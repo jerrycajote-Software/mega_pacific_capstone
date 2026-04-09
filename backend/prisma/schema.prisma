@@ -1,0 +1,40 @@
+// Prisma Schema - Mega Pacific Roofing System
+// Prisma v7: URL is defined in prisma.config.ts, NOT here
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("customer")
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String   // e.g. Spandrel, Rib, Flat Type, etc.
+  price     Float
+  stock     Int
+  imageUrl  String?
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  total     Float
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+}

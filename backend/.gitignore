@@ -1,0 +1,23 @@
+# ─── Environment Variables ───────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Node / NPM ──────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# ─── Prisma Generated Client ─────────────────────────────────
+generated/
+prisma/generated/
+
+# ─── Build ───────────────────────────────────────────────────
+dist/
+build/
+
+# ─── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
