@@ -21,20 +21,37 @@ model User {
 }
 
 model Product {
-  id        Int      @id @default(autoincrement())
-  name      String
-  type      String   // e.g. Spandrel, Rib, Flat Type, etc.
-  price     Float
-  stock     Int
-  imageUrl  String?
-  createdAt DateTime @default(now())
+  id          Int         @id @default(autoincrement())
+  name        String
+  type        String      // e.g. Spandrel, Rib, Flat Type
+  description String?     // NEW: For customer details
+  price       Float
+  unit        String      @default("per meter") // NEW: How is it measured?
+  stock       Int
+  imageUrl    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt // NEW: Admin tracking
+  orderItems  OrderItem[] // NEW: Relation to what was ordered
 }
 
 model Order {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  total     Float
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  user            User        @relation(fields: [userId], references: [id])
+  total           Float
+  status          String      @default("pending") // e.g. pending, processing, shipped, completed
+  paymentStatus   String      @default("unpaid")  // NEW: Admin needs to know if paid
+  shippingAddress String?     // NEW: Where to deliver
+  createdAt       DateTime    @default(now())
+  items           OrderItem[] // NEW: List of products bought
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float   // Captures the price at the time of purchase
 }

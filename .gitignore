@@ -1,15 +1,15 @@
-# ============================================================
+
 # MEGA PACIFIC - Root .gitignore
 # Covers: Node.js backend, React/Vite frontend, Prisma, OS/editor
 # ============================================================
 
-# ─── Environment Variables (NEVER commit these) ─────────────
+#  Environment Variables (NEVER commit these) 
 .env
 .env.*
 !.env.example
 *.env
 
-# ─── Node / NPM ──────────────────────────────────────────────
+#  Node / NPM 
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -18,23 +18,23 @@ pnpm-debug.log*
 lerna-debug.log*
 *.log
 
-# ─── Build Outputs ───────────────────────────────────────────
+#  Build Outputs 
 dist/
 dist-ssr/
 build/
 out/
 .output/
 
-# ─── Vite / Frontend ─────────────────────────────────────────
+#  Vite / Frontend 
 *.local
 .vite/
 
-# ─── Prisma ──────────────────────────────────────────────────
+#  Prisma 
 # Generated Prisma client (can be regenerated with `prisma generate`)
 backend/generated/
 backend/prisma/generated/
 
-# ─── Database ────────────────────────────────────────────────
+#  Database 
 Database/
 *.sql
 *.dump
@@ -42,12 +42,12 @@ Database/
 *.sqlite
 *.sqlite3
 
-# ─── OS & System Files ───────────────────────────────────────
+#  OS & System Files 
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# ─── Editor / IDE ────────────────────────────────────────────
+#  Editor / IDE 
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
@@ -58,7 +58,7 @@ desktop.ini
 *.sln
 *.sw?
 
-# ─── Misc / Personal ─────────────────────────────────────────
+#  Misc / Personal 
 MyLearning/
 *.md.bak
 *.tmp

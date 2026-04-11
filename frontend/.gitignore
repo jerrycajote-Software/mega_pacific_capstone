@@ -1,9 +1,9 @@
-# ─── Environment Variables ───────────────────────────────────
+#  Environment Variables 
 .env
 .env.*
 !.env.example
 
-# ─── Logs ────────────────────────────────────────────────────
+#  Logs 
 logs/
 *.log
 npm-debug.log*
@@ -12,14 +12,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# ─── Node / Build ────────────────────────────────────────────
+#  Node / Build 
 node_modules/
 dist/
 dist-ssr/
 *.local
 .vite/
 
-# ─── Editor / IDE ────────────────────────────────────────────
+#  Editor / IDE 
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
