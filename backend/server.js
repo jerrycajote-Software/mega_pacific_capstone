@@ -10,7 +10,10 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/admin/productRoutes");
+
+app.use("/api/auth", authRoutes);
 app.use("/api/admin/products", productRoutes);
 
 app.get("/", (req, res) => {
