@@ -37,7 +37,8 @@ const ProductManagement = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/admin/products');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await axios.get(`${API_URL}/api/admin/products`);
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -54,10 +55,11 @@ const ProductManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       if (editingProduct) {
-        await axios.put(`http://localhost:5000/api/admin/products/${editingProduct.id}`, formData);
+        await axios.put(`${API_URL}/api/admin/products/${editingProduct.id}`, formData);
       } else {
-        await axios.post('http://localhost:5000/api/admin/products', formData);
+        await axios.post(`${API_URL}/api/admin/products`, formData);
       }
       fetchProducts();
       closeModal();
@@ -68,8 +70,9 @@ const ProductManagement = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       try {
-        await axios.delete(`http://localhost:5000/api/admin/products/${id}`);
+        await axios.delete(`${API_URL}/api/admin/products/${id}`);
         fetchProducts();
       } catch (error) {
         console.error('Error deleting product:', error);

@@ -19,7 +19,8 @@ const DashboardPage = () => {
       // Assuming the admin endpoint is accessible for fetching products 
       // If it requires admin token, we might need a public endpoint, 
       // but based on current backend routes it seems unprotected in server.js
-      const response = await axios.get('http://localhost:5000/api/admin/products');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await axios.get(`${API_URL}/api/admin/products`);
       setProducts(response.data);
       setLoading(false);
     } catch (err) {
