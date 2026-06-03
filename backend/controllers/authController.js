@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 
 // Register a new user (primarily for setting up the first admin)
 const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
@@ -12,7 +12,7 @@ const register = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        role: role || "customer",
+        role: "customer",
       },
     });
     res.status(201).json({ message: "User created successfully", userId: user.id });
