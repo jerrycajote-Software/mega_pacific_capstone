@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   TrendingUp,
   Package,
@@ -13,7 +14,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-/* ─── Widget shell ─── */
+/* Widget shell */
 const Widget = ({ title, action, children, style = {} }) => (
   <div className="widget" style={style}>
     <div className="widget-header">
@@ -31,7 +32,7 @@ const Widget = ({ title, action, children, style = {} }) => (
   </div>
 );
 
-/* ─── Stat card ─── */
+/* Stat card */
 const StatCard = ({ label, value, change, icon, iconBg }) => (
   <div className="widget" style={{ padding: '1.5rem', cursor: 'default', transition: 'border-color 0.2s' }}
     onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)'}
@@ -48,12 +49,12 @@ const StatCard = ({ label, value, change, icon, iconBg }) => (
   </div>
 );
 
-/* ─── Status badge ─── */
+/* Status badge */
 const statusMap = {
   Completed: { cls: 'badge-green', Icon: CheckCircle2 },
-  Pending:   { cls: 'badge-amber', Icon: Clock },
-  Shipped:   { cls: 'badge-blue',  Icon: Truck },
-  Cancelled: { cls: 'badge-red',   Icon: XCircle },
+  Pending: { cls: 'badge-amber', Icon: Clock },
+  Shipped: { cls: 'badge-blue', Icon: Truck },
+  Cancelled: { cls: 'badge-red', Icon: XCircle },
 };
 const StatusBadge = ({ status }) => {
   const { cls, Icon } = statusMap[status] || { cls: 'badge-blue', Icon: Clock };
@@ -65,49 +66,9 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-/* ─── Mock data ─── */
-const recentOrders = [
-  { id: '#ORD-001', customer: 'Juan dela Cruz',  date: 'Apr 12, 2026', status: 'Completed', total: '₱12,450' },
-  { id: '#ORD-002', customer: 'Maria Santos',    date: 'Apr 12, 2026', status: 'Pending',   total: '₱8,200'  },
-  { id: '#ORD-003', customer: 'Pedro Reyes',     date: 'Apr 11, 2026', status: 'Shipped',   total: '₱31,000' },
-  { id: '#ORD-004', customer: 'Rosa Garcia',     date: 'Apr 11, 2026', status: 'Completed', total: '₱5,750'  },
-  { id: '#ORD-005', customer: 'Carlos Mendoza',  date: 'Apr 10, 2026', status: 'Cancelled', total: '₱14,900' },
-];
+/* Dynamic data is fetched from the backend */
 
-const topProducts = [
-  { name: 'Rib Type Blue',  type: 'Rib Type',  sold: 142, revenue: '₱35,500', stock: 88  },
-  { name: 'Spandrel White', type: 'Spandrel',  sold: 98,  revenue: '₱24,500', stock: 42  },
-  { name: 'Flat Type Gray', type: 'Flat Type', sold: 76,  revenue: '₱19,000', stock: 60  },
-  { name: 'Rib Type Brown', type: 'Rib Type',  sold: 65,  revenue: '₱16,250', stock: 110 },
-];
-
-const inventoryBars = [
-  { label: 'Rib Type',    pct: 85, color: '#22c55e', glow: 'rgba(34,197,94,0.5)'   },
-  { label: 'Spandrel',    pct: 42, color: '#f59e0b', glow: 'rgba(245,158,11,0.5)'  },
-  { label: 'Flat Type',   pct: 68, color: '#10b981', glow: 'rgba(16,185,129,0.5)'  },
-  { label: 'Accessories', pct: 90, color: '#06b6d4', glow: 'rgba(6,182,212,0.5)'   },
-];
-
-const stockAlerts = [
-  { name: 'Spandrel Blue', stock: 4 },
-  { name: 'Flat Type Red', stock: 2 },
-  { name: 'Rib Type Green', stock: 7 },
-];
-
-const recentUsers = [
-  { name: 'Juan dela Cruz', email: 'juan@email.com',  role: 'Customer', joined: 'Apr 12' },
-  { name: 'Maria Santos',   email: 'maria@email.com', role: 'Customer', joined: 'Apr 11' },
-  { name: 'Pedro Reyes',    email: 'pedro@email.com', role: 'Customer', joined: 'Apr 10' },
-];
-
-const salesSummary = [
-  { label: "Today's Sales",   value: '₱12,400',  sub: '8 orders'        },
-  { label: 'This Week',       value: '₱58,300',  sub: '42 orders'       },
-  { label: 'This Month',      value: '₱128,450', sub: '156 orders'      },
-  { label: 'Avg Order Value', value: '₱824',     sub: 'Per transaction' },
-];
-
-/* ─── Shared table styles ─── */
+/* Shared table styles */
 const th = {
   padding: '0.625rem 1.25rem',
   fontSize: '0.7rem',
@@ -126,14 +87,48 @@ const td = (right = false) => ({
   borderBottom: '1px solid #1a1a1a',
 });
 
-/* ─── Main Component ─── */
+/*  Main Component  */
 const DashboardPage = () => {
   const [spin, setSpin] = useState(false);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('appToken');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await axios.get(`${API_URL}/api/admin/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setData(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch dashboard data', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   const refresh = () => {
     setSpin(true);
-    setTimeout(() => setSpin(false), 800);
+    fetchDashboardData().then(() => setTimeout(() => setSpin(false), 800));
   };
+
+  if (loading || !data) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#9ca3af' }}>
+        <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginRight: 10 }} />
+        Loading Dashboard Data...
+      </div>
+    );
+  }
+
+  const { totals, recentOrders, stockAlerts, inventoryBars, topProducts, salesSummary } = data; //recentUsers
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -161,17 +156,17 @@ const DashboardPage = () => {
 
       {/* ── Row 1: Stat cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
-        <StatCard label="Total Revenue"    value="₱128,450" change="+12%"         icon={<TrendingUp size={20} color="#22c55e"/>} iconBg="rgba(34,197,94,0.1)"  />
-        <StatCard label="Total Products"   value="42"        change="+3 new"       icon={<Package    size={20} color="#60a5fa"/>} iconBg="rgba(96,165,250,0.1)" />
-        <StatCard label="Total Orders"     value="156"       change="+18%"         icon={<ShoppingCart size={20} color="#c084fc"/>} iconBg="rgba(192,132,252,0.1)" />
-        <StatCard label="Registered Users" value="89"        change="+5 this week" icon={<Users      size={20} color="#22d3ee"/>} iconBg="rgba(34,211,238,0.1)" />
+        <StatCard label="Total Revenue" value={totals.revenue} change="Updated" icon={<TrendingUp size={20} color="#22c55e" />} iconBg="rgba(34,197,94,0.1)" />
+        <StatCard label="Total Products" value={totals.products} change="Updated" icon={<Package size={20} color="#60a5fa" />} iconBg="rgba(96,165,250,0.1)" />
+        <StatCard label="Total Orders" value={totals.orders} change="Updated" icon={<ShoppingCart size={20} color="#c084fc" />} iconBg="rgba(192,132,252,0.1)" />
+        {/* <StatCard label="Registered Users" value={totals.users} change="Updated" icon={<Users size={20} color="#22d3ee" />} iconBg="rgba(34,211,238,0.1)" /> */}
       </div>
 
-      {/* ── Row 2: Recent Orders + Inventory Status ── */}
+      {/*  Row 2: Recent Orders + Inventory Status  */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
 
         {/* Recent Orders */}
-        <Widget title="Recent Orders" action={{ label: 'View all orders', fn: () => {} }}>
+        <Widget title="Recent Orders" action={{ label: 'View all orders', fn: () => { } }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -247,7 +242,7 @@ const DashboardPage = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
 
         {/* Top Products */}
-        <Widget title="Top Selling Products" action={{ label: 'Go to Inventory', fn: () => {} }}>
+        <Widget title="Top Selling Products" action={{ label: 'Go to Inventory', fn: () => { } }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -280,7 +275,7 @@ const DashboardPage = () => {
         </Widget>
 
         {/* Recent Users */}
-        <Widget title="Recently Registered Users" action={{ label: 'Manage Users', fn: () => {} }}>
+        {/* <Widget title="Recently Registered Users" action={{ label: 'Manage Users', fn: () => { } }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -321,12 +316,13 @@ const DashboardPage = () => {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             padding: '0.75rem 1.25rem', borderTop: '1px solid #1a1a1a',
           }}>
-            <span style={{ fontSize: '0.75rem', color: '#4b5563' }}>Showing 3 of 89 users</span>
+            <span style={{ fontSize: '0.75rem', color: '#4b5563' }}>Showing {recentUsers.length} of {totals.users} users</span>
             <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#22c55e', fontSize: '0.75rem', fontWeight: 600 }}>
               View all users →
             </button>
           </div>
-        </Widget>
+        </Widget> */}
+        
       </div>
 
       {/* ── Row 4: Sales Summary bar ── */}

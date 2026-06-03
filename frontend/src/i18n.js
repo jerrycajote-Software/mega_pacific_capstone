@@ -37,7 +37,24 @@ const resources = {
       "Tell customers more about this product...": "Tell customers more about this product...",
       "Cancel": "Cancel",
       "Update Product": "Update Product",
-      "Create Product": "Create Product"
+      "Create Product": "Create Product",
+      "MEGA PACIFIC": "MEGA PACIFIC",
+      "Admin Portal": "Admin Portal",
+      "Login As Admin": "Login As Admin",
+      "Email": "Email",
+      "Password": "Password",
+      "SYSTEM ONLINE": "SYSTEM ONLINE",
+      "Welcome back, ": "Welcome back, ",
+      "Customer": "Customer",
+      "Explore our premium selection of roofing materials. From durable Rib types to elegant Spandrel designs, find exactly what you need for your next project.": "Explore our premium selection of roofing materials. From durable Rib types to elegant Spandrel designs, find exactly what you need for your next project.",
+      "Product Catalog": "Product Catalog",
+      "Available materials from our inventory": "Available materials from our inventory",
+      "Search products...": "Search products...",
+      "Loading catalog...": "Loading catalog...",
+      "Try adjusting your search criteria.": "Try adjusting your search criteria.",
+      "Check back later for new inventory.": "Check back later for new inventory.",
+      "Premium roofing material built for durability and aesthetics.": "Premium roofing material built for durability and aesthetics.",
+      "Price": "Price"
     }
   }
 };

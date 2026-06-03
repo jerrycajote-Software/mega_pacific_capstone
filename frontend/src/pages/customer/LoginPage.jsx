@@ -45,6 +45,7 @@ const CustomerLoginPage = () => {
     setLoading(false);
   };
 
+  
   return (
     <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: 'sans-serif' }}>
       <style>{`
@@ -243,9 +244,9 @@ const CustomerLoginPage = () => {
             <span>Password</span>
           </label>
 
-          <div style={{ textAlign: 'right', marginTop: '-5px' }}>
+          {/* <div style={{ textAlign: 'right', marginTop: '-5px' }}>
             <a href="#" style={{ color: 'royalblue', fontSize: '13px', textDecoration: 'none' }}>Forgot password?</a>
-          </div>
+          </div> */}
           
           <button type="submit" className="custom-submit" disabled={loading}>
             {loading ? <Loader2 size={20} className="animate-spin" /> : 'Submit'}

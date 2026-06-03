@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, Home, Package } from 'lucide-react';
+import { LogOut, User, Home, Package, ShoppingBag, ShoppingBasket } from 'lucide-react';
 
 const CustomerLayout = () => {
   const { user, logout } = useAuth();
@@ -23,15 +23,33 @@ const CustomerLayout = () => {
                 <Link to="/dashboard" className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-600 bg-clip-text text-transparent">
                   Mega Pacific
                 </Link>
+
               </div>
               <div className="hidden md:block">
                 <div className="flex items-baseline space-x-4">
                   <Link to="/dashboard" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors">
                     <Home size={16} className="mr-2" /> Home
+
                   </Link>
                   <Link to="/dashboard" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors">
                     <Package size={16} className="mr-2" /> Products
                   </Link>
+
+                  <Link
+                    to="/orders"
+                    className="relative text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors group"
+                  >
+                    <ShoppingBag size={16} className="mr-2 group-hover:text-blue-400 transition-colors" />
+                    <span className="group-hover:text-blue-400 transition-colors">Order View</span>
+                  </Link>
+
+                  <Link to="/cart"
+                  className="relative text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center
+                  transition-colors group">
+                    <ShoppingBasket size={16} className="mr-2 group-hover:text-blue-400 transition-colors" />
+                    <span className="group-hover:text-blue-400 transition-colors">Cart</span>
+                  </Link>
+
                 </div>
               </div>
             </div>

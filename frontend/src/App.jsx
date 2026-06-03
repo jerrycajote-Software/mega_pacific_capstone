@@ -2,19 +2,25 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
-// Layouts
+//Layouts
 import AdminLayout from './layouts/AdminLayout';
 import CustomerLayout from './layouts/CustomerLayout';
 
-// Admin Pages
+//Admin Pages
 import AdminLoginPage from './pages/admin/LoginPage';
 import AdminDashboardPage from './pages/admin/DashboardPage';
 import ProductManagement from './pages/admin/ProductManagement';
+import OrderManagement from './pages/admin/OrderManagement';
+import UserManagement from './pages/admin/UserManagement';
 
-// Customer Pages
+//Customer
 import RegisterPage from './pages/customer/RegisterPage';
 import CustomerLoginPage from './pages/customer/LoginPage';
 import CustomerDashboardPage from './pages/customer/DashboardPage';
+import ProductDetails from './pages/customer/ProductDetails';
+import Checkout from './pages/customer/Checkout';
+import OrderDetails from './pages/customer/OrderDetails';
+import OrdersPage from './pages/customer/OrdersPage';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
@@ -60,6 +66,10 @@ const App = () => {
       }>
         <Route index element={<Navigate to="/dashboard" />} />
         <Route path="dashboard" element={<CustomerDashboardPage />} />
+        <Route path="product/:id" element={<ProductDetails />} />
+        <Route path="checkout" element={<Checkout />} />
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="order/:id" element={<OrderDetails />} />
       </Route>
 
       {/* Admin Routes */}
@@ -73,8 +83,8 @@ const App = () => {
         <Route index element={<Navigate to="/admin/dashboard" />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="inventory" element={<ProductManagement />} />
-        <Route path="orders" element={<div className="p-8 text-center text-gray-500">Orders management coming soon...</div>} />
-        <Route path="users" element={<div className="p-8 text-center text-gray-500">User management coming soon...</div>} />
+        <Route path="orders" element={<OrderManagement />} />
+        <Route path="users" element={<UserManagement />} />
         <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings coming soon...</div>} />
       </Route>
 

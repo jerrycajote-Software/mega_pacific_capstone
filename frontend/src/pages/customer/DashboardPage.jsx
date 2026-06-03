@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Package, Search, Loader2, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const DashboardPage = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,10 +46,10 @@ const DashboardPage = () => {
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Welcome back, {user?.name?.split(' ')[0] || 'Customer'}!
+            {t("Welcome back, ")}{user?.name?.split(' ')[0] || t("Customer")}!
           </h1>
           <p className="text-gray-300 text-lg max-w-2xl">
-            Explore our premium selection of roofing materials. From durable Rib types to elegant Spandrel designs, find exactly what you need for your next project.
+            {t("Explore our premium selection of roofing materials. From durable Rib types to elegant Spandrel designs, find exactly what you need for your next project.")}
           </p>
         </div>
       </div>
@@ -55,10 +59,10 @@ const DashboardPage = () => {
         <div>
           <h2 className="text-2xl font-semibold text-white flex items-center gap-2">
             <Package className="text-blue-500" />
-            Product Catalog
+            {t("Product Catalog")}
           </h2>
-          <p className="text-gray-400 text-sm mt-1">Available materials from our inventory</p>
-        </div>
+          <p className="text-gray-400 text-sm mt-1">{t("Available materials from our inventory")}</p>
+        </div> 
         
         <div className="relative w-full sm:w-72 group">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 group-focus-within:text-blue-500 transition-colors">
@@ -66,7 +70,7 @@ const DashboardPage = () => {
           </div>
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder={t("Search products...")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-[#111111] border border-gray-800 rounded-xl py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder-gray-600"
@@ -77,7 +81,7 @@ const DashboardPage = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 size={40} className="text-blue-500 animate-spin mb-4" />
-          <p className="text-gray-400">Loading catalog...</p>
+          <p className="text-gray-400">{t("Loading catalog...")}</p>
         </div>
       ) : error ? (
         <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-xl text-center">
@@ -86,20 +90,24 @@ const DashboardPage = () => {
       ) : filteredProducts.length === 0 ? (
         <div className="bg-[#111111] border border-gray-800 rounded-xl p-12 text-center">
           <Package size={48} className="text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-white mb-2">No products found</h3>
+          <h3 className="text-xl font-medium text-white mb-2">{t("No products found")}</h3>
           <p className="text-gray-500">
-            {searchTerm ? 'Try adjusting your search criteria.' : 'Check back later for new inventory.'}
+            {searchTerm ? t("Try adjusting your search criteria.") : t("Check back later for new inventory.")}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-[#111111] border border-gray-800 rounded-2xl overflow-hidden hover:border-blue-500/30 transition-all group hover:shadow-lg hover:shadow-blue-500/10 flex flex-col h-full">
+            <div 
+              key={product.id} 
+              onClick={() => navigate(`/product/${product.id}`)}
+              className="bg-[#111111] border border-gray-800 rounded-2xl overflow-hidden hover:border-blue-500/30 transition-all group hover:shadow-lg hover:shadow-blue-500/10 flex flex-col h-full cursor-pointer"
+            >
               {/* Image Container */}
               <div className="h-48 bg-[#1a1a1a] relative overflow-hidden flex items-center justify-center border-b border-gray-800">
-                {product.imageUrl ? (
+                {(product.imageUrls?.[0] || product.imageUrl) ? (
                   <img 
-                    src={product.imageUrl} 
+                    src={product.imageUrls?.[0] || product.imageUrl} 
                     alt={product.name} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -111,6 +119,12 @@ const DashboardPage = () => {
                     {product.type}
                   </span>
                 </div>
+                {/* Image count badge */}
+                {product.imageUrls?.length > 1 && (
+                  <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white/80 text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/10">
+                    1/{product.imageUrls.length}
+                  </div>
+                )}
               </div>
               
               {/* Product Details */}
@@ -118,12 +132,12 @@ const DashboardPage = () => {
                 <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-400 transition-colors line-clamp-1">{product.name}</h3>
                 
                 <p className="text-gray-400 text-sm mb-4 line-clamp-2 flex-grow">
-                  {product.description || 'Premium roofing material built for durability and aesthetics.'}
+                  {product.description || t("Premium roofing material built for durability and aesthetics.")}
                 </p>
                 
                 <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-800/50">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Price</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{t("Price")}</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-xl font-bold text-white">₱{product.price.toLocaleString()}</span>
                       <span className="text-xs text-gray-400">/ {product.unit}</span>

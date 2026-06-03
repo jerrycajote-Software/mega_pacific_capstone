@@ -30,6 +30,7 @@ const RegisterPage = () => {
     if (!validateEmail(email)) {
       setError('Please enter a valid email address.');
       return;
+
     }
     
     if (password !== confirmPassword) {

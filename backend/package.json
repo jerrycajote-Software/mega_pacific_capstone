@@ -7,12 +7,16 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "build": "prisma generate && prisma migrate deploy",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "prisma db seed"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@hono/node-server": "^1.19.13",
     "@prisma/adapter-pg": "^7.7.0",

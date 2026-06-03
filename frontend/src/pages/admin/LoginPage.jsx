@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /* ─── Keyframes & micro-interactions ─── */
 const css = `
@@ -84,6 +85,7 @@ const css = `
 `;
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
@@ -99,6 +101,12 @@ const LoginPage = () => {
     setLoading(true);
     const result = await login(email, password);
     if (result.success) {
+      if (result.user?.role !== 'admin') {
+        logout();
+        setError('Access denied. Admin privileges required.');
+        setLoading(false);
+        return;
+      }
       navigate('/admin/dashboard');
     } else {
       setError(result.error || 'Invalid credentials. Please try again.');
@@ -192,7 +200,7 @@ const LoginPage = () => {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>
-              MEGA PACIFIC
+              {t("MEGA PACIFIC")}
             </h1>
             <p style={{
               margin: '0.35rem 0 0',
@@ -202,7 +210,7 @@ const LoginPage = () => {
               letterSpacing: '0.18em',
               fontWeight: 600,
             }}>
-              Admin Portal
+              {t("Admin Portal")}
             </p>
           </div>
 
@@ -229,7 +237,7 @@ const LoginPage = () => {
                 color: '#f0f0f0',
                 letterSpacing: '-0.01em',
               }}>
-                Login As Admin
+                {t("Login As Admin")}
               </h2>
               {/* <p style={{
                 margin: '0.3rem 0 0',
@@ -272,7 +280,7 @@ const LoginPage = () => {
                   textTransform: 'uppercase',
                   letterSpacing: '0.07em',
                 }}>
-                  Email
+                  {t("Email")}
                 </label>
                 <div className="lp-input-wrap" style={{ position: 'relative' }}>
                   <Mail
@@ -320,7 +328,7 @@ const LoginPage = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.07em',
                   }}>
-                    Password
+                    {t("Password")}
                   </label>
                 </div>
                 <div className="lp-input-wrap" style={{ position: 'relative' }}>
@@ -449,7 +457,7 @@ const LoginPage = () => {
                 }}
               />
               <span style={{ fontSize: '0.68rem', color: '#4ade80', fontWeight: 600, letterSpacing: '0.06em' }}>
-                SYSTEM ONLINE
+                {t("SYSTEM ONLINE")}
               </span>
             </div>
 
