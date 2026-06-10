@@ -38,7 +38,7 @@ const login = async (req, res) => {
 
     // Check if user is admin if they are accessing admin side
     // (We can enforce this in middleware later, but good to check here too)
-    
+
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_SECRET || "fallback_secret",

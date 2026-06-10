@@ -36,7 +36,6 @@ backend/prisma/generated/
 
 #  Database 
 Database/
-*.sql
 *.dump
 *.db
 *.sqlite
@@ -63,3 +62,6 @@ MyLearning/
 *.md.bak
 *.tmp
 *.cache
+SKILL_DESIGN.MD
+.gitignore
+backend/.env.example
