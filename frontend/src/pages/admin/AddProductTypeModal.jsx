@@ -10,7 +10,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
-/* ─── Inline styles matching ProductManagement theme ─── */
+/* Inline styles matching ProductManagement theme */
 const M = {
   overlay: {
     position: 'fixed', inset: 0, zIndex: 200,
@@ -88,7 +88,7 @@ const M = {
   },
 };
 
-/* ─── Focus styles ─── */
+/* Focus styles */
 const modalFocusStyle = `
   .ptm-input:focus, .ptm-textarea:focus {
     border-color: rgba(34,197,94,0.55) !important;
@@ -109,6 +109,7 @@ const modalFocusStyle = `
  *   - onClose: () => void
  *   - onTypeCreated: (newType) => void  — called after successful creation
  */
+
 const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
   const { t } = useTranslation();
   const [name, setName] = useState('');

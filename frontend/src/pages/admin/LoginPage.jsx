@@ -118,7 +118,7 @@ const LoginPage = () => {
     <>
       <style>{css}</style>
 
-      {/* ── Full-screen shell ── */}
+      {/* Full-screen shell */}
       <div
         className="lp-bg"
         style={{
@@ -159,7 +159,7 @@ const LoginPage = () => {
           transform: 'translate(-50%, -50%)',
         }} />
 
-        {/* ── Content column ── */}
+        {/* Content column */}
         <div style={{
           width: '100%',
           maxWidth: 420,
@@ -170,7 +170,7 @@ const LoginPage = () => {
           gap: '1.75rem',
         }}>
 
-          {/* ── Brand header ── */}
+          {/* Brand header */}
           <div
             className="lp-card"
             style={{ textAlign: 'center', animationDelay: '0s' }}
@@ -214,7 +214,7 @@ const LoginPage = () => {
             </p>
           </div>
 
-          {/* ── Login card ── */}
+          {/* Login card */}
           <div
             className="lp-card"
             style={{
@@ -239,6 +239,7 @@ const LoginPage = () => {
               }}>
                 {t("Login As Admin")}
               </h2>
+
               {/* <p style={{
                 margin: '0.3rem 0 0',
                 fontSize: '0.8rem',
@@ -246,6 +247,7 @@ const LoginPage = () => {
               }}>
                 Enter your credentials to access the dashboard
               </p> */}
+
             </div>
 
             {/* Error banner */}
@@ -428,7 +430,7 @@ const LoginPage = () => {
             </form>
           </div>
 
-          {/* ── Footer ── */}
+          {/* Footer */}
           <div
             className="lp-card"
             style={{

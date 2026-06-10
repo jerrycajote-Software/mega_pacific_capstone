@@ -47,7 +47,7 @@ const resources = {
       "Welcome back, ": "Welcome back, ",
       "Customer": "Customer",
       "Explore our premium selection of roofing materials. From durable Rib types to elegant Spandrel designs, find exactly what you need for your next project.": "Explore our premium selection of roofing materials. From durable Rib types to elegant Spandrel designs, find exactly what you need for your next project.",
-      "Product Catalog": "Product Catalog",
+      "AVAILABLE PRODUCT": "AVAILABLE PRODUCT",
       "Available materials from our inventory": "Available materials from our inventory",
       "Search products...": "Search products...",
       "Loading catalog...": "Loading catalog...",

@@ -25,42 +25,42 @@ const STATUS_CONFIG = {
   pending: {
     label: 'Pending',
     Icon: Clock,
-    bg: 'bg-amber-500/15',
-    text: 'text-amber-400',
-    border: 'border-amber-500/30',
-    dot: 'bg-amber-400',
+    bg: 'bg-amber-50',
+    text: 'text-amber-600',
+    border: 'border-amber-200',
+    dot: 'bg-amber-500',
   },
   processing: {
     label: 'Processing',
     Icon: Package,
-    bg: 'bg-blue-500/15',
-    text: 'text-blue-400',
-    border: 'border-blue-500/30',
-    dot: 'bg-blue-400',
+    bg: 'bg-blue-50',
+    text: 'text-blue-600',
+    border: 'border-blue-200',
+    dot: 'bg-blue-500',
   },
   out_for_delivery: {
     label: 'Out for Delivery',
     Icon: Truck,
-    bg: 'bg-indigo-500/15',
-    text: 'text-indigo-400',
-    border: 'border-indigo-500/30',
-    dot: 'bg-indigo-400',
+    bg: 'bg-indigo-50',
+    text: 'text-indigo-600',
+    border: 'border-indigo-200',
+    dot: 'bg-indigo-500',
   },
   delivered: {
     label: 'Delivered',
     Icon: CheckCircle2,
-    bg: 'bg-emerald-500/15',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/30',
-    dot: 'bg-emerald-400',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-600',
+    border: 'border-emerald-200',
+    dot: 'bg-emerald-500',
   },
   cancelled: {
     label: 'Cancelled',
     Icon: XCircle,
-    bg: 'bg-red-500/15',
-    text: 'text-red-400',
-    border: 'border-red-500/30',
-    dot: 'bg-red-400',
+    bg: 'bg-red-50',
+    text: 'text-red-600',
+    border: 'border-red-200',
+    dot: 'bg-red-500',
   },
 };
 
@@ -114,19 +114,19 @@ const OrderCard = ({ order, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group relative bg-[#111111] border border-gray-800 rounded-2xl overflow-hidden
-                 hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/10
+      className="group relative bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden
+                 hover:border-gray-300 hover:shadow-md hover:shadow-gray-200
                  transition-all duration-300 cursor-pointer"
     >
       {/* Top accent bar */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="h-0.5 w-full bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       <div className="p-6">
         {/* Header row */}
         <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Order ID</p>
-            <h2 className="text-xl font-extrabold text-white">
+            <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-bold">Order ID</p>
+            <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">
               #{String(order.id).padStart(4, '0')}
             </h2>
           </div>
@@ -140,24 +140,24 @@ const OrderCard = ({ order, onClick }) => {
               previewImages.map((url, i) => (
                 <div
                   key={i}
-                  className="w-12 h-12 rounded-xl border-2 border-[#111111] overflow-hidden bg-gray-800 flex-shrink-0"
+                  className="w-12 h-12 rounded-xl border-2 border-white overflow-hidden bg-gray-50 flex-shrink-0"
                 >
                   <img src={url} alt="" className="w-full h-full object-cover" />
                 </div>
               ))
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center">
-                <Package size={20} className="text-gray-500" />
+              <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                <Package size={20} className="text-gray-400" />
               </div>
             )}
             {order.items.length > 3 && (
-              <div className="w-12 h-12 rounded-xl border-2 border-[#111111] bg-gray-800 flex items-center justify-center text-xs text-gray-400 font-medium flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl border-2 border-white bg-gray-100 flex items-center justify-center text-xs text-gray-600 font-bold flex-shrink-0">
                 +{order.items.length - 3}
               </div>
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-white font-medium text-sm truncate">
+            <p className="text-gray-900 font-bold text-sm truncate">
               {order.items.map((i) => i.product?.name).filter(Boolean).join(', ')}
             </p>
             <p className="text-gray-500 text-xs mt-0.5">
@@ -168,30 +168,30 @@ const OrderCard = ({ order, onClick }) => {
         </div>
 
         {/* Meta row */}
-        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-800/70">
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
           <div>
-            <p className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+            <p className="text-xs text-gray-500 flex items-center gap-1 mb-1 font-bold">
               <Calendar size={11} /> Date
             </p>
-            <p className="text-sm text-gray-300 font-medium">{formatDate(order.createdAt)}</p>
+            <p className="text-sm text-gray-700 font-bold">{formatDate(order.createdAt)}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+            <p className="text-xs text-gray-500 flex items-center gap-1 mb-1 font-bold">
               <CreditCard size={11} /> Payment
             </p>
-            <p className="text-sm text-gray-300 font-medium capitalize">
+            <p className="text-sm text-gray-700 font-bold capitalize">
               {order.paymentMode || '—'}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500 mb-1">Total</p>
-            <p className="text-sm font-extrabold text-blue-400">{formatCurrency(order.total)}</p>
+            <p className="text-xs text-gray-500 mb-1 font-bold">Total</p>
+            <p className="text-sm font-extrabold text-gray-900">{formatCurrency(order.total)}</p>
           </div>
         </div>
       </div>
 
       {/* Hover CTA */}
-      <div className="px-6 pb-5 flex items-center gap-2 text-blue-400 text-xs font-semibold opacity-0 group-hover:opacity-100 -translate-y-1 group-hover:translate-y-0 transition-all duration-300">
+      <div className="px-6 pb-5 flex items-center gap-2 text-gray-600 text-xs font-bold opacity-0 group-hover:opacity-100 -translate-y-1 group-hover:translate-y-0 transition-all duration-300">
         View full details <ChevronRight size={14} />
       </div>
     </div>
@@ -285,7 +285,7 @@ const OrdersPage = () => {
       {/* Back button */}
       <button
         onClick={() => navigate('/dashboard')}
-        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8 group"
+        className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold transition-colors mb-8 group"
       >
         <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
         Back to Dashboard
@@ -293,31 +293,31 @@ const OrdersPage = () => {
 
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-3">
-          <ShoppingBag className="text-blue-500" size={36} />
+        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 flex items-center gap-3 tracking-tight">
+          <ShoppingBag className="text-gray-700" size={36} />
           My Orders
         </h1>
-        <p className="text-gray-400 mt-2">Track and manage all your previous purchases.</p>
+        <p className="text-gray-600 mt-2 font-medium">Track and manage all your previous purchases.</p>
       </div>
 
       {/* Stats strip */}
       {!loading && !error && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Orders', value: stats.total, color: 'text-white' },
-            { label: 'Delivered', value: stats.delivered, color: 'text-emerald-400' },
-            { label: 'In Progress', value: stats.pending, color: 'text-amber-400' },
+            { label: 'Total Orders', value: stats.total, color: 'text-gray-900' },
+            { label: 'Delivered', value: stats.delivered, color: 'text-emerald-600' },
+            { label: 'In Progress', value: stats.pending, color: 'text-amber-600' },
             {
               label: 'Total Spent',
               value: formatCurrency(stats.totalSpent),
-              color: 'text-blue-400',
+              color: 'text-gray-900',
             },
           ].map((s) => (
             <div
               key={s.label}
-              className="bg-[#111111] border border-gray-800 rounded-2xl px-5 py-4"
+              className="bg-white border border-gray-200 shadow-sm rounded-2xl px-5 py-4"
             >
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{s.label}</p>
+              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">{s.label}</p>
               <p className={`text-xl font-extrabold ${s.color}`}>{s.value}</p>
             </div>
           ))}
@@ -328,7 +328,7 @@ const OrdersPage = () => {
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         {/* Search */}
         <div className="relative flex-1 group">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500 group-focus-within:text-blue-400 transition-colors">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gray-700 transition-colors">
             <Search size={17} />
           </div>
           <input
@@ -337,9 +337,9 @@ const OrdersPage = () => {
             placeholder="Search by order ID, product name, payment method…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#111111] border border-gray-800 rounded-xl py-3 pl-10 pr-4
-                       text-white placeholder-gray-600 text-sm
-                       focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50
+            className="w-full bg-white border border-gray-300 shadow-sm rounded-xl py-3 pl-10 pr-4
+                       text-gray-900 placeholder-gray-400 text-sm font-medium
+                       focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400/50
                        transition-all"
           />
         </div>
@@ -353,9 +353,9 @@ const OrdersPage = () => {
             id="orders-filter"
             value={activeFilter}
             onChange={(e) => setActiveFilter(e.target.value)}
-            className="appearance-none bg-[#111111] border border-gray-800 rounded-xl py-3 pl-9 pr-8
-                       text-sm text-gray-300
-                       focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50
+            className="appearance-none bg-white border border-gray-300 shadow-sm rounded-xl py-3 pl-9 pr-8
+                       text-sm text-gray-700 font-bold
+                       focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400/50
                        transition-all cursor-pointer"
           >
             {FILTER_OPTIONS.map((opt) => (
@@ -377,11 +377,10 @@ const OrdersPage = () => {
           <button
             key={opt.value}
             onClick={() => setActiveFilter(opt.value)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all
-              ${
-                activeFilter === opt.value
-                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'bg-[#111111] border-gray-800 text-gray-400 hover:border-gray-600 hover:text-white'
+            className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all
+              ${activeFilter === opt.value
+                ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+                : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 shadow-sm'
               }`}
           >
             {opt.label}
@@ -397,27 +396,27 @@ const OrdersPage = () => {
       {/* Content */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32">
-          <Loader2 size={44} className="text-blue-500 animate-spin mb-4" />
-          <p className="text-gray-400">Loading your orders…</p>
+          <Loader2 size={44} className="text-gray-400 animate-spin mb-4" />
+          <p className="text-gray-600 font-bold">Loading your orders…</p>
         </div>
       ) : error ? (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-8 text-center">
+        <div className="bg-red-50 border-red-200 text-red-600 rounded-2xl p-8 text-center shadow-sm">
           <XCircle size={40} className="mx-auto mb-3 text-red-500" />
-          <p className="font-semibold mb-4">{error}</p>
+          <p className="font-bold mb-4">{error}</p>
           <button
             onClick={fetchMyOrders}
-            className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 px-5 py-2 rounded-xl text-sm font-medium transition-colors"
+            className="bg-red-100 hover:bg-red-200 border border-red-300 text-red-700 px-5 py-2 rounded-xl text-sm font-bold transition-colors"
           >
             Try Again
           </button>
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="bg-[#111111] border border-gray-800 rounded-2xl p-16 text-center">
-          <ShoppingBag size={52} className="text-gray-700 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">
+        <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-16 text-center">
+          <ShoppingBag size={52} className="text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-extrabold text-gray-900 mb-2 tracking-tight">
             {orders.length === 0 ? "You haven't placed any orders yet" : 'No orders match your search'}
           </h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500 mb-6 font-medium">
             {orders.length === 0
               ? 'Browse our catalog and start shopping!'
               : 'Try adjusting your filters or search terms.'}
@@ -425,7 +424,7 @@ const OrdersPage = () => {
           {orders.length === 0 && (
             <button
               onClick={() => navigate('/dashboard')}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-blue-600/30"
+              className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-sm"
             >
               Browse Products
             </button>
@@ -433,8 +432,8 @@ const OrdersPage = () => {
         </div>
       ) : (
         <>
-          <p className="text-gray-500 text-sm mb-4">
-            Showing <span className="text-white font-semibold">{filteredOrders.length}</span> order
+          <p className="text-gray-600 text-sm mb-4 font-bold">
+            Showing <span className="text-gray-900 font-extrabold">{filteredOrders.length}</span> order
             {filteredOrders.length !== 1 ? 's' : ''}
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

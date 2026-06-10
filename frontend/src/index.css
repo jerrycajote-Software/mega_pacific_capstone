@@ -3,33 +3,75 @@
 
 /* Design Tokens */
 :root {
-  --bg-primary:    #0a0a0a;
-  --bg-secondary:  #111111;
-  --bg-tertiary:   #1a1a1a;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1a1a1a;
 
-  --text-primary:  #f0f0f0;
-  --text-muted:    #9ca3af;
+  --text-primary: #f0f0f0;
+  --text-muted: #9ca3af;
 
-  --green:         #22c55e;
-  --green-dark:    #16a34a;
-  --green-glow:    rgba(34, 197, 94, 0.15);
-  --green-border:  rgba(34, 197, 94, 0.25);
+  --green: #22c55e;
+  --green-dark: #16a34a;
+  --green-glow: rgba(34, 197, 94, 0.15);
+  --green-border: rgba(34, 197, 94, 0.25);
 
-  --border:        #222222;
-  --border-light:  #2e2e2e;
+  --border: #222222;
+  --border-light: #2e2e2e;
 
-  --sidebar-w:     256px;
+  /* accent - 023047 , -> ECF39E*/
+  /* Customer Interface Accent Tokens */
+  /* main f4f9e9 */
+  --customer-bg-main: #ffffff;
+  --customer-accent: #023047;
+  --customer-accent-hover: #DDEB84;
+
+  --sidebar-w: 256px;
 
   font-family: 'Inter', system-ui, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
 
-/* Reset */
-*, *::before, *::after { box-sizing: border-box; }
+@theme {
+  --color-customer-bg: var(--customer-bg-main);
+  --color-customer-accent: var(--customer-accent);
+  --color-customer-accent-hover: var(--customer-accent-hover);
+}
 
-body { margin: 0; min-height: 100vh; }
-html { height: 100%; }
+/* Reusable Customer Button Utility */
+.btn-customer-primary {
+  background-color: var(--customer-accent);
+  color: #1A1A1A;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.btn-customer-primary:hover {
+  background-color: var(--customer-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(236, 243, 158, 0.35);
+}
+
+.btn-customer-primary:active {
+  transform: translateY(0);
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+html {
+  height: 100%;
+}
 
 
 #root {
@@ -80,7 +122,7 @@ html { height: 100%; }
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(10,10,10,0.9);
+  background: rgba(10, 10, 10, 0.9);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
   padding: 1rem 2rem;
@@ -112,7 +154,7 @@ html { height: 100%; }
 }
 
 .nav-link:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   color: #f0f0f0;
 }
 
@@ -120,7 +162,7 @@ html { height: 100%; }
   background: rgba(34, 197, 94, 0.08);
   color: #4ade80;
   border-color: rgba(34, 197, 94, 0.2);
-  box-shadow: inset 0 0 16px rgba(34,197,94,0.04);
+  box-shadow: inset 0 0 16px rgba(34, 197, 94, 0.04);
 }
 
 /* Widget Card */
@@ -147,8 +189,46 @@ html { height: 100%; }
 }
 
 /* Utility helpers */
-.text-green  { color: var(--green); }
-.badge-green { background: var(--green-glow); color: #4ade80; border: 1px solid var(--green-border); border-radius: 9999px; padding: 0.15rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
-.badge-amber { background: rgba(245,158,11,.1); color: #fbbf24; border: 1px solid rgba(245,158,11,.25); border-radius: 9999px; padding: 0.15rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
-.badge-red   { background: rgba(239,68,68,.1);  color: #f87171; border: 1px solid rgba(239,68,68,.25);  border-radius: 9999px; padding: 0.15rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
-.badge-blue  { background: rgba(59,130,246,.1); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); border-radius: 9999px; padding: 0.15rem 0.6rem; font-size: 0.7rem; font-weight: 600; }
+.text-green {
+  color: var(--green);
+}
+
+.badge-green {
+  background: var(--green-glow);
+  color: #4ade80;
+  border: 1px solid var(--green-border);
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.badge-amber {
+  background: rgba(245, 158, 11, .1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, .25);
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.badge-red {
+  background: rgba(239, 68, 68, .1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, .25);
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.badge-blue {
+  background: rgba(59, 130, 246, .1);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, .25);
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}

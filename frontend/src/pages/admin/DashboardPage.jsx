@@ -87,7 +87,7 @@ const td = (right = false) => ({
   borderBottom: '1px solid #1a1a1a',
 });
 
-/*  Main Component  */
+/* Main Component */
 const DashboardPage = () => {
   const [spin, setSpin] = useState(false);
   const [data, setData] = useState(null);
@@ -154,7 +154,7 @@ const DashboardPage = () => {
         </button>
       </div>
 
-      {/* ── Row 1: Stat cards ── */}
+      {/* Row 1: Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
         <StatCard label="Total Revenue" value={totals.revenue} change="Updated" icon={<TrendingUp size={20} color="#22c55e" />} iconBg="rgba(34,197,94,0.1)" />
         <StatCard label="Total Products" value={totals.products} change="Updated" icon={<Package size={20} color="#60a5fa" />} iconBg="rgba(96,165,250,0.1)" />
@@ -238,7 +238,7 @@ const DashboardPage = () => {
         </Widget>
       </div>
 
-      {/* ── Row 3: Top Products + Recent Users ── */}
+      {/* Row 3: Top Products + Recent Users */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
 
         {/* Top Products */}
@@ -325,7 +325,7 @@ const DashboardPage = () => {
         
       </div>
 
-      {/* ── Row 4: Sales Summary bar ── */}
+      {/* Row 4: Sales Summary bar */}
       <Widget title="Quick Sales Summary">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid #1a1a1a' }}>
           {salesSummary.map((s, i) => (

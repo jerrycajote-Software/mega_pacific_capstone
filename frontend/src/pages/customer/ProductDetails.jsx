@@ -65,9 +65,9 @@ const ImageGallery = ({ images, productName }) => {
 
   if (!hasImages) {
     return (
-      <div className="bg-[#111111] border border-gray-800 rounded-3xl flex flex-col items-center justify-center min-h-[420px] gap-4">
-        <ImageOff size={64} className="text-gray-700" />
-        <p className="text-gray-600 text-sm">No images uploaded for this product</p>
+      <div className="bg-white border border-gray-200 shadow-sm rounded-3xl flex flex-col items-center justify-center min-h-[420px] gap-4">
+        <ImageOff size={64} className="text-gray-400" />
+        <p className="text-gray-500 text-sm font-medium">No images uploaded for this product</p>
       </div>
     );
   }
@@ -75,9 +75,9 @@ const ImageGallery = ({ images, productName }) => {
   return (
     <>
       <div className="flex flex-col gap-4">
-        <div className="relative bg-[#111111] border border-gray-800 rounded-3xl overflow-hidden group" style={{ minHeight: 420 }}>
+        <div className="relative bg-white border border-gray-200 shadow-sm rounded-3xl overflow-hidden group" style={{ minHeight: 420 }}>
           <div className={`w-full h-full flex items-center justify-center p-6 transition-opacity duration-[180ms] ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} style={{ minHeight: 420 }}>
-            <img src={imgs[activeIndex]} alt={`${productName} — image ${activeIndex + 1}`} className="w-full h-full object-contain max-h-[500px] drop-shadow-2xl select-none" draggable={false} />
+            <img src={imgs[activeIndex]} alt={`${productName} — image ${activeIndex + 1}`} className="w-full h-full object-contain max-h-[500px] drop-shadow-md select-none" draggable={false} />
           </div>
           <button onClick={() => setLightboxOpen(true)} className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 backdrop-blur-sm border border-white/10 text-white rounded-xl p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110" title="View full size">
             <ZoomIn size={18} />
@@ -100,7 +100,7 @@ const ImageGallery = ({ images, productName }) => {
         {imgs.length > 1 && (
           <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
             {imgs.map((url, i) => (
-              <button key={i} onClick={() => goTo(i)} className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 ${i === activeIndex ? 'border-blue-500 shadow-lg shadow-blue-500/30 scale-105' : 'border-gray-800 hover:border-gray-600 opacity-60 hover:opacity-100'}`} aria-label={`View image ${i + 1}`}>
+              <button key={i} onClick={() => goTo(i)} className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 ${i === activeIndex ? 'border-blue-500 shadow-md scale-105' : 'border-gray-200 hover:border-gray-400 opacity-60 hover:opacity-100'}`} aria-label={`View image ${i + 1}`}>
                 <img src={url} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" draggable={false} />
               </button>
             ))}
@@ -147,11 +147,11 @@ const VariantSelector = ({ options, selectedOption, onSelect }) => {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
-        <Shuffle size={16} className="text-blue-400" />
-        <span className="text-gray-300 font-semibold text-sm">Select Option</span>
+        <Shuffle size={16} className="text-gray-500" />
+        <span className="text-gray-700 font-bold text-sm">Select Option</span>
         {selectedOption && (
           <span className="ml-auto text-xs text-gray-500">
-            Selected: <span className="text-blue-400 font-medium">{selectedOption.name}</span>
+            Selected: <span className="text-gray-900 font-bold">{selectedOption.name}</span>
           </span>
         )}
       </div>
@@ -166,12 +166,12 @@ const VariantSelector = ({ options, selectedOption, onSelect }) => {
               key={optKey}
               onClick={() => !isOutOfStock && onSelect(opt)}
               disabled={isOutOfStock}
-              className={`relative px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-200 flex flex-col items-center gap-0.5
+              className={`relative px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all duration-200 flex flex-col items-center gap-0.5
                 ${isSelected
-                  ? 'border-blue-500 bg-blue-500/15 text-white shadow-lg shadow-blue-500/20'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
                   : isOutOfStock
-                    ? 'border-gray-800 bg-gray-900/50 text-gray-600 cursor-not-allowed'
-                    : 'border-gray-700 bg-[#111111] text-gray-300 hover:border-blue-400/60 hover:bg-blue-500/5 hover:text-white'
+                    ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 shadow-sm'
                 }`}
             >
               {isSelected && (
@@ -185,7 +185,7 @@ const VariantSelector = ({ options, selectedOption, onSelect }) => {
                   <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-semibold">DEFAULT</span>
                 )}
               </span>
-              <span className={`text-xs font-bold ${isSelected ? 'text-blue-300' : isOutOfStock ? 'text-gray-700' : 'text-blue-400'}`}>
+              <span className={`text-xs font-extrabold ${isSelected ? 'text-blue-600' : isOutOfStock ? 'text-gray-400' : 'text-gray-900'}`}>
                 ₱{Number(opt.price).toLocaleString()}
               </span>
               {isOutOfStock && <span className="text-[10px] text-red-500 font-semibold">Out of Stock</span>}
@@ -315,8 +315,8 @@ const ProductDetails = () => {
   if (error || !product) {
     return (
       <div className="py-20 text-center">
-        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-xl inline-block">{error || 'Product not found.'}</div>
-        <div className="mt-6"><button onClick={() => navigate(-1)} className="text-blue-500 hover:underline">&larr; Go Back</button></div>
+        <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl inline-block font-semibold">{error || 'Product not found.'}</div>
+        <div className="mt-6"><button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-900 font-medium hover:underline">&larr; Go Back</button></div>
       </div>
     );
   }
@@ -327,9 +327,9 @@ const ProductDetails = () => {
   return (
     <div className="animate-fade-in-up pb-20">
       {/* Back Button */}
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8 group">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium transition-colors mb-8 group">
         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        Back to Catalog
+        BACK TO CATALOG
       </button>
 
       {/* Product Top Section */}
@@ -338,7 +338,7 @@ const ProductDetails = () => {
         {/* Left: Image Gallery */}
         <div className="relative">
           <div className="absolute top-4 left-4 z-10">
-            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm font-semibold px-4 py-1.5 rounded-full backdrop-blur-md">{product.type}</span>
+            <span className="bg-white/90 text-gray-900 border border-gray-200 shadow-sm text-sm font-bold px-4 py-1.5 rounded-full backdrop-blur-md">{product.type}</span>
           </div>
           <ImageGallery images={productImages} productName={product.name} />
           {productImages.length > 1 && (
@@ -348,48 +348,48 @@ const ProductDetails = () => {
 
         {/* Right: Product Info & Order Form */}
         <div className="flex flex-col">
-          <h1 className="text-4xl font-extrabold text-white mb-2">{product.name}</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">{product.name}</h1>
 
           {/* Average Rating */}
           <div className="flex items-center gap-2 mb-4">
             <div className="flex text-yellow-500">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} size={18} className={star <= (product.averageRating || 0) ? 'fill-yellow-500' : 'text-gray-600'} />
+                <Star key={star} size={18} className={star <= (product.averageRating || 0) ? 'fill-yellow-500' : 'text-gray-300'} />
               ))}
             </div>
-            <span className="text-white font-semibold">{product.averageRating ? product.averageRating.toFixed(1) : '0.0'}</span>
-            <span className="text-gray-500 text-sm">({product.reviewCount || 0} reviews)</span>
+            <span className="text-gray-900 font-extrabold">{product.averageRating ? product.averageRating.toFixed(1) : '0.0'}</span>
+            <span className="text-gray-500 text-sm font-medium">({product.reviewCount || 0} reviews)</span>
           </div>
 
           {/* Price — updates reactively based on selected option */}
           <div className="flex items-end gap-2 mb-4">
-            <span className="text-4xl font-bold text-blue-500 transition-all duration-200">
+            <span className="text-4xl font-extrabold text-gray-900 transition-all duration-200 tracking-tight">
               ₱{activePrice.toLocaleString()}
             </span>
             {selectedOption && (
-              <span className="text-gray-400 mb-1 text-sm">— {selectedOption.name}</span>
+              <span className="text-gray-600 mb-1 text-sm font-medium">— {selectedOption.name}</span>
             )}
-            {!hasOptions && <span className="text-gray-400 mb-1">/ {product.unit}</span>}
+            {!hasOptions && <span className="text-gray-500 mb-1 font-medium">/ {product.unit}</span>}
           </div>
 
-          <p className="text-gray-300 text-lg leading-relaxed mb-6">
+          <p className="text-gray-700 text-lg leading-relaxed mb-6 font-medium">
             {product.description || 'Premium quality roofing material designed for long-lasting durability and exceptional aesthetic appeal. Perfect for your construction needs.'}
           </p>
 
           {/* Features */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="bg-green-500/10 p-2 rounded-lg text-green-500"><ShieldCheck size={20} /></div>
-              <span className="text-sm font-medium">Quality Guaranteed</span>
+            <div className="flex items-center gap-3 text-gray-700">
+              <div className="bg-green-50 text-green-600 p-2 rounded-lg border border-green-100"><ShieldCheck size={20} /></div>
+              <span className="text-sm font-bold">Quality Guaranteed</span>
             </div>
-            <div className="flex items-center gap-3 text-gray-300">
-              <div className="bg-blue-500/10 p-2 rounded-lg text-blue-500"><Truck size={20} /></div>
-              <span className="text-sm font-medium">Free Delivery</span>
+            <div className="flex items-center gap-3 text-gray-700">
+              <div className="bg-blue-50 text-blue-600 p-2 rounded-lg border border-blue-100"><Truck size={20} /></div>
+              <span className="text-sm font-bold">Free Delivery</span>
             </div>
           </div>
 
           {/* Order Box */}
-          <div className="bg-[#111111] border border-gray-800 rounded-2xl p-6 mt-auto">
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 mt-auto">
 
             {/* Product Option Selector (Base Product + Variants) */}
             <VariantSelector
@@ -408,34 +408,34 @@ const ProductDetails = () => {
 
             {/* Stock indicator */}
             <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-400 font-medium">Available Stock</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-bold transition-all duration-200 ${activeStock > 10 ? 'bg-green-500/10 text-green-500' : activeStock > 0 ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'}`}>
+              <span className="text-gray-600 font-bold">Available Stock</span>
+              <span className={`px-3 py-1 rounded-full text-sm font-extrabold transition-all duration-200 ${activeStock > 10 ? 'bg-green-50 text-green-600 border border-green-200' : activeStock > 0 ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
                 {activeStock} units
               </span>
             </div>
 
             {/* Quantity Selector */}
             <div className="flex items-center justify-between mb-6">
-              <span className="text-gray-300 font-medium">Quantity</span>
-              <div className="flex items-center bg-[#0a0a0a] border border-gray-700 rounded-xl overflow-hidden">
-                <button onClick={handleDecrease} disabled={quantity <= 1} className="p-3 text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><Minus size={18} /></button>
-                <div className="w-16 text-center font-bold text-white text-lg">{quantity}</div>
-                <button onClick={handleIncrease} disabled={quantity >= activeStock || activeStock === 0} className="p-3 text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><Plus size={18} /></button>
+              <span className="text-gray-700 font-bold">Quantity</span>
+              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+                <button onClick={handleDecrease} disabled={quantity <= 1} className="p-3 text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><Minus size={18} /></button>
+                <div className="w-16 text-center font-extrabold text-gray-900 text-lg">{quantity}</div>
+                <button onClick={handleIncrease} disabled={quantity >= activeStock || activeStock === 0} className="p-3 text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><Plus size={18} /></button>
               </div>
             </div>
 
             {/* Total & Action */}
-            <div className="pt-4 border-t border-gray-800 flex items-center justify-between">
+            <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-1">Total Price</p>
-                <p className="text-2xl font-bold text-white transition-all duration-200">
+                <p className="text-gray-500 font-bold text-sm mb-1">Total Price</p>
+                <p className="text-2xl font-extrabold text-gray-900 transition-all duration-200 tracking-tight">
                   ₱{(activePrice * quantity).toLocaleString()}
                 </p>
               </div>
               <button
                 onClick={handleProceedToCheckout}
                 disabled={!canBuy}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-xl font-semibold flex items-center gap-3 transition-all hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-3 transition-all hover:shadow-lg hover:shadow-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ShoppingCart size={20} />
                 Buy Now
@@ -447,46 +447,46 @@ const ProductDetails = () => {
 
       {/* Reviews Section */}
       <div className="mt-12">
-        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-800">
-          <MessageSquare className="text-blue-500" size={24} />
-          <h2 className="text-2xl font-bold text-white">Customer Reviews</h2>
-          <span className="bg-gray-800 text-gray-300 text-sm font-bold px-3 py-1 rounded-full ml-2">{product.reviewCount || 0}</span>
+        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-200">
+          <MessageSquare className="text-gray-700" size={24} />
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Customer Reviews</h2>
+          <span className="bg-gray-100 text-gray-700 text-sm font-extrabold px-3 py-1 rounded-full ml-2 border border-gray-200">{product.reviewCount || 0}</span>
         </div>
 
         {fetchingReviews ? (
-          <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" /></div>
         ) : reviews.length === 0 ? (
-          <div className="bg-[#111111] border border-gray-800 rounded-2xl p-16 flex flex-col items-center justify-center text-center">
-            <div className="bg-gray-800/50 p-4 rounded-full mb-4"><MessageSquare size={32} className="text-gray-500" /></div>
-            <h3 className="text-xl font-semibold text-white mb-2">No reviews yet</h3>
-            <p className="text-gray-500 max-w-md">Customer reviews will appear here once this product has been purchased and rated by our community.</p>
+          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-16 flex flex-col items-center justify-center text-center">
+            <div className="bg-gray-50 border border-gray-100 p-4 rounded-full mb-4"><MessageSquare size={32} className="text-gray-400" /></div>
+            <h3 className="text-xl font-extrabold text-gray-900 mb-2 tracking-tight">No reviews yet</h3>
+            <p className="text-gray-500 max-w-md font-medium">Customer reviews will appear here once this product has been purchased and rated by our community.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {reviews.map((review) => (
-              <div key={review.id} className="bg-[#111111] border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-colors">
+              <div key={review.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 hover:border-gray-300 transition-colors">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-600/20 text-blue-500 flex items-center justify-center font-bold text-lg border border-blue-500/30">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-800 flex items-center justify-center font-bold text-lg border border-gray-200">
                       {review.user?.name?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-white font-medium">{review.user?.name}</p>
-                      <p className="text-gray-500 text-xs">{new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p className="text-gray-900 font-bold">{review.user?.name}</p>
+                      <p className="text-gray-500 font-medium text-xs">{new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     </div>
                   </div>
                   <div className="flex text-yellow-500 gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} size={14} className={star <= review.rating ? 'fill-yellow-500' : 'text-gray-600'} />
+                      <Star key={star} size={14} className={star <= review.rating ? 'fill-yellow-500' : 'text-gray-300'} />
                     ))}
                   </div>
                 </div>
-                {review.title && <h4 className="text-white font-bold mb-2">{review.title}</h4>}
-                <p className="text-gray-300 text-sm leading-relaxed mb-4">{review.comment}</p>
+                {review.title && <h4 className="text-gray-900 font-extrabold mb-2">{review.title}</h4>}
+                <p className="text-gray-700 text-sm leading-relaxed mb-4 font-medium">{review.comment}</p>
                 {review.imageUrls && review.imageUrls.length > 0 && (
                   <div className="flex gap-2 mt-4">
                     {review.imageUrls.map((img, idx) => (
-                      <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden border border-gray-800">
+                      <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
                         <img src={img} alt={`Review by ${review.user?.name}`} className="w-full h-full object-cover" />
                       </div>
                     ))}
