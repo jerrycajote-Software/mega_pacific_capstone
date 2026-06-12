@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -25,8 +25,10 @@ const AdminLayout = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/admin/login');
+    if (window.confirm('Are you sure you want to log out?')) {
+      logout();
+      navigate('/admin/login');
+    }
   };
 
   return (
@@ -40,23 +42,30 @@ const AdminLayout = () => {
         {/* Sticky top bar */}
         <header className="admin-topbar">
           {/* Brand */}
-          <div style={{ lineHeight: 1 }}>
-            <div style={{
-              fontSize: '1.1rem',
-              fontWeight: 700,
-              background: 'linear-gradient(90deg, #4ade80, #16a34a)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>
-              MEGA PACIFIC
+          <Link to="/admin/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
+              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
+              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
             </div>
-            <div style={{ fontSize: '0.62rem', color: '#6b7280', letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>
-              Admin Portal
-            </div>
-          </div>
+            
+            <div style={{ 
+                    color: '#7a90e8', 
+                    fontSize: '10px', 
+                    fontWeight: 800, 
+                    letterSpacing: '0.2em', 
+                    marginTop: '4px',
+                    fontFamily: 'Arial, sans-serif'
+                  }}>
+                    METAL AND STEEL CORP
+              </div>
+
+              {/* <div style={{ color: '#7a90e8', fontSize: '10px', fontWeight: 800, letterSpacing: '0.2em', marginTop: '4px', fontFamily: 'Arial, sans-serif' }}>
+              ADMIN PORTAL
+            </div> */}
+          </Link>
 
           {/* Search */}
-          <div style={{ position: 'relative', flex: 1, maxWidth: 420 }}>
+          {/* <div style={{ position: 'relative', flex: 1, maxWidth: 420 }}>
             <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
             <input
               type="text"
@@ -72,7 +81,7 @@ const AdminLayout = () => {
                 outline: 'none',
               }}
             />
-          </div>
+          </div> */}
 
           {/* Right actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -80,13 +89,13 @@ const AdminLayout = () => {
               position: 'relative', background: 'none', border: 'none', cursor: 'pointer',
               color: '#9ca3af', padding: 8, borderRadius: 8,
             }}>
-              <Bell size={20} />
+              {/* <Bell size={20} />
               <span style={{
                 position: 'absolute', top: 8, right: 8, height: 6, width: 6,
                 background: '#22c55e', borderRadius: '50%',
-              }} />
+              }} /> */}
             </button>
-            <div style={{
+            {/* <div style={{
               height: 36, width: 36, borderRadius: '50%',
               background: 'rgba(34,197,94,0.15)',
               border: '1px solid rgba(34,197,94,0.3)',
@@ -94,7 +103,7 @@ const AdminLayout = () => {
               color: '#4ade80', fontWeight: 700, fontSize: '0.9rem', userSelect: 'none',
             }}>
               {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-            </div>
+            </div> */}
           </div>
         </header>
 
@@ -111,24 +120,24 @@ const AdminLayout = () => {
 
         {/* Sidebar header — user info */}
         <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid #222' }}>
-          <div style={{ fontSize: '0.65rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+          {/* <div style={{ fontSize: '0.65rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
             Signed in as
-          </div>
+          </div> */}
           <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#e5e7eb', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {user?.name || 'Administrator'}
           </div>
           <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {user?.email || 'admin@megapacific.com'}
           </div>
-          <div style={{
+          {/* <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8,
             fontSize: '0.68rem', color: '#4ade80',
-            background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+            background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(36, 94, 57, 0.2)',
             borderRadius: 9999, padding: '2px 8px',
           }}>
             <span style={{ height: 6, width: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
             Online
-          </div>
+          </div> */}
         </div>
 
         {/* Nav label */}

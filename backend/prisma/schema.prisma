@@ -11,45 +11,50 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("customer")
-  status    String   @default("active")  // active, suspended
-  avatarUrl String?                      // Profile Avatar
-  createdAt DateTime @default(now())
-  orders    Order[]
-  reviews   Review[]
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password      String
+  role          String   @default("customer")
+  status        String   @default("active") // active, suspended
+  avatarUrl     String? // Profile Avatar
+  contactNumber String?
+  address       String?
+  cityProvince  String?
+  zipCode       String?
+  createdAt     DateTime @default(now())
+  orders        Order[]
+  reviews       Review[]
 }
 
 model Product {
-  id            Int              @id @default(autoincrement())
-  name          String
-  type          String           // e.g. Spandrel, Rib, Flat Type
-  description   String?
-  price         Float            // Base price (fallback when no variants)
-  unit          String           @default("per meter")
-  stock         Int              // Base stock (fallback when no variants)
-  imageUrl      String?
-  imageUrls     String[]         @default([])
-  averageRating Float            @default(0)
-  reviewCount   Int              @default(0)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  variants      ProductVariant[]
-  orderItems    OrderItem[]
-  reviews       Review[]
+  id               Int              @id @default(autoincrement())
+  name             String
+  type             String // e.g. Spandrel, Rib, Flat Type
+  shortDescription String?
+  longDescription  String?
+  price            Float // Base price (fallback when no variants)
+  unit             String           @default("per meter")
+  stock            Int // Base stock (fallback when no variants)
+  imageUrl         String?
+  imageUrls        String[]         @default([])
+  averageRating    Float            @default(0)
+  reviewCount      Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  variants         ProductVariant[]
+  orderItems       OrderItem[]
+  reviews          Review[]
 }
 
 model ProductVariant {
   id         Int         @id @default(autoincrement())
   productId  Int
   product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name       String      // e.g. "Per Meter", "2 Meters", "Bundle"
+  name       String // e.g. "Per Meter", "2 Meters", "Bundle"
   price      Float
   stock      Int
-  sku        String?     // Optional SKU
+  sku        String? // Optional SKU
   status     String      @default("available") // "available" | "out_of_stock"
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
@@ -63,7 +68,7 @@ model Review {
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
   rating    Int      @default(5)
-  title     String?  // Review Title
+  title     String? // Review Title
   comment   String?
   imageUrls String[] @default([]) // Array for multiple review images
   createdAt DateTime @default(now())
@@ -95,11 +100,11 @@ model OrderItem {
   order       Order           @relation(fields: [orderId], references: [id])
   productId   Int
   product     Product         @relation(fields: [productId], references: [id])
-  variantId   Int?            // Optional: which variant was ordered
+  variantId   Int? // Optional: which variant was ordered
   variant     ProductVariant? @relation(fields: [variantId], references: [id])
-  variantName String?         // Snapshot of variant name at time of purchase
+  variantName String? // Snapshot of variant name at time of purchase
   quantity    Int
-  price       Float           // Price at time of purchase (variant price or base price)
+  price       Float // Price at time of purchase (variant price or base price)
 }
 
 model ProductType {

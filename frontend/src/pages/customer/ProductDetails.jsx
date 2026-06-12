@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +21,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { buildProductOptions, getDefaultOption } from './buildProductOptions';
+import { useCart } from '../../context/CartContext';
 
 /* ─────────────────────────────────────────────
    Image Gallery Component
@@ -212,6 +213,16 @@ const ProductDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [fetchingReviews, setFetchingReviews] = useState(true);
 
+  const { addToCart } = useCart();
+
+  const longDescRef = useRef(null);
+
+  const scrollToLongDesc = () => {
+    if (longDescRef.current) {
+      longDescRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   // Selected option state (base product or variant)
   const [selectedOption, setSelectedOption] = useState(null);
 
@@ -279,8 +290,6 @@ const ProductDetails = () => {
     }
     if (quantity > 0 && quantity <= activeStock) {
       // Map the selected option back to the variant shape expected by Checkout/Order.
-      // Base product: variant = null (variantId will be null in the order)
-      // Variant: pass the original variant object from product.variants
       let variantForCheckout = null;
       if (selectedOption && !selectedOption.isBaseProduct) {
         variantForCheckout = product.variants.find(v => v.id === selectedOption.id) || null;
@@ -293,6 +302,21 @@ const ProductDetails = () => {
           total: activePrice * quantity
         }
       });
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (hasOptions && !selectedOption) {
+      alert('Please select a product option before adding to cart.');
+      return;
+    }
+    if (quantity > 0 && quantity <= activeStock) {
+      let variantForCart = null;
+      if (selectedOption && !selectedOption.isBaseProduct) {
+        variantForCart = product.variants.find(v => v.id === selectedOption.id) || null;
+      }
+      addToCart(product, variantForCart, quantity);
+      // Optional: show a small toast or notification here
     }
   };
 
@@ -325,11 +349,11 @@ const ProductDetails = () => {
   const canBuy = activeStock > 0 && (!hasOptions || selectedOption !== null);
 
   return (
-    <div className="animate-fade-in-up pb-20">
+    <div className="animate-fade-in-up pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Back Button */}
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium transition-colors mb-8 group">
         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        BACK TO CATALOG
+        BACK TO PRODUCT
       </button>
 
       {/* Product Top Section */}
@@ -372,9 +396,13 @@ const ProductDetails = () => {
             {!hasOptions && <span className="text-gray-500 mb-1 font-medium">/ {product.unit}</span>}
           </div>
 
-          <p className="text-gray-700 text-lg leading-relaxed mb-6 font-medium">
-            {product.description || 'Premium quality roofing material designed for long-lasting durability and exceptional aesthetic appeal. Perfect for your construction needs.'}
-          </p>
+          <button 
+            onClick={scrollToLongDesc}
+            className="text-left text-gray-700 text-lg leading-relaxed mb-6 font-medium hover:text-blue-600 transition-all duration-200 focus:outline-none cursor-pointer group"
+            title="Click to read full description"
+          >
+            {product.shortDescription || 'Premium quality roofing material designed for long-lasting durability and exceptional aesthetic appeal. Perfect for your construction needs.'}
+          </button>
 
           {/* Features */}
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -382,10 +410,10 @@ const ProductDetails = () => {
               <div className="bg-green-50 text-green-600 p-2 rounded-lg border border-green-100"><ShieldCheck size={20} /></div>
               <span className="text-sm font-bold">Quality Guaranteed</span>
             </div>
-            <div className="flex items-center gap-3 text-gray-700">
+            {/* <div className="flex items-center gap-3 text-gray-700">
               <div className="bg-blue-50 text-blue-600 p-2 rounded-lg border border-blue-100"><Truck size={20} /></div>
               <span className="text-sm font-bold">Free Delivery</span>
-            </div>
+            </div> */}
           </div>
 
           {/* Order Box */}
@@ -432,15 +460,41 @@ const ProductDetails = () => {
                   ₱{(activePrice * quantity).toLocaleString()}
                 </p>
               </div>
-              <button
-                onClick={handleProceedToCheckout}
-                disabled={!canBuy}
-                className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-3 transition-all hover:shadow-lg hover:shadow-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ShoppingCart size={20} />
-                Buy Now
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!canBuy}
+                  className="bg-white border-2 border-gray-900 hover:bg-gray-50 text-gray-900 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ShoppingCart size={18} />
+                  Add to Cart
+                </button>
+                <button
+                  onClick={handleProceedToCheckout}
+                  disabled={!canBuy}
+                  className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-3 transition-all hover:shadow-lg hover:shadow-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Buy Now
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Long Description Section */}
+      <div 
+        ref={longDescRef} 
+        id="long-description" 
+        className="mt-12 scroll-mt-24" // scroll-mt-24 gives a 6rem top margin when scrolled to, safely clearing the 4rem sticky header
+      >
+        <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 lg:p-10">
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6 flex items-center gap-3">
+            <Package className="text-blue-600" size={24} />
+            Product Details
+          </h2>
+          <div className="prose prose-blue max-w-none text-gray-700 font-medium leading-relaxed whitespace-pre-wrap">
+            {product.longDescription || 'Detailed specifications and long descriptions will appear here.'}
           </div>
         </div>
       </div>

@@ -51,7 +51,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: 'sans-serif' }}>
       <style>{`
         .custom-form-container {
           display: flex;
@@ -59,7 +59,7 @@ const RegisterPage = () => {
           gap: 10px;
           width: 100%;
           max-width: 400px;
-          background-color: #222222;
+          background-color: #0a192f;
           padding: 30px;
           border-radius: 20px;
           position: relative;
@@ -73,37 +73,16 @@ const RegisterPage = () => {
           letter-spacing: -1px;
           position: relative;
           display: flex;
+          justify-content: center;
           align-items: center;
-          padding-left: 30px;
           margin-bottom: 5px;
-        }
-
-        .custom-title::before, .custom-title::after {
-          position: absolute;
-          content: "";
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          left: 0px;
-          background-color: royalblue;
-        }
-
-        .custom-title::before {
-          width: 18px;
-          height: 18px;
-          background-color: royalblue;
-        }
-
-        .custom-title::after {
-          width: 18px;
-          height: 18px;
-          animation: pulse 1s linear infinite;
         }
 
         .custom-message {
           color: rgba(255, 255, 255, 0.7);
           font-size: 14px;
           margin-bottom: 10px;
+          text-align: center;
         }
 
         .custom-signin {
@@ -198,17 +177,6 @@ const RegisterPage = () => {
         .custom-submit:disabled {
           opacity: 0.7;
           cursor: not-allowed;
-        }
-
-        @keyframes pulse {
-          from {
-            transform: scale(0.9);
-            opacity: 1;
-          }
-          to {
-            transform: scale(1.8);
-            opacity: 0;
-          }
         }
       `}</style>
 

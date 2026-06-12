@@ -164,7 +164,7 @@ const focusStyle = `
   }
 `;
 
-const EMPTY_VARIANT = { name: '', price: '', stock: '', sku: '', status: 'available' };
+const EMPTY_VARIANT = { name: '', price: '', stock: '', status: 'available' };
 
 /* ═══════════════════════════════════════════════════
    Main Component
@@ -180,7 +180,7 @@ const ProductManagement = () => {
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    name: '', type: 'Rib Type', description: '',
+    name: '', type: 'Rib Type', shortDescription: '', longDescription: '',
     price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: []
   });
 
@@ -220,7 +220,7 @@ const ProductManagement = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/admin/products`);
+      const response = await axios.get(`${API_URL}/api/admin/products?t=${Date.now()}`);
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -233,7 +233,16 @@ const ProductManagement = () => {
   const fetchVariants = async (productId) => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/products/${productId}/variants`);
-      if (res.data.success) setVariants(res.data.data);
+      if (res.data.success) {
+        const mappedVariants = res.data.data.map(v => ({
+          ...v,
+          originalPrice: v.price,
+          originalStock: v.stock,
+          price: '',
+          stock: ''
+        }));
+        setVariants(mappedVariants);
+      }
     } catch (err) {
       console.error('Error fetching variants:', err);
     }
@@ -242,6 +251,10 @@ const ProductManagement = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleVariantChange = (id, field, value) => {
+    setVariants(prev => prev.map(v => v.id === id ? { ...v, [field]: value } : v));
   };
 
   /* ── Image upload helpers ── */
@@ -283,13 +296,45 @@ const ProductManagement = () => {
     e.preventDefault();
     try {
       if (editingProduct) {
-        await axios.put(`${API_URL}/api/admin/products/${editingProduct.id}`, formData);
+        // Fall back to original base price/stock if left empty
+        const payload = { ...formData };
+        if (payload.price === '' || payload.price === null) payload.price = editingProduct.price;
+        if (payload.stock === '' || payload.stock === null) payload.stock = editingProduct.stock;
+        
+        let variantsPayload = [];
+        if (variants && variants.length > 0) {
+          variantsPayload = variants
+            .filter((v) => v.price !== '' || v.stock !== '') // ONLY send variants the user explicitly edited inline
+            .map((v) => {
+              return {
+                 id: v.id,
+                 name: v.name,
+                 price: (v.price !== '' && v.price !== null) ? v.price : v.originalPrice,
+                 stock: (v.stock !== '' && v.stock !== null) ? v.stock : v.originalStock,
+                 sku: v.sku || '',
+                 status: v.status
+              };
+            });
+          
+          if (variantsPayload.length > 0) {
+            payload.variants = variantsPayload;
+          }
+        }
+
+        // Single transaction PUT
+        const res = await axios.put(`${API_URL}/api/admin/products/${editingProduct.id}`, payload);
+        const freshlyUpdatedProduct = res.data;
+
+        // Deep Immutable Update directly from finalized database response
+        setProducts((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? freshlyUpdatedProduct : p))
+        );
       } else {
         // Pass pending variants in the create payload
         const payload = { ...formData, variants: pendingVariants };
         await axios.post(`${API_URL}/api/admin/products`, payload);
       }
-      fetchProducts();
+      await fetchProducts();
       closeModal();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -319,7 +364,13 @@ const ProductManagement = () => {
 
   const handleStartEditVariant = (v) => {
     setEditingVariantId(v.id);
-    setEditingVariantData({ name: v.name, price: v.price, stock: v.stock, sku: v.sku || '', status: v.status });
+    setEditingVariantData({
+      name: v.name,
+      price: v.price !== '' ? v.price : v.originalPrice,
+      stock: v.stock !== '' ? v.stock : v.originalStock,
+      sku: v.sku || '',
+      status: v.status
+    });
   };
 
   const handleSaveEditVariant = async (variantId) => {
@@ -359,12 +410,12 @@ const ProductManagement = () => {
       setEditingProduct(product);
       let initialImageUrls = product.imageUrls || [];
       if (initialImageUrls.length === 0 && product.imageUrl) initialImageUrls = [product.imageUrl];
-      setFormData({ name: product.name, type: product.type, description: product.description || '', price: product.price, unit: product.unit, stock: product.stock, imageUrl: product.imageUrl || '', imageUrls: initialImageUrls });
+      setFormData({ name: product.name, type: product.type, shortDescription: product.shortDescription || '', longDescription: product.longDescription || '', price: '', unit: product.unit, stock: '', imageUrl: product.imageUrl || '', imageUrls: initialImageUrls });
       fetchVariants(product.id);
     } else {
       setEditingProduct(null);
       setVariants([]);
-      setFormData({ name: '', type: productTypes.length > 0 ? productTypes[0].name : '', description: '', price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [] });
+      setFormData({ name: '', type: productTypes.length > 0 ? productTypes[0].name : '', shortDescription: '', longDescription: '', price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [] });
     }
     setIsDragging(false);
     setIsModalOpen(true);
@@ -397,9 +448,6 @@ const ProductManagement = () => {
       </td>
       <td style={S.variantTd}>
         <input className="pm-variant-input" style={S.variantInput} type="number" value={editingVariantData.stock} onChange={e => setEditingVariantData(p => ({ ...p, stock: e.target.value }))} placeholder="0" />
-      </td>
-      <td style={S.variantTd}>
-        <input className="pm-variant-input" style={S.variantInput} value={editingVariantData.sku} onChange={e => setEditingVariantData(p => ({ ...p, sku: e.target.value }))} placeholder="SKU" />
       </td>
       <td style={S.variantTd}>
         <select className="pm-variant-input" style={S.variantSelect} value={editingVariantData.status} onChange={e => setEditingVariantData(p => ({ ...p, status: e.target.value }))}>
@@ -488,7 +536,7 @@ const ProductManagement = () => {
                           </div>
                           <div>
                             <div style={S.productName}>{p.name}</div>
-                            <div style={S.productDesc}>{p.description || t('No description')}</div>
+                            <div style={S.productDesc}>{p.shortDescription || t('No description')}</div>
                           </div>
                         </div>
                       </td>
@@ -496,17 +544,11 @@ const ProductManagement = () => {
                         <span style={S.typeBadge}><Tag size={10} style={{ color: '#6b7280' }} />{p.type}</span>
                       </td>
                       <td style={S.td}>
-                        {p.variants && p.variants.length > 0 ? (
-                          <div>
-                            <div style={{ fontSize: '0.73rem', color: '#6b7280', marginBottom: 2 }}>from</div>
-                            <div style={S.priceMain}>₱{Math.min(...p.variants.map(v => v.price)).toLocaleString()}</div>
-                          </div>
-                        ) : (
-                          <div>
-                            <div style={S.priceMain}>₱{Number(p.price).toLocaleString()}</div>
-                            <div style={S.priceUnit}>{p.unit}</div>
-                          </div>
-                        )}
+                        <div>
+                          {p.variants && p.variants.length > 0 && <div style={{ fontSize: '0.73rem', color: '#6b7280', marginBottom: 2 }}>from</div>}
+                          <div style={S.priceMain}>₱{Number(p.price).toLocaleString()}</div>
+                          <div style={S.priceUnit}>{p.unit}</div>
+                        </div>
                       </td>
                       <td style={S.td}>
                         <StockBadge stock={ProductStockCalculator.calculateTotalStock(p)} />
@@ -516,7 +558,6 @@ const ProductManagement = () => {
                       </td>
                       <td style={S.tdRight}>
                         <div style={S.actionsWrap}>
-                          <button className="pm-action-edit" title={t('Edit')} onClick={() => openModal(p)} style={S.actionBtn}><Edit2 size={15} /></button>
                           <button className="pm-action-del" title={t('Delete')} onClick={() => handleDelete(p.id)} style={S.actionBtn}><Trash2 size={15} /></button>
                         </div>
                       </td>
@@ -539,7 +580,7 @@ const ProductManagement = () => {
             {/* Modal Header */}
             <div style={S.modalHeader}>
               <div>
-                <h2 style={S.modalTitle}>{editingProduct ? t('Edit Product') : t('Add New Product')}</h2>
+                <h2 style={S.modalTitle}>{editingProduct ? t('Update Inventory Item') : t('Add New Product')}</h2>
                 <p style={S.modalSubtitle}>{editingProduct ? t('Update product details below.') : t('Fill in the details to create a new product.')}</p>
               </div>
               <button className="pm-close-btn" onClick={closeModal} style={S.closeBtn} title={t('Close')}><X size={15} /></button>
@@ -605,8 +646,8 @@ const ProductManagement = () => {
                   {/* Price + Unit */}
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
-                      <label style={S.label}><DollarSign size={11} /> {t('Base Price (₱)')}</label>
-                      <input className="pm-input" name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder="0" style={S.inputBase} />
+                      <label style={S.label}>{t('ORIGINAL PRICE (₱)')}</label>
+                      <input className="pm-input" name="price" type="number" value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><Layers size={11} /> {t('Unit')}</label>
@@ -617,11 +658,11 @@ const ProductManagement = () => {
                   {/* Stock + Type */}
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
-                      <label style={S.label}><AlertTriangle size={11} /> {t('Base Stock Qty')}</label>
-                      <input className="pm-input" name="stock" type="number" value={formData.stock} onChange={handleInputChange} placeholder="0" style={S.inputBase} />
+                      <label style={S.label}>{t('BASE STOCK QTY')}</label>
+                      <input className="pm-input" name="stock" type="number" value={formData.stock} onChange={handleInputChange} placeholder={editingProduct ? t("New Stock") : "0"} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
-                      <label style={S.label}><Tag size={11} /> {t('Type')}</label>
+                      <label style={S.label}><Tag size={11} /> {t('Category Type')}</label>
                       <div style={S.selectWrap}>
                         <select className="pm-select" name="type" value={formData.type} onChange={handleInputChange} style={S.selectBase}>
                           {productTypes.length === 0 && (
@@ -652,10 +693,14 @@ const ProductManagement = () => {
                     </div>
                   </div>
 
-                  {/* Description */}
+                  {/* Descriptions */}
+                  <div style={{ ...S.formGroup, marginBottom: 0 }}>
+                    <label style={S.label}><AlignLeft size={11} /> {t('Short Description')}</label>
+                    <textarea className="pm-textarea" name="shortDescription" value={formData.shortDescription} onChange={handleInputChange} placeholder={t('Concise summary or spec overview…')} style={{ ...S.textareaBase, minHeight: 60 }} />
+                  </div>
                   <div style={{ ...S.formGroup, marginBottom: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <label style={S.label}><AlignLeft size={11} /> {t('Description')}</label>
-                    <textarea className="pm-textarea" name="description" value={formData.description} onChange={handleInputChange} placeholder={t('Tell customers more about this product…')} style={{ ...S.textareaBase, flex: 1, minHeight: 80 }} />
+                    <label style={S.label}><AlignLeft size={11} /> {t('Long Description')}</label>
+                    <textarea className="pm-textarea" name="longDescription" value={formData.longDescription} onChange={handleInputChange} placeholder={t('Detailed product specifications and marketing copy…')} style={{ ...S.textareaBase, flex: 1, minHeight: 120 }} />
                   </div>
                 </div>
               </div>
@@ -677,7 +722,6 @@ const ProductManagement = () => {
                           <th style={S.variantTh}>{t('Variant Name')}</th>
                           <th style={S.variantTh}>{t('Price (₱)')}</th>
                           <th style={S.variantTh}>{t('Stock')}</th>
-                          <th style={S.variantTh}>{t('SKU')}</th>
                           <th style={S.variantTh}>{t('Status')}</th>
                           <th style={{ ...S.variantTh, textAlign: 'right' }}>{t('Actions')}</th>
                         </tr>
@@ -690,9 +734,12 @@ const ProductManagement = () => {
                           ) : (
                             <tr key={v.id}>
                               <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
-                              <td style={S.variantTd}><span style={{ color: '#4ade80', fontWeight: 600 }}>₱{Number(v.price).toLocaleString()}</span></td>
-                              <td style={S.variantTd}><StockBadge stock={v.stock} /></td>
-                              <td style={S.variantTd}><span style={{ color: '#6b7280', fontSize: '0.75rem' }}>{v.sku || '—'}</span></td>
+                              <td style={S.variantTd}>
+                                <span style={{ color: '#e5e7eb', fontWeight: 500 }}>₱{Number(v.originalPrice).toLocaleString()}</span>
+                              </td>
+                              <td style={S.variantTd}>
+                                <span style={{ color: '#e5e7eb', fontWeight: 500 }}>{v.originalStock} units</span>
+                              </td>
                               <td style={S.variantTd}>
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.15rem 0.5rem', borderRadius: 5, fontSize: '0.7rem', fontWeight: 600, background: v.status === 'available' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: v.status === 'available' ? '#4ade80' : '#f87171' }}>
                                   {v.status === 'available' ? 'Available' : 'Out of Stock'}
@@ -700,7 +747,6 @@ const ProductManagement = () => {
                               </td>
                               <td style={{ ...S.variantTd, textAlign: 'right' }}>
                                 <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                                  <button type="button" className="pm-variant-save" style={S.variantSaveBtn} onClick={() => handleStartEditVariant(v)}><Edit2 size={12} /></button>
                                   <button type="button" className="pm-variant-del" style={S.variantDeleteBtn} onClick={() => handleDeleteVariant(v.id)}><Trash2 size={12} /></button>
                                 </div>
                               </td>
@@ -714,7 +760,6 @@ const ProductManagement = () => {
                             <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
                             <td style={S.variantTd}><span style={{ color: '#4ade80', fontWeight: 600 }}>₱{Number(v.price).toLocaleString()}</span></td>
                             <td style={S.variantTd}><StockBadge stock={parseInt(v.stock)} /></td>
-                            <td style={S.variantTd}><span style={{ color: '#6b7280', fontSize: '0.75rem' }}>{v.sku || '—'}</span></td>
                             <td style={S.variantTd}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.15rem 0.5rem', borderRadius: 5, fontSize: '0.7rem', fontWeight: 600, background: 'rgba(34,197,94,0.1)', color: '#4ade80' }}>Available</span>
                             </td>
@@ -734,9 +779,6 @@ const ProductManagement = () => {
                           </td>
                           <td style={S.variantTd}>
                             <input className="pm-variant-input" style={S.variantInput} type="number" value={newVariant.stock} onChange={e => setNewVariant(p => ({ ...p, stock: e.target.value }))} placeholder="0" />
-                          </td>
-                          <td style={S.variantTd}>
-                            <input className="pm-variant-input" style={S.variantInput} value={newVariant.sku} onChange={e => setNewVariant(p => ({ ...p, sku: e.target.value }))} placeholder={t('Optional')} />
                           </td>
                           <td style={S.variantTd}>
                             <select className="pm-variant-input" style={S.variantSelect} value={newVariant.status} onChange={e => setNewVariant(p => ({ ...p, status: e.target.value }))}>

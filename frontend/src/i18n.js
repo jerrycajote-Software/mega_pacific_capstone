@@ -20,7 +20,7 @@ const resources = {
       "Actions": "Actions",
       "No description": "No description",
       "units": "units",
-      "Edit Product": "Edit Product",
+      "Update Inventory Item": "Update Inventory Item",
       "Product Name": "Product Name",
       "e.g. Rib Type Blue": "e.g. Rib Type Blue",
       "Price (₱)": "Price (₱)",

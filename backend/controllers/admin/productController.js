@@ -20,13 +20,14 @@ const getProducts = async (req, res) => {
 
 // Create a new product (optionally with initial variants)
 const createProduct = async (req, res) => {
-  const { name, type, description, price, unit, stock, imageUrl, imageUrls, variants } = req.body;
+  const { name, type, shortDescription, longDescription, price, unit, stock, imageUrl, imageUrls, variants } = req.body;
   try {
     const product = await prisma.product.create({
       data: {
         name,
         type,
-        description,
+        shortDescription,
+        longDescription,
         price: parseFloat(price) || 0,
         unit: unit || "per meter",
         stock: parseInt(stock) || 0,
@@ -55,31 +56,7 @@ const createProduct = async (req, res) => {
   }
 };
 
-// Update a product
-const updateProduct = async (req, res) => {
-  const { id } = req.params;
-  const { name, type, description, price, unit, stock, imageUrl, imageUrls } = req.body;
-  try {
-    const product = await prisma.product.update({
-      where: { id: parseInt(id) },
-      data: {
-        name,
-        type,
-        description,
-        price: price !== undefined ? parseFloat(price) : undefined,
-        unit,
-        stock: stock !== undefined ? parseInt(stock) : undefined,
-        imageUrl: imageUrl !== undefined ? imageUrl : undefined,
-        imageUrls: imageUrls !== undefined ? imageUrls : undefined,
-      },
-      include: { variants: { orderBy: { price: "asc" } } },
-    });
-    res.status(200).json(product);
-  } catch (error) {
-    console.error("Failed to update product:", error);
-    res.status(500).json({ error: "Failed to update product" });
-  }
-};
+
 
 // Delete a product (variants cascade-deleted via schema)
 const deleteProduct = async (req, res) => {
@@ -98,6 +75,5 @@ const deleteProduct = async (req, res) => {
 module.exports = {
   getProducts,
   createProduct,
-  updateProduct,
   deleteProduct,
 };

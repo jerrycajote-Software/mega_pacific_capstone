@@ -59,4 +59,61 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+// Get user profile
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        contactNumber: true,
+        address: true,
+        cityProvince: true,
+        zipCode: true
+      }
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json({ data: user });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+};
+
+// Update user profile
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { contactNumber, address, cityProvince, zipCode } = req.body;
+    
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        contactNumber,
+        address,
+        cityProvince,
+        zipCode
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        contactNumber: true,
+        address: true,
+        cityProvince: true,
+        zipCode: true
+      }
+    });
+    res.status(200).json({ data: updatedUser });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+};
+
+module.exports = { register, login, getProfile, updateProfile };

@@ -1,9 +1,11 @@
 const express = require("express");
-const router = express.Router();
-const { createOrder, getOrderById, getMyOrders } = require("../../controllers/customer/orderController");
 const { verifyToken } = require("../../middleware/authMiddleware");
+const { createOrder, createBulkOrder, getOrderById, getMyOrders } = require("../../controllers/customer/orderController");
 
-router.post("/", createOrder);
+const router = express.Router();
+
+router.post("/", verifyToken, createOrder);
+router.post("/bulk", verifyToken, createBulkOrder);
 router.get("/my", verifyToken, getMyOrders);
 router.get("/:id", verifyToken, getOrderById);
 

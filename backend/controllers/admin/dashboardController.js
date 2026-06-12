@@ -8,7 +8,7 @@ const getDashboardStats = async (req, res) => {
     const totalOrders = await prisma.order.count();
     
     const completedOrders = await prisma.order.findMany({
-      where: { status: { in: ["completed", "shipped"] } },
+      where: { status: { not: "cancelled" } },
       select: { total: true, createdAt: true }
     });
     

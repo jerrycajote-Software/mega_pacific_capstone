@@ -13,11 +13,8 @@ const DashboardPage = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
-  const [iconError, setIconError] = useState(false);
+  //const [iconError, setIconError] = useState(false);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -35,6 +32,10 @@ const DashboardPage = () => {
     }
   };
 
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -46,12 +47,12 @@ const DashboardPage = () => {
       {/* Hero Section */}
       <div className="bg-[hsl(220,40%,12%)] rounded-3xl p-10 mb-10 relative overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
         <div className="relative z-10">
-          <div className="flex items-center gap-4 mb-4">
-            {/* <div className="w-10 h-[1px] bg-[#27a358]"></div> */}
+          {/* <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-[1px] bg-[#27a358]"></div>
             <span className="text-[#27a358] text-xs font-bold tracking-[0.2em] uppercase">
               {t("Catalog")}
             </span>
-          </div>
+          </div> */}
           <h1 className="text-4xl font-black text-white mb-4 tracking-tight">
             {t("Product Catalog")}
           </h1>
@@ -81,7 +82,7 @@ const DashboardPage = () => {
 
       {/* Search and Categories */}
       <div className="mb-8">
-        <div className="relative w-full mb-4 group">
+        <div className="relative w-full max-w-md mb-4 group">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gray-700 transition-colors">
             <Search size={18} />
           </div>
@@ -99,19 +100,26 @@ const DashboardPage = () => {
             {t("All Products")}
           </button>
           {/* Temporary unclickable categories */}
-          <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Roofing Sheets")} <span className="text-gray-400 font-normal ml-1">(9)</span>
+          {/* <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
+            {t("Roofing Sheets")} 
+            <span className="text-gray-400 font-normal ml-1">(9)</span>
+          </div> */}
+
+          {/* <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
+            {t("Ceiling & Cladding")} 
+            
           </div>
+
           <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Ceiling & Cladding")} <span className="text-gray-400 font-normal ml-1">(2)</span>
+            {t("Structural Steel")} 
           </div>
+
           <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Structural Steel")} <span className="text-gray-400 font-normal ml-1">(1)</span>
-          </div>
-          <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Decking Systems")} <span className="text-gray-400 font-normal ml-1">(3)</span>
-          </div>
+            {t("Decking Systems")} 
+          </div> */}
+
         </div>
+        
       </div>
 
       {loading ? (
@@ -168,7 +176,7 @@ const DashboardPage = () => {
                 <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-gray-600 transition-colors line-clamp-1 tracking-tight">{product.name}</h3>
 
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow font-medium">
-                  {product.description || t("Premium roofing material built for durability and aesthetics.")}
+                  {product.shortDescription || t("No description")}
                 </p>
 
                 <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-100">

@@ -92,7 +92,7 @@ const LoginPage = () => {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
-  const { login }  = useAuth();
+  const { login, logout }  = useAuth();
   const navigate   = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -173,45 +173,32 @@ const LoginPage = () => {
           {/* Brand header */}
           <div
             className="lp-card"
-            style={{ textAlign: 'center', animationDelay: '0s' }}
-          >
-            {/* Logo mark */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
+            style={{ 
+              textAlign: 'center', 
+              animationDelay: '0s', 
+              display: 'flex', 
+              flexDirection: 'column', 
               justifyContent: 'center',
-              width: 60, height: 60,
-              borderRadius: 18,
-              background: 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(16,163,74,0.08) 100%)',
-              border: '1px solid rgba(34,197,94,0.25)',
+              alignItems: 'center',
               marginBottom: '1rem',
-              boxShadow: '0 0 40px rgba(34,197,94,0.12)',
-            }}>
-              <ShieldCheck size={28} style={{ color: '#22c55e' }} />
+              userSelect: 'none' 
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '32px', letterSpacing: '0.05em', lineHeight: 1 }}>
+              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
+              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
             </div>
-
-            <h1 style={{
-              margin: 0,
-              fontSize: '1.75rem',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              background: 'linear-gradient(135deg, #4ade80 0%, #16a34a 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+            
+            <div style={{ 
+              color: '#7a90e8', 
+              fontSize: '11px', 
+              fontWeight: 800, 
+              letterSpacing: '0.2em', 
+              marginTop: '6px',
+              fontFamily: 'Arial, sans-serif'
             }}>
-              {t("MEGA PACIFIC")}
-            </h1>
-            <p style={{
-              margin: '0.35rem 0 0',
-              fontSize: '0.7rem',
-              color: '#4b5563',
-              textTransform: 'uppercase',
-              letterSpacing: '0.18em',
-              fontWeight: 600,
-            }}>
-              {t("Admin Portal")}
-            </p>
+              METAL AND STEEL CORP
+            </div>
           </div>
 
           {/* Login card */}
@@ -236,8 +223,9 @@ const LoginPage = () => {
                 fontWeight: 700,
                 color: '#f0f0f0',
                 letterSpacing: '-0.01em',
+                
               }}>
-                {t("Login As Admin")}
+                {t("Admin Portal")}
               </h2>
 
               {/* <p style={{
@@ -245,7 +233,7 @@ const LoginPage = () => {
                 fontSize: '0.8rem',
                 color: '#6b7280',
               }}>
-                Enter your credentials to access the dashboard
+                
               </p> */}
 
             </div>
@@ -431,42 +419,7 @@ const LoginPage = () => {
           </div>
 
           {/* Footer */}
-          <div
-            className="lp-card"
-            style={{
-              textAlign: 'center',
-              animationDelay: '0.18s',
-            }}
-          >
-            {/* Status badge */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: 'rgba(34,197,94,0.07)',
-              border: '1px solid rgba(34,197,94,0.18)',
-              borderRadius: 9999,
-              padding: '0.25rem 0.75rem',
-              marginBottom: '0.9rem',
-            }}>
-              <span
-                className="lp-live-dot"
-                style={{
-                  width: 7, height: 7,
-                  borderRadius: '50%',
-                  background: '#22c55e',
-                  display: 'inline-block',
-                }}
-              />
-              <span style={{ fontSize: '0.68rem', color: '#4ade80', fontWeight: 600, letterSpacing: '0.06em' }}>
-                {t("SYSTEM ONLINE")}
-              </span>
-            </div>
-
-            <p style={{ margin: 0, fontSize: '0.73rem', color: '#374151' }}>
-              © 2026 Mega Pacific Roofing Systems · All rights reserved
-            </p>
-          </div>
+          
 
         </div>
       </div>

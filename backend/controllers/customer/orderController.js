@@ -86,17 +86,25 @@ const createOrder = async (req, res) => {
       });
 
       if (parsedVariantId) {
-        // Deduct from variant stock
-        await tx.productVariant.update({
-          where: { id: parsedVariantId },
+        // Deduct from variant stock atomically
+        const updated = await tx.productVariant.updateMany({
+          where: { id: parsedVariantId, stock: { gte: parseInt(quantity) } },
           data: { stock: { decrement: parseInt(quantity) } }
         });
+        if (updated.count === 0) {
+          const current = await tx.productVariant.findUnique({ where: { id: parsedVariantId } });
+          throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: quantity };
+        }
       } else {
-        // Deduct from product stock
-        await tx.product.update({
-          where: { id: parseInt(productId) },
+        // Deduct from product stock atomically
+        const updated = await tx.product.updateMany({
+          where: { id: parseInt(productId), stock: { gte: parseInt(quantity) } },
           data: { stock: { decrement: parseInt(quantity) } }
         });
+        if (updated.count === 0) {
+          const current = await tx.product.findUnique({ where: { id: parseInt(productId) } });
+          throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: quantity };
+        }
       }
 
       return order;
@@ -105,6 +113,9 @@ const createOrder = async (req, res) => {
     res.status(201).json({ success: true, data: newOrder });
   } catch (error) {
     console.error("Failed to create order:", error);
+    if (error.type === 'STOCK_ERROR') {
+      return res.status(409).json({ success: false, error: 'Out of Stock', details: error });
+    }
     res.status(500).json({ success: false, error: error.message || "Failed to create order" });
   }
 };
@@ -180,8 +191,124 @@ const getMyOrders = async (req, res) => {
   }
 };
 
+// Create a bulk order from cart checkout
+const createBulkOrder = async (req, res) => {
+  const {
+    userId,
+    items, // Array of { productId, variantId, quantity }
+    paymentMode,
+    customerName,
+    customerEmail,
+    contactNumber,
+    address,
+    cityProvince,
+    zipCode,
+    notes
+  } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, error: "Order items are required" });
+  }
+
+  try {
+    const newOrder = await prisma.$transaction(async (tx) => {
+      let totalAmount = 0;
+      const orderItemsData = [];
+
+      for (const item of items) {
+        const { productId, variantId, quantity } = item;
+        const parsedVariantId = variantId ? parseInt(variantId) : null;
+        
+        const product = await tx.product.findUnique({ where: { id: parseInt(productId) } });
+        if (!product) {
+          throw new Error(`Product ID ${productId} not found`);
+        }
+
+        let unitPrice;
+        let variantName = null;
+
+        if (parsedVariantId) {
+          const variant = await tx.productVariant.findUnique({ where: { id: parsedVariantId } });
+          if (!variant) throw new Error(`Variant ID ${parsedVariantId} not found`);
+          if (variant.status === "out_of_stock" || variant.stock < parseInt(quantity)) {
+            throw { type: 'STOCK_ERROR', itemName: variant.name, available: variant.stock, requested: quantity };
+          }
+
+          unitPrice = variant.price;
+          variantName = variant.name;
+
+          // Deduct variant stock atomically
+          const updated = await tx.productVariant.updateMany({
+            where: { id: parsedVariantId, stock: { gte: parseInt(quantity) } },
+            data: { stock: { decrement: parseInt(quantity) } }
+          });
+          if (updated.count === 0) {
+            const current = await tx.productVariant.findUnique({ where: { id: parsedVariantId } });
+            throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: quantity };
+          }
+        } else {
+          if (product.stock < parseInt(quantity)) {
+            throw { type: 'STOCK_ERROR', itemName: product.name, available: product.stock, requested: quantity };
+          }
+          unitPrice = product.price;
+
+          // Deduct product stock atomically
+          const updated = await tx.product.updateMany({
+            where: { id: parseInt(productId), stock: { gte: parseInt(quantity) } },
+            data: { stock: { decrement: parseInt(quantity) } }
+          });
+          if (updated.count === 0) {
+            const current = await tx.product.findUnique({ where: { id: parseInt(productId) } });
+            throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: quantity };
+          }
+        }
+
+        totalAmount += unitPrice * parseInt(quantity);
+        orderItemsData.push({
+          productId: parseInt(productId),
+          variantId: parsedVariantId,
+          variantName,
+          quantity: parseInt(quantity),
+          price: unitPrice
+        });
+      }
+
+      const order = await tx.order.create({
+        data: {
+          userId: parseInt(userId),
+          total: totalAmount,
+          status: "pending",
+          paymentStatus: "unpaid",
+          paymentMode,
+          customerName,
+          customerEmail,
+          contactNumber,
+          address,
+          cityProvince,
+          zipCode,
+          notes,
+          items: {
+            create: orderItemsData
+          }
+        }
+      });
+
+      return order;
+    });
+
+    res.status(201).json({ success: true, data: newOrder });
+  } catch (error) {
+    console.error("Failed to create bulk order:", error);
+    if (error.type === 'STOCK_ERROR') {
+      return res.status(409).json({ success: false, error: 'Out of Stock', details: error });
+    }
+    res.status(400).json({ success: false, error: error.message || "Failed to create bulk order" });
+  }
+};
+
 module.exports = {
   createOrder,
+  createBulkOrder,
   getOrderById,
   getMyOrders
 };

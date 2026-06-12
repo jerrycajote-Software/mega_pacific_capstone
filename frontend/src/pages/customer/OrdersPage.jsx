@@ -220,7 +220,11 @@ const OrdersPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
-        setOrders(res.data.data);
+        const mappedOrders = res.data.data.map(o => ({
+          ...o,
+          status: o.status.toLowerCase() === 'shipped' ? 'processing' : o.status
+        }));
+        setOrders(mappedOrders);
       } else {
         setError(res.data.error || 'Failed to load orders.');
       }
@@ -281,7 +285,7 @@ const OrdersPage = () => {
 
   /* ── Render ── */
   return (
-    <div className="animate-fade-in-up pb-20 max-w-6xl mx-auto">
+    <div className="animate-fade-in-up pb-20 max-w-6xl mx-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Back button */}
       <button
         onClick={() => navigate('/dashboard')}
@@ -297,7 +301,7 @@ const OrdersPage = () => {
           <ShoppingBag className="text-gray-700" size={36} />
           My Orders
         </h1>
-        <p className="text-gray-600 mt-2 font-medium">Track and manage all your previous purchases.</p>
+        <p className="text-gray-600 mt-2 font-medium">Track and manage all your previous and current purchases.</p>
       </div>
 
       {/* Stats strip */}

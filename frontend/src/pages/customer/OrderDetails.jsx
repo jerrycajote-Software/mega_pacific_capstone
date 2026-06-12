@@ -36,7 +36,11 @@ const OrderDetails = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {
-          setOrder(res.data.data);
+          const fetchedOrder = res.data.data;
+          if (fetchedOrder.status.toLowerCase() === 'shipped') {
+            fetchedOrder.status = 'processing';
+          }
+          setOrder(fetchedOrder);
         }
       } catch (err) {
         console.error('Failed to fetch order', err);

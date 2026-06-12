@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   Package,
@@ -89,6 +90,7 @@ const td = (right = false) => ({
 
 /* Main Component */
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [spin, setSpin] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -166,7 +168,7 @@ const DashboardPage = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
 
         {/* Recent Orders */}
-        <Widget title="Recent Orders" action={{ label: 'View all orders', fn: () => { } }}>
+        <Widget title="Recent Orders" action={{ label: 'View all orders', fn: () => navigate('/admin/orders') }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -195,7 +197,7 @@ const DashboardPage = () => {
         </Widget>
 
         {/* Inventory Status */}
-        <Widget title="Inventory Status">
+        {/* <Widget title="Inventory Status">
           <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {inventoryBars.map(bar => (
               <div key={bar.label}>
@@ -213,7 +215,7 @@ const DashboardPage = () => {
               </div>
             ))}
 
-            {/* Stock alerts */}
+           
             <div style={{ paddingTop: '1rem', borderTop: '1px solid #1f1f1f' }}>
               <p style={{ fontSize: '0.65rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: 10 }}>
                 ⚠ Stock Alerts
@@ -235,14 +237,14 @@ const DashboardPage = () => {
               </div>
             </div>
           </div>
-        </Widget>
+        </Widget> */}
       </div>
 
       {/* Row 3: Top Products + Recent Users */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
 
         {/* Top Products */}
-        <Widget title="Top Selling Products" action={{ label: 'Go to Inventory', fn: () => { } }}>
+        <Widget title="Top Selling Products" action={{ label: 'Go to Inventory', fn: () => navigate('/admin/inventory') }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -326,7 +328,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Row 4: Sales Summary bar */}
-      <Widget title="Quick Sales Summary">
+      {/* <Widget title="Quick Sales Summary">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid #1a1a1a' }}>
           {salesSummary.map((s, i) => (
             <div key={s.label} style={{
@@ -339,7 +341,7 @@ const DashboardPage = () => {
             </div>
           ))}
         </div>
-      </Widget>
+      </Widget> */}
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>

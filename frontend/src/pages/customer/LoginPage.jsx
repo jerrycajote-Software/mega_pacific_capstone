@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 const CustomerLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -47,7 +48,7 @@ const CustomerLoginPage = () => {
 
   
   return (
-    <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: 'sans-serif' }}>
+    <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: 'sans-serif' }}>
       <style>{`
         .custom-form-container {
           display: flex;
@@ -55,7 +56,7 @@ const CustomerLoginPage = () => {
           gap: 10px;
           width: 100%;
           max-width: 400px;
-          background-color: #222222;
+          background-color: #0a192f;
           padding: 30px;
           border-radius: 20px;
           position: relative;
@@ -69,37 +70,16 @@ const CustomerLoginPage = () => {
           letter-spacing: -1px;
           position: relative;
           display: flex;
+          justify-content: center;
           align-items: center;
-          padding-left: 30px;
           margin-bottom: 5px;
-        }
-
-        .custom-title::before, .custom-title::after {
-          position: absolute;
-          content: "";
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          left: 0px;
-          background-color: royalblue;
-        }
-
-        .custom-title::before {
-          width: 18px;
-          height: 18px;
-          background-color: royalblue;
-        }
-
-        .custom-title::after {
-          width: 18px;
-          height: 18px;
-          animation: pulse 1s linear infinite;
         }
 
         .custom-message {
           color: rgba(255, 255, 255, 0.7);
           font-size: 14px;
           margin-bottom: 10px;
+          text-align: center;
         }
 
         .custom-signin {
@@ -189,22 +169,11 @@ const CustomerLoginPage = () => {
           opacity: 0.7;
           cursor: not-allowed;
         }
-
-        @keyframes pulse {
-          from {
-            transform: scale(0.9);
-            opacity: 1;
-          }
-          to {
-            transform: scale(1.8);
-            opacity: 0;
-          }
-        }
       `}</style>
 
       <div className="custom-form-container">
         <h2 className="custom-title">Login</h2>
-        <p className="custom-message">Welcome back. Please login to your account.</p>
+        <p className="custom-message">Login to your account.</p>
 
         {successMessage && (
           <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-lg mb-2 text-sm flex items-center justify-center">
@@ -236,12 +205,33 @@ const CustomerLoginPage = () => {
             <input 
               required 
               placeholder=" " 
-              type="password" 
+              type={showPassword ? 'text' : 'password'} 
               className="custom-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              style={{ paddingRight: '40px' }}
             />
             <span>Password</span>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'grey',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+            
           </label>
 
           {/* <div style={{ textAlign: 'right', marginTop: '-5px' }}>
@@ -249,7 +239,7 @@ const CustomerLoginPage = () => {
           </div> */}
           
           <button type="submit" className="custom-submit" disabled={loading}>
-            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Submit'}
+            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Login'}
           </button>
         </form>
         
