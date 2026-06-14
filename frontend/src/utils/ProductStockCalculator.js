@@ -1,8 +1,8 @@
 export class ProductStockCalculator {
   /**
-   * Calculates the total stock for a product, combining base stock and variant stocks.
-   * @param {Object} product - The product object containing stock and variants.
-   * @returns {number} The total aggregated stock.
+   * 
+   * @param {Object} product 
+   * @returns {number} 
    */
   static calculateTotalStock(product) {
     if (!product) return 0;

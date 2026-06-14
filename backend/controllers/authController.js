@@ -2,7 +2,7 @@ const prisma = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// Register a new user (primarily for setting up the first admin)
+
 const register = async (req, res) => {
   const { name, email, password } = req.body;
   try {
@@ -22,7 +22,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
+
 const login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -36,8 +36,7 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Check if user is admin if they are accessing admin side
-    // (We can enforce this in middleware later, but good to check here too)
+    
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
@@ -59,7 +58,7 @@ const login = async (req, res) => {
   }
 };
 
-// Get user profile
+
 const getProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -85,7 +84,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Update user profile
+
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;

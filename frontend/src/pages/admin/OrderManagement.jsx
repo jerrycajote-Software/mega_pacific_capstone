@@ -60,12 +60,12 @@ const OrderManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
 
-  // Modal State
+
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState('');
 
-  // Pagination
+ 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -148,7 +148,7 @@ const OrderManagement = () => {
     setDeliveryDate(order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate).toISOString().split('T')[0] : '');
   };
 
-  // Filtering
+  
   const filteredOrders = orders.filter(order => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,7 +160,7 @@ const OrderManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // Pagination Logic
+ 
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * itemsPerPage,
@@ -178,7 +178,7 @@ const OrderManagement = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
-      {/* Header */}
+     
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Order Management</h2>
@@ -201,7 +201,7 @@ const OrderManagement = () => {
         </button>
       </div>
 
-      {/* Toolbar */}
+     
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         background: '#121212', padding: '1rem', borderRadius: 16, border: '1px solid #1f1f1f',
@@ -248,7 +248,7 @@ const OrderManagement = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
+      
       <div style={{ background: '#121212', borderRadius: 16, border: '1px solid #1f1f1f', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
           <thead>
@@ -325,7 +325,7 @@ const OrderManagement = () => {
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
+        
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderTop: '1px solid #1a1a1a' }}>
             <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
@@ -379,12 +379,12 @@ const OrderManagement = () => {
         )}
       </div>
 
-      {/* Order Details Modal */}
+     
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
           <div className="bg-[#111111] border border-gray-800 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
 
-            {/* Modal Header */}
+            
             <div className="flex justify-between items-center p-6 border-b border-gray-800 sticky top-0 bg-[#111111]/90 backdrop-blur-md z-10">
               <div>
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">
@@ -402,11 +402,11 @@ const OrderManagement = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
+           
             <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
               <div className="lg:col-span-2 space-y-6">
-                {/* Customer Info */}
+               
                 <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
                   <h4 className="text-white font-semibold mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
                     <MapPin size={18} className="text-blue-500" /> Customer & Shipping Info
@@ -441,7 +441,7 @@ const OrderManagement = () => {
                   </div>
                 </div>
 
-                {/* Items */}
+                
                 <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
                   <h4 className="text-white font-semibold mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
                     <Package size={18} className="text-blue-500" /> Order Items
@@ -478,10 +478,10 @@ const OrderManagement = () => {
                 </div>
               </div>
 
-              {/* Action Sidebar */}
+             
               <div className="space-y-6">
 
-                {/* Delivery Date Updater */}
+                
                 <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
                   <h4 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm border-b border-gray-800 pb-2">
                     <Calendar size={16} className="text-blue-500" /> Estimated Delivery
@@ -510,7 +510,7 @@ const OrderManagement = () => {
                   </div>
                 </div>
 
-                {/* Status Actions */}
+               
                 <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
                   <h4 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm border-b border-gray-800 pb-2">
                     <CheckCircle2 size={16} className="text-blue-500" /> Update Order Status

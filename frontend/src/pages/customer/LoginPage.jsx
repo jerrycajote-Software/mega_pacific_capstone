@@ -18,7 +18,7 @@ const CustomerLoginPage = () => {
   useEffect(() => {
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
-      // Clear state to avoid showing it again on refresh
+      
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -32,7 +32,7 @@ const CustomerLoginPage = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      // Block admin accounts from accessing the customer interface
+     
       if (result.user?.role === 'admin') {
         logout();
         setError('Admin accounts cannot access the customer portal. Please use the Admin Login.');

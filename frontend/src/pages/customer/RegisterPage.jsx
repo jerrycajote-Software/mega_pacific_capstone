@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { Loader2 } from 'lucide-react';
 
 const RegisterPage = () => {
@@ -13,6 +14,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   
   const { register } = useAuth();
+  const { clearCart } = useCart();
   const navigate = useNavigate();
 
   const validateEmail = (email) => {
@@ -43,6 +45,7 @@ const RegisterPage = () => {
     const result = await register(fullName, email, password);
     
     if (result.success) {
+      clearCart();
       navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
     } else {
       setError(result.error);

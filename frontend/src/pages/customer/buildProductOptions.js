@@ -1,39 +1,26 @@
-/**
- * buildProductOptions.js
- *
- * Utility that merges a product's base configuration with its variants
- * into a unified list of selectable options for the customer product view.
- *
- * The base product is represented as a "virtual" option with id: null and
- * isBaseProduct: true, which signals the checkout and order system to use
- * the base product price/stock (variantId = null).
- *
- * This follows the Extension-First approach: no existing variant or product
- * data structures are modified. We simply build a display-ready list.
- */
+
 
 /**
  * Builds a unified array of selectable product options.
  *
- * @param {Object} product - The full product object from the API
- * @param {number} product.price - Base price
- * @param {number} product.stock - Base stock
- * @param {string} product.unit - Base unit (e.g. "per linear meter - 0.40mm")
- * @param {Array}  product.variants - Array of variant objects
- * @returns {Array} Merged list of options with a consistent shape:
- *   { id, name, price, stock, status, isBaseProduct, sku? }
+ * @param {Object} product 
+ * @param {number} product.price 
+ * @param {number} product.stock 
+ * @param {string} product.unit 
+ * @param {Array}  product.variants 
+ * @returns {Array} 
  */
 export function buildProductOptions(product) {
   if (!product) return [];
 
   const options = [];
 
-  // Include the base product as the first option when it has meaningful data
+  
   const hasBaseConfig = product.price > 0 || product.stock > 0;
 
   if (hasBaseConfig) {
     options.push({
-      id: null,                         // null signals "base product" to the order system
+      id: null,                         
       name: `${product.unit || 'Default'} (Default)`,
       price: product.price ?? 0,
       stock: product.stock ?? 0,
@@ -42,7 +29,7 @@ export function buildProductOptions(product) {
     });
   }
 
-  // Append all variants (already filtered by the API to status: "available")
+ 
   if (product.variants && product.variants.length > 0) {
     product.variants.forEach((v) => {
       options.push({

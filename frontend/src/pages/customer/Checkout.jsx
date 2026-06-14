@@ -195,7 +195,7 @@ const Checkout = () => {
 
     setIsSubmitting(true);
     
-    // Save address if we are in edit mode or first-time
+
     if (isEditingAddress || !hasProfile) {
       await saveProfileAddress();
     }
@@ -205,7 +205,7 @@ const Checkout = () => {
       
       let res;
       if (state.isBulk || orderItems.length > 1) {
-        // Bulk Order
+        
         const bulkPayload = {
           userId: user?.id,
           paymentMode: formData.paymentMode,
@@ -226,10 +226,10 @@ const Checkout = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success && state.isBulk) {
-          clearCart(); // Clear the entire cart after successful bulk checkout
+          clearCart(); 
         }
       } else {
-        // Single Order
+        
         const singleItem = orderItems[0];
         const singlePayload = {
           userId: user?.id,
@@ -242,7 +242,7 @@ const Checkout = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success && state.isSingle) {
-          removeFromCart(state.item.id); // Remove the checked out item from cart
+          removeFromCart(state.item.id); 
         }
       }
 
@@ -258,7 +258,7 @@ const Checkout = () => {
          } else {
            setErrors({ submit: `The item "${itemName}" only has ${available} units left (you requested ${requested}). We've adjusted your quantity. Please review and try again.` });
            
-           // Automatically adjust cart and checkout state
+           
            const updatedItems = orderItems.map(item => {
              const nameMatches = item.variant ? item.variant.name === itemName : item.product.name === itemName;
              if (nameMatches) {
@@ -312,7 +312,7 @@ const Checkout = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-        {/* Left Section */}
+        
         <div className="lg:col-span-2">
           
           <form onSubmit={handleSubmit} className="bg-white border border-gray-200 shadow-sm rounded-3xl p-8">

@@ -1,6 +1,6 @@
 const prisma = require("../../config/db");
 
-// Helper: Parent Re-Aggregation Loop
+
 // Calculates the combined stock and lowest price among variants, and updates the parent product.
 const syncParentProductAggregates = async (tx, productId) => {
   const variants = await tx.productVariant.findMany({
@@ -9,7 +9,7 @@ const syncParentProductAggregates = async (tx, productId) => {
   });
 
   if (variants.length > 0) {
-    const minPrice = variants[0].price; // Already ordered ascending
+    const minPrice = variants[0].price; 
     const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
 
     await tx.product.update({
@@ -22,7 +22,7 @@ const syncParentProductAggregates = async (tx, productId) => {
   }
 };
 
-// GET /api/admin/products/:productId/variants
+
 const getVariants = async (req, res) => {
   const { productId } = req.params;
   try {
@@ -37,13 +37,13 @@ const getVariants = async (req, res) => {
   }
 };
 
-// POST /api/admin/products/:productId/variants
+
 const createVariant = async (req, res) => {
   const { productId } = req.params;
   const { name, price, stock, sku, status } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Write changes to the target row
+      
       const variant = await tx.productVariant.create({
         data: {
           productId: parseInt(productId),
@@ -55,7 +55,7 @@ const createVariant = async (req, res) => {
         },
       });
 
-      // 2. Parent Re-Aggregation Loop
+      
       await syncParentProductAggregates(tx, parseInt(productId));
 
       return variant;
@@ -68,17 +68,17 @@ const createVariant = async (req, res) => {
   }
 };
 
-// DELETE /api/admin/products/:productId/variants/:id
+
 const deleteVariant = async (req, res) => {
   const { productId, id } = req.params;
   try {
     await prisma.$transaction(async (tx) => {
-      // 1. Write changes to the target row
+      
       await tx.productVariant.delete({
         where: { id: parseInt(id) },
       });
 
-      // 2. Parent Re-Aggregation Loop
+      
       await syncParentProductAggregates(tx, parseInt(productId));
     });
 

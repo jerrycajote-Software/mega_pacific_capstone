@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 async function main() {
   console.log("Starting database initialization...");
 
-  // Check if an admin account already exists
+  
   const existingAdmin = await prisma.user.findFirst({
     where: { role: "admin" },
   });
@@ -14,7 +14,7 @@ async function main() {
     return;
   }
 
-  // Create default admin account
+  
   console.log("No admin account found. Creating default admin account...");
   
   const defaultAdminEmail = "admin@megapacific.com";

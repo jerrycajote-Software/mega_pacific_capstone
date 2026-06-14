@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-/* ─── Keyframes & micro-interactions ─── */
+
 const css = `
   @keyframes lp-fadeUp {
     from { opacity: 0; transform: translateY(28px); }
@@ -118,7 +118,7 @@ const LoginPage = () => {
     <>
       <style>{css}</style>
 
-      {/* Full-screen shell */}
+      
       <div
         className="lp-bg"
         style={{
@@ -132,13 +132,13 @@ const LoginPage = () => {
           fontFamily: "'Inter', system-ui, sans-serif",
         }}
       >
-        {/* Animated grid overlay */}
+        
         <div
           className="lp-grid-overlay"
           style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
         />
 
-        {/* Floating ambient blobs */}
+        
         <div className="lp-blob-1" style={{
           position: 'absolute', top: '-12%', right: '-8%',
           width: 480, height: 480, borderRadius: '50%',
@@ -159,7 +159,7 @@ const LoginPage = () => {
           transform: 'translate(-50%, -50%)',
         }} />
 
-        {/* Content column */}
+        
         <div style={{
           width: '100%',
           maxWidth: 420,
@@ -170,7 +170,7 @@ const LoginPage = () => {
           gap: '1.75rem',
         }}>
 
-          {/* Brand header */}
+          
           <div
             className="lp-card"
             style={{ 
@@ -201,7 +201,7 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Login card */}
+          
           <div
             className="lp-card"
             style={{
@@ -215,7 +215,7 @@ const LoginPage = () => {
               animationDelay: '0.08s',
             }}
           >
-            {/* Card heading */}
+            
             <div style={{ marginBottom: '1.75rem' }}>
               <h2 style={{
                 margin: 0,
@@ -238,7 +238,7 @@ const LoginPage = () => {
 
             </div>
 
-            {/* Error banner */}
+            
             {error && (
               <div style={{
                 display: 'flex',
@@ -258,10 +258,9 @@ const LoginPage = () => {
               </div>
             )}
 
-            {/* Form */}
+            
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
 
-              {/* Email */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label style={{
                   fontSize: '0.72rem',
@@ -308,7 +307,7 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              {/* Password */}
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label style={{
@@ -354,7 +353,7 @@ const LoginPage = () => {
                       boxSizing: 'border-box',
                     }}
                   />
-                  {/* Show/Hide toggle */}
+                
                   <button
                     type="button"
                     className="lp-show-btn"
@@ -378,7 +377,7 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              {/* Submit */}
+             
               <button
                 type="submit"
                 className="lp-btn"

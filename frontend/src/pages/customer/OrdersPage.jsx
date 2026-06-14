@@ -18,9 +18,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-/* ─────────────────────────────────────────────
-   Helpers
-───────────────────────────────────────────── */
+
+
 const STATUS_CONFIG = {
   pending: {
     label: 'Pending',
@@ -83,9 +82,8 @@ const formatDate = (dateStr) =>
 const formatCurrency = (amount) =>
   `₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 
-/* ─────────────────────────────────────────────
-   Status Badge
-───────────────────────────────────────────── */
+
+
 const StatusBadge = ({ status }) => {
   const key = status?.toLowerCase() || 'pending';
   const cfg = STATUS_CONFIG[key] || STATUS_CONFIG.pending;
@@ -100,9 +98,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-/* ─────────────────────────────────────────────
-   Order Card
-───────────────────────────────────────────── */
+
 const OrderCard = ({ order, onClick }) => {
   const previewImages = order.items
     .slice(0, 3)
@@ -118,11 +114,11 @@ const OrderCard = ({ order, onClick }) => {
                  hover:border-gray-300 hover:shadow-md hover:shadow-gray-200
                  transition-all duration-300 cursor-pointer"
     >
-      {/* Top accent bar */}
+      
       <div className="h-0.5 w-full bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       <div className="p-6">
-        {/* Header row */}
+      
         <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
           <div>
             <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-bold">Order ID</p>
@@ -133,7 +129,7 @@ const OrderCard = ({ order, onClick }) => {
           <StatusBadge status={order.status} />
         </div>
 
-        {/* Product images + names */}
+       
         <div className="flex items-center gap-3 mb-5">
           <div className="flex -space-x-3">
             {previewImages.length > 0 ? (
@@ -167,7 +163,7 @@ const OrderCard = ({ order, onClick }) => {
           </div>
         </div>
 
-        {/* Meta row */}
+     
         <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
           <div>
             <p className="text-xs text-gray-500 flex items-center gap-1 mb-1 font-bold">
@@ -190,7 +186,7 @@ const OrderCard = ({ order, onClick }) => {
         </div>
       </div>
 
-      {/* Hover CTA */}
+     
       <div className="px-6 pb-5 flex items-center gap-2 text-gray-600 text-xs font-bold opacity-0 group-hover:opacity-100 -translate-y-1 group-hover:translate-y-0 transition-all duration-300">
         View full details <ChevronRight size={14} />
       </div>
@@ -198,9 +194,8 @@ const OrderCard = ({ order, onClick }) => {
   );
 };
 
-/* ─────────────────────────────────────────────
-   Main Page
-───────────────────────────────────────────── */
+
+
 const OrdersPage = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
@@ -272,7 +267,7 @@ const OrdersPage = () => {
     });
   }, [orders, searchTerm, activeFilter]);
 
-  /* ── Stats ── */
+  
   const stats = useMemo(() => {
     const total = orders.length;
     const delivered = orders.filter((o) => o.status?.toLowerCase() === 'delivered').length;
@@ -283,10 +278,10 @@ const OrdersPage = () => {
     return { total, delivered, pending, totalSpent };
   }, [orders]);
 
-  /* ── Render ── */
+ 
   return (
     <div className="animate-fade-in-up pb-20 max-w-6xl mx-auto" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Back button */}
+     
       <button
         onClick={() => navigate('/dashboard')}
         className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold transition-colors mb-8 group"
@@ -295,7 +290,7 @@ const OrdersPage = () => {
         Back to Dashboard
       </button>
 
-      {/* Page header */}
+     
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 flex items-center gap-3 tracking-tight">
           <ShoppingBag className="text-gray-700" size={36} />
@@ -304,7 +299,7 @@ const OrdersPage = () => {
         <p className="text-gray-600 mt-2 font-medium">Track and manage all your previous and current purchases.</p>
       </div>
 
-      {/* Stats strip */}
+     
       {!loading && !error && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
@@ -328,9 +323,9 @@ const OrdersPage = () => {
         </div>
       )}
 
-      {/* Controls */}
+     
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {/* Search */}
+       
         <div className="relative flex-1 group">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gray-700 transition-colors">
             <Search size={17} />
@@ -348,7 +343,7 @@ const OrdersPage = () => {
           />
         </div>
 
-        {/* Filter dropdown */}
+        
         <div className="relative flex-shrink-0">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
             <Filter size={15} />
@@ -375,7 +370,7 @@ const OrdersPage = () => {
         </div>
       </div>
 
-      {/* Quick filter pills */}
+      
       <div className="flex flex-wrap gap-2 mb-8">
         {FILTER_OPTIONS.map((opt) => (
           <button
@@ -397,7 +392,7 @@ const OrdersPage = () => {
         ))}
       </div>
 
-      {/* Content */}
+      
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32">
           <Loader2 size={44} className="text-gray-400 animate-spin mb-4" />

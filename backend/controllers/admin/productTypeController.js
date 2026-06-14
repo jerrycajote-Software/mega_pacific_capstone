@@ -1,9 +1,9 @@
 const prisma = require("../../config/db");
 
-// Get all product types
+
 const getProductTypes = async (req, res) => {
   try {
-    // Defensive: verify Prisma client and ProductType model are available
+    
     if (!prisma) {
       console.error("ProductType: Prisma client is not initialized. Check config/db.js");
       return res.status(500).json({ error: "Database client is not available" });
@@ -29,7 +29,7 @@ const getProductTypes = async (req, res) => {
   }
 };
 
-// Create a new product type
+
 const createProductType = async (req, res) => {
   const { name, description } = req.body;
 
@@ -38,7 +38,7 @@ const createProductType = async (req, res) => {
   }
 
   try {
-    // Defensive: verify Prisma client and ProductType model are available
+    
     if (!prisma || !prisma.productType) {
       console.error(
         "ProductType: prisma.productType is undefined. " +
@@ -49,7 +49,7 @@ const createProductType = async (req, res) => {
       });
     }
 
-    // Check for duplicate name (case-insensitive)
+    
     const existing = await prisma.productType.findFirst({
       where: {
         name: {

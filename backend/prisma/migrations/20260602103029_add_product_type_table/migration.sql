@@ -1,4 +1,4 @@
--- CreateTable
+
 CREATE TABLE "ProductType" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
@@ -8,5 +8,5 @@ CREATE TABLE "ProductType" (
     CONSTRAINT "ProductType_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
+
 CREATE UNIQUE INDEX "ProductType_name_key" ON "ProductType"("name");

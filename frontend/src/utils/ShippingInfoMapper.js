@@ -1,8 +1,8 @@
 class ShippingInfoMapper {
   /**
-   * Maps raw order shipping data into a structured format for UI display.
-   * @param {Object} order - The raw order data.
-   * @returns {Object} Structured shipping information.
+   * 
+   * @param {Object} order 
+   * @returns {Object} 
    */
   static map(order) {
     if (!order) return null;

@@ -3,18 +3,18 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
-//Layouts
+
 import AdminLayout from './layouts/AdminLayout';
 import CustomerLayout from './layouts/CustomerLayout';
 
-//Admin Pages
+
 import AdminLoginPage from './pages/admin/LoginPage';
 import AdminDashboardPage from './pages/admin/DashboardPage';
 import ProductManagement from './pages/admin/ProductManagement';
 import OrderManagement from './pages/admin/OrderManagement';
 import UserManagement from './pages/admin/UserManagement';
 
-//Customer
+
 import RegisterPage from './pages/customer/RegisterPage';
 import CustomerLoginPage from './pages/customer/LoginPage';
 import CustomerDashboardPage from './pages/customer/DashboardPage';
@@ -23,7 +23,7 @@ import Checkout from './pages/customer/Checkout';
 import OrderDetails from './pages/customer/OrderDetails';
 import OrdersPage from './pages/customer/OrdersPage';
 
-// Protected Route Component
+
 const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
   const { token, user, loading } = useAuth();
 
@@ -39,13 +39,13 @@ const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
     return <Navigate to={redirectTo} />;
   }
 
-  // If a required role is specified and the user's role doesn't match, redirect them
+
   if (requiredRole && user?.role !== requiredRole) {
-    // Admin trying to access customer area → send to admin panel
+    
     if (user?.role === 'admin') {
       return <Navigate to="/admin/dashboard" replace />;
     }
-    // Customer trying to access admin area → send to customer login
+   
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -53,14 +53,15 @@ const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
 };
 
 const App = () => {
+  const { user } = useAuth();
   return (
-    <CartProvider>
+    <CartProvider userId={user?.id}>
       <Routes>
-        {/* Customer Auth Routes */}
+       
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<CustomerLoginPage />} />
 
-        {/* Customer Interface Routes */}
+      
         <Route path="/" element={
           <ProtectedRoute redirectTo="/login" requiredRole="customer">
             <CustomerLayout />
@@ -74,7 +75,7 @@ const App = () => {
           <Route path="order/:id" element={<OrderDetails />} />
         </Route>
 
-        {/* Admin Routes */}
+       
         <Route path="/admin/login" element={<AdminLoginPage />} />
         
         <Route path="/admin" element={
@@ -90,7 +91,7 @@ const App = () => {
           <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings coming soon...</div>} />
         </Route>
 
-        {/* 404 Page */}
+       
         <Route path="*" element={<div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">404 - Page Not Found</div>} />
       </Routes>
     </CartProvider>

@@ -10,7 +10,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
-/* Inline styles matching ProductManagement theme */
+
 const M = {
   overlay: {
     position: 'fixed', inset: 0, zIndex: 200,
@@ -88,7 +88,7 @@ const M = {
   },
 };
 
-/* Focus styles */
+
 const modalFocusStyle = `
   .ptm-input:focus, .ptm-textarea:focus {
     border-color: rgba(34,197,94,0.55) !important;
@@ -100,15 +100,7 @@ const modalFocusStyle = `
   .ptm-create:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 `;
 
-/**
- * AddProductTypeModal
- *
- * Self-contained modal for creating a new ProductType.
- * Props:
- *   - isOpen: boolean
- *   - onClose: () => void
- *   - onTypeCreated: (newType) => void  — called after successful creation
- */
+
 
 const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
   const { t } = useTranslation();
@@ -151,12 +143,12 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
 
       setSuccess(t('Product type created successfully!'));
 
-      // Notify parent with the newly created type
+      
       if (onTypeCreated) {
         onTypeCreated(res.data);
       }
 
-      // Brief delay so the user sees the success message, then close
+      
       setTimeout(() => {
         handleClose();
       }, 600);
@@ -180,7 +172,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
       <div style={M.overlay} onClick={(e) => e.target === e.currentTarget && handleClose()}>
         <div style={M.modal}>
 
-          {/* Header */}
+          
           <div style={M.header}>
             <div>
               <h2 style={M.title}>{t('Add New Product Type')}</h2>
@@ -191,11 +183,11 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
             </button>
           </div>
 
-          {/* Body */}
+          
           <form onSubmit={handleSubmit}>
             <div style={M.body}>
 
-              {/* Error banner */}
+              
               {error && (
                 <div style={M.errorBanner}>
                   <AlertTriangle size={14} />
@@ -203,7 +195,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
                 </div>
               )}
 
-              {/* Success banner */}
+              
               {success && (
                 <div style={M.successBanner}>
                   <CheckCircle2 size={14} />
@@ -211,7 +203,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
                 </div>
               )}
 
-              {/* Type Name */}
+              
               <div style={M.formGroup}>
                 <label style={M.label}><Tag size={11} /> {t('Type Name')} *</label>
                 <input
@@ -226,7 +218,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
                 />
               </div>
 
-              {/* Description */}
+              
               <div style={{ ...M.formGroup, marginBottom: 0 }}>
                 <label style={M.label}><AlignLeft size={11} /> {t('Description')} ({t('optional')})</label>
                 <textarea
@@ -239,7 +231,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
               </div>
             </div>
 
-            {/* Footer */}
+           
             <div style={M.footer}>
               <button type="button" className="ptm-cancel" onClick={handleClose} style={M.btnCancel}>
                 {t('Cancel')}

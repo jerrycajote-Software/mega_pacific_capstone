@@ -5,7 +5,7 @@ const {
   createProductType,
 } = require("../../controllers/admin/productTypeController");
 
-// Product Type CRUD
+
 router.get("/", getProductTypes);
 router.post("/", createProductType);
 

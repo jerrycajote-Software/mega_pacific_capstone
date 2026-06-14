@@ -34,9 +34,8 @@ const AdminLayout = () => {
   return (
     <div className="admin-shell">
 
-      {/* ────────────────────────────────────
-          LEFT: Main content area
-      ──────────────────────────────────── */}
+     
+
       <div className="admin-main">
 
         {/* Sticky top bar */}
@@ -113,9 +112,8 @@ const AdminLayout = () => {
         </div>
       </div>
 
-      {/* ────────────────────────────────────
-          RIGHT: Sidebar (fixed)
-      ──────────────────────────────────── */}
+      
+
       <aside className="admin-sidebar">
 
         {/* Sidebar header — user info */}
@@ -140,12 +138,12 @@ const AdminLayout = () => {
           </div> */}
         </div>
 
-        {/* Nav label */}
+        
         <div style={{ padding: '1rem 1.25rem 0.5rem', fontSize: '0.65rem', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
           Navigation
         </div>
 
-        {/* Nav links */}
+        
         <nav style={{ padding: '0 0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {navItems.map((item) => (
             <NavLink
@@ -159,7 +157,7 @@ const AdminLayout = () => {
           ))}
         </nav>
 
-        {/* Logout */}
+        
         <div style={{ padding: '1rem', borderTop: '1px solid #222', marginTop: 'auto' }}>
           <button
             onClick={handleLogout}

@@ -15,7 +15,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-/* Widget shell */
+
 const Widget = ({ title, action, children, style = {} }) => (
   <div className="widget" style={style}>
     <div className="widget-header">
@@ -33,7 +33,7 @@ const Widget = ({ title, action, children, style = {} }) => (
   </div>
 );
 
-/* Stat card */
+
 const StatCard = ({ label, value, change, icon, iconBg }) => (
   <div className="widget" style={{ padding: '1.5rem', cursor: 'default', transition: 'border-color 0.2s' }}
     onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)'}
@@ -50,7 +50,7 @@ const StatCard = ({ label, value, change, icon, iconBg }) => (
   </div>
 );
 
-/* Status badge */
+
 const statusMap = {
   Completed: { cls: 'badge-green', Icon: CheckCircle2 },
   Pending: { cls: 'badge-amber', Icon: Clock },
@@ -67,9 +67,9 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-/* Dynamic data is fetched from the backend */
 
-/* Shared table styles */
+
+
 const th = {
   padding: '0.625rem 1.25rem',
   fontSize: '0.7rem',
@@ -88,7 +88,7 @@ const td = (right = false) => ({
   borderBottom: '1px solid #1a1a1a',
 });
 
-/* Main Component */
+
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [spin, setSpin] = useState(false);
@@ -130,7 +130,7 @@ const DashboardPage = () => {
     );
   }
 
-  const { totals, recentOrders, stockAlerts, inventoryBars, topProducts, salesSummary } = data; //recentUsers
+  const { totals, recentOrders, stockAlerts, inventoryBars, topProducts, salesSummary } = data; 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -156,7 +156,7 @@ const DashboardPage = () => {
         </button>
       </div>
 
-      {/* Row 1: Stat cards */}
+      
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
         <StatCard label="Total Revenue" value={totals.revenue} change="Updated" icon={<TrendingUp size={20} color="#22c55e" />} iconBg="rgba(34,197,94,0.1)" />
         <StatCard label="Total Products" value={totals.products} change="Updated" icon={<Package size={20} color="#60a5fa" />} iconBg="rgba(96,165,250,0.1)" />
@@ -164,10 +164,10 @@ const DashboardPage = () => {
         {/* <StatCard label="Registered Users" value={totals.users} change="Updated" icon={<Users size={20} color="#22d3ee" />} iconBg="rgba(34,211,238,0.1)" /> */}
       </div>
 
-      {/*  Row 2: Recent Orders + Inventory Status  */}
+      
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
 
-        {/* Recent Orders */}
+        
         <Widget title="Recent Orders" action={{ label: 'View all orders', fn: () => navigate('/admin/orders') }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -240,10 +240,10 @@ const DashboardPage = () => {
         </Widget> */}
       </div>
 
-      {/* Row 3: Top Products + Recent Users */}
+      
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
 
-        {/* Top Products */}
+        
         <Widget title="Top Selling Products" action={{ label: 'Go to Inventory', fn: () => navigate('/admin/inventory') }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

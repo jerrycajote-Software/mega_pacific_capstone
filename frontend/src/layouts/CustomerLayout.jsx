@@ -7,12 +7,12 @@ import { LogOut, User, Home, Package, ShoppingBag, ShoppingBasket, X, Minus, Plu
 const CustomerLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { cartItems, cartCount, updateQuantity, removeFromCart, updateCartValidation } = useCart();
+  const { cartItems, cartCount, updateQuantity, removeFromCart, updateCartValidation, clearCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
 
-  // Categorize cart items
+ 
   const validItems = cartItems.filter(item => !item.isDeleted && !item.isOutOfStock);
   const outOfStockItems = cartItems.filter(item => !item.isDeleted && item.isOutOfStock);
   const deletedItems = cartItems.filter(item => item.isDeleted);
@@ -32,7 +32,7 @@ const CustomerLayout = () => {
     }
   };
 
-  // Re-validate cart whenever it is opened
+ 
   React.useEffect(() => {
     if (isCartOpen) {
       const validate = async () => {
@@ -44,7 +44,7 @@ const CustomerLayout = () => {
       };
       validate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [isCartOpen]);
 
   const handleLogout = () => {
@@ -78,7 +78,7 @@ const CustomerLayout = () => {
 
   return (
     <div className="min-h-screen bg-[var(--customer-bg-main)] font-sans text-gray-900">
-      {/* Navigation Bar */}
+    
       <nav className="border-b border-gray-800 sticky top-0 z-50 shadow-sm" style={{ backgroundColor: '#162035' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 relative">
@@ -166,14 +166,14 @@ const CustomerLayout = () => {
         <Outlet />
       </main>
 
-      {/* Footer */}
+      
       <footer className="bg-white border-t border-gray-200 py-8 mt-auto shadow-[0_-1px_2px_rgba(0,0,0,0.02)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm font-medium">
           <p>© 2026 Mega Pacific Roofing Systems. Providing Quality Roofing Since 1998.</p>
         </div>
       </footer>
 
-      {/* Cart Side Drawer Overlay */}
+      
       {isCartOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-[100] transition-opacity" 
@@ -181,7 +181,7 @@ const CustomerLayout = () => {
         />
       )}
 
-      {/* Cart Side Drawer Content */}
+      
       <div 
         className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl z-[110] transform transition-transform duration-300 ease-in-out flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
@@ -305,7 +305,7 @@ const CustomerLayout = () => {
                             </button>
                           </div>
                           
-                          {/* Single-Item Buy Now Button */}
+                          
                           <button
                             onClick={() => handleSingleCheckout(item)}
                             className="bg-white border border-gray-300 hover:border-gray-900 hover:bg-gray-900 hover:text-white text-gray-800 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"

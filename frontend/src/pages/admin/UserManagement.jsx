@@ -40,7 +40,7 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('All');
   
-  // Pagination
+  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -70,7 +70,7 @@ const UserManagement = () => {
     fetchUsers().then(() => setTimeout(() => setSpin(false), 800));
   };
 
-  // Filtering
+  
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,7 +81,7 @@ const UserManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // Pagination Logic
+  
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * itemsPerPage,
@@ -99,7 +99,7 @@ const UserManagement = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
-      {/* Header */}
+     
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>User Management</h2>
@@ -122,7 +122,7 @@ const UserManagement = () => {
         </button>
       </div>
 
-      {/* Toolbar (Search & Filters) */}
+     
       <div style={{ 
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         background: '#121212', padding: '1rem', borderRadius: 16, border: '1px solid #1f1f1f',
@@ -165,7 +165,7 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Users Table */}
+     
       <div style={{ background: '#121212', borderRadius: 16, border: '1px solid #1f1f1f', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
           <thead>
@@ -249,7 +249,7 @@ const UserManagement = () => {
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
+       
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderTop: '1px solid #1a1a1a' }}>
             <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>

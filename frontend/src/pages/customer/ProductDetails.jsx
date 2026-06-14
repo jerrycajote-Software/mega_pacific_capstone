@@ -23,9 +23,7 @@ import {
 import { buildProductOptions, getDefaultOption } from './buildProductOptions';
 import { useCart } from '../../context/CartContext';
 
-/* ─────────────────────────────────────────────
-   Image Gallery Component
-───────────────────────────────────────────── */
+
 const ImageGallery = ({ images, productName }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -109,7 +107,7 @@ const ImageGallery = ({ images, productName }) => {
         )}
       </div>
 
-      {/* Lightbox */}
+ 
       {lightboxOpen && (
         <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-4" onClick={() => setLightboxOpen(false)}>
           <button onClick={() => setLightboxOpen(false)} className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-xl p-2.5 transition-colors z-10" aria-label="Close lightbox"><X size={22} /></button>
@@ -138,10 +136,8 @@ const ImageGallery = ({ images, productName }) => {
   );
 };
 
-/* ─────────────────────────────────────────────
-   Variant Selector Component
-   Renders all selectable options (base product + variants)
-───────────────────────────────────────────── */
+
+
 const VariantSelector = ({ options, selectedOption, onSelect }) => {
   if (!options || options.length === 0) return null;
 
@@ -158,7 +154,7 @@ const VariantSelector = ({ options, selectedOption, onSelect }) => {
       </div>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => {
-          // Use a stable key: null id (base) gets a string key
+          
           const optKey = opt.id !== null ? opt.id : '_base';
           const isSelected = selectedOption?.id === opt.id && selectedOption?.isBaseProduct === opt.isBaseProduct;
           const isOutOfStock = opt.status === 'out_of_stock' || opt.stock === 0;
@@ -198,9 +194,7 @@ const VariantSelector = ({ options, selectedOption, onSelect }) => {
   );
 };
 
-/* ─────────────────────────────────────────────
-   Main Page Component
-───────────────────────────────────────────── */
+
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -223,7 +217,7 @@ const ProductDetails = () => {
     }
   };
 
-  // Selected option state (base product or variant)
+
   const [selectedOption, setSelectedOption] = useState(null);
 
   useEffect(() => {
@@ -236,7 +230,7 @@ const ProductDetails = () => {
         if (res.data.success) {
           const productData = res.data.data;
           setProduct(productData);
-          // Build unified options and auto-select the default (base product first)
+        
           const options = buildProductOptions(productData);
           const defaultOpt = getDefaultOption(options);
           if (defaultOpt) {
@@ -267,17 +261,17 @@ const ProductDetails = () => {
     fetchReviews();
   }, [id, token]);
 
-  // Build unified selectable options from base product + variants
+
   const productOptions = useMemo(() => buildProductOptions(product), [product]);
   const hasOptions = productOptions.length > 0;
 
-  // Derived values based on the currently selected option
+
   const activePrice = selectedOption?.price ?? product?.price ?? 0;
   const activeStock = selectedOption?.stock ?? product?.stock ?? 0;
 
   const handleOptionSelect = (opt) => {
     setSelectedOption(opt);
-    setQuantity(1); // Reset quantity when switching option
+    setQuantity(1); 
   };
 
   const handleDecrease = () => { if (quantity > 1) setQuantity(quantity - 1); };
@@ -289,7 +283,7 @@ const ProductDetails = () => {
       return;
     }
     if (quantity > 0 && quantity <= activeStock) {
-      // Map the selected option back to the variant shape expected by Checkout/Order.
+      
       let variantForCheckout = null;
       if (selectedOption && !selectedOption.isBaseProduct) {
         variantForCheckout = product.variants.find(v => v.id === selectedOption.id) || null;
@@ -316,7 +310,7 @@ const ProductDetails = () => {
         variantForCart = product.variants.find(v => v.id === selectedOption.id) || null;
       }
       addToCart(product, variantForCart, quantity);
-      // Optional: show a small toast or notification here
+      
     }
   };
 
@@ -350,16 +344,16 @@ const ProductDetails = () => {
 
   return (
     <div className="animate-fade-in-up pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Back Button */}
+     
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium transition-colors mb-8 group">
         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
         BACK TO PRODUCT
       </button>
 
-      {/* Product Top Section */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
 
-        {/* Left: Image Gallery */}
+     
         <div className="relative">
           <div className="absolute top-4 left-4 z-10">
             <span className="bg-white/90 text-gray-900 border border-gray-200 shadow-sm text-sm font-bold px-4 py-1.5 rounded-full backdrop-blur-md">{product.type}</span>
@@ -370,11 +364,11 @@ const ProductDetails = () => {
           )}
         </div>
 
-        {/* Right: Product Info & Order Form */}
+      
         <div className="flex flex-col">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">{product.name}</h1>
 
-          {/* Average Rating */}
+     
           <div className="flex items-center gap-2 mb-4">
             <div className="flex text-yellow-500">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -385,7 +379,7 @@ const ProductDetails = () => {
             <span className="text-gray-500 text-sm font-medium">({product.reviewCount || 0} reviews)</span>
           </div>
 
-          {/* Price — updates reactively based on selected option */}
+         
           <div className="flex items-end gap-2 mb-4">
             <span className="text-4xl font-extrabold text-gray-900 transition-all duration-200 tracking-tight">
               ₱{activePrice.toLocaleString()}
@@ -416,10 +410,10 @@ const ProductDetails = () => {
             </div> */}
           </div>
 
-          {/* Order Box */}
+          
           <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 mt-auto">
 
-            {/* Product Option Selector (Base Product + Variants) */}
+            
             <VariantSelector
               options={productOptions}
               selectedOption={selectedOption}
@@ -482,11 +476,11 @@ const ProductDetails = () => {
         </div>
       </div>
 
-      {/* Long Description Section */}
+      
       <div 
         ref={longDescRef} 
         id="long-description" 
-        className="mt-12 scroll-mt-24" // scroll-mt-24 gives a 6rem top margin when scrolled to, safely clearing the 4rem sticky header
+        className="mt-12 scroll-mt-24" 
       >
         <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 lg:p-10">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6 flex items-center gap-3">

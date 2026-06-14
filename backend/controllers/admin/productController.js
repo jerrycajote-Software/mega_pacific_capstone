@@ -1,6 +1,6 @@
 const prisma = require("../../config/db");
 
-// Get all products (includes variant count)
+
 const getProducts = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
@@ -18,7 +18,7 @@ const getProducts = async (req, res) => {
   }
 };
 
-// Create a new product (optionally with initial variants)
+
 const createProduct = async (req, res) => {
   const { name, type, shortDescription, longDescription, price, unit, stock, imageUrl, imageUrls, variants } = req.body;
   try {
@@ -33,7 +33,7 @@ const createProduct = async (req, res) => {
         stock: parseInt(stock) || 0,
         imageUrl: imageUrl || null,
         imageUrls: imageUrls || [],
-        // Create initial variants if provided
+        
         variants:
           variants && variants.length > 0
             ? {
@@ -58,7 +58,7 @@ const createProduct = async (req, res) => {
 
 
 
-// Delete a product (variants cascade-deleted via schema)
+
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
   try {

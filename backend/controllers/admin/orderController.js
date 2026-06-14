@@ -1,7 +1,7 @@
 const prisma = require("../../config/db");
 const EstimatedDeliveryValidator = require("../../utils/EstimatedDeliveryValidator");
 
-// Get all orders with nested relationships
+
 const getOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
@@ -20,7 +20,7 @@ const getOrders = async (req, res) => {
     });
 
     const formattedOrders = orders.map(o => {
-      // Build a human-readable products summary that includes variant name
+      
       const productsSummary = o.items.map(item => {
         const variantLabel = item.variantName || item.variant?.name;
         const suffix = variantLabel ? ` — ${variantLabel}` : "";
@@ -46,7 +46,7 @@ const getOrders = async (req, res) => {
         cityProvince: o.cityProvince,
         zipCode: o.zipCode,
         notes: o.notes,
-        // Include raw items with variant info for the modal
+        
         items: o.items.map(item => ({
           id: item.id,
           productName: item.product.name,
@@ -65,7 +65,7 @@ const getOrders = async (req, res) => {
   }
 };
 
-// Update order status
+
 const updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { status, paymentStatus, estimatedDeliveryDate } = req.body;

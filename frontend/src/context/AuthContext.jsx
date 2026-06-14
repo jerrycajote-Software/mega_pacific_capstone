@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      // Decode or verify token if needed, for now just set user from storage
+      
       const savedUser = localStorage.getItem('appUser');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('appToken');
     localStorage.removeItem('appUser');
+    localStorage.removeItem('mega_pacific_cart');
     setToken(null);
     setUser(null);
   };

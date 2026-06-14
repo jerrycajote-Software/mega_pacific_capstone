@@ -26,7 +26,7 @@ import {
 import AddProductTypeModal from './AddProductTypeModal';
 import { ProductStockCalculator } from '../../utils/ProductStockCalculator';
 
-/* ─── Inline styles (scoped, no class conflicts) ─── */
+
 const S = {
   page: { padding: '2rem 2.5rem', maxWidth: 1100, width: '100%', color: '#f0f0f0', fontFamily: "'Inter', system-ui, sans-serif" },
   pageHeader: { display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' },
@@ -90,7 +90,8 @@ const S = {
   uploadPreviewImg: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
   uploadRemoveBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 9999, border: 'none', background: 'rgba(239,68,68,0.85)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 10, transition: 'background 0.15s, transform 0.12s', backdropFilter: 'blur(4px)', zIndex: 10 },
   uploadSuccessBar: { display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.75rem', background: 'rgba(34,197,94,0.08)', borderTop: '1px solid rgba(34,197,94,0.15)', fontSize: '0.72rem', color: '#4ade80', fontWeight: 500 },
-  // Variant-specific styles
+ 
+
   variantSection: { margin: '1.25rem 0 0', borderTop: '1px solid #1e1e1e', paddingTop: '1.25rem' },
   variantHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' },
   variantTitle: { display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em' },
@@ -104,7 +105,7 @@ const S = {
   addVariantBtn: { display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.85rem', borderRadius: 8, border: '1px dashed rgba(34,197,94,0.4)', background: 'rgba(34,197,94,0.04)', color: '#4ade80', fontSize: '0.78rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' },
 };
 
-/* ─── Helper: stock badge ─── */
+
 function StockBadge({ stock }) {
   const isLow = stock <= 10;
   return (
@@ -115,7 +116,7 @@ function StockBadge({ stock }) {
   );
 }
 
-/* ─── Variant badge (count) ─── */
+
 function VariantBadge({ count }) {
   if (count === 0) return <span style={{ fontSize: '0.73rem', color: '#4b5563', fontStyle: 'italic' }}>No variants</span>;
   return (
@@ -125,7 +126,7 @@ function VariantBadge({ count }) {
   );
 }
 
-/* ─── Focus style injection ─── */
+
 const focusStyle = `
   @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUpModal {
@@ -166,9 +167,8 @@ const focusStyle = `
 
 const EMPTY_VARIANT = { name: '', price: '', stock: '', status: 'available' };
 
-/* ═══════════════════════════════════════════════════
-   Main Component
-═══════════════════════════════════════════════════ */
+
+
 const ProductManagement = () => {
   const { t } = useTranslation();
   const [products, setProducts] = useState([]);
@@ -184,17 +184,17 @@ const ProductManagement = () => {
     price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: []
   });
 
-  // Variant state: list of existing + pending variants
-  const [variants, setVariants] = useState([]);        // persisted variants (from DB)
-  const [newVariant, setNewVariant] = useState({ ...EMPTY_VARIANT }); // "add row"
+ 
+  const [variants, setVariants] = useState([]);        
+  const [newVariant, setNewVariant] = useState({ ...EMPTY_VARIANT }); 
   const [savingVariant, setSavingVariant] = useState(false);
   const [editingVariantId, setEditingVariantId] = useState(null);
   const [editingVariantData, setEditingVariantData] = useState({});
 
-  // For new (not-yet-saved) products, queue variants locally
+ 
   const [pendingVariants, setPendingVariants] = useState([]);
 
-  // Product Type state
+
   const [productTypes, setProductTypes] = useState([]);
   const [showAddTypeModal, setShowAddTypeModal] = useState(false);
 
@@ -202,7 +202,7 @@ const ProductManagement = () => {
 
   useEffect(() => { fetchProducts(); fetchProductTypes(); }, []);
 
-  /* ── Fetch product types from API ── */
+
   const fetchProductTypes = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/product-types`);
@@ -212,7 +212,7 @@ const ProductManagement = () => {
     }
   };
 
-  /* ── Callback when a new type is created from the modal ── */
+
   const handleTypeCreated = (newType) => {
     setProductTypes(prev => [...prev, newType].sort((a, b) => a.name.localeCompare(b.name)));
     setFormData(prev => ({ ...prev, type: newType.name }));
@@ -229,7 +229,7 @@ const ProductManagement = () => {
     }
   };
 
-  /* ── Fetch variants for the product being edited ── */
+
   const fetchVariants = async (productId) => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/products/${productId}/variants`);
@@ -257,7 +257,7 @@ const ProductManagement = () => {
     setVariants(prev => prev.map(v => v.id === id ? { ...v, [field]: value } : v));
   };
 
-  /* ── Image upload helpers ── */
+
   const processImageFiles = useCallback(async (files) => {
     const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (validFiles.length === 0) return;
@@ -291,12 +291,12 @@ const ProductManagement = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  /* ── Product submit ── */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editingProduct) {
-        // Fall back to original base price/stock if left empty
+        
         const payload = { ...formData };
         if (payload.price === '' || payload.price === null) payload.price = editingProduct.price;
         if (payload.stock === '' || payload.stock === null) payload.stock = editingProduct.stock;
@@ -304,7 +304,7 @@ const ProductManagement = () => {
         let variantsPayload = [];
         if (variants && variants.length > 0) {
           variantsPayload = variants
-            .filter((v) => v.price !== '' || v.stock !== '') // ONLY send variants the user explicitly edited inline
+            .filter((v) => v.price !== '' || v.stock !== '') 
             .map((v) => {
               return {
                  id: v.id,
@@ -321,16 +321,16 @@ const ProductManagement = () => {
           }
         }
 
-        // Single transaction PUT
+        
         const res = await axios.put(`${API_URL}/api/admin/products/${editingProduct.id}`, payload);
         const freshlyUpdatedProduct = res.data;
 
-        // Deep Immutable Update directly from finalized database response
+        
         setProducts((prev) =>
           prev.map((p) => (p.id === editingProduct.id ? freshlyUpdatedProduct : p))
         );
       } else {
-        // Pass pending variants in the create payload
+        
         const payload = { ...formData, variants: pendingVariants };
         await axios.post(`${API_URL}/api/admin/products`, payload);
       }
@@ -350,7 +350,7 @@ const ProductManagement = () => {
     }
   };
 
-  /* ── Variant helpers (existing product) ── */
+  
   const handleAddVariant = async () => {
     if (!newVariant.name || !newVariant.price || !newVariant.stock) return;
     setSavingVariant(true);
@@ -391,7 +391,7 @@ const ProductManagement = () => {
     } catch (err) { console.error('Error deleting variant:', err); }
   };
 
-  /* ── Pending variant helpers (new product, not yet saved) ── */
+
   const handleAddPendingVariant = () => {
     if (!newVariant.name || !newVariant.price || !newVariant.stock) return;
     setPendingVariants(prev => [...prev, { ...newVariant, _tempId: Date.now() }]);
@@ -437,7 +437,7 @@ const ProductManagement = () => {
     p.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  /* ─── Variant Row (edit mode) ─── */
+
   const VariantEditRow = ({ v }) => (
     <tr>
       <td style={S.variantTd}>
@@ -469,7 +469,7 @@ const ProductManagement = () => {
       <style>{focusStyle}</style>
       <div style={S.page}>
 
-        {/* ── Page Header ── */}
+       
         <div style={S.pageHeader}>
           <div>
             <h1 style={S.pageTitle}>{t('Inventory Management')}</h1>
@@ -480,7 +480,7 @@ const ProductManagement = () => {
           </button>
         </div>
 
-        {/* ── Toolbar ── */}
+       
         <div style={S.toolbar}>
           <div style={S.searchWrap}>
             <Search size={15} style={S.searchIcon} />
@@ -494,7 +494,7 @@ const ProductManagement = () => {
           )}
         </div>
 
-        {/* ── Content Area ── */}
+       
         {loading ? (
           <div style={S.loadingBox}>
             <Loader2 size={22} style={{ animation: 'spin 1s linear infinite', color: '#22c55e' }} />
@@ -570,14 +570,13 @@ const ProductManagement = () => {
         )}
       </div>
 
-      {/* ══════════════════════════════════
-          Modal Overlay
-      ══════════════════════════════════ */}
+      
+
       {isModalOpen && (
         <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && closeModal()}>
           <div style={S.modal}>
 
-            {/* Modal Header */}
+            
             <div style={S.modalHeader}>
               <div>
                 <h2 style={S.modalTitle}>{editingProduct ? t('Update Inventory Item') : t('Add New Product')}</h2>
@@ -586,11 +585,11 @@ const ProductManagement = () => {
               <button className="pm-close-btn" onClick={closeModal} style={S.closeBtn} title={t('Close')}><X size={15} /></button>
             </div>
 
-            {/* Modal Body */}
+           
             <form onSubmit={handleSubmit}>
               <div style={S.modalBody} className="pm-modal-grid">
 
-                {/* ── Left Column: Images ── */}
+               
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ ...S.formGroup, marginBottom: 0 }}>
                     <label style={S.label}><ImageIcon size={11} /> {t('Product Images')}</label>
@@ -635,15 +634,17 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
-                {/* ── Right Column: Info ── */}
+                
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                  {/* Product Name */}
+                  
+                  
                   <div style={{ ...S.formGroup, marginBottom: 0 }}>
                     <label style={S.label}><Package size={11} /> {t('Product Name')}</label>
                     <input className="pm-input" name="name" type="text" required value={formData.name} onChange={handleInputChange} placeholder={t('e.g. Rib Type Blue')} style={S.inputBase} />
                   </div>
 
-                  {/* Price + Unit */}
+                 
+                 
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('ORIGINAL PRICE (₱)')}</label>
@@ -655,7 +656,8 @@ const ProductManagement = () => {
                     </div>
                   </div>
 
-                  {/* Stock + Type */}
+                 
+                 
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('BASE STOCK QTY')}</label>
@@ -693,7 +695,7 @@ const ProductManagement = () => {
                     </div>
                   </div>
 
-                  {/* Descriptions */}
+                  
                   <div style={{ ...S.formGroup, marginBottom: 0 }}>
                     <label style={S.label}><AlignLeft size={11} /> {t('Short Description')}</label>
                     <textarea className="pm-textarea" name="shortDescription" value={formData.shortDescription} onChange={handleInputChange} placeholder={t('Concise summary or spec overview…')} style={{ ...S.textareaBase, minHeight: 60 }} />
@@ -705,7 +707,7 @@ const ProductManagement = () => {
                 </div>
               </div>
 
-              {/* ══ Variants Section (full-width, below the grid) ══ */}
+              
               <div style={{ padding: '0 1.5rem' }}>
                 <div style={S.variantSection}>
                   <div style={S.variantHeader}>
@@ -727,7 +729,7 @@ const ProductManagement = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {/* Existing persisted variants */}
+                       
                         {variants.map((v) =>
                           editingVariantId === v.id ? (
                             <VariantEditRow key={v.id} v={v} />
@@ -754,7 +756,7 @@ const ProductManagement = () => {
                           )
                         )}
 
-                        {/* Pending variants (new product not saved yet) */}
+                        
                         {pendingVariants.map((v) => (
                           <tr key={v._tempId} style={{ background: 'rgba(34,197,94,0.03)' }}>
                             <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
@@ -769,7 +771,7 @@ const ProductManagement = () => {
                           </tr>
                         ))}
 
-                        {/* Add new variant input row */}
+                       
                         <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
                           <td style={S.variantTd}>
                             <input className="pm-variant-input" style={S.variantInput} value={newVariant.name} onChange={e => setNewVariant(p => ({ ...p, name: e.target.value }))} placeholder={t('e.g. Per Meter')} />
@@ -805,7 +807,7 @@ const ProductManagement = () => {
                 </div>
               </div>
 
-              {/* Modal Footer */}
+              
               <div style={S.modalFooter}>
                 <button type="button" className="pm-btn-cancel" onClick={closeModal} style={S.btnCancel}>{t('Cancel')}</button>
                 <button type="submit" className="pm-btn-save" style={S.btnSave}>
@@ -818,7 +820,7 @@ const ProductManagement = () => {
         </div>
       )}
 
-      {/* ── Add Product Type Modal ── */}
+      
       <AddProductTypeModal
         isOpen={showAddTypeModal}
         onClose={() => setShowAddTypeModal(false)}

@@ -20,7 +20,7 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Review Modal State
+ 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', comment: '', images: [] });
@@ -214,9 +214,9 @@ const OrderDetails = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Left Column: Items & Summary */}
+        
         <div className="lg:col-span-2 space-y-8">
-          {/* Order Items */}
+         
           <div className="bg-white border border-gray-200 shadow-sm rounded-3xl p-8">
             <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-200 pb-4 tracking-tight">Ordered Products</h2>
             <div className="space-y-6">
@@ -268,7 +268,7 @@ const OrderDetails = () => {
           </div>
         </div>
 
-        {/* Right Column: Customer Info & Total */}
+        
         <div className="space-y-8">
           {/* Summary */}
           <div className="bg-white border border-gray-200 shadow-sm rounded-3xl p-6">
@@ -305,7 +305,7 @@ const OrderDetails = () => {
             </div>
           </div>
 
-          {/* Delivery Details */}
+          
           <div className="bg-white border border-gray-200 shadow-sm rounded-3xl p-6">
             <h2 className="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2 tracking-tight">
               <MapPin size={20} className="text-gray-700" /> Delivery Information
@@ -337,7 +337,7 @@ const OrderDetails = () => {
 
       </div>
 
-      {/* Review Modal */}
+     
       {reviewModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white border border-gray-200 shadow-xl rounded-3xl w-full max-w-4xl p-6 lg:p-8 animate-scale-in max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -361,9 +361,9 @@ const OrderDetails = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
 
-                  {/* Left Column */}
+                  
                   <div className="space-y-8">
-                    {/* Product Info */}
+                    
                     <div className="flex gap-4 items-center bg-gray-50 p-4 rounded-2xl border border-gray-200">
                       <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
                         <img src={selectedProduct?.imageUrls?.[0] || selectedProduct?.imageUrl} alt="Product" className="w-full h-full object-cover" />
@@ -374,7 +374,7 @@ const OrderDetails = () => {
                       </div>
                     </div>
 
-                    {/* Rating */}
+                   
                     <div>
                       <label className="block text-base font-semibold text-gray-900 mb-3">Overall Rating</label>
                       <div className="flex gap-2">

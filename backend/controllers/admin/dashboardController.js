@@ -2,7 +2,7 @@ const prisma = require("../../config/db");
 
 const getDashboardStats = async (req, res) => {
   try {
-    // 1. Core aggregates
+    
     const totalUsers = await prisma.user.count({ where: { role: "customer" } });
     const totalProducts = await prisma.product.count();
     const totalOrders = await prisma.order.count();
@@ -14,7 +14,7 @@ const getDashboardStats = async (req, res) => {
     
     const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
 
-    // 2. Recent Orders (last 5)
+    
     const recentOrdersData = await prisma.order.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
@@ -29,7 +29,7 @@ const getDashboardStats = async (req, res) => {
       total: `₱${o.total.toLocaleString()}`
     }));
 
-    // 3. Recent Users
+  
     const recentUsersData = await prisma.user.findMany({
       where: { role: "customer" },
       take: 5,
@@ -42,7 +42,8 @@ const getDashboardStats = async (req, res) => {
       joined: new Date(u.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" })
     }));
 
-    // 4. Stock Alerts (stock < 10)
+    
+  
     const stockAlertsData = await prisma.product.findMany({
       where: { stock: { lt: 10 } },
       take: 5,
@@ -53,7 +54,7 @@ const getDashboardStats = async (req, res) => {
       stock: p.stock
     }));
 
-    // 5. Inventory Bars (grouped by type)
+    
     const products = await prisma.product.findMany({ select: { type: true, stock: true } });
     const typeGroups = {};
     let totalStock = 0;
@@ -75,8 +76,7 @@ const getDashboardStats = async (req, res) => {
       };
     }).sort((a, b) => b.pct - a.pct); // Sort descending
 
-    // 6. Top Products
-    // Find top selling products by querying orderItems
+    
     const topSelling = await prisma.orderItem.groupBy({
       by: ['productId'],
       _sum: { quantity: true },
@@ -89,10 +89,10 @@ const getDashboardStats = async (req, res) => {
       if (!ts.productId) continue;
       const prod = await prisma.product.findUnique({
         where: { id: ts.productId },
-        include: { orderItems: true } // to calculate revenue if needed
+        include: { orderItems: true } 
       });
       if (prod) {
-        // Calculate revenue for this product
+        
         const revenue = prod.orderItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
         topProducts.push({
           name: prod.name,
@@ -104,7 +104,7 @@ const getDashboardStats = async (req, res) => {
       }
     }
     
-    // If no sales yet, fallback to highest stock products
+    
     if (topProducts.length === 0) {
       const fallbackProducts = await prisma.product.findMany({ take: 4, orderBy: { stock: "desc" } });
       fallbackProducts.forEach(p => {
@@ -118,12 +118,12 @@ const getDashboardStats = async (req, res) => {
       });
     }
 
-    // 7. Sales Summary (Today, This Week, This Month)
+    
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     const weekStart = new Date(today);
-    weekStart.setDate(weekStart.getDate() - today.getDay()); // Sunday as start of week
+    weekStart.setDate(weekStart.getDate() - today.getDay()); 
     
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
