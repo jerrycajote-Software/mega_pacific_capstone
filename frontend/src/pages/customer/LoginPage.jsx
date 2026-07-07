@@ -1,7 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  InputAdornment,
+  IconButton,
+  CircularProgress,
+  Paper,
+  Link,
+} from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+
+const BRAND_FEATURES = [
+  'Premium quality roofing & steel materials',
+  'Fast and reliable order processing',
+  'Trusted by thousands of contractors',
+  'Secure and seamless checkout',
+];
 
 const CustomerLoginPage = () => {
   const [email, setEmail] = useState('');
@@ -10,7 +32,7 @@ const CustomerLoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  
+
   const { login, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,7 +40,6 @@ const CustomerLoginPage = () => {
   useEffect(() => {
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
-      
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -28,226 +49,224 @@ const CustomerLoginPage = () => {
     setError('');
     setSuccessMessage('');
     setLoading(true);
-    
+
     const result = await login(email, password);
-    
+
     if (result.success) {
-     
-      if (result.user?.role === 'admin') {
+      if (result.user?.role !== 'customer') {
         logout();
-        setError('Admin accounts cannot access the customer portal. Please use the Admin Login.');
+        setError('Staff accounts cannot access the customer portal. Please use the staff login.');
         setLoading(false);
         return;
       }
       navigate('/dashboard');
     } else {
-      setError(result.error);
+      if (result.error === 'Email not verified' && result.email) {
+        navigate('/verify-email', { state: { email: result.email } });
+      } else {
+        setError(result.error);
+      }
     }
     setLoading(false);
   };
 
-  
   return (
-    <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: 'sans-serif' }}>
-      <style>{`
-        .custom-form-container {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          width: 100%;
-          max-width: 400px;
-          background-color: #0a192f;
-          padding: 30px;
-          border-radius: 20px;
-          position: relative;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        bgcolor: 'background.default',
+      }}
+    >
+      {/* ─── Left Decorative Panel (md+) ─────────────────────── */}
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          width: '45%',
+          flexShrink: 0,
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          px: 6,
+          py: 8,
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'linear-gradient(145deg, #31572c 0%, #4f772d 40%, #6b9840 75%, #90a955 100%)',
+        }}
+      >
+        {/* Decorative circles */}
+        <Box sx={{ position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.06)' }} />
+        <Box sx={{ position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.05)' }} />
+        <Box sx={{ position: 'absolute', top: '40%', right: 40, width: 100, height: 100, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.08)' }} />
 
-        .custom-title {
-          font-size: 28px;
-          color: royalblue;
-          font-weight: 600;
-          letter-spacing: -1px;
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-bottom: 5px;
-        }
+        {/* Logo */}
+        <Box sx={{ mb: 4, position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 36, letterSpacing: '0.05em', lineHeight: 1 }}>
+            <Typography component="span" sx={{ color: '#ecf39e' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: '#ffffff' }}>PACIFIC</Typography>
+          </Box>
+          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px', fontWeight: 800, letterSpacing: '0.25em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+            METAL AND STEEL CORP
+          </Typography>
+        </Box>
 
-        .custom-message {
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 14px;
-          margin-bottom: 10px;
-          text-align: center;
-        }
+        <Typography variant="h4" fontWeight={700} sx={{ color: '#ffffff', mb: 1.5, lineHeight: 1.3, position: 'relative', zIndex: 1 }}>
+          Build the Future<br />with Confidence
+        </Typography>
+        <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.75)', mb: 5, maxWidth: 340, lineHeight: 1.8, position: 'relative', zIndex: 1 }}>
+          Your trusted partner for premium roofing systems, steel trusses, and durable construction materials.
+        </Typography>
 
-        .custom-signin {
-          text-align: center;
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 14px;
-          margin-top: 10px;
-        }
+        {/* Feature list */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
+          {BRAND_FEATURES.map((feat, i) => (
+            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <CheckCircleOutlinedIcon sx={{ color: '#ecf39e', fontSize: 20, flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
+                {feat}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
 
-        .custom-signin a {
-          color: royalblue;
-        }
+      {/* ─── Right: Login Form ────────────────────────────────── */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: { xs: 3, sm: 6, md: 8 },
+          py: 6,
+        }}
+      >
+        <Box sx={{ width: '100%', maxWidth: 420 }}>
 
-        .custom-signin a:hover {
-          text-decoration: underline royalblue;
-        }
+          {/* Mobile logo (shown only on xs/sm) */}
+          <Box sx={{ textAlign: 'center', mb: 4, display: { xs: 'block', md: 'none' } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 28, letterSpacing: '0.05em', lineHeight: 1, mb: 0.5 }}>
+              <Typography component="span" sx={{ color: 'primary.main' }}>MEGA</Typography>
+              <Typography component="span" sx={{ color: 'secondary.main' }}>PACIFIC</Typography>
+            </Box>
+            <Typography sx={{ color: 'text.secondary', fontSize: '9px', fontWeight: 800, letterSpacing: '0.2em', fontFamily: 'Arial, sans-serif' }}>
+              METAL AND STEEL CORP
+            </Typography>
+          </Box>
 
-        .custom-form-container label {
-          position: relative;
-          width: 100%;
-          display: block;
-        }
+          {/* Lock icon */}
+          <Box
+            sx={{
+              width: 52,
+              height: 52,
+              borderRadius: 3,
+              bgcolor: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 3,
+              background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
+              boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
+            }}
+          >
+            <LockOutlinedIcon sx={{ color: '#ffffff', fontSize: 26 }} />
+          </Box>
 
-        .custom-form-container label .custom-input {
-          width: 100%;
-          padding: 10px 10px 20px 10px;
-          outline: 0;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 10px;
-          background-color: transparent;
-          color: white;
-        }
+          <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
+            Welcome back
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+            Sign in to your account to continue shopping.
+          </Typography>
 
-        .custom-form-container label .custom-input + span {
-          position: absolute;
-          left: 10px;
-          top: 15px;
-          color: grey;
-          font-size: 0.9em;
-          cursor: text;
-          transition: 0.3s ease;
-          pointer-events: none;
-        }
+          {successMessage && (
+            <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
+              {successMessage}
+            </Alert>
+          )}
 
-        .custom-form-container label .custom-input:placeholder-shown + span {
-          top: 15px;
-          font-size: 0.9em;
-        }
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-        .custom-form-container label .custom-input:focus + span,
-        .custom-form-container label .custom-input:not(:placeholder-shown) + span {
-          top: 32px;
-          font-size: 0.7em;
-          font-weight: 600;
-        }
-
-        .custom-form-container label .custom-input:not(:placeholder-shown) + span {
-          color: #4CAF50;
-        }
-        
-        .custom-form-container label .custom-input:focus + span {
-          color: royalblue;
-        }
-
-        .custom-submit {
-          border: none;
-          outline: none;
-          background-color: royalblue;
-          padding: 12px;
-          border-radius: 10px;
-          color: #fff;
-          font-size: 16px;
-          transition: .3s ease;
-          cursor: pointer;
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-top: 5px;
-        }
-
-        .custom-submit:hover {
-          background-color: rgb(56, 90, 194);
-        }
-
-        .custom-submit:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-      `}</style>
-
-      <div className="custom-form-container">
-        <h2 className="custom-title">Login</h2>
-        <p className="custom-message">Login to your account.</p>
-
-        {successMessage && (
-          <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-lg mb-2 text-sm flex items-center justify-center">
-            <CheckCircle2 size={16} className="mr-2 flex-shrink-0" />
-            {successMessage}
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg mb-2 text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <label>
-            <input 
-              required 
-              placeholder=" " 
-              type="email" 
-              className="custom-input"
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <TextField
+              fullWidth
+              label="Email Address"
+              type="email"
+              variant="outlined"
+              margin="normal"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              sx={{ mb: 0 }}
             />
-            <span>Email</span>
-          </label> 
-          
-          <label>
-            <input 
-              required 
-              placeholder=" " 
-              type={showPassword ? 'text' : 'password'} 
-              className="custom-input"
+
+            <TextField
+              fullWidth
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              variant="outlined"
+              margin="normal"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ paddingRight: '40px' }}
-            />
-            <span>Password</span>
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                color: 'grey',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      size="small"
+                    >
+                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
               }}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-            
-          </label>
+            />
 
-          {/* <div style={{ textAlign: 'right', marginTop: '-5px' }}>
-            <a href="#" style={{ color: 'royalblue', fontSize: '13px', textDecoration: 'none' }}>Forgot password?</a>
-          </div> */}
-          
-          <button type="submit" className="custom-submit" disabled={loading}>
-            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Login'}
-          </button>
-        </form>
-        
-        <p className="custom-signin">
-          Don't have an account ? <Link to="/register">Signup</Link> 
-        </p>
-      </div>
-    </div>
+            {/* Forgot Password link */}
+            <Box sx={{ textAlign: 'right', mt: 0.5, mb: 1 }}>
+              <Link
+                component={RouterLink}
+                to="/forgot-password"
+                color="primary"
+                fontWeight={600}
+                underline="hover"
+                variant="body2"
+              >
+                Forgot Password?
+              </Link>
+            </Box>
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
+              disabled={loading}
+              sx={{ mt: 3, mb: 2, py: 1.6, borderRadius: 2, fontSize: '1rem', fontWeight: 700 }}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+            </Button>
+          </Box>
+
+          <Box textAlign="center">
+            <Typography variant="body2" color="text.secondary">
+              Don&apos;t have an account?{' '}
+              <Link component={RouterLink} to="/register" color="primary" fontWeight={700} underline="hover">
+                Create account
+              </Link>
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

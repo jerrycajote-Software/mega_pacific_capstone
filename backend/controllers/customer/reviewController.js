@@ -3,7 +3,7 @@ const prisma = require("../../config/db");
 // Submit a review
 const submitReview = async (req, res) => {
   const userId = req.user.userId || req.user.id;
-  const { productId, rating, title, comment, imageUrls } = req.body;
+  const { productId, rating, title, comment, imageUrls, orderId } = req.body;
 
   // 1. Validate payload
   if (!productId) {
@@ -20,36 +20,72 @@ const submitReview = async (req, res) => {
   }
 
   try {
-    // 2. Verify the user has purchased the product and it is delivered
-    const hasDeliveredOrder = await prisma.order.findFirst({
-      where: {
-        userId: userId,
-        status: {
-          equals: "delivered",
-          mode: "insensitive"
-        },
-        items: {
-          some: {
-            productId: parseInt(productId)
+    if (orderId) {
+      // 2a. Verify the user has purchased the product in this specific order, and the order is delivered
+      const order = await prisma.order.findFirst({
+        where: {
+          id: parseInt(orderId),
+          userId: userId,
+          status: {
+            equals: "delivered",
+            mode: "insensitive"
+          },
+          items: {
+            some: {
+              productId: parseInt(productId)
+            }
           }
         }
+      });
+
+      if (!order) {
+        return res.status(403).json({ success: false, message: "You can only review products from your delivered orders." });
       }
-    });
 
-    if (!hasDeliveredOrder) {
-      return res.status(403).json({ success: false, message: "You can only review products from delivered orders." });
-    }
+      // 3a. Check if user already reviewed this product for this specific order
+      const existingReview = await prisma.review.findFirst({
+        where: {
+          userId: userId,
+          productId: parseInt(productId),
+          orderId: parseInt(orderId)
+        }
+      });
 
-    // 3. Check if user already reviewed this product
-    const existingReview = await prisma.review.findFirst({
-      where: {
-        userId: userId,
-        productId: parseInt(productId)
+      if (existingReview) {
+        return res.status(400).json({ success: false, message: "You have already reviewed this product for this order." });
       }
-    });
+    } else {
+      // 2b. Legacy: Verify the user has purchased the product and it is delivered
+      const hasDeliveredOrder = await prisma.order.findFirst({
+        where: {
+          userId: userId,
+          status: {
+            equals: "delivered",
+            mode: "insensitive"
+          },
+          items: {
+            some: {
+              productId: parseInt(productId)
+            }
+          }
+        }
+      });
 
-    if (existingReview) {
-      return res.status(400).json({ success: false, message: "You have already reviewed this product." });
+      if (!hasDeliveredOrder) {
+        return res.status(403).json({ success: false, message: "You can only review products from delivered orders." });
+      }
+
+      // 3b. Check if user already reviewed this product globally
+      const existingReview = await prisma.review.findFirst({
+        where: {
+          userId: userId,
+          productId: parseInt(productId)
+        }
+      });
+
+      if (existingReview) {
+        return res.status(400).json({ success: false, message: "You have already reviewed this product." });
+      }
     }
 
     // 4. Create the review
@@ -60,7 +96,8 @@ const submitReview = async (req, res) => {
         rating: parseInt(rating),
         title,
         comment,
-        imageUrls: imageUrls || []
+        imageUrls: imageUrls || [],
+        orderId: orderId ? parseInt(orderId) : null
       }
     });
 
@@ -104,6 +141,16 @@ const getProductReviews = async (req, res) => {
           select: {
             name: true,
             avatarUrl: true
+          }
+        },
+        reply: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                role: true
+              }
+            }
           }
         }
       },

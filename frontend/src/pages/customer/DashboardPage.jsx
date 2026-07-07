@@ -2,10 +2,31 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, Search, Loader2, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { 
+  Box, 
+  Container,
+  Grid, 
+  Card, 
+  CardMedia, 
+  CardContent, 
+  Typography, 
+  TextField, 
+  InputAdornment, 
+  Button, 
+  Chip,
+  CircularProgress,
+  Alert,
+  IconButton,
+  Paper
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import HeroSection from '../../components/HeroSection';
+import { buildProductOptions, getDefaultOption } from './buildProductOptions';
 
-const DashboardPage = () => {
+const DashboardPage = ({ showHero = true }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -13,12 +34,9 @@ const DashboardPage = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
-  //const [iconError, setIconError] = useState(false);
-
 
   const fetchProducts = async () => {
     try {
-      
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const response = await axios.get(`${API_URL}/api/admin/products`);
       setProducts(response.data);
@@ -40,162 +58,340 @@ const DashboardPage = () => {
   );
 
   return (
-    <div className="animate-fade-in-up">
-      
-      {/* Hero Section */}
-      <div className="bg-[hsl(220,40%,12%)] rounded-3xl p-10 mb-10 relative overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
-        <div className="relative z-10">
-          {/* <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-[1px] bg-[#27a358]"></div>
-            <span className="text-[#27a358] text-xs font-bold tracking-[0.2em] uppercase">
-              {t("Catalog")}
-            </span>
-          </div> */}
-          <h1 className="text-4xl font-black text-white mb-4 tracking-tight">
-            {t("Product Catalog")}
-          </h1>
-          <p className="text-gray-400 text-base max-w-2xl font-normal">
-            {t("Roofing, ceiling, and structural steel solutions for every application.")}
-          </p>
-        </div>
-      </div>
+    <Box sx={{ animation: 'fadeIn 0.5s ease-in-out' }}>
+      {/* Hero Section — no container wrapping so it bleeds full-width */}
+      {showHero && <HeroSection />}
 
-      {/* Inventory Section */}
-      <div className="mb-6">
-        <h2 className="text-[22px] font-bold text-[#111b2e] flex items-center gap-3 tracking-tight">
-          {/* {!iconError ? (
-            <img 
-              src="/roof_product.png" 
-              alt="Product Catalog" 
-              className="w-8 h-8 object-contain"
-              onError={() => setIconError(true)}
-            />
-          ) : (
-            <Package className="text-[#111b2e]" size={28} />
-          )} */}
-          {t("PRODUCT AVAILABLE")}
-        </h2>
-        {/* <p className="text-[#3b4758] text-sm mt-1 font-medium">{t("Available materials from our inventory")}</p> */}
-      </div>
+      {/* Product Catalog — wrapped in Container for consistent page margins */}
+      <Container maxWidth="xl" disableGutters sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+        {!showHero && (
+          <>
+            {/* Section Title — Phase 4: 20px left padding */}
+            <Box sx={{ mb: 3, pl: '20px' }}>
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  mb: 0.5,
+                  color: 'text.primary',
+                }}
+              >
+                {/* <Inventory2Icon color="primary" /> */}
+                {t('PRODUCT AVAILABLE')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('Browse our full catalog of quality materials')}
+              </Typography>
+            </Box>
+          </>
+        )}
 
-      {/* Search and Categories */}
-      <div className="mb-8">
-        <div className="relative w-full max-w-md mb-4 group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gray-700 transition-colors">
-            <Search size={18} />
-          </div>
-          <input
-            type="text"
-            placeholder={t("Search products...")}
+        {/* Search and Filters — Phase 4: 20px left padding */}
+        <Box sx={{ mb: 4, pl: '20px', display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+          <TextField
+            placeholder={t('Search products...')}
+            variant="outlined"
+            size="small"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white border border-gray-200 rounded-md py-2.5 pl-10 pr-4 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400/50 transition-all placeholder-gray-400 shadow-sm"
+            sx={{
+              width: { xs: '100%', sm: 300 },
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 3,
+                bgcolor: 'background.paper',
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" sx={{ fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
           />
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-2">
-          <button className="bg-[#27a358] text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-[#208a48] transition-colors cursor-pointer border border-[#27a358]">
-            {t("All Products")}
-          </button>
-          {/* Temporary unclickable categories */}
-          {/* <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Roofing Sheets")} 
-            <span className="text-gray-400 font-normal ml-1">(9)</span>
-          </div> */}
 
-          {/* <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Ceiling & Cladding")} 
-            
-          </div>
-
-          <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Structural Steel")} 
-          </div>
-
-          <div className="bg-white border border-gray-200 text-[#111b2e] px-4 py-2 rounded-md text-sm font-semibold cursor-default">
-            {t("Decking Systems")} 
-          </div> */}
-
-        </div>
-        
-      </div>
-
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 size={40} className="text-gray-400 animate-spin mb-4" />
-          <p className="text-gray-600">{t("Loading catalog...")}</p>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl text-center">
-          {error}
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-12 text-center">
-          <Package size={48} className="text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">{t("No products found")}</h3>
-          <p className="text-gray-500">
-            {searchTerm ? t("Try adjusting your search criteria.") : t("Check back later for new inventory.")}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              onClick={() => navigate(`/product/${product.id}`)}
-              className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-all group shadow-sm hover:shadow-md flex flex-col h-full cursor-pointer"
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              sx={{ borderRadius: 3, px: 2.5, fontWeight: 700 }}
             >
-              {/* Image Container */}
-              <div className="h-48 bg-gray-50 relative overflow-hidden flex items-center justify-center border-b border-gray-100">
-                {(product.imageUrls?.[0] || product.imageUrl) ? (
-                  <img
-                    src={product.imageUrls?.[0] || product.imageUrl}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <Package size={48} className="text-gray-300" />
-                )}
-                <div className="absolute top-3 right-3">
-                  <span className="bg-white/90 text-gray-800 border border-gray-200 shadow-sm text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-md">
-                    {product.type}
-                  </span>
-                </div>
-                {/* Image count badge */}
-                {product.imageUrls?.length > 1 && (
-                  <div className="absolute bottom-3 left-3 bg-white/90 shadow-sm text-gray-800 font-bold text-[10px] px-2 py-0.5 rounded-full border border-gray-200 backdrop-blur-sm">
-                    1/{product.imageUrls.length}
-                  </div>
-                )}
-              </div>
+              {t('All Products')}
+            </Button>
+          </Box>
+        </Box>
 
-              
-              <div className="p-5 flex-grow flex flex-col">
-                <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-gray-600 transition-colors line-clamp-1 tracking-tight">{product.name}</h3>
+        {/* Content */}
+        {loading ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 12 }}>
+            <CircularProgress color="primary" size={48} sx={{ mb: 2 }} />
+            <Typography color="text.secondary">{t('Loading catalog...')}</Typography>
+          </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>
+        ) : filteredProducts.length === 0 ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 8,
+              textAlign: 'center',
+              borderRadius: 4,
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Inventory2Icon sx={{ fontSize: 64, color: 'text.disabled', opacity: 0.4, mb: 2 }} />
+            <Typography variant="h5" fontWeight="bold" gutterBottom color="text.primary">
+              {t('No products found')}
+            </Typography>
+            <Typography color="text.secondary">
+              {searchTerm
+                ? t('Try adjusting your search criteria.')
+                : t('Check back later for new inventory.')}
+            </Typography>
+          </Paper>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              /* All columns equal width; auto-fill packs as many 220px cols as fit */
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: 2,
+            }}
+          >
+            {filteredProducts.map((product) => {
+              const options = buildProductOptions(product);
+              const defaultOpt = getDefaultOption(options);
+              const displayPrice = defaultOpt ? defaultOpt.price : product.price;
+              const displayUnit = defaultOpt ? defaultOpt.name : product.unit;
 
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow font-medium">
-                  {product.shortDescription || t("No description")}
-                </p>
+              return (
+                <Card
+                  key={product.id}
+                  elevation={0}
+                  onClick={() => navigate(`/product/${product.id}`)}
+                  sx={{
+                    /* CSS grid already controls column width; card fills the cell */
+                    width: '100%',
+                    height: 300,   /* every card is exactly 300px tall */
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    borderRadius: 3,
+                    bgcolor: '#ffffff',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 12px 28px rgba(0,0,0,0.1)',
+                      borderColor: 'transparent',
+                    },
+                  }}
+                >
+                  {/* Image area — fixed height */}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      height: 150,
+                      minHeight: 150,
+                      bgcolor: 'grey.50',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {(product.imageUrls?.[0] || product.imageUrl) ? (
+                      <CardMedia
+                        component="img"
+                        image={product.imageUrls?.[0] || product.imageUrl}
+                        alt={product.name}
+                        sx={{
+                          objectFit: 'cover',
+                          width: '100%',
+                          height: '100%',
+                          transition: 'transform 0.4s ease',
+                          '&:hover': { transform: 'scale(1.04)' },
+                        }}
+                      />
+                    ) : (
+                      <Inventory2Icon sx={{ fontSize: 56, color: 'text.disabled' }} />
+                    )}
 
-                <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-100">
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">{t("Price")}</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-extrabold text-gray-900">₱{product.price.toLocaleString()}</span>
-                      <span className="text-xs text-gray-500 font-medium">/ {product.unit}</span>
-                    </div>
-                  </div>
+                    {/* Type chip */}
+                    <Chip
+                      label={product.type}
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 10,
+                        fontWeight: 700,
+                        bgcolor: 'rgba(255,255,255,0.92)',
+                        color: '#1a2027',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        backdropFilter: 'blur(4px)',
+                        '& .MuiChip-label': { px: 1.5 },
+                      }}
+                    />
 
-                  <button className="bg-gray-900 hover:bg-gray-800 text-white p-2.5 rounded-xl transition-colors shadow-sm">
-                    <ArrowRight size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+                    {/* Multi-image indicator */}
+                    {product.imageUrls?.length > 1 && (
+                      <Chip
+                        label={`1/${product.imageUrls.length}`}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          bottom: 10,
+                          left: 10,
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          height: 22,
+                          bgcolor: 'rgba(0,0,0,0.5)',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      />
+                    )}
+                  </Box>
+
+                  {/* Card Content */}
+                  <CardContent
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      overflow: 'hidden',
+                      p: 1.5,
+                      '&:last-child': { pb: 1.5 },
+                    }}
+                  >
+                    {/* Product name — 2-line clamp */}
+                    <Typography
+                      variant="subtitle2"
+                      component="h3"
+                      fontWeight={800}
+                      title={product.name}
+                      sx={{
+                        color: '#1a2027',
+                        textTransform: 'uppercase',
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.02em',
+                        mb: 0.5,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: 36,
+                        lineHeight: '18px',
+                      }}
+                    >
+                      {product.name}
+                    </Typography>
+
+                    {/* Short description — 2-line clamp */}
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: '#6b7280',
+                        mb: 1,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: 32,
+                        lineHeight: '16px',
+                      }}
+                    >
+                      {product.shortDescription || t('No description')}
+                    </Typography>
+
+                    {/* Price + Arrow */}
+                    <Box
+                      sx={{
+                        mt: 'auto',
+                        pt: 1,
+                        borderTop: '1px solid #f0f4f8',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Box sx={{ minWidth: 0, flex: 1, pr: 1 }}>
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            color: '#9ca3af',
+                            display: 'block',
+                            lineHeight: 1,
+                            mb: 0.75,
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            fontSize: '0.65rem',
+                          }}
+                        >
+                          PRICE
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, flexWrap: 'nowrap', overflow: 'hidden' }}>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={900}
+                            sx={{ color: '#1a2027', lineHeight: 1, flexShrink: 0, fontSize: '0.85rem' }}
+                          >
+                            ₱{(displayPrice || 0).toLocaleString()}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            title={displayUnit || 'Default'}
+                            sx={{
+                              color: '#6b7280',
+                              fontWeight: 500,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            / {displayUnit || 'Default'}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <IconButton
+                        size="small"
+                        sx={{
+                          flexShrink: 0,
+                          bgcolor: 'primary.main',
+                          color: '#ffffff',
+                          borderRadius: 2,
+                          p: 1,
+                          boxShadow: '0 4px 12px rgba(79,119,45,0.35)',
+                          '&:hover': {
+                            bgcolor: 'primary.dark',
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <ArrowForwardIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Box>
+        )}
+      </Container>
+    </Box>
   );
 };
 

@@ -36,20 +36,35 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user };
     } catch (error) {
       console.error('Login error:', error.response?.data?.error || error.message);
-      return { success: false, error: error.response?.data?.error || 'Login failed' };
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Login failed',
+        email: error.response?.data?.email || null
+      };
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, contactNumber, address, city, province, zipCode) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const response = await axios.post(`${API_URL}/api/auth/register`, { 
         name, 
         email, 
         password,
+        contactNumber,
+        address,
+        city,
+        province,
+        zipCode,
         role: 'customer'
       });
-      return { success: true, userId: response.data.userId };
+      return { 
+        success: true, 
+        userId: response.data.userId, 
+        email: response.data.email,
+        isRestoration: response.data.isRestoration,
+        message: response.data.message 
+      };
     } catch (error) {
       console.error('Registration error:', error.response?.data?.error || error.message);
       return { success: false, error: error.response?.data?.error || 'Registration failed' };

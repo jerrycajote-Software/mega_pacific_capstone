@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getProducts,
   createProduct,
+  updateProduct,
   deleteProduct,
 } = require("../../controllers/admin/productController");
 const {
@@ -14,6 +15,7 @@ const {
 
 router.get("/", getProducts);
 router.post("/", createProduct);
+router.put("/:id", updateProduct);
 router.delete("/:id", deleteProduct);
 
 

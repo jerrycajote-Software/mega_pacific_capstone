@@ -16,23 +16,33 @@ model User {
   email         String   @unique
   password      String
   role          String   @default("customer")
-  status        String   @default("active") // active, suspended
+  status        String   @default("active") // active, suspended, deleted
+  deletedAt     DateTime?
   avatarUrl     String? // Profile Avatar
   contactNumber String?
   address       String?
-  cityProvince  String?
+  city          String?
+  province      String?
   zipCode       String?
   createdAt     DateTime @default(now())
   orders        Order[]
   reviews       Review[]
+  inquiries     Inquiry[]
+  sentMessages  Message[]
+  isEmailVerified    Boolean   @default(false)
+  otpCode            String?
+  otpExpiresAt       DateTime?
+  lastOtpSentAt      DateTime?
+  resetOtpCode       String?   // For forgot-password flow (separate from email verification OTP)
+  resetOtpExpiresAt  DateTime?
+  replies            ReviewReply[]
 }
 
 model Product {
   id               Int              @id @default(autoincrement())
-  name             String
+  name             String           @unique
   type             String // e.g. Spandrel, Rib, Flat Type
-  shortDescription String?
-  longDescription  String?
+  description      String?
   price            Float // Base price (fallback when no variants)
   unit             String           @default("per meter")
   stock            Int // Base stock (fallback when no variants)
@@ -62,16 +72,19 @@ model ProductVariant {
 }
 
 model Review {
-  id        Int      @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   productId Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product      @relation(fields: [productId], references: [id])
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  rating    Int      @default(5)
+  user      User         @relation(fields: [userId], references: [id])
+  rating    Int          @default(5)
   title     String? // Review Title
   comment   String?
-  imageUrls String[] @default([]) // Array for multiple review images
-  createdAt DateTime @default(now())
+  imageUrls String[]     @default([]) // Array for multiple review images
+  createdAt DateTime     @default(now())
+  orderId   Int?
+  order     Order?       @relation(fields: [orderId], references: [id])
+  reply     ReviewReply?
 }
 
 model Order {
@@ -84,14 +97,17 @@ model Order {
   paymentMode           String      @default("Cash on Delivery")
   customerName          String?
   customerEmail         String?
-  contactNumber         String?
-  address               String?
-  cityProvince          String?
-  zipCode               String?
+  shippingName          String?
+  shippingContactNumber String?
+  shippingAddress       String?
+  shippingCity          String?
+  shippingProvince      String?
+  shippingZipCode       String?
   notes                 String?
   estimatedDeliveryDate DateTime?
   createdAt             DateTime    @default(now())
   items                 OrderItem[]
+  reviews               Review[]
 }
 
 model OrderItem {
@@ -112,4 +128,35 @@ model ProductType {
   name        String   @unique
   description String?
   createdAt   DateTime @default(now())
+}
+
+model Inquiry {
+  id          Int       @id @default(autoincrement())
+  customerId  Int
+  customer    User      @relation(fields: [customerId], references: [id])
+  subject     String?
+  status      String    @default("Open") // Open, In Progress, Resolved
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  messages    Message[]
+}
+
+model Message {
+  id          Int       @id @default(autoincrement())
+  inquiryId   Int
+  inquiry     Inquiry   @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  senderId    Int
+  sender      User      @relation(fields: [senderId], references: [id])
+  content     String
+  createdAt   DateTime  @default(now())
+}
+
+model ReviewReply {
+  id        Int      @id @default(autoincrement())
+  reviewId  Int      @unique
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  comment   String
+  createdAt DateTime @default(now())
 }

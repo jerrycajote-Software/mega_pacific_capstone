@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import {
-  TrendingUp,
-  Package,
-  ShoppingCart,
-  Users,
-  AlertTriangle,
-  ArrowUpRight,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  Truck,
-  RefreshCw,
-} from 'lucide-react';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import InventoryIcon from '@mui/icons-material/Inventory2';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PeopleIcon from '@mui/icons-material/People';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CancelIcon from '@mui/icons-material/Cancel';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 
 const Widget = ({ title, action, children, style = {} }) => (
@@ -23,7 +20,7 @@ const Widget = ({ title, action, children, style = {} }) => (
       {action && (
         <button
           onClick={action.fn}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#22c55e', fontSize: '0.78rem', fontWeight: 600 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--green)', fontSize: '0.78rem', fontWeight: 600 }}
         >
           {action.label}
         </button>
@@ -37,7 +34,7 @@ const Widget = ({ title, action, children, style = {} }) => (
 const StatCard = ({ label, value, change, icon, iconBg }) => (
   <div className="widget" style={{ padding: '1.5rem', cursor: 'default', transition: 'border-color 0.2s' }}
     onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)'}
-    onMouseLeave={e => e.currentTarget.style.borderColor = '#2e2e2e'}
+    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-light)'}
   >
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
       <div style={{ padding: '0.6rem', borderRadius: 12, background: iconBg }}>
@@ -46,22 +43,22 @@ const StatCard = ({ label, value, change, icon, iconBg }) => (
       <span className="badge-green">{change}</span>
     </div>
     <div style={{ fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.1 }}>{value}</div>
-    <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: 4 }}>{label}</div>
+    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>{label}</div>
   </div>
 );
 
 
 const statusMap = {
-  Completed: { cls: 'badge-green', Icon: CheckCircle2 },
-  Pending: { cls: 'badge-amber', Icon: Clock },
-  Shipped: { cls: 'badge-blue', Icon: Truck },
-  Cancelled: { cls: 'badge-red', Icon: XCircle },
+  Completed: { cls: 'badge-green', Icon: CheckCircleIcon },
+  Pending:   { cls: 'badge-amber', Icon: AccessTimeIcon },
+  Shipped:   { cls: 'badge-blue',  Icon: LocalShippingIcon },
+  Cancelled: { cls: 'badge-red',   Icon: CancelIcon },
 };
 const StatusBadge = ({ status }) => {
-  const { cls, Icon } = statusMap[status] || { cls: 'badge-blue', Icon: Clock };
+  const { cls, Icon } = statusMap[status] || { cls: 'badge-blue', Icon: AccessTimeIcon };
   return (
     <span className={cls} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-      <Icon size={10} />
+      <Icon sx={{ fontSize: 10 }} />
       {status}
     </span>
   );
@@ -76,16 +73,16 @@ const th = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  color: '#6b7280',
+  color: 'var(--text-muted)',
   background: 'rgba(255,255,255,0.02)',
-  borderBottom: '1px solid #1f1f1f',
+  borderBottom: '1px solid var(--border)',
 };
 const td = (right = false) => ({
   padding: '0.8rem 1.25rem',
   fontSize: '0.85rem',
-  color: '#d1d5db',
+  color: 'var(--text-primary)',
   textAlign: right ? 'right' : 'left',
-  borderBottom: '1px solid #1a1a1a',
+  borderBottom: '1px solid var(--border)',
 });
 
 
@@ -123,8 +120,8 @@ const DashboardPage = () => {
 
   if (loading || !data) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#9ca3af' }}>
-        <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginRight: 10 }} />
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: 'var(--text-muted)' }}>
+        <RefreshIcon sx={{ fontSize: 24, animation: 'spin 1s linear infinite', marginRight: '10px' }} />
         Loading Dashboard Data...
       </div>
     );
@@ -139,7 +136,7 @@ const DashboardPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>Dashboard Overview</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#6b7280' }}>
+          <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
             {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -147,21 +144,21 @@ const DashboardPage = () => {
           onClick={refresh}
           style={{
             display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
-            background: '#1a1a1a', border: '1px solid #2e2e2e', borderRadius: 10,
-            color: '#9ca3af', fontSize: '0.82rem', cursor: 'pointer',
+            background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', borderRadius: 10,
+            color: 'var(--text-muted)', fontSize: '0.82rem', cursor: 'pointer',
           }}
         >
-          <RefreshCw size={15} style={{ animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? '#22c55e' : 'inherit' }} />
+          <RefreshIcon sx={{ fontSize: 15, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? '#22c55e' : 'inherit' }} />
           Refresh
         </button>
       </div>
 
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
-        <StatCard label="Total Revenue" value={totals.revenue} change="Updated" icon={<TrendingUp size={20} color="#22c55e" />} iconBg="rgba(34,197,94,0.1)" />
-        <StatCard label="Total Products" value={totals.products} change="Updated" icon={<Package size={20} color="#60a5fa" />} iconBg="rgba(96,165,250,0.1)" />
-        <StatCard label="Total Orders" value={totals.orders} change="Updated" icon={<ShoppingCart size={20} color="#c084fc" />} iconBg="rgba(192,132,252,0.1)" />
-        {/* <StatCard label="Registered Users" value={totals.users} change="Updated" icon={<Users size={20} color="#22d3ee" />} iconBg="rgba(34,211,238,0.1)" /> */}
+        <StatCard label="Total Revenue" value={totals.revenue} change="Updated" icon={<TrendingUpIcon sx={{ fontSize: 20, color: '#22c55e' }} />} iconBg="rgba(34,197,94,0.1)" />
+        <StatCard label="Total Products" value={totals.products} change="Updated" icon={<InventoryIcon sx={{ fontSize: 20, color: '#60a5fa' }} />} iconBg="rgba(96,165,250,0.1)" />
+        <StatCard label="Total Orders" value={totals.orders} change="Updated" icon={<ShoppingCartIcon sx={{ fontSize: 20, color: '#c084fc' }} />} iconBg="rgba(192,132,252,0.1)" />
+        {/* <StatCard label="Registered Users" value={totals.users} change="Updated" icon={<PeopleIcon sx={{ fontSize: 20, color: '#22d3ee' }} />} iconBg="rgba(34,211,238,0.1)" /> */}
       </div>
 
       
@@ -185,9 +182,9 @@ const DashboardPage = () => {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <td style={{ ...td(), fontFamily: 'monospace', color: '#4ade80', fontSize: '0.8rem' }}>{o.id}</td>
-                  <td style={{ ...td(), fontWeight: 500, color: '#e5e7eb' }}>{o.customer}</td>
-                  <td style={{ ...td(), color: '#6b7280' }}>{o.date}</td>
+                  <td style={{ ...td(), fontFamily: 'monospace', color: 'var(--green)', fontSize: '0.8rem' }}>{o.id}</td>
+                  <td style={{ ...td(), fontWeight: 500, color: 'var(--text-primary)' }}>{o.customer}</td>
+                  <td style={{ ...td(), color: 'var(--text-muted)' }}>{o.date}</td>
                   <td style={td()}><StatusBadge status={o.status} /></td>
                   <td style={{ ...td(true), fontWeight: 600 }}>{o.total}</td>
                 </tr>
@@ -262,11 +259,11 @@ const DashboardPage = () => {
                   style={{ transition: 'background 0.15s' }}
                 >
                   <td style={td()}>
-                    <div style={{ fontWeight: 500, color: '#e5e7eb' }}>{p.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#4b5563' }}>{p.type}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{p.name}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{p.type}</div>
                   </td>
                   <td style={td()}>{p.sold}</td>
-                  <td style={{ ...td(), color: '#4ade80', fontWeight: 600 }}>{p.revenue}</td>
+                  <td style={{ ...td(), color: 'var(--green)', fontWeight: 600 }}>{p.revenue}</td>
                   <td style={td()}>
                     <span className={p.stock < 50 ? 'badge-red' : 'badge-green'}>{p.stock} units</span>
                   </td>

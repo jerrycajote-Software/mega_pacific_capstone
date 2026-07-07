@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  Search, Filter, RefreshCw, Eye, CheckCircle2, XCircle, Clock, Truck,
-  CreditCard, ChevronLeft, ChevronRight, Package, MapPin, Calendar, X, Shuffle
-} from 'lucide-react';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import CloseIcon from '@mui/icons-material/Close';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { ShippingInfoMapper } from '../../utils/ShippingInfoMapper';
 import { EstimatedDeliveryValidator } from '../../utils/EstimatedDeliveryValidator';
+import { useAuth } from '../../context/AuthContext';
+import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
+import DownloadIcon from '@mui/icons-material/Download';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 const th = {
   padding: '1rem 1.25rem',
@@ -13,52 +29,55 @@ const th = {
   fontWeight: 600,
   letterSpacing: '0.05em',
   textTransform: 'uppercase',
-  color: '#9ca3af',
+  color: 'var(--text-muted)',
   background: 'rgba(255,255,255,0.02)',
-  borderBottom: '1px solid #2e2e2e',
+  borderBottom: '1px solid var(--border-light)',
   whiteSpace: 'nowrap'
 };
 
 const td = {
   padding: '1rem 1.25rem',
   fontSize: '0.85rem',
-  color: '#d1d5db',
-  borderBottom: '1px solid #1a1a1a',
+  color: 'var(--text-primary)',
+  borderBottom: '1px solid var(--border)',
 };
 
 const statusMap = {
-  completed: { cls: 'badge-green', Icon: CheckCircle2 },
-  delivered: { cls: 'badge-green', Icon: CheckCircle2 },
-  pending: { cls: 'badge-amber', Icon: Clock },
-  shipped: { cls: 'badge-blue', Icon: Truck },
-  out_for_delivery: { cls: 'badge-blue', Icon: Truck },
-  cancelled: { cls: 'badge-red', Icon: XCircle },
+  completed:        { cls: 'badge-green', Icon: CheckCircleIcon, label: 'Delivered' },
+  delivered:        { cls: 'badge-green', Icon: CheckCircleIcon, label: 'Delivered' },
+  pending:          { cls: 'badge-amber', Icon: AccessTimeIcon,  label: 'Preparing' },
+  shipped:          { cls: 'badge-amber', Icon: AccessTimeIcon,  label: 'Preparing' },
+  out_for_delivery: { cls: 'badge-blue',  Icon: LocalShippingIcon, label: 'Out for Delivery' },
+  cancelled:        { cls: 'badge-red',   Icon: CancelIcon,      label: 'Cancelled' },
 };
 
 const paymentStatusMap = {
-  paid: { cls: 'badge-green', Icon: CheckCircle2 },
-  unpaid: { cls: 'badge-amber', Icon: Clock },
+  paid:   { cls: 'badge-green', Icon: CheckCircleIcon, label: 'Paid' },
+  unpaid: { cls: 'badge-amber', Icon: AccessTimeIcon,  label: 'Unpaid' },
 };
 
 const StatusBadge = ({ status, type = 'order' }) => {
   const s = status ? status.toLowerCase() : '';
   const map = type === 'payment' ? paymentStatusMap : statusMap;
-  const config = map[s] || { cls: 'badge-blue', Icon: Clock };
-  const { cls, Icon } = config;
+  const config = map[s] || { cls: 'badge-blue', Icon: AccessTimeIcon, label: status };
+  const { cls, Icon, label } = config;
   return (
     <span className={cls} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 99 }}>
-      <Icon size={12} />
-      <span style={{ textTransform: 'capitalize' }}>{status.replace(/_/g, ' ')}</span>
+      <Icon sx={{ fontSize: 12 }} />
+      <span style={{ textTransform: 'capitalize' }}>{(label || status).replace(/_/g, ' ')}</span>
     </span>
   );
 };
 
 const OrderManagement = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All');
 
 
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -157,8 +176,30 @@ const OrderManagement = () => {
 
     const matchesFilter = filterStatus === 'All' || order.orderStatus.toLowerCase() === filterStatus.toLowerCase();
 
-    return matchesSearch && matchesFilter;
+    let matchesDate = true;
+    if (dateFilter !== 'All') {
+      const orderDate = new Date(order.dateOrdered);
+      const now = new Date();
+      if (dateFilter === 'Daily') {
+        matchesDate = orderDate.toDateString() === now.toDateString();
+      } else if (dateFilter === 'Weekly') {
+        const oneWeekAgo = new Date(now.setDate(now.getDate() - 7));
+        matchesDate = orderDate >= oneWeekAgo;
+      } else if (dateFilter === 'Monthly') {
+        matchesDate = orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+      }
+    }
+
+    return matchesSearch && matchesFilter && matchesDate;
   });
+
+  const handleExportExcel = () => {
+    exportToExcel(filteredOrders, `Orders_${dateFilter}`);
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF(filteredOrders, `Orders_${dateFilter}`);
+  };
 
  
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -170,7 +211,7 @@ const OrderManagement = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#9ca3af' }}>
-        <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite', marginRight: 10 }} />
+        <RefreshIcon sx={{ fontSize: 24, animation: 'spin 1s linear infinite', marginRight: '10px' }} />
         Loading Orders...
       </div>
     );
@@ -181,58 +222,82 @@ const OrderManagement = () => {
      
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Order Management</h2>
-          <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: '#6b7280' }}>
+          <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Order Management</h2>
+          <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             View and manage all customer orders from the platform.
           </p>
         </div>
-        <button
-          onClick={refresh}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
-            background: '#1a1a1a', border: '1px solid #2e2e2e', borderRadius: 10,
-            color: '#9ca3af', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#22c55e'; e.currentTarget.style.color = '#e5e7eb'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#2e2e2e'; e.currentTarget.style.color = '#9ca3af'; }}
-        >
-          <RefreshCw size={15} style={{ animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? '#22c55e' : 'inherit' }} />
-          Refresh Data
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleExportExcel}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
+              background: '#107c41', border: '1px solid #107c41', borderRadius: 10,
+              color: 'white', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s',
+            }}
+          >
+            <DownloadIcon sx={{ fontSize: 16 }} />
+            Excel
+          </button>
+          <button
+            onClick={handleExportPDF}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
+              background: '#d32f2f', border: '1px solid #d32f2f', borderRadius: 10,
+              color: 'white', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s',
+            }}
+          >
+            <PictureAsPdfIcon sx={{ fontSize: 16 }} />
+            PDF
+          </button>
+          <button
+            onClick={refresh}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
+              background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', borderRadius: 10,
+              color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <RefreshIcon sx={{ fontSize: 15, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? '#22c55e' : 'inherit' }} />
+            Refresh Data
+          </button>
+        </div>
       </div>
 
      
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        background: '#121212', padding: '1rem', borderRadius: 16, border: '1px solid #1f1f1f',
+        background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 16, border: '1px solid var(--border)',
         boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
       }}>
         <div style={{ display: 'flex', gap: '1rem', flex: 1 }}>
           <div style={{ position: 'relative', width: '300px' }}>
-            <Search size={16} color="#6b7280" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+            <SearchIcon sx={{ fontSize: 16, color: 'var(--text-muted)', position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
               placeholder="Search by Order ID, Name, Email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
-                width: '100%', background: '#0a0a0a', border: '1px solid #2e2e2e',
-                padding: '10px 14px 10px 38px', borderRadius: 10, color: '#e5e7eb', fontSize: '0.85rem',
+                width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                padding: '10px 14px 10px 38px', borderRadius: 10, color: 'var(--text-primary)', fontSize: '0.85rem',
                 outline: 'none', transition: 'border-color 0.2s'
               }}
               onFocus={e => e.target.style.borderColor = '#22c55e'}
-              onBlur={e => e.target.style.borderColor = '#2e2e2e'}
+              onBlur={e => e.target.style.borderColor = 'var(--border-light)'}
             />
           </div>
 
           <div style={{ position: 'relative' }}>
-            <Filter size={14} color="#6b7280" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+            <FilterListIcon sx={{ fontSize: 14, color: 'var(--text-muted)', position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
             <select
               value={filterStatus}
               onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
               style={{
-                appearance: 'none', background: '#0a0a0a', border: '1px solid #2e2e2e',
-                padding: '10px 32px', borderRadius: 10, color: '#e5e7eb', fontSize: '0.85rem',
+                appearance: 'none', background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                padding: '10px 32px', borderRadius: 10, color: 'var(--text-primary)', fontSize: '0.85rem',
                 outline: 'none', cursor: 'pointer', minWidth: '140px'
               }}
             >
@@ -245,11 +310,29 @@ const OrderManagement = () => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
+
+          <div style={{ position: 'relative' }}>
+            <CalendarTodayIcon sx={{ fontSize: 14, color: 'var(--text-muted)', position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
+            <select
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
+              style={{
+                appearance: 'none', background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                padding: '10px 32px', borderRadius: 10, color: 'var(--text-primary)', fontSize: '0.85rem',
+                outline: 'none', cursor: 'pointer', minWidth: '140px'
+              }}
+            >
+              <option value="All">All Time</option>
+              <option value="Daily">Today</option>
+              <option value="Weekly">Last 7 Days</option>
+              <option value="Monthly">This Month</option>
+            </select>
+          </div>
         </div>
       </div>
 
       
-      <div style={{ background: '#121212', borderRadius: 16, border: '1px solid #1f1f1f', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+      <div style={{ background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
           <thead>
             <tr>
@@ -267,7 +350,7 @@ const OrderManagement = () => {
           <tbody>
             {paginatedOrders.length === 0 ? (
               <tr>
-                <td colSpan="9" style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>
+                <td colSpan="9" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   No orders found matching your criteria.
                 </td>
               </tr>
@@ -279,19 +362,19 @@ const OrderManagement = () => {
                 >
                   <td style={{ ...td, fontFamily: 'monospace', color: '#4ade80', fontWeight: 600 }}>{order.id}</td>
                   <td style={td}>
-                    <div style={{ fontWeight: 500, color: '#e5e7eb' }}>{order.customerName}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{order.customerEmail}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{order.shippingName || order.customerName}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{order.customerEmail}</div>
                   </td>
                   <td style={{ ...td, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={order.productsSummary}>
                     {order.productsSummary}
                   </td>
                   <td style={td}>{order.totalQuantity}</td>
                   <td style={{ ...td, color: '#22c55e', fontWeight: 600 }}>₱{order.totalAmount.toLocaleString()}</td>
-                  <td style={{ ...td, color: '#9ca3af', fontSize: '0.8rem' }}>
+                  <td style={{ ...td, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                     {new Date(order.dateOrdered).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td style={td}>
-                    <span style={{ fontSize: '0.8rem', color: '#e5e7eb', background: '#1a1a1a', padding: '4px 8px', borderRadius: 6, border: '1px solid #2e2e2e' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border-light)' }}>
                       {order.paymentMode}
                     </span>
                   </td>
@@ -303,7 +386,7 @@ const OrderManagement = () => {
                         onClick={() => openModal(order)}
                         title="View Details"
                       >
-                        <Eye size={16} />
+                        <VisibilityIcon sx={{ fontSize: 16 }} />
                       </button>
 
                       {/* Action Shortcuts */}
@@ -327,8 +410,8 @@ const OrderManagement = () => {
 
         
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderTop: '1px solid #1a1a1a' }}>
-            <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderTop: '1px solid var(--border)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
               Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} entries
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
@@ -337,22 +420,22 @@ const OrderManagement = () => {
                 disabled={currentPage === 1}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: currentPage === 1 ? 'transparent' : '#1a1a1a',
-                  border: `1px solid ${currentPage === 1 ? '#2e2e2e' : '#3f3f46'}`,
-                  color: currentPage === 1 ? '#4b5563' : '#e5e7eb',
+                  background: currentPage === 1 ? 'transparent' : 'var(--bg-tertiary)',
+                  border: `1px solid ${currentPage === 1 ? 'var(--border-light)' : 'var(--border)'}`,
+                  color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)',
                   padding: '6px', borderRadius: 6, cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
                 }}
               >
-                <ChevronLeft size={16} />
+                <ChevronLeftIcon sx={{ fontSize: 16 }} />
               </button>
               {Array.from({ length: totalPages }).map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentPage(idx + 1)}
                   style={{
-                    background: currentPage === idx + 1 ? '#22c55e' : 'transparent',
-                    border: `1px solid ${currentPage === idx + 1 ? '#22c55e' : '#2e2e2e'}`,
-                    color: currentPage === idx + 1 ? '#000' : '#e5e7eb',
+                    background: currentPage === idx + 1 ? 'var(--green)' : 'transparent',
+                    border: `1px solid ${currentPage === idx + 1 ? 'var(--green)' : 'var(--border-light)'}`,
+                    color: currentPage === idx + 1 ? '#000' : 'var(--text-primary)',
                     fontWeight: currentPage === idx + 1 ? 600 : 400,
                     width: 30, height: 30, borderRadius: 6, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem'
@@ -366,13 +449,13 @@ const OrderManagement = () => {
                 disabled={currentPage === totalPages}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: currentPage === totalPages ? 'transparent' : '#1a1a1a',
-                  border: `1px solid ${currentPage === totalPages ? '#2e2e2e' : '#3f3f46'}`,
-                  color: currentPage === totalPages ? '#4b5563' : '#e5e7eb',
+                  background: currentPage === totalPages ? 'transparent' : 'var(--bg-tertiary)',
+                  border: `1px solid ${currentPage === totalPages ? 'var(--border-light)' : 'var(--border)'}`,
+                  color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
                   padding: '6px', borderRadius: 6, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
                 }}
               >
-                <ChevronRight size={16} />
+                <ChevronRightIcon sx={{ fontSize: 16 }} />
               </button>
             </div>
           </div>
@@ -382,23 +465,23 @@ const OrderManagement = () => {
      
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
-          <div className="bg-[#111111] border border-gray-800 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+          <div className="bg-bg-secondary border border-border rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
 
             
-            <div className="flex justify-between items-center p-6 border-b border-gray-800 sticky top-0 bg-[#111111]/90 backdrop-blur-md z-10">
+            <div className="flex justify-between items-center p-6 border-b border-border sticky top-0 bg-bg-topbar backdrop-blur-md z-10">
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                <h3 className="text-xl font-bold text-text-primary flex items-center gap-3">
                   Order Details <span className="text-blue-500">{selectedOrder.id}</span>
                 </h3>
-                <p className="text-sm text-gray-400 mt-1">
+                <p className="text-sm text-text-muted mt-1">
                   Placed on {new Date(selectedOrder.dateOrdered).toLocaleString()}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-2 text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2 text-text-muted hover:text-text-primary bg-bg-tertiary hover:bg-bg-primary rounded-full transition-colors"
               >
-                <X size={20} />
+                <CloseIcon sx={{ fontSize: 20 }} />
               </button>
             </div>
 
@@ -407,34 +490,34 @@ const OrderManagement = () => {
 
               <div className="lg:col-span-2 space-y-6">
                
-                <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
-                  <h4 className="text-white font-semibold mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
-                    <MapPin size={18} className="text-blue-500" /> Customer & Shipping Info
+                <div className="bg-bg-primary border border-border rounded-2xl p-5">
+                  <h4 className="text-text-primary font-semibold mb-4 flex items-center gap-2 border-b border-border pb-2">
+                    <LocationOnIcon sx={{ fontSize: 18, className: 'text-blue-500' }} /> Customer & Shipping Info
                   </h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Customer</p>
-                      <p className="text-sm text-gray-200">{ShippingInfoMapper.map(selectedOrder)?.fullName}</p>
-                      <p className="text-sm text-gray-400">{ShippingInfoMapper.map(selectedOrder)?.email}</p>
-                      <p className="text-sm text-gray-400">{ShippingInfoMapper.map(selectedOrder)?.contactNumber}</p>
+                      <p className="text-xs text-text-muted mb-1">Customer</p>
+                      <p className="text-sm text-text-primary">{ShippingInfoMapper.map(selectedOrder)?.fullName}</p>
+                      <p className="text-sm text-text-muted">{ShippingInfoMapper.map(selectedOrder)?.email}</p>
+                      <p className="text-sm text-text-muted">{ShippingInfoMapper.map(selectedOrder)?.contactNumber}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Status</p>
+                      <p className="text-xs text-text-muted mb-1">Status</p>
                       <StatusBadge status={selectedOrder.orderStatus} />
-                      <p className="text-xs text-gray-500 mt-3 mb-1">Payment Method</p>
-                      <p className="text-sm text-gray-200">{ShippingInfoMapper.map(selectedOrder)?.paymentMethod}</p>
+                      <p className="text-xs text-text-muted mt-3 mb-1">Payment Method</p>
+                      <p className="text-sm text-text-primary">{ShippingInfoMapper.map(selectedOrder)?.paymentMethod}</p>
                     </div>
                     <div className="col-span-2 mt-2">
-                      <p className="text-xs text-gray-500 mb-1">Shipping Address</p>
-                      <p className="text-sm text-gray-300">
+                      <p className="text-xs text-text-muted mb-1">Shipping Address</p>
+                      <p className="text-sm text-text-primary">
                         {ShippingInfoMapper.map(selectedOrder)?.address}<br/>
-                        {ShippingInfoMapper.map(selectedOrder)?.cityProvince}<br/>
+                        {ShippingInfoMapper.map(selectedOrder)?.city}, {ShippingInfoMapper.map(selectedOrder)?.province}<br/>
                         {ShippingInfoMapper.map(selectedOrder)?.zipCode}
                       </p>
                       {ShippingInfoMapper.map(selectedOrder)?.notes && ShippingInfoMapper.map(selectedOrder)?.notes !== "None" && (
                         <>
-                          <p className="text-xs text-gray-500 mt-3 mb-1">Order Notes</p>
-                          <p className="text-sm text-gray-300 italic">"{ShippingInfoMapper.map(selectedOrder)?.notes}"</p>
+                          <p className="text-xs text-text-muted mt-3 mb-1">Order Notes</p>
+                          <p className="text-sm text-text-primary italic">"{ShippingInfoMapper.map(selectedOrder)?.notes}"</p>
                         </>
                       )}
                     </div>
@@ -442,37 +525,37 @@ const OrderManagement = () => {
                 </div>
 
                 
-                <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
-                  <h4 className="text-white font-semibold mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
-                    <Package size={18} className="text-blue-500" /> Order Items
+                <div className="bg-bg-primary border border-border rounded-2xl p-5">
+                  <h4 className="text-text-primary font-semibold mb-4 flex items-center gap-2 border-b border-border pb-2">
+                    <Inventory2Icon sx={{ fontSize: 18 }} /> Order Items
                   </h4>
                   <div className="space-y-3">
                     {selectedOrder.items && selectedOrder.items.length > 0 ? (
                       selectedOrder.items.map(item => (
-                        <div key={item.id} className="flex justify-between items-start p-3 bg-[#111111] rounded-xl border border-gray-800/50">
+                        <div key={item.id} className="flex justify-between items-start p-3 bg-bg-secondary rounded-xl border border-border-light">
                           <div>
-                            <p className="text-sm text-gray-200 font-medium">{item.productName}</p>
+                            <p className="text-sm text-text-primary font-medium">{item.productName}</p>
                             {item.variantName && (
                               <div className="flex items-center gap-1.5 mt-1 px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded-md w-fit">
-                                <Shuffle size={10} className="text-blue-400" />
+                                <SwapHorizIcon sx={{ fontSize: 10, color: '#60a5fa' }} />
                                 <span className="text-blue-400 text-xs font-semibold">{item.variantName}</span>
                               </div>
                             )}
-                            <p className="text-xs text-gray-500 mt-1">Qty: {item.quantity}</p>
+                            <p className="text-xs text-text-muted mt-1">Qty: {item.quantity}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm text-green-400 font-semibold">₱{item.price.toLocaleString()}</p>
-                            <p className="text-xs text-gray-600">unit price</p>
-                            <p className="text-xs text-gray-400 mt-1">= ₱{(item.price * item.quantity).toLocaleString()}</p>
+                            <p className="text-sm text-green-500 font-semibold">₱{item.price.toLocaleString()}</p>
+                            <p className="text-xs text-text-muted">unit price</p>
+                            <p className="text-xs text-text-muted mt-1">= ₱{(item.price * item.quantity).toLocaleString()}</p>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-300">{selectedOrder.productsSummary}</p>
+                      <p className="text-sm text-text-muted">{selectedOrder.productsSummary}</p>
                     )}
                   </div>
-                  <div className="mt-4 flex justify-between font-medium border-t border-gray-800 pt-3">
-                    <span className="text-gray-400">Total Quantity: {selectedOrder.totalQuantity}</span>
+                  <div className="mt-4 flex justify-between font-medium border-t border-border pt-3">
+                    <span className="text-text-muted">Total Quantity: {selectedOrder.totalQuantity}</span>
                     <span className="text-blue-400">Total Amount: ₱{selectedOrder.totalAmount.toLocaleString()}</span>
                   </div>
                 </div>
@@ -482,9 +565,9 @@ const OrderManagement = () => {
               <div className="space-y-6">
 
                 
-                <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
-                  <h4 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm border-b border-gray-800 pb-2">
-                    <Calendar size={16} className="text-blue-500" /> Estimated Delivery
+                <div className="bg-bg-primary border border-border rounded-2xl p-5">
+                  <h4 className="text-text-primary font-semibold mb-3 flex items-center gap-2 text-sm border-b border-border pb-2">
+                    <CalendarTodayIcon sx={{ fontSize: 16 }} /> Estimated Delivery
                   </h4>
                   <div className="flex flex-col gap-3">
                     <input
@@ -492,53 +575,52 @@ const OrderManagement = () => {
                       min={EstimatedDeliveryValidator.getMinDate()}
                       value={deliveryDate}
                       onChange={(e) => setDeliveryDate(e.target.value)}
-                      disabled={!EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)}
-                      className="bg-[#111111] border border-gray-700 text-sm text-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)}
+                      className="bg-bg-secondary border border-border text-sm text-text-primary rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
                     />
-                    {!EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus) && (
+                    {(isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)) && (
                       <p className="text-xs text-amber-500/80 italic">
-                        Delivery date locked because the order is {selectedOrder.orderStatus.replace(/_/g, ' ')}.
+                        {isAdmin ? 'Delivery date can only be modified by Employees.' : `Delivery date locked because the order is ${selectedOrder.orderStatus.replace(/_/g, ' ')}.`}
                       </p>
                     )}
-                    <button
-                      onClick={handleUpdateDeliveryDate}
-                      disabled={isUpdating || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)}
-                      className="bg-[#1a1a1a] hover:bg-[#222] border border-gray-700 text-sm text-white py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Update Date
-                    </button>
+                    {!isAdmin && (
+                      <button
+                        onClick={handleUpdateDeliveryDate}
+                        disabled={isUpdating || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)}
+                        className="bg-bg-tertiary hover:bg-bg-secondary border border-border text-sm text-text-primary py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Update Date
+                      </button>
+                    )}
                   </div>
                 </div>
 
                
-                <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-5">
-                  <h4 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm border-b border-gray-800 pb-2">
-                    <CheckCircle2 size={16} className="text-blue-500" /> Update Order Status
+                <div className="bg-bg-primary border border-border rounded-2xl p-5">
+                  <h4 className="text-text-primary font-semibold mb-3 flex items-center gap-2 text-sm border-b border-border pb-2">
+                    <CheckCircleIcon sx={{ fontSize: 16 }} /> Update Order Status
                   </h4>
                   <div className="flex flex-col gap-2">
-                    {selectedOrder.orderStatus === 'pending' && (
-                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'shipped')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-medium rounded-lg transition-colors border border-blue-500/20 flex items-center gap-2">
-                        <Truck size={14} /> Mark as Shipped
+                    {!isAdmin && (selectedOrder.orderStatus.toLowerCase() === 'pending' || selectedOrder.orderStatus.toLowerCase() === 'shipped') && (
+                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-medium rounded-lg transition-colors border border-blue-500/20 flex items-center gap-2">
+                        <LocalShippingIcon sx={{ fontSize: 14 }} /> Out for Delivery
                       </button>
                     )}
-                    {selectedOrder.orderStatus === 'shipped' && (
-                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-sm font-medium rounded-lg transition-colors border border-amber-500/20 flex items-center gap-2">
-                        <Truck size={14} /> Out for Delivery
-                      </button>
-                    )}
-                    {selectedOrder.orderStatus === 'out_for_delivery' && (
+                    {!isAdmin && selectedOrder.orderStatus.toLowerCase() === 'out_for_delivery' && (
                       <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'delivered', 'paid')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-sm font-medium rounded-lg transition-colors border border-green-500/20 flex items-center gap-2">
-                        <CheckCircle2 size={14} /> Mark Delivered & Paid
+                        <CheckCircleIcon sx={{ fontSize: 14 }} /> Mark Delivered & Paid
                       </button>
                     )}
-                    {(selectedOrder.orderStatus === 'pending' || selectedOrder.orderStatus === 'shipped') && (
-                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-4">
-                        <XCircle size={14} /> Cancel Order
+                    {!isAdmin && ['pending', 'shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus.toLowerCase()) && (
+                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-2">
+                        <CancelIcon sx={{ fontSize: 14 }} /> Cancel Order
                       </button>
                     )}
 
-                    {(selectedOrder.orderStatus === 'delivered' || selectedOrder.orderStatus === 'cancelled') && (
-                      <p className="text-xs text-gray-500 italic text-center py-2">No further status updates available.</p>
+                    {(isAdmin || ['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase())) && (
+                      <p className="text-xs text-text-muted italic text-center py-2">
+                        {isAdmin ? 'Status updates can only be modified by Employees.' : 'No further status updates available.'}
+                      </p>
                     )}
                   </div>
                 </div>

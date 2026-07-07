@@ -2,198 +2,270 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import {
-  ArrowLeft,
-  Package,
-  Minus,
-  Plus,
-  ShoppingCart,
-  MessageSquare,
-  ShieldCheck,
-  Truck,
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  X,
-  ImageOff,
-  Star,
-  Shuffle,
-  CheckCircle,
-} from 'lucide-react';
-import { buildProductOptions, getDefaultOption } from './buildProductOptions';
 import { useCart } from '../../context/CartContext';
+import { buildProductOptions, getDefaultOption } from './buildProductOptions';
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  Button,
+  IconButton,
+  Chip,
+  Rating,
+  Avatar,
+  Paper,
+  Divider,
+  CircularProgress,
+  Alert,
+  Modal,
+  Stack
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import CloseIcon from '@mui/icons-material/Close';
+import ImageNotSupportedIcon from '@mui/icons-material/ImageNotSupported';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import ShieldIcon from '@mui/icons-material/Shield';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
+import CategoryIcon from '@mui/icons-material/Category';
 
+const ZOOM_SCALE = 2.5;
 
 const ImageGallery = ({ images, productName }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const imageContainerRef = useRef(null);
 
   const imgs = images && images.length > 0 ? images : [];
   const hasImages = imgs.length > 0;
 
-  const goTo = useCallback(
-    (index) => {
-      if (isTransitioning) return;
-      const next = (index + imgs.length) % imgs.length;
-      if (next === activeIndex) return;
-      setIsTransitioning(true);
-      setTimeout(() => { setActiveIndex(next); setIsTransitioning(false); }, 180);
-    },
-    [activeIndex, imgs.length, isTransitioning]
-  );
+  const handleNext = (e) => {
+    e?.stopPropagation();
+    setActiveIndex((prev) => (prev + 1) % imgs.length);
+  };
 
-  const goPrev = useCallback((e) => { e?.stopPropagation(); goTo(activeIndex - 1); }, [activeIndex, goTo]);
-  const goNext = useCallback((e) => { e?.stopPropagation(); goTo(activeIndex + 1); }, [activeIndex, goTo]);
+  const handlePrev = (e) => {
+    e?.stopPropagation();
+    setActiveIndex((prev) => (prev - 1 + imgs.length) % imgs.length);
+  };
 
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const handler = (e) => {
-      if (e.key === 'ArrowLeft') goPrev();
-      if (e.key === 'ArrowRight') goNext();
-      if (e.key === 'Escape') setLightboxOpen(false);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [lightboxOpen, goPrev, goNext]);
+  const handleMouseMove = useCallback((e) => {
+    const container = imageContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+  }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = lightboxOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [lightboxOpen]);
+  const handleMouseEnter = useCallback(() => setIsZooming(true), []);
+  const handleMouseLeave = useCallback(() => setIsZooming(false), []);
 
   if (!hasImages) {
     return (
-      <div className="bg-white border border-gray-200 shadow-sm rounded-3xl flex flex-col items-center justify-center min-h-[420px] gap-4">
-        <ImageOff size={64} className="text-gray-400" />
-        <p className="text-gray-500 text-sm font-medium">No images uploaded for this product</p>
-      </div>
+      <Paper elevation={1} sx={{ height: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 4, bgcolor: 'background.paper' }}>
+        <ImageNotSupportedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+        <Typography color="text.secondary">No images uploaded for this product</Typography>
+      </Paper>
     );
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-4">
-        <div className="relative bg-white border border-gray-200 shadow-sm rounded-3xl overflow-hidden group" style={{ minHeight: 420 }}>
-          <div className={`w-full h-full flex items-center justify-center p-6 transition-opacity duration-[180ms] ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} style={{ minHeight: 420 }}>
-            <img src={imgs[activeIndex]} alt={`${productName} — image ${activeIndex + 1}`} className="w-full h-full object-contain max-h-[500px] drop-shadow-md select-none" draggable={false} />
-          </div>
-          <button onClick={() => setLightboxOpen(true)} className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 backdrop-blur-sm border border-white/10 text-white rounded-xl p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110" title="View full size">
-            <ZoomIn size={18} />
-          </button>
+    <Box sx={{ width: '100%', height: { xs: 'auto', md: 510 }, display: 'flex', flexDirection: 'column' }}>
+      {/* Main image with hover zoom */}
+      <Paper 
+        ref={imageContainerRef}
+        elevation={0}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => setLightboxOpen(true)}
+        sx={{ 
+          position: 'relative', 
+          width: '100%',
+          height: { xs: 300, sm: 380, md: 420 },
+          minHeight: { xs: 300, sm: 380, md: 420 },
+          flexShrink: 0,
+          borderRadius: 4, 
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden',
+          cursor: 'zoom-in',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: 12,
+            right: 12,
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            bgcolor: 'rgba(0,0,0,0.45)',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3Cpath d='M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z'/%3E%3C/svg%3E")`,
+            backgroundSize: '20px 20px',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center',
+            opacity: isZooming ? 0 : 0.7,
+            transition: 'opacity 0.2s ease',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }
+        }}
+      >
+        {/* Normal image layer — absolutely positioned so it never affects layout */}
+        <Box 
+          component="img" 
+          src={imgs[activeIndex]} 
+          alt={`${productName} image ${activeIndex + 1}`} 
+          draggable={false}
+          sx={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            maxHeight: '100%', 
+            maxWidth: '100%', 
+            objectFit: 'contain',
+            transition: 'opacity 0.2s ease',
+            opacity: isZooming ? 0 : 1,
+            pointerEvents: 'none',
+          }} 
+        />
+
+        {/* Zoomed image layer */}
+        <Box 
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundImage: `url(${imgs[activeIndex]})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: `${ZOOM_SCALE * 100}%`,
+            backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+            opacity: isZooming ? 1 : 0,
+            transition: isZooming ? 'none' : 'opacity 0.25s ease',
+            pointerEvents: 'none',
+            zIndex: 1,
+          }}
+        />
+      </Paper>
+
+      {/* Thumbnail strip — always reserve space for layout stability */}
+      <Stack 
+        direction="row" 
+        spacing={1} 
+        sx={{ 
+          mt: 2, 
+          overflowX: 'auto', 
+          pb: 1, 
+          height: 72, 
+          minHeight: 72, 
+          flexShrink: 0, 
+          visibility: imgs.length > 1 ? 'visible' : 'hidden',
+        }}
+      >
+        {imgs.length > 1 && imgs.map((url, i) => (
+            <Box 
+              key={i} 
+              onClick={() => setActiveIndex(i)}
+              sx={{ 
+                width: 64, 
+                height: 64, 
+                flexShrink: 0, 
+                borderRadius: 2, 
+                border: '2px solid', 
+                borderColor: i === activeIndex ? 'primary.main' : 'transparent',
+                cursor: 'pointer',
+                opacity: i === activeIndex ? 1 : 0.6,
+                transition: 'opacity 0.2s, border-color 0.2s',
+                '&:hover': { opacity: 1 }
+              }}
+            >
+              <Box component="img" src={url} alt={`Thumbnail ${i + 1}`} sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 1 }} />
+            </Box>
+          ))}
+      </Stack>
+
+      {/* Lightbox Modal — keeps navigation arrows for full-screen browsing */}
+      <Modal open={lightboxOpen} onClose={() => setLightboxOpen(false)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ position: 'relative', width: '90vw', height: '90vh', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <IconButton onClick={() => setLightboxOpen(false)} sx={{ position: 'absolute', top: 16, right: 16, color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
+            <CloseIcon />
+          </IconButton>
+          <Box component="img" src={imgs[activeIndex]} alt={`${productName} full size`} sx={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
           {imgs.length > 1 && (
             <>
-              <button onClick={goPrev} className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 backdrop-blur-sm border border-white/10 text-white rounded-xl p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 disabled:opacity-30" aria-label="Previous image"><ChevronLeft size={22} /></button>
-              <button onClick={goNext} className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 backdrop-blur-sm border border-white/10 text-white rounded-xl p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110" aria-label="Next image"><ChevronRight size={22} /></button>
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {imgs.map((_, i) => (
-                  <button key={i} onClick={() => goTo(i)} className={`rounded-full transition-all duration-200 ${i === activeIndex ? 'w-5 h-2 bg-blue-500' : 'w-2 h-2 bg-white/30 hover:bg-white/60'}`} aria-label={`Go to image ${i + 1}`} />
-                ))}
-              </div>
+              <IconButton onClick={handlePrev} sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
+                <ChevronLeftIcon fontSize="large" />
+              </IconButton>
+              <IconButton onClick={handleNext} sx={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
+                <ChevronRightIcon fontSize="large" />
+              </IconButton>
             </>
           )}
-          {imgs.length > 1 && (
-            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm border border-white/10 text-white text-xs font-medium px-2.5 py-1 rounded-full">{activeIndex + 1} / {imgs.length}</div>
-          )}
-        </div>
-        {imgs.length > 1 && (
-          <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
-            {imgs.map((url, i) => (
-              <button key={i} onClick={() => goTo(i)} className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 ${i === activeIndex ? 'border-blue-500 shadow-md scale-105' : 'border-gray-200 hover:border-gray-400 opacity-60 hover:opacity-100'}`} aria-label={`View image ${i + 1}`}>
-                <img src={url} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" draggable={false} />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
- 
-      {lightboxOpen && (
-        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-4" onClick={() => setLightboxOpen(false)}>
-          <button onClick={() => setLightboxOpen(false)} className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-xl p-2.5 transition-colors z-10" aria-label="Close lightbox"><X size={22} /></button>
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/60 text-sm font-medium">{activeIndex + 1} / {imgs.length}</div>
-          <div className="relative max-w-5xl w-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-            <img src={imgs[activeIndex]} alt={`${productName} — full view ${activeIndex + 1}`} className={`max-h-[80vh] max-w-full object-contain rounded-2xl transition-opacity duration-[180ms] select-none ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} draggable={false} />
-            {imgs.length > 1 && (
-              <>
-                <button onClick={goPrev} className="absolute -left-4 md:-left-14 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-xl p-3 transition-all hover:scale-110" aria-label="Previous"><ChevronLeft size={26} /></button>
-                <button onClick={goNext} className="absolute -right-4 md:-right-14 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-xl p-3 transition-all hover:scale-110" aria-label="Next"><ChevronRight size={26} /></button>
-              </>
-            )}
-          </div>
-          {imgs.length > 1 && (
-            <div className="flex gap-2 mt-6 overflow-x-auto max-w-full px-4" onClick={(e) => e.stopPropagation()}>
-              {imgs.map((url, i) => (
-                <button key={i} onClick={() => goTo(i)} className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all duration-200 ${i === activeIndex ? 'border-blue-500 scale-110' : 'border-white/20 opacity-50 hover:opacity-100'}`}>
-                  <img src={url} alt="" className="w-full h-full object-cover" draggable={false} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </>
+        </Box>
+      </Modal>
+    </Box>
   );
 };
-
-
 
 const VariantSelector = ({ options, selectedOption, onSelect }) => {
   if (!options || options.length === 0) return null;
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <Shuffle size={16} className="text-gray-500" />
-        <span className="text-gray-700 font-bold text-sm">Select Option</span>
-        {selectedOption && (
-          <span className="ml-auto text-xs text-gray-500">
-            Selected: <span className="text-gray-900 font-bold">{selectedOption.name}</span>
-          </span>
-        )}
-      </div>
-      <div className="flex flex-wrap gap-2">
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Select Option
+      </Typography>
+      <Grid container spacing={1}>
         {options.map((opt) => {
-          
           const optKey = opt.id !== null ? opt.id : '_base';
           const isSelected = selectedOption?.id === opt.id && selectedOption?.isBaseProduct === opt.isBaseProduct;
           const isOutOfStock = opt.status === 'out_of_stock' || opt.stock === 0;
+
           return (
-            <button
-              key={optKey}
-              onClick={() => !isOutOfStock && onSelect(opt)}
-              disabled={isOutOfStock}
-              className={`relative px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all duration-200 flex flex-col items-center gap-0.5
-                ${isSelected
-                  ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
-                  : isOutOfStock
-                    ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 shadow-sm'
-                }`}
-            >
-              {isSelected && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                  <CheckCircle size={12} className="text-white fill-white" />
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                {opt.name}
-                {opt.isBaseProduct && (
-                  <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-semibold">DEFAULT</span>
-                )}
-              </span>
-              <span className={`text-xs font-extrabold ${isSelected ? 'text-blue-600' : isOutOfStock ? 'text-gray-400' : 'text-gray-900'}`}>
-                ₱{Number(opt.price).toLocaleString()}
-              </span>
-              {isOutOfStock && <span className="text-[10px] text-red-500 font-semibold">Out of Stock</span>}
-            </button>
+            <Grid item key={optKey}>
+              <Button
+                variant={isSelected ? 'contained' : 'outlined'}
+                color={isSelected ? 'primary' : 'inherit'}
+                onClick={() => !isOutOfStock && onSelect(opt)}
+                disabled={isOutOfStock}
+                sx={{ 
+                  borderRadius: 2, 
+                  textTransform: 'none', 
+                  flexDirection: 'column', 
+                  alignItems: 'flex-start',
+                  p: 1.5,
+                  minWidth: 120,
+                  bgcolor: isSelected ? 'primary.main' : 'background.paper',
+                  borderColor: isSelected ? 'primary.main' : 'divider'
+                }}
+              >
+                <Typography variant="body2" fontWeight="bold">
+                  {opt.name}
+                </Typography>
+                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                  ₱{Number(opt.price).toLocaleString()}
+                </Typography>
+                {isOutOfStock && <Typography variant="caption" color="error">Out of Stock</Typography>}
+              </Button>
+            </Grid>
           );
         })}
-      </div>
-    </div>
+      </Grid>
+    </Box>
   );
 };
-
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -206,19 +278,10 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [fetchingReviews, setFetchingReviews] = useState(true);
+  const [selectedOption, setSelectedOption] = useState(null);
 
   const { addToCart } = useCart();
-
   const longDescRef = useRef(null);
-
-  const scrollToLongDesc = () => {
-    if (longDescRef.current) {
-      longDescRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-
-  const [selectedOption, setSelectedOption] = useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -261,11 +324,8 @@ const ProductDetails = () => {
     fetchReviews();
   }, [id, token]);
 
-
   const productOptions = useMemo(() => buildProductOptions(product), [product]);
   const hasOptions = productOptions.length > 0;
-
-
   const activePrice = selectedOption?.price ?? product?.price ?? 0;
   const activeStock = selectedOption?.stock ?? product?.stock ?? 0;
 
@@ -274,16 +334,12 @@ const ProductDetails = () => {
     setQuantity(1); 
   };
 
-  const handleDecrease = () => { if (quantity > 1) setQuantity(quantity - 1); };
-  const handleIncrease = () => { if (quantity < activeStock) setQuantity(quantity + 1); };
-
   const handleProceedToCheckout = () => {
     if (hasOptions && !selectedOption) {
       alert('Please select a product option before proceeding.');
       return;
     }
     if (quantity > 0 && quantity <= activeStock) {
-      
       let variantForCheckout = null;
       if (selectedOption && !selectedOption.isBaseProduct) {
         variantForCheckout = product.variants.find(v => v.id === selectedOption.id) || null;
@@ -310,242 +366,262 @@ const ProductDetails = () => {
         variantForCart = product.variants.find(v => v.id === selectedOption.id) || null;
       }
       addToCart(product, variantForCart, quantity);
-      
+    }
+  };
+  const handleDecrease = () => {
+    if (quantity > 1) {
+      setQuantity(q => q - 1);
     }
   };
 
-  const getProductImages = (p) => {
-    if (!p) return [];
-    if (p.imageUrls && p.imageUrls.length > 0) return p.imageUrls;
-    if (p.imageUrl) return [p.imageUrl];
-    return [];
+  const handleIncrease = () => {
+    if (activeStock > 0 && quantity < activeStock) {
+      setQuantity(q => q + 1);
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-gray-400">
-        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4" />
-        Loading product details...
-      </div>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 10 }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }} color="text.secondary">Loading product details...</Typography>
+      </Box>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="py-20 text-center">
-        <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl inline-block font-semibold">{error || 'Product not found.'}</div>
-        <div className="mt-6"><button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-900 font-medium hover:underline">&larr; Go Back</button></div>
-      </div>
+      <Box sx={{ py: 10, textAlign: 'center' }}>
+        <Alert severity="error" sx={{ display: 'inline-flex', mb: 3 }}>{error || 'Product not found.'}</Alert>
+        <br />
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)}>Go Back</Button>
+      </Box>
     );
   }
 
-  const productImages = getProductImages(product);
+  const productImages = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
   const canBuy = activeStock > 0 && (!hasOptions || selectedOption !== null);
 
   return (
-    <div className="animate-fade-in-up pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
-     
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium transition-colors mb-8 group">
-        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+    <Container maxWidth="lg" sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, pt: 4 }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary' }}>
         BACK TO PRODUCT
-      </button>
+      </Button>
 
+      <Grid container spacing={6} mb={8} alignItems="flex-start">
+        {/* Left: Images */}
+        <Grid item xs={12} md={6}>
+          <Box sx={{ position: 'relative' }}>
+            <Chip label={product.type} sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1, fontWeight: 'bold', bgcolor: 'rgba(255,255,255,0.9)' }} />
+            <ImageGallery images={productImages} productName={product.name} />
+          </Box>
+        </Grid>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+        {/* Right: Details */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom color="text.primary">
+            {product.name}
+          </Typography>
 
-     
-        <div className="relative">
-          <div className="absolute top-4 left-4 z-10">
-            <span className="bg-white/90 text-gray-900 border border-gray-200 shadow-sm text-sm font-bold px-4 py-1.5 rounded-full backdrop-blur-md">{product.type}</span>
-          </div>
-          <ImageGallery images={productImages} productName={product.name} />
-          {productImages.length > 1 && (
-            <p className="text-center text-gray-600 text-xs mt-2">{productImages.length} photos · Click main image to zoom</p>
-          )}
-        </div>
+          <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+            <Rating value={product.averageRating || 0} precision={0.1} readOnly size="small" />
+            <Typography variant="subtitle2" fontWeight="bold">
+              {product.averageRating ? product.averageRating.toFixed(1) : '0.0'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              ({product.reviewCount || 0} reviews)
+            </Typography>
+          </Stack>
 
-      
-        <div className="flex flex-col">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">{product.name}</h1>
-
-     
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex text-yellow-500">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} size={18} className={star <= (product.averageRating || 0) ? 'fill-yellow-500' : 'text-gray-300'} />
-              ))}
-            </div>
-            <span className="text-gray-900 font-extrabold">{product.averageRating ? product.averageRating.toFixed(1) : '0.0'}</span>
-            <span className="text-gray-500 text-sm font-medium">({product.reviewCount || 0} reviews)</span>
-          </div>
-
-         
-          <div className="flex items-end gap-2 mb-4">
-            <span className="text-4xl font-extrabold text-gray-900 transition-all duration-200 tracking-tight">
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 3 }}>
+            <Typography variant="h4" fontWeight="900" color="text.primary">
               ₱{activePrice.toLocaleString()}
-            </span>
+            </Typography>
             {selectedOption && (
-              <span className="text-gray-600 mb-1 text-sm font-medium">— {selectedOption.name}</span>
+              <Typography variant="subtitle1" color="text.secondary">
+                — {selectedOption.name}
+              </Typography>
             )}
-            {!hasOptions && <span className="text-gray-500 mb-1 font-medium">/ {product.unit}</span>}
-          </div>
+            {!hasOptions && <Typography variant="subtitle1" color="text.secondary">/ {product.unit}</Typography>}
+          </Box>
 
-          <button 
-            onClick={scrollToLongDesc}
-            className="text-left text-gray-700 text-lg leading-relaxed mb-6 font-medium hover:text-blue-600 transition-all duration-200 focus:outline-none cursor-pointer group"
-            title="Click to read full description"
-          >
-            {product.shortDescription || 'Premium quality roofing material designed for long-lasting durability and exceptional aesthetic appeal. Perfect for your construction needs.'}
-          </button>
+          <Typography variant="body1" color="text.secondary" mb={4} sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }} onClick={() => longDescRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+            {product.description ? 
+              (product.description.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).length > 15 
+                ? product.description.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).slice(0, 15).join(' ') + '...' 
+                : product.description.replace(/<[^>]+>/g, ' ').trim())
+              : 'Premium quality material designed for long-lasting durability.'}
+          </Typography>
 
-          {/* Features */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="flex items-center gap-3 text-gray-700">
-              <div className="bg-green-50 text-green-600 p-2 rounded-lg border border-green-100"><ShieldCheck size={20} /></div>
-              <span className="text-sm font-bold">Quality Guaranteed</span>
-            </div>
-            {/* <div className="flex items-center gap-3 text-gray-700">
-              <div className="bg-blue-50 text-blue-600 p-2 rounded-lg border border-blue-100"><Truck size={20} /></div>
-              <span className="text-sm font-bold">Free Delivery</span>
-            </div> */}
-          </div>
+          <Stack direction="row" spacing={3} mb={4}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 32, height: 32 }}><ShieldIcon fontSize="small" /></Avatar>
+              <Typography variant="body2" fontWeight="bold">Quality Guaranteed</Typography>
+            </Box>
+          </Stack>
 
-          
-          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 mt-auto">
-
-            
+          <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
             <VariantSelector
               options={productOptions}
               selectedOption={selectedOption}
               onSelect={handleOptionSelect}
             />
 
-            {/* Option required warning */}
-            {hasOptions && !selectedOption && (
-              <div className="mb-4 px-4 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-2 text-amber-400 text-sm">
-                <Shuffle size={14} />
-                Please select a product option to continue.
-              </div>
-            )}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="subtitle2" fontWeight="bold">Available Stock</Typography>
+              <Chip 
+                label={`${activeStock} units`} 
+                color={activeStock > 10 ? 'success' : activeStock > 0 ? 'warning' : 'error'} 
+                size="small" 
+                sx={{ fontWeight: 'bold' }} 
+              />
+            </Box>
 
-            {/* Stock indicator */}
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-600 font-bold">Available Stock</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-extrabold transition-all duration-200 ${activeStock > 10 ? 'bg-green-50 text-green-600 border border-green-200' : activeStock > 0 ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-                {activeStock} units
-              </span>
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+              <Typography variant="subtitle2" fontWeight="bold">Quantity</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                <IconButton onClick={handleDecrease} disabled={quantity <= 1} size="small"><RemoveIcon /></IconButton>
+                <Typography sx={{ px: 2, fontWeight: 'bold' }}>{quantity}</Typography>
+                <IconButton onClick={handleIncrease} disabled={quantity >= activeStock || activeStock === 0} size="small"><AddIcon /></IconButton>
+              </Box>
+            </Box>
 
-            {/* Quantity Selector */}
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-gray-700 font-bold">Quantity</span>
-              <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
-                <button onClick={handleDecrease} disabled={quantity <= 1} className="p-3 text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><Minus size={18} /></button>
-                <div className="w-16 text-center font-extrabold text-gray-900 text-lg">{quantity}</div>
-                <button onClick={handleIncrease} disabled={quantity >= activeStock || activeStock === 0} className="p-3 text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><Plus size={18} /></button>
-              </div>
-            </div>
+            <Divider sx={{ mb: 3 }} />
 
-            {/* Total & Action */}
-            <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 font-bold text-sm mb-1">Total Price</p>
-                <p className="text-2xl font-extrabold text-gray-900 transition-all duration-200 tracking-tight">
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">Total Price</Typography>
+                <Typography variant="h5" fontWeight="900" color="text.primary">
                   ₱{(activePrice * quantity).toLocaleString()}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
+                </Typography>
+              </Box>
+              <Stack direction="row" spacing={2}>
+                <Button 
+                  variant="outlined" 
+                  color="inherit" 
+                  startIcon={<ShoppingCartIcon />} 
                   onClick={handleAddToCart}
                   disabled={!canBuy}
-                  className="bg-white border-2 border-gray-900 hover:bg-gray-50 text-gray-900 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  sx={{ borderRadius: 2, py: 1.5, px: 3, fontWeight: 'bold' }}
                 >
-                  <ShoppingCart size={18} />
-                  Add to Cart
-                </button>
-                <button
+                  Add
+                </Button>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
                   onClick={handleProceedToCheckout}
                   disabled={!canBuy}
-                  className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-3 transition-all hover:shadow-lg hover:shadow-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  sx={{ borderRadius: 2, py: 1.5, px: 4, fontWeight: 'bold' }}
                 >
                   Buy Now
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                </Button>
+              </Stack>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
 
-      
-      <div 
-        ref={longDescRef} 
-        id="long-description" 
-        className="mt-12 scroll-mt-24" 
-      >
-        <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8 lg:p-10">
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-6 flex items-center gap-3">
-            <Package className="text-blue-600" size={24} />
-            Product Details
-          </h2>
-          <div className="prose prose-blue max-w-none text-gray-700 font-medium leading-relaxed whitespace-pre-wrap">
-            {product.longDescription || 'Detailed specifications and long descriptions will appear here.'}
-          </div>
-        </div>
-      </div>
+      {/* <CategoryIcon color="primary" /> */}
+
+      {/* Long Description */}
+      <Box ref={longDescRef} sx={{ mt: 8, scrollMarginTop: 100 }}>
+        <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.primary' }}>
+           Product Details
+          </Typography>
+          <Box 
+            sx={{ 
+              lineHeight: 1.8, 
+              color: 'text.secondary',
+              '& ul': { pl: 4, mb: 2, listStyleType: 'disc' },
+              '& ol': { pl: 4, mb: 2, listStyleType: 'decimal' },
+              '& h1, & h2, & h3, & h4': { mt: 3, mb: 1.5, color: 'text.primary', fontWeight: 'bold' },
+              '& p': { mb: 2 },
+              '& a': { color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }
+            }}
+            dangerouslySetInnerHTML={{ __html: product.description || '<p>Detailed specifications and descriptions will appear here.</p>' }}
+          />
+        </Paper>
+      </Box>
 
       {/* Reviews Section */}
-      <div className="mt-12">
-        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-200">
-          <MessageSquare className="text-gray-700" size={24} />
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Customer Reviews</h2>
-          <span className="bg-gray-100 text-gray-700 text-sm font-extrabold px-3 py-1 rounded-full ml-2 border border-gray-200">{product.reviewCount || 0}</span>
-        </div>
+      <Box sx={{ mt: 8 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
+          <ChatBubbleOutlineIcon color="action" />
+          <Typography variant="h5" fontWeight="bold" color="text.primary">Customer Reviews</Typography>
+          <Chip label={product.reviewCount || 0} size="small" sx={{ fontWeight: 'bold' }} />
+        </Box>
 
         {fetchingReviews ? (
-          <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" /></div>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
         ) : reviews.length === 0 ? (
-          <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-16 flex flex-col items-center justify-center text-center">
-            <div className="bg-gray-50 border border-gray-100 p-4 rounded-full mb-4"><MessageSquare size={32} className="text-gray-400" /></div>
-            <h3 className="text-xl font-extrabold text-gray-900 mb-2 tracking-tight">No reviews yet</h3>
-            <p className="text-gray-500 max-w-md font-medium">Customer reviews will appear here once this product has been purchased and rated by our community.</p>
-          </div>
+          <Paper elevation={0} sx={{ p: 6, textAlign: 'center', borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <ChatBubbleOutlineIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+            <Typography variant="h6" fontWeight="bold" gutterBottom>No reviews yet</Typography>
+            <Typography color="text.secondary">Customer reviews will appear here once this product has been purchased and rated by our community.</Typography>
+          </Paper>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Grid container spacing={3}>
             {reviews.map((review) => (
-              <div key={review.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 hover:border-gray-300 transition-colors">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-800 flex items-center justify-center font-bold text-lg border border-gray-200">
-                      {review.user?.name?.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-gray-900 font-bold">{review.user?.name}</p>
-                      <p className="text-gray-500 font-medium text-xs">{new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                  </div>
-                  <div className="flex text-yellow-500 gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} size={14} className={star <= review.rating ? 'fill-yellow-500' : 'text-gray-300'} />
-                    ))}
-                  </div>
-                </div>
-                {review.title && <h4 className="text-gray-900 font-extrabold mb-2">{review.title}</h4>}
-                <p className="text-gray-700 text-sm leading-relaxed mb-4 font-medium">{review.comment}</p>
-                {review.imageUrls && review.imageUrls.length > 0 && (
-                  <div className="flex gap-2 mt-4">
-                    {review.imageUrls.map((img, idx) => (
-                      <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
-                        <img src={img} alt={`Review by ${review.user?.name}`} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <Grid item xs={12} md={6} key={review.id}>
+                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar sx={{ bgcolor: 'grey.200', color: 'text.primary', fontWeight: 'bold' }}>
+                        {review.user?.name?.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight="bold">{review.user?.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                    <Rating value={review.rating} size="small" readOnly />
+                  </Box>
+                  {review.title && <Typography variant="subtitle1" fontWeight="bold" gutterBottom>{review.title}</Typography>}
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: review.imageUrls?.length ? 2 : 0 }}>
+                    {review.comment}
+                  </Typography>
+                  {review.imageUrls && review.imageUrls.length > 0 && (
+                    <Stack direction="row" spacing={1} sx={{ mb: review.reply ? 2 : 0 }}>
+                      {review.imageUrls.map((img, idx) => (
+                        <Box key={idx} component="img" src={img} sx={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 1 }} />
+                      ))}
+                    </Stack>
+                  )}
+                  {review.reply && (
+                    <Box sx={{ mt: 2, pl: 2, borderLeft: '3px solid', borderColor: 'primary.main', bgcolor: 'action.hover', p: 1.5, borderRadius: 2 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+                        <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem', bgcolor: 'primary.light', color: 'primary.contrastText', fontWeight: 'bold' }}>
+                          {review.reply.user?.name?.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Typography variant="subtitle2" fontWeight="bold" color="primary.dark">
+                          {review.reply.user?.name}
+                        </Typography>
+                        <Chip 
+                          label={review.reply.user?.role} 
+                          size="small" 
+                          color="primary" 
+                          variant="filled" 
+                          sx={{ height: 18, fontSize: '0.625rem', textTransform: 'uppercase', fontWeight: 'bold', borderRadius: 1 }} 
+                        />
+                        <Typography variant="caption" color="text.secondary">
+                          {new Date(review.reply.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body2" color="text.primary">
+                        {review.reply.comment}
+                      </Typography>
+                    </Box>
+                  )}
+                </Paper>
+              </Grid>
             ))}
-          </div>
+          </Grid>
         )}
-      </div>
-    </div>
+      </Box>
+    </Container>
   );
 };
 

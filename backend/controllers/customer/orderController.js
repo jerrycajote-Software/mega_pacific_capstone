@@ -8,12 +8,13 @@ const createOrder = async (req, res) => {
     variantId,      // NEW: Optional variant selection
     quantity,
     paymentMode,
-    customerName,
     customerEmail,
-    contactNumber,
-    address,
-    cityProvince,
-    zipCode,
+    shippingName,
+    shippingContactNumber,
+    shippingAddress,
+    shippingCity,
+    shippingProvince,
+    shippingZipCode,
     notes
   } = req.body;
 
@@ -66,13 +67,15 @@ const createOrder = async (req, res) => {
           status: "pending",
           paymentStatus: "unpaid",
           paymentMode,
-          customerName,
           customerEmail,
-          contactNumber,
-          address,
-          cityProvince,
-          zipCode,
+          shippingName,
+          shippingContactNumber,
+          shippingAddress,
+          shippingCity,
+          shippingProvince,
+          shippingZipCode,
           notes,
+          estimatedDeliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Default 2 days delivery
           items: {
             create: {
               productId: parseInt(productId),
@@ -152,7 +155,28 @@ const getOrderById = async (req, res) => {
       }
     }
 
-    res.status(200).json({ success: true, data: order });
+    // Fetch reviews submitted for this specific order
+    const orderReviews = await prisma.review.findMany({
+      where: { orderId: order.id },
+      select: { productId: true }
+    });
+    const reviewedProductIds = orderReviews.map(r => r.productId);
+
+    // Map items to include isReviewed status
+    const itemsWithReviewStatus = order.items.map(item => ({
+      ...item,
+      isReviewed: reviewedProductIds.includes(item.productId)
+    }));
+
+    const orderWithReviews = {
+      ...order,
+      items: itemsWithReviewStatus
+    };
+
+    const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
+    const updatedOrder = await checkAndExtendDeliveryDates(orderWithReviews);
+
+    res.status(200).json({ success: true, data: updatedOrder });
   } catch (error) {
     console.error("Failed to fetch order:", error);
     res.status(500).json({ success: false, error: "Failed to fetch order details" });
@@ -184,7 +208,10 @@ const getMyOrders = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    res.status(200).json({ success: true, data: orders });
+    const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
+    const updatedOrders = await checkAndExtendDeliveryDates(orders);
+
+    res.status(200).json({ success: true, data: updatedOrders });
   } catch (error) {
     console.error("Failed to fetch customer orders:", error);
     res.status(500).json({ success: false, error: "Failed to fetch orders" });
@@ -197,12 +224,13 @@ const createBulkOrder = async (req, res) => {
     userId,
     items, // Array of { productId, variantId, quantity }
     paymentMode,
-    customerName,
     customerEmail,
-    contactNumber,
-    address,
-    cityProvince,
-    zipCode,
+    shippingName,
+    shippingContactNumber,
+    shippingAddress,
+    shippingCity,
+    shippingProvince,
+    shippingZipCode,
     notes
   } = req.body;
 
@@ -280,13 +308,15 @@ const createBulkOrder = async (req, res) => {
           status: "pending",
           paymentStatus: "unpaid",
           paymentMode,
-          customerName,
           customerEmail,
-          contactNumber,
-          address,
-          cityProvince,
-          zipCode,
+          shippingName,
+          shippingContactNumber,
+          shippingAddress,
+          shippingCity,
+          shippingProvince,
+          shippingZipCode,
           notes,
+          estimatedDeliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Default 2 days delivery
           items: {
             create: orderItemsData
           }

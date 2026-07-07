@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
+import MailIcon from '@mui/icons-material/Mail';
+import LockIcon from '@mui/icons-material/Lock';
+import CircularProgress from '@mui/material/CircularProgress';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 import { useTranslation } from 'react-i18next';
 
 
@@ -101,13 +106,14 @@ const LoginPage = () => {
     setLoading(true);
     const result = await login(email, password);
     if (result.success) {
-      if (result.user?.role !== 'admin') {
+      if (result.user?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
         logout();
-        setError('Access denied. Admin privileges required.');
+        setError('Access denied. Admin portal requires administrator privileges.');
         setLoading(false);
         return;
       }
-      navigate('/admin/dashboard');
     } else {
       setError(result.error || 'Invalid credentials. Please try again.');
     }
@@ -253,7 +259,7 @@ const LoginPage = () => {
                 fontSize: '0.82rem',
                 lineHeight: 1.4,
               }}>
-                <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                <ErrorOutlineIcon sx={{ fontSize: 15, flexShrink: 0 }} />
                 {error}
               </div>
             )}
@@ -272,8 +278,8 @@ const LoginPage = () => {
                   {t("Email")}
                 </label>
                 <div className="lp-input-wrap" style={{ position: 'relative' }}>
-                  <Mail
-                    size={16}
+                  <MailIcon
+                    sx={{ fontSize: 16 }}
                     className="lp-input-icon"
                     style={{
                       position: 'absolute', left: 13, top: '50%',
@@ -321,8 +327,8 @@ const LoginPage = () => {
                   </label>
                 </div>
                 <div className="lp-input-wrap" style={{ position: 'relative' }}>
-                  <Lock
-                    size={16}
+                  <LockIcon
+                    sx={{ fontSize: 16 }}
                     className="lp-input-icon"
                     style={{
                       position: 'absolute', left: 13, top: '50%',
@@ -370,8 +376,8 @@ const LoginPage = () => {
                     aria-label={showPw ? 'Hide password' : 'Show password'}
                   >
                     {showPw
-                      ? <EyeOff size={15} />
-                      : <Eye size={15} />
+                      ? <VisibilityOffIcon sx={{ fontSize: 15 }} />
+                      : <VisibilityIcon sx={{ fontSize: 15 }} />
                     }
                   </button>
                 </div>
@@ -404,10 +410,7 @@ const LoginPage = () => {
               >
                 {loading ? (
                   <>
-                    <Loader2
-                      size={17}
-                      style={{ animation: 'lp-spin 0.9s linear infinite' }}
-                    />
+                    <CircularProgress size={17} thickness={5} sx={{ color: '#fff', animation: 'none' }} />
                     Signing in…
                   </>
                 ) : (

@@ -17,8 +17,10 @@ async function main() {
   
   console.log("No admin account found. Creating default admin account...");
   
-  const defaultAdminEmail = "admin@megapacific.com";
-  const defaultAdminPassword = "megapacific@123";
+  // Use environment variables if set, otherwise fall back to dev defaults
+  // WARNING: Change these credentials immediately after first login!
+  const defaultAdminEmail = process.env.SEED_ADMIN_EMAIL || "admin@megapacific.com";
+  const defaultAdminPassword = process.env.SEED_ADMIN_PASSWORD || "ChangeMe@123";
   const hashedPassword = await bcrypt.hash(defaultAdminPassword, 10);
 
   const admin = await prisma.user.create({
@@ -27,6 +29,7 @@ async function main() {
       email: defaultAdminEmail,
       password: hashedPassword,
       role: "admin",
+      isEmailVerified: true,
     },
   });
 

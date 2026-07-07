@@ -1,8 +1,38 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { LogOut, User, Home, Package, ShoppingBag, ShoppingBasket, X, Minus, Plus } from 'lucide-react';
+import CustomerHeader from '../components/CustomerHeader';
+import Footer from '../components/Footer';
+import CustomerServiceWidget from '../components/CustomerServiceWidget';
+import {
+  Box,
+  Drawer,
+  Typography,
+  IconButton,
+  Button,
+  Checkbox,
+  Stack,
+  Divider,
+  CircularProgress,
+  Fab,
+  Badge,
+  Tooltip,
+} from '@mui/material';
+import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
+import CloseIcon from '@mui/icons-material/Close';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+
+/* ─── Floating Cart Pulse Keyframe ─────────────────────────────────────── */
+const pulseKeyframes = `
+  @keyframes cartPulse {
+    0%   { box-shadow: 0 0 0 0   rgba(79,119,45,0.55); }
+    70%  { box-shadow: 0 0 0 12px rgba(79,119,45,0); }
+    100% { box-shadow: 0 0 0 0   rgba(79,119,45,0); }
+  }
+`;
 
 const CustomerLayout = () => {
   const { user, logout } = useAuth();
@@ -12,7 +42,6 @@ const CustomerLayout = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
 
- 
   const validItems = cartItems.filter(item => !item.isDeleted && !item.isOutOfStock);
   const outOfStockItems = cartItems.filter(item => !item.isDeleted && item.isOutOfStock);
   const deletedItems = cartItems.filter(item => item.isDeleted);
@@ -32,7 +61,6 @@ const CustomerLayout = () => {
     }
   };
 
- 
   React.useEffect(() => {
     if (isCartOpen) {
       const validate = async () => {
@@ -44,15 +72,7 @@ const CustomerLayout = () => {
       };
       validate();
     }
-    
   }, [isCartOpen]);
-
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to log out?')) {
-      logout();
-      navigate('/login');
-    }
-  };
 
   const getProductImage = (product) => {
     if (!product) return null;
@@ -77,343 +97,328 @@ const CustomerLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--customer-bg-main)] font-sans text-gray-900">
-    
-      <nav className="border-b border-gray-800 sticky top-0 z-50 shadow-sm" style={{ backgroundColor: '#162035' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 relative">
-            
-            <div className="flex-shrink-0">
-              <Link to="/dashboard" className="flex flex-col justify-center select-none" style={{ textDecoration: 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
-                  <span style={{ 
-                    color: '#111b2e', 
-                    WebkitTextStroke: '1px #3a4fd4'
-                  }}>MEGA</span>
-                  <span style={{ 
-                    color: '#111b2e', 
-                    WebkitTextStroke: '1px #5b6ee8'
-                  }}>PACIFIC</span>
-                </div>
-                <div style={{ 
-                  color: '#7a90e8', 
-                  fontSize: '10px', 
-                  fontWeight: 800, 
-                  letterSpacing: '0.2em', 
-                  marginTop: '4px',
-                  fontFamily: 'Arial, sans-serif'
-                }}>
-                  METAL AND STEEL CORP
-                </div>
-              </Link>
-            </div>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+      {/* Inject pulse keyframe once */}
+      <style>{pulseKeyframes}</style>
 
-            <div className="hidden md:flex flex-1 justify-center absolute left-1/2 -translate-x-1/2">
-              <div className="flex items-baseline space-x-2">
-                {/* <Link to="/dashboard" className="text-gray-300 hover:text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors">
-                  <Home size={16} className="mr-2" /> Home
-                </Link> */}
-                
-                <Link to="/dashboard" className="text-gray-300 hover:text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors">
-                  <Package size={16} className="mr-2" /> Products
-                </Link>
-
-                <Link
-                  to="/orders"
-                  className="relative text-gray-300 hover:text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors group"
-                >
-                  <ShoppingBag size={16} className="mr-2 group-hover:text-white transition-colors" />
-                  <span className="group-hover:text-white transition-colors">Order View</span>
-                </Link>
-
-                <button 
-                  onClick={() => setIsCartOpen(true)}
-                  className="relative text-gray-300 hover:text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors group">
-                  <ShoppingBasket size={16} className="mr-2 group-hover:text-white transition-colors" />
-                  <span className="group-hover:text-white transition-colors">Cart</span>
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
-
-              </div>
-            </div>
-
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center md:ml-6 gap-4">
-                <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-                  <User size={16} className="text-blue-400" />
-                  <span className="font-medium tracking-wide">Hello, {user?.name?.split(' ')[0]}</span>
-                </div>
-                
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-400 hover:text-white hover:bg-red-500/20 p-2 rounded-full transition-all group"
-                  title="Logout"
-                >
-                  <LogOut size={18} className="group-hover:scale-110 transition-transform" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <CustomerHeader />
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-[calc(100vh-160px)]">
-        <Outlet />
-      </main>
-
-      
-      <footer className="bg-white border-t border-gray-200 py-8 mt-auto shadow-[0_-1px_2px_rgba(0,0,0,0.02)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm font-medium">
-          <p>© 2026 Mega Pacific Roofing Systems. Providing Quality Roofing Since 1998.</p>
-        </div>
-      </footer>
-
-      
-      {isCartOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-[100] transition-opacity" 
-          onClick={() => setIsCartOpen(false)}
-        />
-      )}
-
-      
-      <div 
-        className={`fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-2xl z-[110] transform transition-transform duration-300 ease-in-out flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          px: { xs: 2, md: 4 },
+          py: { xs: 2, md: 4 },
+        }}
       >
-        <div className="flex items-center justify-between p-5 border-b border-gray-200">
-          <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
-            <ShoppingBasket className="text-blue-600" />
-            Your Cart
-            <span className="bg-gray-100 text-gray-600 text-sm px-2 py-0.5 rounded-full ml-1">{cartCount}</span>
-          </h2>
-          <button 
-            onClick={() => setIsCartOpen(false)}
-            className="p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-900 rounded-full transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
+        <Outlet />
+      </Box>
 
-        <div className="flex-1 overflow-y-auto p-5 scrollbar-thin relative">
+      <Footer />
+
+      {/* ─── Floating Cart FAB (Phase 3) ───────────────────────────────── */}
+      <Tooltip title={`Your Cart${cartCount > 0 ? ` (${cartCount} items)` : ' — empty'}`} placement="left" arrow>
+        <Fab
+          color="primary"
+          aria-label="Open cart"
+          onClick={() => setIsCartOpen(true)}
+          sx={{
+            position: 'fixed',
+            bottom: 100,
+            right: 28,
+            zIndex: 1200,
+            width: 60,
+            height: 60,
+            background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
+            boxShadow: '0 8px 24px rgba(79,119,45,0.4)',
+            animation: cartCount > 0 ? 'cartPulse 2s ease-in-out infinite' : 'none',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            '&:hover': {
+              transform: 'scale(1.1)',
+              boxShadow: '0 12px 32px rgba(79,119,45,0.55)',
+            },
+          }}
+        >
+          <Badge
+            badgeContent={cartCount}
+            color="error"
+            overlap="circular"
+            max={99}
+            sx={{
+              '& .MuiBadge-badge': {
+                fontWeight: 700,
+                fontSize: '0.7rem',
+                minWidth: 20,
+                height: 20,
+                border: '2px solid white',
+              },
+            }}
+          >
+            <ShoppingBasketIcon sx={{ fontSize: 26, color: '#ffffff' }} />
+          </Badge>
+        </Fab>
+      </Tooltip>
+
+      {/* Cart Drawer */}
+      <Drawer
+        anchor="right"
+        open={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        PaperProps={{
+          sx: {
+            width: { xs: '100%', sm: 420 },
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: '#ffffff',
+          }
+        }}
+        zIndex={1300}
+      >
+        {/* Drawer Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            p: 2.5,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#ffffff' }}>
+            
+            Your Cart
+            <Box
+              component="span"
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: '#ffffff',
+                px: 1.5,
+                py: 0.25,
+                borderRadius: 2,
+                fontSize: '0.875rem',
+                fontWeight: 700,
+              }}
+            >
+              {cartCount}
+            </Box>
+          </Typography>
+          <IconButton onClick={() => setIsCartOpen(false)} size="small" sx={{ color: '#ffffff', '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' } }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2, position: 'relative' }}>
           {isValidating && (
-            <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
-              <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-2"></div>
-              <p className="text-sm font-bold text-gray-600">Checking inventory...</p>
-            </div>
+            <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(255,255,255,0.8)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+              <CircularProgress size={32} sx={{ mb: 1 }} color="primary" />
+              <Typography variant="body2" fontWeight="bold" color="text.secondary">Checking inventory...</Typography>
+            </Box>
           )}
 
           {cartItems.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center text-gray-500">
-              <ShoppingBasket size={48} className="text-gray-300 mb-4" />
-              <p className="font-bold text-gray-900 mb-1">Your cart is empty</p>
-              <p className="text-sm">Looks like you haven't added anything yet.</p>
-              <button 
-                onClick={() => setIsCartOpen(false)}
-                className="mt-6 px-6 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold hover:bg-blue-100 transition-colors"
-              >
-                Continue Shopping
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6">
+            <Box sx={{ height: '100%', minHeight: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'text.secondary', py: 6 }}>
               
-              {/* Valid Items */}
+              <Typography variant="h6" fontWeight="bold" color="text.primary" gutterBottom>Your cart is empty</Typography>
+              <Typography variant="body2">Looks like you haven't added anything yet.</Typography>
+              <Button variant="outlined" color="primary" sx={{ mt: 3, borderRadius: 2 }} onClick={() => setIsCartOpen(false)}>
+                Continue Shopping
+              </Button>
+            </Box>
+          ) : (
+            <Stack spacing={3}>
               {validItems.length > 0 && (
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center gap-2 mb-1 pb-3 border-b border-gray-100">
-                    <input 
-                      type="checkbox" 
+                <Stack spacing={2}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider', pb: 1 }}>
+                    <Checkbox
                       checked={selectedItemIds.length === validItems.length && validItems.length > 0}
                       onChange={toggleAll}
-                      className="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer"
+                      size="small"
+                      color="primary"
                     />
-                    <span className="text-sm font-bold text-gray-700 cursor-pointer" onClick={toggleAll}>Select All</span>
-                  </div>
+                    <Typography variant="body2" fontWeight="bold" sx={{ cursor: 'pointer' }} onClick={toggleAll}>
+                      Select All
+                    </Typography>
+                  </Box>
+
                   {validItems.map(item => (
-                    <div key={item.id} className="flex gap-3 group items-center">
-                      <input 
-                        type="checkbox" 
+                    <Box key={item.id} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                      <Checkbox
                         checked={selectedItemIds.includes(item.id)}
                         onChange={() => toggleSelection(item.id)}
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer flex-shrink-0"
+                        size="small"
+                        color="primary"
+                        sx={{ p: 0, mt: 0.5 }}
                       />
-                      <div 
-                        className="w-20 h-20 flex-shrink-0 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden cursor-pointer"
-                        onClick={() => {
-                          setIsCartOpen(false);
-                          navigate(`/product/${item.product.id}`);
+                      <Box
+                        onClick={() => { setIsCartOpen(false); navigate(`/product/${item.product.id}`); }}
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          flexShrink: 0,
+                          bgcolor: 'grey.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
                         {getProductImage(item.product) ? (
-                          <img src={getProductImage(item.product)} alt={item.product.name} className="w-full h-full object-cover mix-blend-multiply" />
+                          <Box component="img" src={getProductImage(item.product)} alt={item.product.name} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={24} /></div>
+                          <Inventory2Icon color="disabled" />
                         )}
-                      </div>
-                      
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex justify-between items-start gap-2">
-                            <h3 
-                              className="font-bold text-gray-900 text-sm leading-tight cursor-pointer hover:text-blue-600 transition-colors line-clamp-2"
-                              onClick={() => {
-                                setIsCartOpen(false);
-                                navigate(`/product/${item.product.id}`);
-                              }}
-                            >
-                              {item.product.name}
-                            </h3>
-                            <button 
-                              onClick={() => removeFromCart(item.id)}
-                              className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                              title="Remove item"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                          
-                          {item.variant && !item.variant.isBaseProduct && (
-                            <p className="text-xs text-gray-500 mt-1">{item.variant.name}</p>
-                          )}
-                          {!item.variant && (
-                            <p className="text-xs text-gray-500 mt-1">Default</p>
-                          )}
-                          <p className="text-[11px] text-gray-400 mt-0.5 font-medium">₱{Number(item.price).toLocaleString()}</p>
-                        </div>
-                        
-                        <div className="flex items-center justify-between mt-2 gap-2">
-                          <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
-                            <button 
-                              disabled={item.quantity <= 1}
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="w-8 text-center text-xs font-bold text-gray-900">{item.quantity}</span>
-                            <button 
-                              disabled={item.quantity >= (item.variant ? item.variant.stock : item.product.stock)}
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                          
-                          
-                          <button
-                            onClick={() => handleSingleCheckout(item)}
-                            className="bg-white border border-gray-300 hover:border-gray-900 hover:bg-gray-900 hover:text-white text-gray-800 text-xs font-bold px-3 py-1.5 rounded-lg transition-all"
+                      </Box>
+                      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight="bold"
+                            sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' }, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                            onClick={() => { setIsCartOpen(false); navigate(`/product/${item.product.id}`); }}
                           >
+                            {item.product.name}
+                          </Typography>
+                          <IconButton size="small" onClick={() => removeFromCart(item.id)} sx={{ p: 0.5, color: 'text.disabled', '&:hover': { color: 'error.main' } }}>
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                          {item.variant && !item.variant.isBaseProduct ? item.variant.name : 'Default'}
+                        </Typography>
+                        <Typography variant="caption" color="primary.main" fontWeight="bold">
+                          ₱{Number(item.price).toLocaleString()}
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto', pt: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
+                            <IconButton size="small" disabled={item.quantity <= 1} onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                              <RemoveIcon fontSize="small" />
+                            </IconButton>
+                            <Typography variant="caption" fontWeight="bold" sx={{ width: 28, textAlign: 'center' }}>
+                              {item.quantity}
+                            </Typography>
+                            <IconButton size="small" disabled={item.quantity >= (item.variant ? item.variant.stock : item.product.stock)} onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                              <AddIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                          <Button size="small" variant="outlined" color="primary" sx={{ py: 0.5, textTransform: 'none', borderRadius: 2 }} onClick={() => handleSingleCheckout(item)}>
                             Buy Now
-                          </button>
-                        </div>
-                        <div className="mt-1 text-right">
-                          <span className="font-extrabold text-gray-900 text-sm">
-                            ₱{(item.price * item.quantity).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Box>
                   ))}
-                </div>
+                </Stack>
               )}
 
-              {/* Out of Stock Section */}
+              {/* Out of Stock */}
               {outOfStockItems.length > 0 && (
-                <div className="border-t border-gray-200 pt-5">
-                  <h3 className="text-sm font-bold text-amber-600 mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                <Box sx={{ pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant="body2" fontWeight="bold" color="warning.main" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box component="span" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }} />
                     Out of stock items
-                  </h3>
-                  <div className="flex flex-col gap-4">
+                  </Typography>
+                  <Stack spacing={2}>
                     {outOfStockItems.map(item => (
-                      <div key={item.id} className="flex gap-3 opacity-60">
-                        <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
-                          <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
-                            <span className="bg-amber-500 text-white text-[9px] font-bold px-1 rounded-sm uppercase tracking-wider">Out of Stock</span>
-                          </div>
-                          {getProductImage(item.product) ? (
-                            <img src={getProductImage(item.product)} alt={item.product.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <Package size={20} className="text-gray-300 m-auto mt-4" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start gap-2">
-                            <h4 className="font-bold text-gray-700 text-xs leading-tight line-clamp-2">{item.product.name}</h4>
-                            <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500">
-                              <X size={14} />
-                            </button>
-                          </div>
-                          <p className="text-[10px] text-gray-500 mt-0.5">{item.variant ? item.variant.name : 'Default'}</p>
-                        </div>
-                      </div>
+                      <Box key={item.id} sx={{ display: 'flex', gap: 2, opacity: 0.6 }}>
+                        <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', position: 'relative' }}>
+                          <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(255,255,255,0.5)', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Box component="span" sx={{ bgcolor: 'warning.main', color: 'white', fontSize: '0.6rem', fontWeight: 'bold', px: 0.5, borderRadius: 0.5, textTransform: 'uppercase' }}>
+                              Out of Stock
+                            </Box>
+                          </Box>
+                          <Box component="img" src={getProductImage(item.product)} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </Box>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Typography variant="caption" fontWeight="bold" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {item.product.name}
+                            </Typography>
+                            <IconButton size="small" onClick={() => removeFromCart(item.id)} sx={{ p: 0.5 }}>
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {item.variant ? item.variant.name : 'Default'}
+                          </Typography>
+                        </Box>
+                      </Box>
                     ))}
-                  </div>
-                </div>
+                  </Stack>
+                </Box>
               )}
 
-              {/* Deleted Items Section */}
+              {/* Deleted Items */}
               {deletedItems.length > 0 && (
-                <div className="border-t border-gray-200 pt-5">
-                  <h3 className="text-sm font-bold text-red-600 mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                <Box sx={{ pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant="body2" fontWeight="bold" color="error.main" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box component="span" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'error.main' }} />
                     Deleted Items
-                  </h3>
-                  <p className="text-xs text-gray-500 mb-3">These items are no longer available in the store.</p>
-                  <div className="flex flex-col gap-4">
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                    These items are no longer available in the store.
+                  </Typography>
+                  <Stack spacing={2}>
                     {deletedItems.map(item => (
-                      <div key={item.id} className="flex gap-3 opacity-50 grayscale">
-                        <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
-                          {getProductImage(item.product) ? (
-                            <img src={getProductImage(item.product)} alt={item.product.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <Package size={20} className="text-gray-300 m-auto mt-4" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start gap-2">
-                            <h4 className="font-bold text-gray-700 text-xs leading-tight line-clamp-2 strike line-through">{item.product.name}</h4>
-                            <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500">
-                              <X size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                      <Box key={item.id} sx={{ display: 'flex', gap: 2, opacity: 0.5, filter: 'grayscale(100%)' }}>
+                        <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+                          <Box component="img" src={getProductImage(item.product)} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </Box>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Typography variant="caption" fontWeight="bold" sx={{ textDecoration: 'line-through' }}>
+                              {item.product.name}
+                            </Typography>
+                            <IconButton size="small" onClick={() => removeFromCart(item.id)} sx={{ p: 0.5 }}>
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      </Box>
                     ))}
-                  </div>
-                </div>
+                  </Stack>
+                </Box>
               )}
-
-            </div>
+            </Stack>
           )}
-        </div>
+        </Box>
 
+        {/* Drawer Footer */}
         {cartItems.length > 0 && (
-          <div className="p-5 border-t border-gray-200 bg-gray-50">
-            <div className="flex justify-between items-center mb-4 text-gray-900">
-              <span className="font-bold">Subtotal</span>
-              <span className="font-extrabold text-xl">₱{validTotal.toLocaleString()}</span>
-            </div>
-            <p className="text-xs text-gray-500 mb-4 text-center">Shipping and taxes calculated at checkout.</p>
-            <button 
-              onClick={handleBulkCheckout}
+          <Box sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'grey.50' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Typography variant="body2" fontWeight="bold" color="text.secondary">Subtotal</Typography>
+              <Typography variant="h6" fontWeight={900} color="text.primary">
+                ₱{validTotal.toLocaleString()}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mb={2}>
+              Shipping and taxes calculated at checkout.
+            </Typography>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
               disabled={checkedItems.length === 0}
-              className="w-full bg-gray-900 text-white hover:bg-gray-800 font-bold py-3.5 rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleBulkCheckout}
+              sx={{ borderRadius: 2, fontWeight: 'bold', py: 1.5 }}
             >
               Buy Now ({checkedItems.length})
-            </button>
-          </div>
+            </Button>
+          </Box>
         )}
-      </div>
-
-    </div>
+      </Drawer>
+      <CustomerServiceWidget />
+    </Box>
   );
 };
 

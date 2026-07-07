@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import {
-  X,
-  Tag,
-  AlignLeft,
-  Loader2,
-  CheckCircle2,
-  AlertTriangle,
-} from 'lucide-react';
+import CloseIcon from '@mui/icons-material/Close';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import NotesIcon from '@mui/icons-material/Notes';
+import CircularProgress from '@mui/material/CircularProgress';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 
 const M = {
@@ -179,7 +177,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
               <p style={M.subtitle}>{t('Create a new product type for your inventory.')}</p>
             </div>
             <button className="ptm-close" onClick={handleClose} style={M.closeBtn} title={t('Close')}>
-              <X size={15} />
+            <CloseIcon sx={{ fontSize: 15 }} />
             </button>
           </div>
 
@@ -190,7 +188,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
               
               {error && (
                 <div style={M.errorBanner}>
-                  <AlertTriangle size={14} />
+                  <WarningAmberIcon sx={{ fontSize: 14 }} />
                   {error}
                 </div>
               )}
@@ -198,14 +196,14 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
               
               {success && (
                 <div style={M.successBanner}>
-                  <CheckCircle2 size={14} />
+                  <CheckCircleIcon sx={{ fontSize: 14 }} />
                   {success}
                 </div>
               )}
 
               
               <div style={M.formGroup}>
-                <label style={M.label}><Tag size={11} /> {t('Type Name')} *</label>
+                <label style={M.label}><LocalOfferIcon sx={{ fontSize: 11 }} /> {t('Type Name')} *</label>
                 <input
                   className="ptm-input"
                   type="text"
@@ -220,7 +218,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
 
               
               <div style={{ ...M.formGroup, marginBottom: 0 }}>
-                <label style={M.label}><AlignLeft size={11} /> {t('Description')} ({t('optional')})</label>
+                <label style={M.label}><NotesIcon sx={{ fontSize: 11 }} /> {t('Description')} ({t('optional')})</label>
                 <textarea
                   className="ptm-textarea"
                   value={description}
@@ -238,7 +236,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
               </button>
               <button type="submit" className="ptm-create" style={M.btnCreate} disabled={saving || !name.trim()}>
                 {saving ? (
-                  <><Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> {t('Creating…')}</>
+                  <><CircularProgress size={14} thickness={5} sx={{ color: '#fff' }} /> {t('Creating…')}</>
                 ) : (
                   t('Create Type')
                 )}

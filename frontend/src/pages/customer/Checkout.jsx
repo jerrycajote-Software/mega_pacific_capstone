@@ -3,35 +3,37 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { ArrowLeft, CheckCircle2, AlertCircle, ShoppingBag, CreditCard, Loader2, Package, Shuffle, MapPin, Edit3 } from 'lucide-react';
-
-const InputField = ({ label, name, type = 'text', placeholder, required = false, formData, errors, handleInputChange }) => (
-  <div className="mb-5">
-    <label className="block text-gray-700 text-sm font-bold mb-2">
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    {type === 'textarea' ? (
-      <textarea
-        name={name}
-        value={formData[name] || ''}
-        onChange={handleInputChange}
-        placeholder={placeholder}
-        rows="3"
-        className={`w-full bg-white border shadow-sm ${errors[name] ? 'border-red-500 focus:ring-red-500/50' : 'border-gray-300 focus:border-gray-400 focus:ring-gray-400/50'} rounded-xl px-4 py-3 text-gray-900 font-medium focus:outline-none focus:ring-1 transition-all resize-none`}
-      />
-    ) : (
-      <input
-        type={type}
-        name={name}
-        value={formData[name] || ''}
-        onChange={handleInputChange}
-        placeholder={placeholder}
-        className={`w-full bg-white border shadow-sm ${errors[name] ? 'border-red-500 focus:ring-red-500/50' : 'border-gray-300 focus:border-gray-400 focus:ring-gray-400/50'} rounded-xl px-4 py-3 text-gray-900 font-medium focus:outline-none focus:ring-1 transition-all`}
-      />
-    )}
-    {errors[name] && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1 font-bold"><AlertCircle size={12} /> {errors[name]}</p>}
-  </div>
-);
+import { getAvailableProvinces, getLocationsForProvince, getZipCodeForLocation } from '../../utils/locationService';
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  CircularProgress,
+  Alert,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
+  Divider,
+  Stack,
+  Avatar,
+  IconButton
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import EditIcon from '@mui/icons-material/Edit';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import CategoryIcon from '@mui/icons-material/Category';
 
 const Checkout = () => {
   const location = useLocation();
@@ -68,7 +70,8 @@ const Checkout = () => {
     customerEmail: user?.email || '',
     contactNumber: '',
     address: '',
-    cityProvince: '',
+    city: '',
+    province: 'Cavite',
     zipCode: '',
     notes: '',
     paymentMode: 'Cash on Delivery'
@@ -78,7 +81,6 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   
-  // Profile loading & bypass logic
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
@@ -103,11 +105,12 @@ const Checkout = () => {
             customerEmail: profile.email || prev.customerEmail,
             contactNumber: profile.contactNumber || '',
             address: profile.address || '',
-            cityProvince: profile.cityProvince || '',
+            city: profile.city || '',
+            province: profile.province || 'Cavite',
             zipCode: profile.zipCode || ''
           }));
           
-          if (profile.address && profile.contactNumber && profile.cityProvince && profile.zipCode) {
+          if (profile.address && profile.contactNumber && profile.city && profile.province && profile.zipCode) {
             setHasProfile(true);
           }
         }
@@ -123,37 +126,50 @@ const Checkout = () => {
 
   if (!user) {
     return (
-      <div className="py-20 text-center animate-fade-in-up">
-        <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6 mx-auto border border-amber-200">
-          <AlertCircle size={40} className="text-amber-500" />
-        </div>
-        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-4">Authentication Required</h2>
-        <p className="text-gray-600 font-medium mb-8 max-w-md mx-auto">You must be logged in to your account to proceed with the checkout and place an order.</p>
-        <button onClick={() => navigate('/dashboard')} className="bg-gray-900 hover:bg-gray-800 text-white shadow-sm px-8 py-3 rounded-xl font-bold transition-colors">Go to Dashboard to Login</button>
-      </div>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 10, textAlign: 'center' }}>
+        <Avatar sx={{ bgcolor: 'warning.light', width: 64, height: 64, mb: 3 }}>
+          <Alert color="warning" icon={false} sx={{ bgcolor: 'transparent' }} />
+        </Avatar>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>Authentication Required</Typography>
+        <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 400 }}>
+          You must be logged in to your account to proceed with the checkout and place an order.
+        </Typography>
+        <Button variant="contained" color="primary" onClick={() => navigate('/login')}>
+          Login to Proceed
+        </Button>
+      </Box>
     );
   }
 
   if (orderItems.length === 0) {
     return (
-      <div className="py-20 text-center">
-        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-4">No Items in Checkout</h2>
-        <button onClick={() => navigate('/dashboard')} className="text-gray-600 hover:text-gray-900 font-bold hover:underline">Return to Catalog</button>
-      </div>
+      <Box sx={{ py: 10, textAlign: 'center' }}>
+        <Typography variant="h5" fontWeight="bold" gutterBottom>No Items in Checkout</Typography>
+        <Button variant="text" onClick={() => navigate('/dashboard')}>Return to Catalog</Button>
+      </Box>
     );
   }
 
   if (isLoadingProfile) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-gray-400">
-        <Loader2 size={48} className="animate-spin mb-4 text-blue-500" />
-        Loading your secure checkout...
-      </div>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}>
+        <CircularProgress size={60} sx={{ mb: 3 }} />
+        <Typography color="text.secondary">Loading your secure checkout...</Typography>
+      </Box>
     );
   }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'city') {
+      const zipCode = getZipCodeForLocation(formData.province || 'Cavite', value);
+      setFormData(prev => ({ ...prev, city: value, zipCode }));
+      if (errors.city) setErrors(prev => ({ ...prev, city: '' }));
+      if (errors.zipCode) setErrors(prev => ({ ...prev, zipCode: '' }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -165,7 +181,8 @@ const Checkout = () => {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail)) newErrors.customerEmail = 'Invalid email format';
     if (!formData.contactNumber?.trim()) newErrors.contactNumber = 'Contact Number is required';
     if (!formData.address?.trim()) newErrors.address = 'Complete Address is required';
-    if (!formData.cityProvince?.trim()) newErrors.cityProvince = 'City/Province is required';
+    if (!formData.city?.trim()) newErrors.city = 'City is required';
+    if (!formData.province?.trim()) newErrors.province = 'Province is required';
     if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -177,7 +194,8 @@ const Checkout = () => {
       await axios.put(`${API_URL}/api/auth/profile`, {
         contactNumber: formData.contactNumber,
         address: formData.address,
-        cityProvince: formData.cityProvince,
+        city: formData.city,
+        province: formData.province,
         zipCode: formData.zipCode
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -194,7 +212,6 @@ const Checkout = () => {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    
 
     if (isEditingAddress || !hasProfile) {
       await saveProfileAddress();
@@ -205,16 +222,16 @@ const Checkout = () => {
       
       let res;
       if (state.isBulk || orderItems.length > 1) {
-        
         const bulkPayload = {
           userId: user?.id,
           paymentMode: formData.paymentMode,
-          customerName: formData.customerName,
           customerEmail: formData.customerEmail,
-          contactNumber: formData.contactNumber,
-          address: formData.address,
-          cityProvince: formData.cityProvince,
-          zipCode: formData.zipCode,
+          shippingName: formData.customerName,
+          shippingContactNumber: formData.contactNumber,
+          shippingAddress: formData.address,
+          shippingCity: formData.city,
+          shippingProvince: formData.province,
+          shippingZipCode: formData.zipCode,
           notes: formData.notes,
           items: orderItems.map(item => ({
             productId: item.product.id,
@@ -229,14 +246,21 @@ const Checkout = () => {
           clearCart(); 
         }
       } else {
-        
         const singleItem = orderItems[0];
         const singlePayload = {
           userId: user?.id,
           productId: singleItem.product.id,
           variantId: singleItem.variant?.id || singleItem.variantId || null,
           quantity: singleItem.quantity,
-          ...formData
+          paymentMode: formData.paymentMode,
+          customerEmail: formData.customerEmail,
+          shippingName: formData.customerName,
+          shippingContactNumber: formData.contactNumber,
+          shippingAddress: formData.address,
+          shippingCity: formData.city,
+          shippingProvince: formData.province,
+          shippingZipCode: formData.zipCode,
+          notes: formData.notes
         };
         res = await axios.post(`${API_URL}/api/customer/orders`, singlePayload, {
           headers: { Authorization: `Bearer ${token}` }
@@ -258,11 +282,10 @@ const Checkout = () => {
          } else {
            setErrors({ submit: `The item "${itemName}" only has ${available} units left (you requested ${requested}). We've adjusted your quantity. Please review and try again.` });
            
-           
            const updatedItems = orderItems.map(item => {
              const nameMatches = item.variant ? item.variant.name === itemName : item.product.name === itemName;
              if (nameMatches) {
-               if (updateQuantity && item.id) updateQuantity(item.id, available); // sync with cart
+               if (updateQuantity && item.id) updateQuantity(item.id, available);
                return { ...item, quantity: available };
              }
              return item;
@@ -280,176 +303,185 @@ const Checkout = () => {
 
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 animate-fade-in-up text-center">
-        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6 border border-green-200">
-          <CheckCircle2 size={40} className="text-green-600" />
-        </div>
-        <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-4">Order Placed Successfully!</h2>
-        <p className="text-gray-600 font-medium mb-8 max-w-md">Thank you for your purchase. We have received your order and will process it shortly.</p>
-        <div className="flex items-center gap-4 justify-center">
-          <button onClick={() => navigate('/dashboard')} className="px-6 py-3 bg-white border border-gray-300 hover:border-gray-400 shadow-sm text-gray-700 rounded-xl transition-all font-bold">Return to Dashboard</button>
-          <button onClick={() => navigate(`/order/${success}`)} className="px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white shadow-sm rounded-xl transition-all font-bold flex items-center gap-2">
-            <Package size={18} /> View Order
-          </button>
-        </div>
-      </div>
+      <Box sx={{ py: 10, textAlign: 'center', animation: 'fadeIn 0.5s ease-in-out' }}>
+        <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 80, height: 80, mx: 'auto', mb: 3 }}>
+          <CheckCircleIcon fontSize="large" />
+        </Avatar>
+        <Typography variant="h3" fontWeight="bold" gutterBottom>Order Placed Successfully!</Typography>
+        <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
+          Thank you for your purchase. We have received your order and will process it shortly.
+        </Typography>
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button variant="outlined" color="inherit" onClick={() => navigate('/dashboard')}>
+            Return to Dashboard
+          </Button>
+          <Button variant="contained" color="primary" startIcon={<Inventory2Icon />} onClick={() => navigate(`/order/${success}`)}>
+            View Order
+          </Button>
+        </Stack>
+      </Box>
     );
   }
 
   const showAddressForm = !hasProfile || isEditingAddress;
 
   return (
-    <div className="animate-fade-in-up pb-20">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold transition-colors mb-8 group">
-        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+    <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10 }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary' }}>
         Back to Previous
-      </button>
+      </Button>
 
-      <div className="flex items-center gap-3 mb-8">
-        <CreditCard className="text-gray-700" size={32} />
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Secure Checkout</h1>
-      </div>
+      <Typography variant="h3" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, color: 'text.primary' }}>
+        <CreditCardIcon fontSize="large" color="primary" /> Secure Checkout
+      </Typography>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
-        
-        <div className="lg:col-span-2">
-          
-          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 shadow-sm rounded-3xl p-8">
-            
-            <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
-              <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">Shipping Information</h2>
+      <Grid container spacing={4}>
+        <Grid item xs={12} lg={8}>
+          <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <LocalShippingIcon color="primary" /> Shipping Information
+              </Typography>
               {hasProfile && !isEditingAddress && (
-                <button 
-                  type="button" 
-                  onClick={() => setIsEditingAddress(true)}
-                  className="text-blue-600 hover:text-blue-800 font-bold text-sm flex items-center gap-1"
-                >
-                  <Edit3 size={16} /> Edit Address
-                </button>
+                <Button startIcon={<EditIcon />} size="small" onClick={() => setIsEditingAddress(true)}>Edit</Button>
               )}
               {isEditingAddress && hasProfile && (
-                <button 
-                  type="button" 
-                  onClick={() => {
-                    setIsEditingAddress(false);
-                    setErrors({});
-                  }}
-                  className="text-gray-500 hover:text-gray-700 font-bold text-sm flex items-center gap-1"
-                >
-                  Cancel Edit
-                </button>
+                <Button size="small" color="error" onClick={() => { setIsEditingAddress(false); setErrors({}); }}>Cancel</Button>
               )}
-            </div>
+            </Box>
 
-            {showAddressForm ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                  <InputField label="Full Name" name="customerName" required placeholder="John Doe" formData={formData} errors={errors} handleInputChange={handleInputChange} />
-                  <InputField label="Email Address" name="customerEmail" type="email" required placeholder="john@example.com" formData={formData} errors={errors} handleInputChange={handleInputChange} />
-                  <InputField label="Contact Number" name="contactNumber" required placeholder="09123456789" formData={formData} errors={errors} handleInputChange={handleInputChange} />
-                  <InputField label="Zip Code" name="zipCode" required placeholder="e.g. 1000" formData={formData} errors={errors} handleInputChange={handleInputChange} />
-                </div>
+            <Divider sx={{ mb: 3 }} />
 
-                <InputField label="Complete Address" name="address" required placeholder="Street Name, Building, House No." formData={formData} errors={errors} handleInputChange={handleInputChange} />
-                <InputField label="City/Province" name="cityProvince" required placeholder="e.g. Quezon City, Metro Manila" formData={formData} errors={errors} handleInputChange={handleInputChange} />
-              </>
-            ) : (
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 flex gap-4 items-start">
-                <MapPin className="text-blue-600 flex-shrink-0 mt-1" size={24} />
-                <div>
-                  <h3 className="font-extrabold text-gray-900 text-lg mb-1">{formData.customerName}</h3>
-                  <p className="text-gray-600 font-medium mb-1">{formData.contactNumber}</p>
-                  <p className="text-gray-700 font-medium">{formData.address}, {formData.cityProvince} {formData.zipCode}</p>
-                  <p className="text-gray-500 text-sm mt-1">{formData.customerEmail}</p>
-                </div>
-              </div>
-            )}
+            <form onSubmit={handleSubmit}>
+              {showAddressForm ? (
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Full Name" name="customerName" required value={formData.customerName} onChange={handleInputChange} error={!!errors.customerName} helperText={errors.customerName} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Email Address" name="customerEmail" type="email" required value={formData.customerEmail} onChange={handleInputChange} error={!!errors.customerEmail} helperText={errors.customerEmail} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Contact Number" name="contactNumber" required value={formData.contactNumber} onChange={handleInputChange} error={!!errors.contactNumber} helperText={errors.contactNumber} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Zip Code" name="zipCode" required value={formData.zipCode} InputProps={{ readOnly: true }} sx={{ bgcolor: 'rgba(0,0,0,0.02)' }} error={!!errors.zipCode} helperText={errors.zipCode} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField fullWidth label="Complete Address" name="address" required value={formData.address} onChange={handleInputChange} error={!!errors.address} helperText={errors.address} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField select fullWidth label="City / Municipality" name="city" required value={formData.city} onChange={handleInputChange} error={!!errors.city} helperText={errors.city}>
+                      <MenuItem value="" disabled>Select City</MenuItem>
+                      {getLocationsForProvince(formData.province || 'Cavite').map(loc => (
+                        <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField select fullWidth label="Province" name="province" required value={formData.province} disabled error={!!errors.province} helperText={errors.province}>
+                      {getAvailableProvinces().map(prov => (
+                        <MenuItem key={prov} value={prov}>{prov}</MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </Grid>
+              ) : (
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, p: 3, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 4 }}>
+                  <LocationOnIcon color="primary" sx={{ mt: 0.5 }} />
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">{formData.customerName}</Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>{formData.contactNumber}</Typography>
+                    <Typography variant="body1">{formData.address}, {formData.city}, {formData.province} {formData.zipCode}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{formData.customerEmail}</Typography>
+                  </Box>
+                </Box>
+              )}
 
-            <InputField label="Additional Notes" name="notes" type="textarea" placeholder="Any special instructions for delivery? (Optional)" formData={formData} errors={errors} handleInputChange={handleInputChange} />
+              <Box sx={{ mt: 4, mb: 6 }}>
+                <TextField fullWidth label="Additional Notes (Optional)" name="notes" multiline rows={3} value={formData.notes} onChange={handleInputChange} placeholder="Any special instructions for delivery?" />
+              </Box>
 
-            <h2 className="text-xl font-extrabold text-gray-900 tracking-tight mt-10 mb-6 border-b border-gray-200 pb-4">Payment Method</h2>
+              <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2, mb: 3 }}>
+                Payment Method
+              </Typography>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              {['Cash on Delivery with 50% Bank tranfer', 'Bank Transfer Fully Paid'].map((mode) => (
-                <label key={mode} className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${formData.paymentMode === mode ? 'border-gray-900 bg-gray-50 text-gray-900 shadow-sm' : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700 shadow-sm'}`}>
-                  <input type="radio" name="paymentMode" value={mode} checked={formData.paymentMode === mode} onChange={handleInputChange} className="sr-only" />
-                  <span className="text-sm font-bold text-center">{mode}</span>
-                </label>
-              ))}
-            </div>
+              <FormControl component="fieldset" sx={{ width: '100%', mb: 4 }}>
+                <RadioGroup name="paymentMode" value={formData.paymentMode} onChange={handleInputChange} row sx={{ gap: 2 }}>
+                  {['Cash on Delivery with 50% Bank tranfer', 'Bank Transfer Fully Paid'].map((mode) => (
+                    <Paper key={mode} variant="outlined" sx={{ flex: 1, p: 2, display: 'flex', alignItems: 'center', borderColor: formData.paymentMode === mode ? 'primary.main' : 'divider', bgcolor: formData.paymentMode === mode ? 'primary.50' : 'background.paper', cursor: 'pointer' }} onClick={() => handleInputChange({ target: { name: 'paymentMode', value: mode } })}>
+                      <FormControlLabel value={mode} control={<Radio color="primary" />} label={<Typography fontWeight="bold" variant="body2">{mode}</Typography>} sx={{ m: 0, width: '100%' }} />
+                    </Paper>
+                  ))}
+                </RadioGroup>
+              </FormControl>
 
-            {errors.submit && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl flex items-center gap-2 font-bold">
-                <AlertCircle size={18} />{errors.submit}
-              </div>
-            )}
+              {errors.submit && <Alert severity="error" sx={{ mb: 4 }}>{errors.submit}</Alert>}
 
-            <div className="flex justify-end pt-4">
-              <button type="submit" disabled={isSubmitting} className="bg-gray-900 hover:bg-gray-800 text-white shadow-sm px-8 py-4 rounded-xl font-bold flex items-center gap-3 transition-all hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto">
-                {isSubmitting ? (<><Loader2 size={20} className="animate-spin" />Processing Order...</>) : (<><CheckCircle2 size={20} />Complete Order</>)}
-              </button>
-            </div>
-          </form>
-        </div>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                <Button type="submit" variant="contained" color="primary" size="large" disabled={isSubmitting} sx={{ px: 6, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}>
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Complete Order'}
+                </Button>
+              </Box>
+            </form>
+          </Paper>
+        </Grid>
 
-        {/* Right Summary Section */}
-        <div className="lg:col-span-1">
-          <div className="bg-white border border-gray-200 shadow-sm rounded-3xl p-6 sticky top-24">
-            <h2 className="text-lg font-extrabold text-gray-900 tracking-tight mb-6 flex items-center gap-2">
-              <ShoppingBag size={20} className="text-gray-700" /> Order Summary
-            </h2>
+        <Grid item xs={12} lg={4}>
+          <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', position: 'sticky', top: 90 }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+              <ShoppingBagIcon color="action" /> Order Summary
+            </Typography>
 
-            <div className="flex flex-col gap-4 mb-6 max-h-[300px] overflow-y-auto scrollbar-thin pr-2">
+            <Box sx={{ maxHeight: 400, overflowY: 'auto', pr: 1, mb: 3 }}>
               {orderItems.map((item, idx) => (
-                <div key={idx} className="flex gap-4">
-                  <div className="w-16 h-16 bg-white rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200">
+                <Box key={idx} sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                  <Box sx={{ width: 64, height: 64, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                     {(item.product.imageUrls?.[0] || item.product.imageUrl) ? (
-                      <img src={item.product.imageUrls?.[0] || item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                      <Box component="img" src={item.product.imageUrls?.[0] || item.product.imageUrl} alt={item.product.name} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <Package size={20} className="text-gray-400" />
+                      <Inventory2Icon sx={{ color: 'text.disabled' }} />
                     )}
-                  </div>
-                  <div className="flex flex-col justify-center flex-1">
-                    <h3 className="text-gray-900 font-bold tracking-tight line-clamp-1 text-sm">{item.product.name}</h3>
-                    
-                    {/* Variant display in summary */}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" fontWeight="bold" sx={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {item.product.name}
+                    </Typography>
                     {item.variant && (
-                      <div className="flex items-center gap-1.5 mt-1 px-2 py-0.5 bg-gray-50 border border-gray-200 shadow-sm rounded-md w-fit">
-                        <Shuffle size={10} className="text-gray-500" />
-                        <span className="text-gray-900 font-bold text-[10px]">{item.variant.name}</span>
-                      </div>
+                      <Chip icon={<CategoryIcon fontSize="small" />} label={item.variant.name} size="small" variant="outlined" sx={{ height: 20, mt: 0.5, fontSize: '0.65rem' }} />
                     )}
-
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-gray-600 font-medium text-xs">Qty: {item.quantity}</span>
-                      <span className="text-gray-900 font-extrabold text-xs">₱{((item.variant?.price ?? item.product.price) * item.quantity).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                      <Typography variant="caption" color="text.secondary">Qty: {item.quantity}</Typography>
+                      <Typography variant="caption" fontWeight="bold">₱{((item.variant?.price ?? item.product.price) * item.quantity).toLocaleString()}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
               ))}
-            </div>
+            </Box>
 
-            <div className="border-t border-gray-200 pt-4 space-y-3 mb-6">
-              <div className="flex justify-between text-gray-600 font-medium text-sm">
-                <span>Subtotal</span>
-                <span>₱{orderTotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-gray-600 font-medium text-sm">
-                <span>Shipping</span>
-                <span className="text-green-600 font-bold">Calculated later</span>
-              </div>
-            </div>
+            <Divider sx={{ mb: 2 }} />
 
-            <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
-              <span className="text-gray-600 font-bold">Total Amount</span>
-              <span className="text-2xl font-extrabold text-gray-900 tracking-tight">₱{orderTotal.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
+            <Stack spacing={1.5} sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Subtotal</Typography>
+                <Typography variant="body2" fontWeight="bold">₱{orderTotal.toLocaleString()}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Shipping</Typography>
+                <Typography variant="body2" color="success.main" fontWeight="bold">Calculated later</Typography>
+              </Box>
+            </Stack>
 
-      </div>
-    </div>
+            <Divider sx={{ mb: 2 }} />
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <Typography variant="subtitle1" fontWeight="bold">Total Amount</Typography>
+              <Typography variant="h5" fontWeight="900" color="primary">₱{orderTotal.toLocaleString()}</Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

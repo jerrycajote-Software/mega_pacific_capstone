@@ -1,8 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// Simple initialization with empty resources
-// since this is mainly to pass the linter and portability requirements
+
 const resources = {
   en: {
     translation: {

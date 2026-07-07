@@ -19,7 +19,10 @@ const getOrders = async (req, res) => {
       }
     });
 
-    const formattedOrders = orders.map(o => {
+    const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
+    const updatedOrders = await checkAndExtendDeliveryDates(orders);
+
+    const formattedOrders = updatedOrders.map(o => {
       
       const productsSummary = o.items.map(item => {
         const variantLabel = item.variantName || item.variant?.name;

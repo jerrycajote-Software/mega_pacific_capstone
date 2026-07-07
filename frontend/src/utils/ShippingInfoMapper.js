@@ -8,12 +8,13 @@ class ShippingInfoMapper {
     if (!order) return null;
 
     return {
-      fullName: order.customerName || "N/A",
+      fullName: order.shippingName || order.customerName || "N/A", // fallback to customerName if old data
       email: order.customerEmail || "N/A",
-      contactNumber: order.contactNumber || "N/A",
-      address: order.address || "N/A",
-      cityProvince: order.cityProvince || "N/A",
-      zipCode: order.zipCode || "N/A",
+      contactNumber: order.shippingContactNumber || order.contactNumber || "N/A",
+      address: order.shippingAddress || order.address || "N/A",
+      city: order.shippingCity || order.cityProvince || "N/A",
+      province: order.shippingProvince || "N/A",
+      zipCode: order.shippingZipCode || order.zipCode || "N/A",
       paymentMethod: order.paymentMode || "N/A",
       notes: order.notes || "None"
     };

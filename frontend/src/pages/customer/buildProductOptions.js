@@ -21,7 +21,7 @@ export function buildProductOptions(product) {
   if (hasBaseConfig) {
     options.push({
       id: null,                         
-      name: `${product.unit || 'Default'} (Default)`,
+      name: product.unit || 'per unit',
       price: product.price ?? 0,
       stock: product.stock ?? 0,
       status: (product.stock ?? 0) > 0 ? 'available' : 'out_of_stock',
