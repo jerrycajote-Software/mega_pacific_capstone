@@ -79,7 +79,7 @@ const ImageGallery = ({ images, productName }) => {
   }
 
   return (
-    <Box sx={{ width: '100%', height: { xs: 'auto', md: 510 }, display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ width: '100%', height: { xs: 'auto', md: 660 }, display: 'flex', flexDirection: 'column' }}>
       {/* Main image with hover zoom */}
       <Paper 
         ref={imageContainerRef}
@@ -91,8 +91,8 @@ const ImageGallery = ({ images, productName }) => {
         sx={{ 
           position: 'relative', 
           width: '100%',
-          height: { xs: 300, sm: 380, md: 420 },
-          minHeight: { xs: 300, sm: 380, md: 420 },
+          height: { xs: 350, sm: 450, md: 550 },
+          minHeight: { xs: 350, sm: 450, md: 550 },
           flexShrink: 0,
           borderRadius: 4, 
           bgcolor: 'background.paper',
@@ -168,8 +168,8 @@ const ImageGallery = ({ images, productName }) => {
           mt: 2, 
           overflowX: 'auto', 
           pb: 1, 
-          height: 72, 
-          minHeight: 72, 
+          height: 92, 
+          minHeight: 92, 
           flexShrink: 0, 
           visibility: imgs.length > 1 ? 'visible' : 'hidden',
         }}
@@ -179,8 +179,8 @@ const ImageGallery = ({ images, productName }) => {
               key={i} 
               onClick={() => setActiveIndex(i)}
               sx={{ 
-                width: 64, 
-                height: 64, 
+                width: 84, 
+                height: 84, 
                 flexShrink: 0, 
                 borderRadius: 2, 
                 border: '2px solid', 

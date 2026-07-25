@@ -107,13 +107,29 @@ const login = async (req, res) => {
       return res.status(403).json({ error: "Email not verified", email: user.email });
     }
 
+    let sessionToken = null;
+    if (user.role === "admin" || user.role === "employee") {
+      const crypto = require("crypto");
+      sessionToken = crypto.randomUUID();
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { sessionToken }
+      });
+    }
+
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       console.error("FATAL: JWT_SECRET environment variable is not set!");
       return res.status(500).json({ error: "Server configuration error." });
     }
+    
+    const payload = { userId: user.id, role: user.role };
+    if (sessionToken) {
+      payload.sessionToken = sessionToken;
+    }
+
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      payload,
       jwtSecret,
       { expiresIn: "1d" }
     );
@@ -128,7 +144,8 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+    console.error("Login Error:", error);
+    res.status(500).json({ error: "Login failed: " + (error.message || "Unknown error") });
   }
 };
 

@@ -172,9 +172,210 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/admin/products/stock-adjust
+ * Single item stock addition
+ */
+const adjustStock = async (req, res) => {
+  try {
+    const { productId, variantId, addedQuantity, reason } = req.body;
+    const qty = parseInt(addedQuantity);
+
+    if (!productId || isNaN(qty) || qty <= 0) {
+      return res.status(400).json({ error: "Product ID and a valid positive addedQuantity are required." });
+    }
+
+    const userId = req.user?.userId || null;
+    let result;
+
+    if (variantId) {
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: parseInt(variantId) },
+        include: { product: true }
+      });
+      if (!variant) {
+        return res.status(404).json({ error: "Product variant not found" });
+      }
+
+      const previousStock = variant.stock;
+      const newStock = previousStock + qty;
+
+      const [updatedVariant, log] = await prisma.$transaction([
+        prisma.productVariant.update({
+          where: { id: parseInt(variantId) },
+          data: {
+            stock: newStock,
+            status: newStock > 0 ? "available" : "out_of_stock"
+          }
+        }),
+        prisma.inventoryLog.create({
+          data: {
+            productId: parseInt(productId),
+            variantId: parseInt(variantId),
+            addedBy: userId,
+            previousStock,
+            addedQuantity: qty,
+            newStock,
+            reason: reason || "Restock"
+          },
+          include: {
+            product: { select: { name: true } },
+            variant: { select: { name: true } },
+            user: { select: { name: true, email: true } }
+          }
+        })
+      ]);
+
+      result = { updatedVariant, log };
+    } else {
+      const product = await prisma.product.findUnique({
+        where: { id: parseInt(productId) }
+      });
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const previousStock = product.stock;
+      const newStock = previousStock + qty;
+
+      const [updatedProduct, log] = await prisma.$transaction([
+        prisma.product.update({
+          where: { id: parseInt(productId) },
+          data: { stock: newStock }
+        }),
+        prisma.inventoryLog.create({
+          data: {
+            productId: parseInt(productId),
+            addedBy: userId,
+            previousStock,
+            addedQuantity: qty,
+            newStock,
+            reason: reason || "Restock"
+          },
+          include: {
+            product: { select: { name: true } },
+            user: { select: { name: true, email: true } }
+          }
+        })
+      ]);
+
+      result = { updatedProduct, log };
+    }
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error("Stock adjustment failed:", error);
+    res.status(500).json({ error: "Failed to adjust stock: " + error.message });
+  }
+};
+
+/**
+ * POST /api/admin/products/stock-adjust-bulk
+ * Bulk stock addition across multiple items
+ */
+const bulkAdjustStock = async (req, res) => {
+  try {
+    const { adjustments } = req.body;
+    if (!Array.isArray(adjustments) || adjustments.length === 0) {
+      return res.status(400).json({ error: "Adjustments array is required." });
+    }
+
+    const userId = req.user?.userId || null;
+    const logs = [];
+
+    await prisma.$transaction(async (tx) => {
+      for (const item of adjustments) {
+        const { productId, variantId, addedQuantity, reason } = item;
+        const qty = parseInt(addedQuantity);
+        if (!productId || isNaN(qty) || qty <= 0) continue;
+
+        if (variantId) {
+          const variant = await tx.productVariant.findUnique({ where: { id: parseInt(variantId) } });
+          if (!variant) continue;
+          const previousStock = variant.stock;
+          const newStock = previousStock + qty;
+
+          await tx.productVariant.update({
+            where: { id: parseInt(variantId) },
+            data: {
+              stock: newStock,
+              status: newStock > 0 ? "available" : "out_of_stock"
+            }
+          });
+
+          const log = await tx.inventoryLog.create({
+            data: {
+              productId: parseInt(productId),
+              variantId: parseInt(variantId),
+              addedBy: userId,
+              previousStock,
+              addedQuantity: qty,
+              newStock,
+              reason: reason || "Bulk Restock"
+            }
+          });
+          logs.push(log);
+        } else {
+          const product = await tx.product.findUnique({ where: { id: parseInt(productId) } });
+          if (!product) continue;
+          const previousStock = product.stock;
+          const newStock = previousStock + qty;
+
+          await tx.product.update({
+            where: { id: parseInt(productId) },
+            data: { stock: newStock }
+          });
+
+          const log = await tx.inventoryLog.create({
+            data: {
+              productId: parseInt(productId),
+              addedBy: userId,
+              previousStock,
+              addedQuantity: qty,
+              newStock,
+              reason: reason || "Bulk Restock"
+            }
+          });
+          logs.push(log);
+        }
+      }
+    });
+
+    res.status(200).json({ success: true, count: logs.length, message: `Successfully restocked ${logs.length} items.` });
+  } catch (error) {
+    console.error("Bulk stock adjustment failed:", error);
+    res.status(500).json({ error: "Failed to perform bulk stock restock: " + error.message });
+  }
+};
+
+/**
+ * GET /api/admin/products/stock-logs
+ * Fetch restock audit logs
+ */
+const getStockLogs = async (req, res) => {
+  try {
+    const logs = await prisma.inventoryLog.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        product: { select: { id: true, name: true, type: true } },
+        variant: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, email: true, role: true } }
+      },
+      take: 200
+    });
+    res.status(200).json({ success: true, data: logs });
+  } catch (error) {
+    console.error("Failed to fetch stock logs:", error);
+    res.status(500).json({ error: "Failed to fetch stock logs" });
+  }
+};
+
 module.exports = {
   getProducts,
   createProduct,
   updateProduct,
   deleteProduct,
+  adjustStock,
+  bulkAdjustStock,
+  getStockLogs,
 };

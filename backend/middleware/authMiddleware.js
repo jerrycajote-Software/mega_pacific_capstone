@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const prisma = require("../config/db");
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Access denied. No token provided." });
@@ -14,10 +15,22 @@ const verifyToken = (req, res, next) => {
       return res.status(500).json({ error: "Server configuration error." });
     }
     const decoded = jwt.verify(token, jwtSecret);
+    
+    // Check single-session constraint for admin/employee
+    if (decoded.role === "admin" || decoded.role === "employee") {
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: { sessionToken: true }
+      });
+      if (!user || user.sessionToken !== decoded.sessionToken) {
+        return res.status(401).json({ error: "Session expired. Logged in from another device." });
+      }
+    }
+
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(400).json({ error: "Invalid token." });
+    res.status(401).json({ error: "Invalid or expired token." });
   }
 };
 

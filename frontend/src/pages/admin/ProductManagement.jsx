@@ -30,6 +30,7 @@ import {
 } from '@mui/material';
 import AddProductTypeModal from './AddProductTypeModal';
 import InventoryDataGrid from '../../components/InventoryDataGrid';
+import StockManagementTab from '../../components/StockManagementTab';
 import { ProductStockCalculator } from '../../utils/ProductStockCalculator';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Loader2, PlusCircle } from 'lucide-react';
@@ -205,6 +206,7 @@ const ProductManagement = () => {
   const isAdmin = user?.role === 'admin';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'stock'
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -522,16 +524,65 @@ const ProductManagement = () => {
             </div>
           </Box>
 
-          <Paper sx={{ borderRadius: 2, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            <InventoryDataGrid
-              products={products}
-              onViewProduct={(product) => openModal(product)}
-              onEditProduct={(product) => openModal(product)}
-              onDeleteProduct={handleDelete}
-              isAdmin={isAdmin}
-              loading={loading}
-            />
-          </Paper>
+          {/* Top Tab Navigation Header */}
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 3, borderBottom: '1px solid var(--border)', pb: 1.5, flexWrap: 'wrap' }}>
+            <Button
+              variant={activeTab === 'catalog' ? 'contained' : 'outlined'}
+              startIcon={<Inventory2Icon />}
+              onClick={() => setActiveTab('catalog')}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 600,
+                textTransform: 'none',
+                px: 2.5,
+                py: 1,
+                background: activeTab === 'catalog' ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'transparent',
+                borderColor: activeTab === 'catalog' ? 'transparent' : 'var(--border-light)',
+                color: activeTab === 'catalog' ? '#fff' : 'var(--text-muted)',
+                '&:hover': {
+                  background: activeTab === 'catalog' ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)' : 'var(--bg-tertiary)'
+                }
+              }}
+            >
+              {t('Item Catalog & Details')}
+            </Button>
+
+            <Button
+              variant={activeTab === 'stock' ? 'contained' : 'outlined'}
+              startIcon={<AddCircleIcon />}
+              onClick={() => setActiveTab('stock')}
+              sx={{
+                borderRadius: 2.5,
+                fontWeight: 600,
+                textTransform: 'none',
+                px: 2.5,
+                py: 1,
+                background: activeTab === 'stock' ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'transparent',
+                borderColor: activeTab === 'stock' ? 'transparent' : 'var(--border-light)',
+                color: activeTab === 'stock' ? '#fff' : 'var(--text-muted)',
+                '&:hover': {
+                  background: activeTab === 'stock' ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)' : 'var(--bg-tertiary)'
+                }
+              }}
+            >
+              {t('Stock Quantity Management (Stock In)')}
+            </Button>
+          </Box>
+
+          {activeTab === 'catalog' ? (
+            <Paper sx={{ borderRadius: 2, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              <InventoryDataGrid
+                products={products}
+                onViewProduct={(product) => openModal(product)}
+                onEditProduct={(product) => openModal(product)}
+                onDeleteProduct={handleDelete}
+                isAdmin={isAdmin}
+                loading={loading}
+              />
+            </Paper>
+          ) : (
+            <StockManagementTab products={products} onRefreshProducts={fetchProducts} />
+          )}
         </Box>
       </div>
 

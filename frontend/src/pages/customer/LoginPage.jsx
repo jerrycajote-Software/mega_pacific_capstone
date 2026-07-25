@@ -48,6 +48,20 @@ const CustomerLoginPage = () => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
+
+    if (!email && !password) {
+      setError('please type your valid credentials');
+      return;
+    }
+    if (email && !password) {
+      setError('Please type your correct password');
+      return;
+    }
+    if (!email && password) {
+      setError('Please type your email address');
+      return;
+    }
+
     setLoading(true);
 
     const result = await login(email, password);
@@ -78,7 +92,7 @@ const CustomerLoginPage = () => {
         bgcolor: 'background.default',
       }}
     >
-      {/* ─── Left Decorative Panel (md+) ─────────────────────── */}
+      {/*  Left Decorative Panel (md+) */}
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
@@ -130,7 +144,7 @@ const CustomerLoginPage = () => {
         </Box>
       </Box>
 
-      {/* ─── Right: Login Form ────────────────────────────────── */}
+      {/*  Right: Login Form  */}
       <Box
         sx={{
           flex: 1,

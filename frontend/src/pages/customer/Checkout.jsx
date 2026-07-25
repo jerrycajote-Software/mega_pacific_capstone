@@ -3,10 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { getAvailableProvinces, getLocationsForProvince, getZipCodeForLocation } from '../../utils/locationService';
+import { getZipCodeForLocation } from '../../utils/locationService';
+import ShippingInfoWidget from '../../components/ShippingInfoWidget';
+import PaymentMethodWidget from '../../components/PaymentMethodWidget';
 import {
   Box,
-  Container,
   Grid,
   Typography,
   TextField,
@@ -14,24 +15,15 @@ import {
   Paper,
   CircularProgress,
   Alert,
-  MenuItem,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormControl,
-  FormLabel,
+  Chip,
   Divider,
   Stack,
   Avatar,
-  IconButton
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import EditIcon from '@mui/icons-material/Edit';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CategoryIcon from '@mui/icons-material/Category';
 
@@ -323,8 +315,6 @@ const Checkout = () => {
     );
   }
 
-  const showAddressForm = !hasProfile || isEditingAddress;
-
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10 }}>
       <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary' }}>
@@ -338,83 +328,25 @@ const Checkout = () => {
       <Grid container spacing={4}>
         <Grid item xs={12} lg={8}>
           <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h5" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LocalShippingIcon color="primary" /> Shipping Information
-              </Typography>
-              {hasProfile && !isEditingAddress && (
-                <Button startIcon={<EditIcon />} size="small" onClick={() => setIsEditingAddress(true)}>Edit</Button>
-              )}
-              {isEditingAddress && hasProfile && (
-                <Button size="small" color="error" onClick={() => { setIsEditingAddress(false); setErrors({}); }}>Cancel</Button>
-              )}
-            </Box>
-
-            <Divider sx={{ mb: 3 }} />
+            <ShippingInfoWidget
+              formData={formData}
+              errors={errors}
+              hasProfile={hasProfile}
+              isEditingAddress={isEditingAddress}
+              onEdit={() => setIsEditingAddress(true)}
+              onCancelEdit={() => { setIsEditingAddress(false); setErrors({}); }}
+              onInputChange={handleInputChange}
+            />
 
             <form onSubmit={handleSubmit}>
-              {showAddressForm ? (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Full Name" name="customerName" required value={formData.customerName} onChange={handleInputChange} error={!!errors.customerName} helperText={errors.customerName} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Email Address" name="customerEmail" type="email" required value={formData.customerEmail} onChange={handleInputChange} error={!!errors.customerEmail} helperText={errors.customerEmail} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Contact Number" name="contactNumber" required value={formData.contactNumber} onChange={handleInputChange} error={!!errors.contactNumber} helperText={errors.contactNumber} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Zip Code" name="zipCode" required value={formData.zipCode} InputProps={{ readOnly: true }} sx={{ bgcolor: 'rgba(0,0,0,0.02)' }} error={!!errors.zipCode} helperText={errors.zipCode} />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField fullWidth label="Complete Address" name="address" required value={formData.address} onChange={handleInputChange} error={!!errors.address} helperText={errors.address} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField select fullWidth label="City / Municipality" name="city" required value={formData.city} onChange={handleInputChange} error={!!errors.city} helperText={errors.city}>
-                      <MenuItem value="" disabled>Select City</MenuItem>
-                      {getLocationsForProvince(formData.province || 'Cavite').map(loc => (
-                        <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField select fullWidth label="Province" name="province" required value={formData.province} disabled error={!!errors.province} helperText={errors.province}>
-                      {getAvailableProvinces().map(prov => (
-                        <MenuItem key={prov} value={prov}>{prov}</MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                </Grid>
-              ) : (
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, p: 3, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 4 }}>
-                  <LocationOnIcon color="primary" sx={{ mt: 0.5 }} />
-                  <Box>
-                    <Typography variant="h6" fontWeight="bold">{formData.customerName}</Typography>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>{formData.contactNumber}</Typography>
-                    <Typography variant="body1">{formData.address}, {formData.city}, {formData.province} {formData.zipCode}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{formData.customerEmail}</Typography>
-                  </Box>
-                </Box>
-              )}
-
               <Box sx={{ mt: 4, mb: 6 }}>
                 <TextField fullWidth label="Additional Notes (Optional)" name="notes" multiline rows={3} value={formData.notes} onChange={handleInputChange} placeholder="Any special instructions for delivery?" />
               </Box>
 
-              <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2, mb: 3 }}>
-                Payment Method
-              </Typography>
-
-              <FormControl component="fieldset" sx={{ width: '100%', mb: 4 }}>
-                <RadioGroup name="paymentMode" value={formData.paymentMode} onChange={handleInputChange} row sx={{ gap: 2 }}>
-                  {['Cash on Delivery with 50% Bank tranfer', 'Bank Transfer Fully Paid'].map((mode) => (
-                    <Paper key={mode} variant="outlined" sx={{ flex: 1, p: 2, display: 'flex', alignItems: 'center', borderColor: formData.paymentMode === mode ? 'primary.main' : 'divider', bgcolor: formData.paymentMode === mode ? 'primary.50' : 'background.paper', cursor: 'pointer' }} onClick={() => handleInputChange({ target: { name: 'paymentMode', value: mode } })}>
-                      <FormControlLabel value={mode} control={<Radio color="primary" />} label={<Typography fontWeight="bold" variant="body2">{mode}</Typography>} sx={{ m: 0, width: '100%' }} />
-                    </Paper>
-                  ))}
-                </RadioGroup>
-              </FormControl>
+              <PaymentMethodWidget
+                paymentMode={formData.paymentMode}
+                onChange={handleInputChange}
+              />
 
               {errors.submit && <Alert severity="error" sx={{ mb: 4 }}>{errors.submit}</Alert>}
 
