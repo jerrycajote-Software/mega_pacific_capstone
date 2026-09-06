@@ -234,7 +234,7 @@ const ProductManagement = () => {
   const [productTypes, setProductTypes] = useState([]);
   const [showAddTypeModal, setShowAddTypeModal] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || '';
 
   useEffect(() => { fetchProducts(); fetchProductTypes(); }, []);
 
@@ -486,10 +486,10 @@ const ProductManagement = () => {
         <input className="pm-variant-input" style={S.variantInput} value={editingVariantData.name} onChange={e => setEditingVariantData(p => ({ ...p, name: e.target.value }))} placeholder="Name" />
       </td>
       <td style={S.variantTd}>
-        <input className="pm-variant-input" style={S.variantInput} type="number" value={editingVariantData.price} onChange={e => setEditingVariantData(p => ({ ...p, price: e.target.value }))} placeholder="0" />
+        <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={editingVariantData.price} onChange={e => setEditingVariantData(p => ({ ...p, price: e.target.value }))} placeholder="0" />
       </td>
       <td style={S.variantTd}>
-        <input className="pm-variant-input" style={S.variantInput} type="number" value={editingVariantData.stock} onChange={e => setEditingVariantData(p => ({ ...p, stock: e.target.value }))} placeholder="0" />
+        <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={editingVariantData.stock} onChange={e => setEditingVariantData(p => ({ ...p, stock: e.target.value }))} placeholder="0" />
       </td>
       <td style={S.variantTd}>
         <select className="pm-variant-input" style={S.variantSelect} value={editingVariantData.status} onChange={e => setEditingVariantData(p => ({ ...p, status: e.target.value }))}>
@@ -522,6 +522,17 @@ const ProductManagement = () => {
                 {t('Manage your products, stock levels and pricing.')}
               </Typography>
             </div>
+            {!isAdmin && (
+              <button
+                type="button"
+                className="pm-btn-primary"
+                style={S.btnPrimary}
+                onClick={() => openModal()}
+              >
+                <AddCircleIcon sx={{ fontSize: 18 }} />
+                {t('Add New Product')}
+              </button>
+            )}
           </Box>
 
           {/* Top Tab Navigation Header */}
@@ -672,7 +683,7 @@ const ProductManagement = () => {
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('ORIGINAL PRICE (₱)')}</label>
-                      <input className="pm-input" name="price" type="number" disabled={isAdmin} value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
+                      <input className="pm-input" name="price" type="number" min="0" disabled={isAdmin} value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LayersIcon sx={{ fontSize: 11 }} /> {t('Unit')}</label>
@@ -685,7 +696,7 @@ const ProductManagement = () => {
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('BASE STOCK QTY')}</label>
-                      <input className="pm-input" name="stock" type="number" disabled={isAdmin} value={formData.stock} onChange={handleInputChange} placeholder={editingProduct ? t("New Stock") : "0"} style={S.inputBase} />
+                      <input className="pm-input" name="stock" type="number" min="0" disabled={isAdmin} value={formData.stock} onChange={handleInputChange} placeholder={editingProduct ? t("New Stock") : "0"} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LocalOfferIcon sx={{ fontSize: 11 }} /> {t('Category Type')}</label>
@@ -811,10 +822,10 @@ const ProductManagement = () => {
                               <input className="pm-variant-input" style={S.variantInput} value={newVariant.name} onChange={e => setNewVariant(p => ({ ...p, name: e.target.value }))} placeholder={t('e.g. Per Meter')} />
                             </td>
                             <td style={S.variantTd}>
-                              <input className="pm-variant-input" style={S.variantInput} type="number" value={newVariant.price} onChange={e => setNewVariant(p => ({ ...p, price: e.target.value }))} placeholder="0" />
+                              <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={newVariant.price} onChange={e => setNewVariant(p => ({ ...p, price: e.target.value }))} placeholder="0" />
                             </td>
                             <td style={S.variantTd}>
-                              <input className="pm-variant-input" style={S.variantInput} type="number" value={newVariant.stock} onChange={e => setNewVariant(p => ({ ...p, stock: e.target.value }))} placeholder="0" />
+                              <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={newVariant.stock} onChange={e => setNewVariant(p => ({ ...p, stock: e.target.value }))} placeholder="0" />
                             </td>
                             <td style={S.variantTd}>
                               <select className="pm-variant-input" style={S.variantSelect} value={newVariant.status} onChange={e => setNewVariant(p => ({ ...p, status: e.target.value }))}>

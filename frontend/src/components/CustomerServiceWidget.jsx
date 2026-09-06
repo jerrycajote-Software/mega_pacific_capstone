@@ -11,9 +11,7 @@ import {
   Button,
   CircularProgress
 } from '@mui/material';
-import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
-import CloseIcon from '@mui/icons-material/Close';
-import SendIcon from '@mui/icons-material/Send';
+
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -28,7 +26,7 @@ const CustomerServiceWidget = () => {
   const [socket, setSocket] = useState(null);
   const messagesEndRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || '';
 
   useEffect(() => {
     if (!user || user.role !== 'customer') return;
@@ -140,7 +138,7 @@ const CustomerServiceWidget = () => {
           }}
         >
           <Badge color="error" variant="dot" invisible={isOpen}>
-            <ChatBubbleIcon sx={{ fontSize: 26, color: '#ffffff' }} />
+            <i className="fi fi-rr-comment-alt" style={{ fontSize: '22px', color: '#ffffff' }}></i>
           </Badge>
         </Fab>
       </Tooltip>
@@ -172,7 +170,7 @@ const CustomerServiceWidget = () => {
           }}>
             <Typography variant="subtitle1" fontWeight="bold">Customer Support</Typography>
             <IconButton size="small" onClick={() => setIsOpen(false)} sx={{ color: 'white' }}>
-              <CloseIcon />
+              <i className="fi fi-rr-cross" style={{ fontSize: '14px', color: '#ffffff' }}></i>
             </IconButton>
           </Box>
 
@@ -223,7 +221,7 @@ const CustomerServiceWidget = () => {
               autoComplete="off"
             />
             <Button type="submit" variant="contained" color="secondary" sx={{ minWidth: 'auto', px: 2 }} disabled={!newMessage.trim()}>
-              <SendIcon fontSize="small" />
+              <i className="fi fi-rr-paper-plane" style={{ fontSize: '14px', color: '#ffffff' }}></i>
             </Button>
           </Box>
         </Paper>

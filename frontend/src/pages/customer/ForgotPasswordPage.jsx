@@ -10,8 +10,7 @@ import {
   CircularProgress,
   Link,
 } from '@mui/material';
-import LockResetOutlinedIcon from '@mui/icons-material/LockResetOutlined';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+
 
 const BRAND_FEATURES = [
   'Premium quality roofing & steel materials',
@@ -39,7 +38,7 @@ const ForgotPasswordPage = () => {
 
     setLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
       // Always navigate regardless — backend returns 200 even for unknown emails (security best practice)
       navigate('/reset-password', { state: { email } });
@@ -96,7 +95,7 @@ const ForgotPasswordPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
           {BRAND_FEATURES.map((feat, i) => (
             <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <CheckCircleOutlinedIcon sx={{ color: '#ecf39e', fontSize: 20, flexShrink: 0 }} />
+              <i className="fi fi-sr-check-circle" style={{ color: '#ecf39e', fontSize: '18px', flexShrink: 0 }}></i>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
                 {feat}
               </Typography>
@@ -140,7 +139,7 @@ const ForgotPasswordPage = () => {
               boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
             }}
           >
-            <LockResetOutlinedIcon sx={{ color: '#ffffff', fontSize: 26 }} />
+            <i className="fi fi-rr-lock" style={{ color: '#ffffff', fontSize: '24px' }}></i>
           </Box>
 
           <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>

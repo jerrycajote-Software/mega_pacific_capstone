@@ -350,8 +350,8 @@ const LoginPage = () => {
                     aria-label={showPw ? 'Hide password' : 'Show password'}
                   >
                     {showPw
-                      ? <VisibilityOffIcon sx={{ fontSize: 15 }} />
-                      : <VisibilityIcon sx={{ fontSize: 15 }} />
+                      ? <VisibilityIcon sx={{ fontSize: 15 }} />
+                      : <VisibilityOffIcon sx={{ fontSize: 15 }} />
                     }
                   </button>
                 </div>

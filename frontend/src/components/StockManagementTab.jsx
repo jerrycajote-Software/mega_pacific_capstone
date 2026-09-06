@@ -19,7 +19,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const S = {
   container: {

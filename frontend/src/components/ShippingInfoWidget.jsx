@@ -10,14 +10,7 @@ import {
   Avatar,
   Fade,
 } from '@mui/material';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import EditIcon from '@mui/icons-material/Edit';
-import CancelIcon from '@mui/icons-material/Cancel';
-import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
-import MarkunreadMailboxIcon from '@mui/icons-material/MarkunreadMailbox';
+
 import {
   getAvailableProvinces,
   getLocationsForProvince,
@@ -54,7 +47,7 @@ const ShippingInfoWidget = ({
               boxShadow: '0 2px 8px rgba(79,119,45,0.25)',
             }}
           >
-            <LocalShippingIcon fontSize="small" />
+            <i className="fi fi-rr-truck-side" style={{ fontSize: '18px', color: '#ffffff' }}></i>
           </Avatar>
           <Typography variant="h6" fontWeight={700}>
             Shipping Information
@@ -65,7 +58,6 @@ const ShippingInfoWidget = ({
           <Button
             variant="outlined"
             size="small"
-            startIcon={<EditIcon />}
             onClick={onEdit}
             sx={{
               borderRadius: 2,
@@ -73,12 +65,16 @@ const ShippingInfoWidget = ({
               fontWeight: 600,
               borderColor: 'primary.main',
               color: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
               '&:hover': {
                 borderColor: 'primary.dark',
                 bgcolor: 'rgba(79,119,45,0.04)',
               },
             }}
           >
+            <i className="fi fi-rr-edit" style={{ fontSize: '13px' }}></i>
             Edit
           </Button>
         )}
@@ -87,15 +83,18 @@ const ShippingInfoWidget = ({
             variant="outlined"
             size="small"
             color="error"
-            startIcon={<CancelIcon />}
             onClick={onCancelEdit}
             sx={{
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
               '&:hover': { bgcolor: 'error.light' },
             }}
           >
+            <i className="fi fi-rr-cross" style={{ fontSize: '13px' }}></i>
             Cancel
           </Button>
         )}
@@ -121,9 +120,7 @@ const ShippingInfoWidget = ({
                   helperText={errors.customerName}
                   InputProps={{
                     startAdornment: (
-                      <DriveFileRenameOutlineIcon
-                        sx={{ mr: 1, color: 'text.disabled', fontSize: 20 }}
-                      />
+                      <i className="fi fi-rr-user" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
                     ),
                   }}
                 />
@@ -141,9 +138,7 @@ const ShippingInfoWidget = ({
                   helperText={errors.customerEmail}
                   InputProps={{
                     startAdornment: (
-                      <EmailIcon
-                        sx={{ mr: 1, color: 'text.disabled', fontSize: 20 }}
-                      />
+                      <i className="fi fi-rr-envelope" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
                     ),
                   }}
                 />
@@ -160,9 +155,7 @@ const ShippingInfoWidget = ({
                   helperText={errors.contactNumber}
                   InputProps={{
                     startAdornment: (
-                      <PhoneIcon
-                        sx={{ mr: 1, color: 'text.disabled', fontSize: 20 }}
-                      />
+                      <i className="fi fi-rr-phone-call" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
                     ),
                   }}
                 />
@@ -177,9 +170,7 @@ const ShippingInfoWidget = ({
                   InputProps={{
                     readOnly: true,
                     startAdornment: (
-                      <MarkunreadMailboxIcon
-                        sx={{ mr: 1, color: 'text.disabled', fontSize: 20 }}
-                      />
+                      <i className="fi fi-rr-marker" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
                     ),
                   }}
                   sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}
@@ -199,9 +190,7 @@ const ShippingInfoWidget = ({
                   helperText={errors.address}
                   InputProps={{
                     startAdornment: (
-                      <LocationOnIcon
-                        sx={{ mr: 1, color: 'text.disabled', fontSize: 20 }}
-                      />
+                      <i className="fi fi-rr-marker" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
                     ),
                   }}
                 />
@@ -275,7 +264,7 @@ const ShippingInfoWidget = ({
                     height: 44,
                   }}
                 >
-                  <LocationOnIcon />
+                  <i className="fi fi-rr-marker" style={{ fontSize: '20px', color: '#1e3a8a' }}></i>
                 </Avatar>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle1" fontWeight={700} gutterBottom>
@@ -289,7 +278,7 @@ const ShippingInfoWidget = ({
                       mb: 0.5,
                     }}
                   >
-                    <PhoneIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                    <i className="fi fi-rr-phone-call" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
                     <Typography variant="body2" color="text.secondary">
                       {formData.contactNumber}
                     </Typography>
@@ -308,7 +297,7 @@ const ShippingInfoWidget = ({
                       mt: 1,
                     }}
                   >
-                    <EmailIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                    <i className="fi fi-rr-envelope" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
                     <Typography variant="body2" color="text.secondary">
                       {formData.customerEmail}
                     </Typography>

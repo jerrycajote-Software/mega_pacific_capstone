@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { useLocation } from 'react-router-dom';
 
 const ThemeContext = createContext();
 
@@ -100,16 +101,21 @@ const buildTheme = (mode) =>
 
 // ─── Provider ──────────────────────────────────────────────────────────────
 export const ThemeProvider = ({ children }) => {
-  const [mode, setMode] = useState(() => {
+  const location = useLocation();
+  const isCustomerRoute = !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/employee');
+
+  const [storedMode, setStoredMode] = useState(() => {
     return localStorage.getItem('mega_pacific_admin_theme') || 'dark';
   });
+
+  const mode = isCustomerRoute ? 'light' : storedMode;
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', mode);
   }, [mode]);
 
   const toggleTheme = () => {
-    setMode((prev) => {
+    setStoredMode((prev) => {
       const next = prev === 'dark' ? 'light' : 'dark';
       localStorage.setItem('mega_pacific_admin_theme', next);
       return next;

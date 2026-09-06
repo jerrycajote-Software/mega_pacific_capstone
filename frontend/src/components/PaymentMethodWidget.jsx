@@ -10,23 +10,19 @@ import {
   Avatar,
   Stack,
 } from '@mui/material';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const PAYMENT_OPTIONS = [
   {
     value: 'Cash on Delivery with 50% Bank tranfer',
     label: 'Cash on Delivery',
     description: 'Pay 50% upfront via bank transfer, remainder on delivery',
-    icon: PaymentsIcon,
+    iconClass: 'fi fi-rr-money-bill-wave',
   },
   {
     value: 'Bank Transfer Fully Paid',
     label: 'Bank Transfer',
     description: 'Pay the full amount via bank transfer before delivery',
-    icon: AccountBalanceWalletIcon,
+    iconClass: 'fi fi-rr-bank',
   },
 ];
 
@@ -43,7 +39,7 @@ const PaymentMethodWidget = ({ paymentMode, onChange }) => {
             boxShadow: '0 2px 8px rgba(79,119,45,0.25)',
           }}
         >
-          <CreditCardIcon fontSize="small" />
+          <i className="fi fi-rr-credit-card" style={{ fontSize: '18px', color: '#ffffff' }}></i>
         </Avatar>
         <Typography variant="h6" fontWeight={700}>
           Payment Method
@@ -62,7 +58,6 @@ const PaymentMethodWidget = ({ paymentMode, onChange }) => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           {PAYMENT_OPTIONS.map((option) => {
             const isSelected = paymentMode === option.value;
-            const Icon = option.icon;
 
             return (
               <Fade in key={option.value} timeout={200}>
@@ -111,20 +106,12 @@ const PaymentMethodWidget = ({ paymentMode, onChange }) => {
                     />
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Icon
-                          sx={{
-                            fontSize: 20,
-                            color: isSelected ? 'primary.main' : 'text.disabled',
-                            transition: 'color 0.25s ease',
-                          }}
-                        />
+                        <i className={option.iconClass} style={{ fontSize: '18px', color: isSelected ? '#1e3a8a' : '#94a3b8' }}></i>
                         <Typography fontWeight={700} variant="body2">
                           {option.label}
                         </Typography>
                         {isSelected && (
-                          <CheckCircleIcon
-                            sx={{ fontSize: 16, color: 'primary.main', ml: 'auto' }}
-                          />
+                          <i className="fi fi-sr-check-circle" style={{ fontSize: '16px', color: '#1e3a8a', marginLeft: 'auto' }}></i>
                         )}
                       </Box>
                       <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>

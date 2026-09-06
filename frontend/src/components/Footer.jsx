@@ -1,12 +1,5 @@
 import React from 'react';
 import { Box, Container, Grid, Typography, Link, IconButton, Divider } from '@mui/material';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import InstagramIcon from '@mui/icons-material/Instagram';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import PhoneIcon from '@mui/icons-material/Phone';
-import EmailIcon from '@mui/icons-material/Email';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const Footer = () => {
   return (
@@ -28,10 +21,7 @@ const Footer = () => {
               Providing top-quality roofing systems, construction materials, and durable steel solutions since 1998. Your trusted partner in building the future.
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <IconButton size="small" color="primary"><FacebookIcon /></IconButton>
-              {/* <IconButton size="small" color="primary"><TwitterIcon /></IconButton>
-              <IconButton size="small" color="primary"><InstagramIcon /></IconButton> */}
-              {/* <IconButton size="small" color="primary"><LinkedInIcon /></IconButton> */}
+              <IconButton size="small" color="primary"><i className="fi fi-brands-facebook" style={{ fontSize: '16px' }}></i></IconButton>
             </Box>
           </Grid>
 
@@ -41,19 +31,19 @@ const Footer = () => {
               Contact Us
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1, gap: 1 }}>
-              <LocationOnIcon fontSize="small" color="action" sx={{ mt: 0.5 }} />
+              <i className="fi fi-rr-marker" style={{ fontSize: '14px', color: '#64748b', marginTop: '4px' }}></i>
               <Typography variant="body2" color="text.secondary">
                 123 Industrial Ave, Cavite,<br /> Philippines 4100
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-              <PhoneIcon fontSize="small" color="action" />
+              <i className="fi fi-rr-phone-call" style={{ fontSize: '14px', color: '#64748b' }}></i>
               <Typography variant="body2" color="text.secondary">
                 +63 (2) 1234 5678
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <EmailIcon fontSize="small" color="action" />
+              <i className="fi fi-rr-envelope" style={{ fontSize: '14px', color: '#64748b' }}></i>
               <Typography variant="body2" color="text.secondary">
                 info@megapacific.com
               </Typography>

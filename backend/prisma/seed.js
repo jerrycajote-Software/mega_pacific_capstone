@@ -20,7 +20,7 @@ async function main() {
   // Use environment variables if set, otherwise fall back to dev defaults
   // WARNING: Change these credentials immediately after first login!
   const defaultAdminEmail = process.env.SEED_ADMIN_EMAIL || "admin@megapacific.com";
-  const defaultAdminPassword = process.env.SEED_ADMIN_PASSWORD || "ChangeMe@123";
+  const defaultAdminPassword = process.env.SEED_ADMIN_PASSWORD || "megapacific@123";
   const hashedPassword = await bcrypt.hash(defaultAdminPassword, 10);
 
   const admin = await prisma.user.create({

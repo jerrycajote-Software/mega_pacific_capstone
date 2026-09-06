@@ -21,7 +21,7 @@ const EmployeeDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || '';
 
   const fetchData = async () => {
     try {
@@ -275,7 +275,7 @@ const EmployeeDashboard = () => {
               {lowStockProducts.length === 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '2rem', border: '1px dashed var(--border-light)', borderRadius: 12 }}>
                   <CheckCircleIcon sx={{ fontSize: 32, color: 'var(--green)' }} />
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>All stocks are healthy!</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>All stocks are good for now!</span>
                 </div>
               ) : (
                 lowStockProducts.map(p => (

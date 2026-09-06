@@ -34,7 +34,7 @@ const ReviewManagement = () => {
   const fetchReviews = async () => {
     try {
       const token = localStorage.getItem('appToken');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       const endpoint = isEmployee 
         ? `${API_URL}/api/employee/reviews` 
         : `${API_URL}/api/admin/reviews`;
@@ -87,7 +87,7 @@ const ReviewManagement = () => {
 
     try {
       const token = localStorage.getItem('appToken');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.post(
         `${API_URL}/api/employee/reviews/${replyReviewId}/reply`,
         { comment: replyComment },

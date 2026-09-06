@@ -14,9 +14,7 @@ import {
   Alert,
   Chip
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
 
 const ProfilePage = () => {
   const { user, token } = useAuth();
@@ -36,7 +34,7 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const API_URL = import.meta.env.VITE_API_URL || '';
         const res = await axios.get(`${API_URL}/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -92,7 +90,7 @@ const ProfilePage = () => {
     setSaving(true);
     setSuccessMsg('');
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       await axios.put(`${API_URL}/api/auth/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -117,7 +115,7 @@ const ProfilePage = () => {
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, maxWidth: 1000, mx: 'auto' }}>
       <Typography variant="h3" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, color: 'text.primary' }}>
-        <PersonIcon fontSize="large" color="primary" /> My Profile
+        <i className="fi fi-rr-user" style={{ fontSize: '28px', color: '#1e3a8a' }}></i> My Profile
       </Typography>
 
       <Grid container spacing={4}>
@@ -129,7 +127,7 @@ const ProfilePage = () => {
             <Typography variant="h5" fontWeight="bold" gutterBottom>{user?.name}</Typography>
             <Typography color="text.secondary" gutterBottom>{user?.email}</Typography>
             <Chip 
-              icon={<CheckCircleIcon />} 
+              icon={<i className="fi fi-sr-check-circle" style={{ fontSize: '13px', marginLeft: '6px' }}></i>} 
               label="Active Customer" 
               color="success" 
               variant="outlined" 
@@ -142,7 +140,7 @@ const ProfilePage = () => {
         <Grid item xs={12} md={8}>
           <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-              <LocationOnIcon color="action" /> Default Shipping Address
+              <i className="fi fi-rr-marker" style={{ fontSize: '18px', color: '#1e3a8a' }}></i> Default Shipping Address
             </Typography>
 
             {errorMsg && <Alert severity="error" sx={{ mb: 3 }}>{errorMsg}</Alert>}

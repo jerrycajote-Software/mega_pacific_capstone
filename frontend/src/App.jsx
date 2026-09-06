@@ -69,9 +69,9 @@ const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
 };
 
 const App = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   return (
-    <CartProvider userId={user?.id}>
+    <CartProvider userId={user?.id} token={token}>
       <Routes>
        
         <Route path="/register" element={<RegisterPage />} />

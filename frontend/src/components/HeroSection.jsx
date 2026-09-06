@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button, Container, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -51,10 +50,10 @@ const HeroSection = () => {
               color="primary" 
               size="large" 
               onClick={() => navigate('/dashboard')}
-              endIcon={<ArrowForwardIcon />}
-              sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
+              sx={{ px: 4, py: 1.5, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 1 }}
             >
               Shop Now
+              <i className="fi fi-rr-arrow-right" style={{ fontSize: '14px' }}></i>
             </Button>
           </Box>
         </Box>

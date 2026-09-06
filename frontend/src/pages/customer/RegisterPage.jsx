@@ -19,13 +19,11 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+
 
 const BRAND_FEATURES = [
   'Premium quality roofing & steel materials',
@@ -217,7 +215,7 @@ const RegisterPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
           {BRAND_FEATURES.map((feat, i) => (
             <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <CheckCircleOutlinedIcon sx={{ color: '#ecf39e', fontSize: 18, flexShrink: 0 }} />
+              <i className="fi fi-sr-check-circle" style={{ color: '#ecf39e', fontSize: '18px', flexShrink: 0 }}></i>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, fontSize: '0.82rem' }}>
                 {feat}
               </Typography>
@@ -262,7 +260,7 @@ const RegisterPage = () => {
               boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
             }}
           >
-            <PersonAddOutlinedIcon sx={{ color: '#ffffff', fontSize: 26 }} />
+            <i className="fi fi-rr-user-add" style={{ color: '#ffffff', fontSize: '24px' }}></i>
           </Box>
 
           <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
@@ -384,7 +382,7 @@ const RegisterPage = () => {
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" size="small">
-                          {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          {showConfirmPassword ? <i className="fi fi-rr-eye-crossed" style={{ fontSize: '16px' }}></i> : <i className="fi fi-rr-eye" style={{ fontSize: '16px' }}></i>}
                         </IconButton>
                       </InputAdornment>
                     ),
@@ -489,7 +487,7 @@ const RegisterPage = () => {
               width: 72,
               height: 72,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
+              background: 'linear-gradient(135deg, #4f772d 0%, #31572c 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -498,7 +496,7 @@ const RegisterPage = () => {
               boxShadow: '0 8px 24px rgba(79,119,45,0.3)',
             }}
           >
-            <TaskAltIcon sx={{ color: '#fff', fontSize: 40 }} />
+            <i className="fi fi-sr-check-circle" style={{ color: '#ffffff', fontSize: '36px' }}></i>
           </Box>
           <Typography variant="h5" fontWeight={700} gutterBottom>
             Registration Successful
@@ -543,7 +541,7 @@ const RegisterPage = () => {
               boxShadow: '0 8px 24px rgba(230,81,0,0.3)',
             }}
           >
-            <PersonAddOutlinedIcon sx={{ color: '#fff', fontSize: 40 }} />
+            <i className="fi fi-rr-user-add" style={{ color: '#ffffff', fontSize: '36px' }}></i>
           </Box>
           <Typography variant="h5" fontWeight={700} gutterBottom>
             Account Restored

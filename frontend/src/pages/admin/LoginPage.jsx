@@ -373,11 +373,11 @@ const LoginPage = () => {
                       padding: 4, display: 'flex',
                       transition: 'color 0.15s',
                     }}
-                    aria-label={showPw ? 'Hide password' : 'Show password'}
+                    aria-label={showPw ? 'Show password' : 'Hide password'}
                   >
                     {showPw
-                      ? <VisibilityOffIcon sx={{ fontSize: 15 }} />
-                      : <VisibilityIcon sx={{ fontSize: 15 }} />
+                      ? <VisibilityIcon sx={{ fontSize: 15 }} />
+                      : <VisibilityOffIcon sx={{ fontSize: 15 }} />
                     }
                   </button>
                 </div>

@@ -22,44 +22,32 @@ import {
   Divider,
   Alert
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import PackageIcon from '@mui/icons-material/Inventory';
+
 
 const STATUS_CONFIG = {
   pending: {
     label: 'Pending',
-    Icon: AccessTimeIcon,
+    iconClass: 'fi fi-rr-time-fast',
     color: 'warning'
   },
   processing: {
     label: 'Processing',
-    Icon: Inventory2Icon,
+    iconClass: 'fi fi-rr-box',
     color: 'info'
   },
   out_for_delivery: {
     label: 'Out for Delivery',
-    Icon: LocalShippingIcon,
+    iconClass: 'fi fi-rr-truck-side',
     color: 'primary'
   },
   delivered: {
     label: 'Delivered',
-    Icon: CheckCircleIcon,
+    iconClass: 'fi fi-sr-check-circle',
     color: 'success'
   },
   cancelled: {
     label: 'Cancelled',
-    Icon: CancelIcon,
+    iconClass: 'fi fi-rr-cross-circle',
     color: 'error'
   },
 };
@@ -86,10 +74,10 @@ const formatCurrency = (amount) =>
 const StatusBadge = ({ status }) => {
   const key = status?.toLowerCase() || 'pending';
   const cfg = STATUS_CONFIG[key] || STATUS_CONFIG.pending;
-  const { Icon, label, color } = cfg;
+  const { iconClass, label, color } = cfg;
   return (
     <Chip 
-      icon={<Icon fontSize="small" />} 
+      icon={<i className={iconClass} style={{ fontSize: '13px', marginLeft: '6px' }}></i>} 
       label={label} 
       color={color} 
       variant="outlined" 
@@ -149,7 +137,7 @@ const OrderCard = ({ order, onClick }) => {
               ))
             ) : (
               <Avatar variant="rounded" sx={{ width: 48, height: 48, border: '2px solid white', ml: -1, bgcolor: 'background.default', color: 'text.disabled' }}>
-                <PackageIcon />
+                <i className="fi fi-rr-box" style={{ fontSize: '20px' }}></i>
               </Avatar>
             )}
             {order.items.length > 3 && (
@@ -173,13 +161,13 @@ const OrderCard = ({ order, onClick }) => {
         <Grid container spacing={2}>
           <Grid item xs={4}>
             <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <CalendarTodayIcon sx={{ fontSize: 12 }} /> Date
+              <i className="fi fi-rr-calendar" style={{ fontSize: '12px' }}></i> Date
             </Typography>
             <Typography variant="body2" fontWeight="bold">{formatDate(order.createdAt)}</Typography>
           </Grid>
           <Grid item xs={4}>
             <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <CreditCardIcon sx={{ fontSize: 12 }} /> Payment
+              <i className="fi fi-rr-credit-card" style={{ fontSize: '12px' }}></i> Payment
             </Typography>
             <Typography variant="body2" fontWeight="bold" sx={{ textTransform: 'capitalize' }}>
               {order.paymentMode || '—'}
@@ -197,7 +185,7 @@ const OrderCard = ({ order, onClick }) => {
 
         {order.estimatedDeliveryDate && !['delivered', 'cancelled', 'completed'].includes(order.status?.toLowerCase()) && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, bgcolor: 'primary.50', p: 1, borderRadius: 2, border: '1px solid', borderColor: 'primary.100' }}>
-            <LocalShippingIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+            <i className="fi fi-rr-truck-side" style={{ fontSize: '16px', color: '#1e3a8a' }}></i>
             <Typography variant="caption" color="primary.dark" fontWeight="bold">
               Estimated Delivery: {new Date(order.estimatedDeliveryDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
             </Typography>
@@ -205,7 +193,7 @@ const OrderCard = ({ order, onClick }) => {
         )}
         
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', mt: 2, fontSize: '0.75rem', fontWeight: 'bold', justifyContent: 'flex-end' }}>
-          View full details <ChevronRightIcon fontSize="small" />
+          View full details <i className="fi fi-rr-angle-right" style={{ fontSize: '12px' }}></i>
         </Box>
       </CardActionArea>
     </Card>
@@ -226,7 +214,7 @@ const OrdersPage = () => {
     setLoading(true);
     setError('');
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/customer/orders/my`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -295,13 +283,14 @@ const OrdersPage = () => {
 
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, maxWidth: 1200, mx: 'auto' }}>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/dashboard')} sx={{ mb: 4, color: 'text.secondary' }}>
+      <Button onClick={() => navigate('/dashboard')} sx={{ mb: 4, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <i className="fi fi-rr-arrow-left" style={{ fontSize: '14px' }}></i>
         Back to Dashboard
       </Button>
 
       <Box sx={{ mb: 6 }}>
         <Typography variant="h3" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'text.primary' }}>
-          <ShoppingBagIcon fontSize="large" color="primary" /> My Orders
+          <i className="fi fi-rr-shopping-bag" style={{ fontSize: '32px', color: '#1e3a8a' }}></i> My Orders
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 1 }}>
           Track and manage all your previous and current purchases.
@@ -346,7 +335,7 @@ const OrdersPage = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <i className="fi fi-rr-search" style={{ fontSize: '16px', color: '#64748b' }}></i>
               </InputAdornment>
             ),
           }}
@@ -359,7 +348,7 @@ const OrdersPage = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <FilterListIcon />
+                <i className="fi fi-rr-filter" style={{ fontSize: '16px', color: '#64748b' }}></i>
               </InputAdornment>
             ),
           }}
