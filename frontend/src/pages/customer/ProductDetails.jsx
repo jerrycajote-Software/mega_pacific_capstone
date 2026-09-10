@@ -23,6 +23,16 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
+const extractShortDesc = (htmlStr) => {
+  if (!htmlStr) return 'Premium quality material designed for long-lasting durability.';
+  // Replace non-breaking spaces with regular spaces and strip HTML tags
+  const cleanText = htmlStr.replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, ' ').trim();
+  const words = cleanText.split(/\s+/);
+  if (words.length > 12) {
+    return words.slice(0, 12).join(' ') + '...';
+  }
+  return cleanText;
+};
 
 const ZOOM_SCALE = 2.5;
 
@@ -435,12 +445,8 @@ const ProductDetails = () => {
             {!hasOptions && <Typography variant="subtitle1" color="text.secondary">/ {product.unit}</Typography>}
           </Box>
 
-          <Typography variant="body1" color="text.secondary" mb={4} sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }} onClick={() => longDescRef.current?.scrollIntoView({ behavior: 'smooth' })}>
-            {product.description ? 
-              (product.description.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).length > 15 
-                ? product.description.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).slice(0, 15).join(' ') + '...' 
-                : product.description.replace(/<[^>]+>/g, ' ').trim())
-              : 'Premium quality material designed for long-lasting durability.'}
+          <Typography variant="body1" color="text.secondary" mb={4} sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' }, lineHeight: 1.6 }} onClick={() => longDescRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+            {extractShortDesc(product.description)}
           </Typography>
 
           <Stack direction="row" spacing={3} mb={4}>
@@ -529,7 +535,7 @@ const ProductDetails = () => {
               '& p': { mb: 2 },
               '& a': { color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }
             }}
-            dangerouslySetInnerHTML={{ __html: product.description || '<p>Detailed specifications and descriptions will appear here.</p>' }}
+            dangerouslySetInnerHTML={{ __html: product.description ? product.description.replace(/&nbsp;/g, ' ') : '<p>Detailed specifications and descriptions will appear here.</p>' }}
           />
         </Paper>
       </Box>

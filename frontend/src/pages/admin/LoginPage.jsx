@@ -107,7 +107,7 @@ const LoginPage = () => {
     const result = await login(email, password);
     if (result.success) {
       if (result.user?.role === 'admin') {
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else {
         logout();
         setError('Access denied. Admin portal requires administrator privileges.');

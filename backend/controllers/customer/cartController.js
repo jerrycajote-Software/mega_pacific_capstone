@@ -3,7 +3,7 @@ const prisma = require('../../config/db');
 // Get current user's cart
 exports.getCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const cartItems = await prisma.cartItem.findMany({
       where: { userId },
       include: {
@@ -26,7 +26,7 @@ exports.getCart = async (req, res) => {
 // Add or update a cart item
 exports.addToCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const { productId, variantId, quantity } = req.body;
 
     if (!productId || !quantity) {
@@ -87,7 +87,7 @@ exports.addToCart = async (req, res) => {
 // Update cart item quantity (absolute quantity, not additive)
 exports.updateQuantity = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const { id } = req.params;
     const { quantity } = req.body;
 
@@ -119,7 +119,7 @@ exports.updateQuantity = async (req, res) => {
 // Remove a specific cart item
 exports.removeFromCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const { id } = req.params;
 
     const cartItem = await prisma.cartItem.findFirst({
@@ -144,7 +144,7 @@ exports.removeFromCart = async (req, res) => {
 // Clear the entire cart for a user
 exports.clearCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     await prisma.cartItem.deleteMany({
       where: { userId }
     });
@@ -158,7 +158,7 @@ exports.clearCart = async (req, res) => {
 // Sync local storage cart to database
 exports.syncCart = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const { items } = req.body; // Expecting array of { productId, variantId, quantity }
 
     if (!items || !Array.isArray(items)) {

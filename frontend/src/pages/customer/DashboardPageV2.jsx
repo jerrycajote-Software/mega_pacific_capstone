@@ -305,7 +305,7 @@ const DashboardPageV2 = ({ showHero = true }) => {
                       }}
                     />
 
-                    <Box
+                    {/* <Box
                       sx={{
                         position: 'absolute',
                         bottom: 10,
@@ -325,7 +325,7 @@ const DashboardPageV2 = ({ showHero = true }) => {
                     >
                       <i className="fi fi-sr-shield-check" style={{ fontSize: '11px', color: '#16a34a' }}></i>
                       ISO Certified Grade
-                    </Box>
+                    </Box> */}
                   </Box>
 
                   {/* Body Content */}
@@ -368,9 +368,9 @@ const DashboardPageV2 = ({ showHero = true }) => {
                         <i className="fi fi-sr-star" style={{ color: '#f59e0b', fontSize: '12px' }}></i>
                         4.9 <span style={{ color: '#94a3b8', fontWeight: 500 }}>(Direct Stock)</span>
                       </Box>
-                      <Typography variant="caption" sx={{ color: '#16a34a', fontWeight: 700 }}>
+                      {/* <Typography variant="caption" sx={{ color: '#16a34a', fontWeight: 700 }}>
                         ● Depot Ready
-                      </Typography>
+                      </Typography> */}
                     </Box>
 
                     {/* Price & Action Button Footer */}
@@ -416,7 +416,7 @@ const DashboardPageV2 = ({ showHero = true }) => {
                           '&:hover': { bgcolor: '#1d4ed8' },
                         }}
                       >
-                        View Specs
+                        Buy Now
                         <i className="fi fi-rr-arrow-right" style={{ fontSize: '11px' }}></i>
                       </Button>
                     </Box>

@@ -294,15 +294,20 @@ const ResetPasswordPage = () => {
               required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              sx={{ mb: newPassword.length > 0 ? 1 : 2 }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              sx={{ 
+                mb: newPassword.length > 0 ? 1 : 2,
+                '& input::-ms-reveal, & input::-ms-clear': { display: 'none' } 
+              }}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} onMouseDown={(e) => e.preventDefault()} edge="end" size="small">
+                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
             {/* Real-time password checklist */}
@@ -323,17 +328,22 @@ const ResetPasswordPage = () => {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              sx={{ mb: 3 }}
+              sx={{ 
+                mb: 3,
+                '& input::-ms-reveal, & input::-ms-clear': { display: 'none' } 
+              }}
               error={!!confirmPassword && newPassword !== confirmPassword}
               helperText={confirmPassword && newPassword !== confirmPassword ? 'Passwords do not match.' : ''}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" size="small">
-                      {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} onMouseDown={(e) => e.preventDefault()} edge="end" size="small">
+                        {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
 

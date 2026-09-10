@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -18,6 +18,10 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -65,6 +69,52 @@ const RegisterPage = () => {
   const [province, setProvince]               = useState(getAvailableProvinces()[0] || 'Cavite');
   const [city, setCity]                       = useState('');
   const [zipCode, setZipCode]                 = useState('');
+  const [cityOpen, setCityOpen]               = useState(false);
+  const [provinceOpen, setProvinceOpen]       = useState(false);
+
+  const cityBoxRef = useRef(null);
+  const provinceBoxRef = useRef(null);
+
+  useEffect(() => {
+    if (!cityOpen && !provinceOpen) return;
+    let frameId;
+    let lastEvent = null;
+
+    const checkHover = () => {
+      if (!lastEvent) return;
+      const e = lastEvent;
+      const isOverCityBox = cityBoxRef.current && cityBoxRef.current.contains(e.target);
+      const isOverProvinceBox = provinceBoxRef.current && provinceBoxRef.current.contains(e.target);
+      const isOverMenu = e.target.closest && e.target.closest('.MuiMenu-paper, .MuiPopover-paper');
+
+      if (cityOpen && !isOverCityBox && !isOverMenu) {
+        setCityOpen(false);
+      }
+      if (provinceOpen && !isOverProvinceBox && !isOverMenu) {
+        setProvinceOpen(false);
+      }
+    };
+
+    const handleMouseMove = (e) => {
+      lastEvent = e;
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(checkHover);
+    };
+
+    // Slight delay before attaching listener to avoid instantly closing on open
+    const delayTimer = setTimeout(() => {
+      document.addEventListener('mousemove', handleMouseMove);
+    }, 150);
+
+    return () => {
+      clearTimeout(delayTimer);
+      document.removeEventListener('mousemove', handleMouseMove);
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [cityOpen, provinceOpen]);
+
+  const handleCityMouseEnter = () => setCityOpen(true);
+  const handleProvinceMouseEnter = () => setProvinceOpen(true);
 
   // Per-field error state
   const [fieldErrors, setFieldErrors] = useState({});
@@ -77,7 +127,7 @@ const RegisterPage = () => {
   const [restorationMessage, setRestorationMessage] = useState('');
   const [registeredEmail, setRegisteredEmail]     = useState('');
 
-  // ─── Computed ─────────────────────────────────────────────────────────────
+  //  Computed 
   const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
   const allPasswordChecksPassed = Object.values(passwordChecks).every(Boolean);
 
@@ -173,7 +223,7 @@ const RegisterPage = () => {
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: 'background.default' }}>
 
-      {/* ─── Left Decorative Panel (md+) ─────────────────────── */}
+      {/*  Left Decorative Panel (md+)  */}
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
@@ -224,7 +274,7 @@ const RegisterPage = () => {
         </Box>
       </Box>
 
-      {/* ─── Right: Registration Form ─────────────────────────── */}
+      {/*  Right: Registration Form  */}
       <Box
         sx={{
           flex: 1,
@@ -346,14 +396,17 @@ const RegisterPage = () => {
                   onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
                   error={!!fieldErrors.password}
                   helperText={fieldErrors.password}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
-                          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  sx={{ '& input::-ms-reveal, & input::-ms-clear': { display: 'none' } }}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} onMouseDown={(e) => e.preventDefault()} edge="end" size="small">
+                            {showPassword ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }
                   }}
                 />
                 {/* Real-time password requirement checklist */}
@@ -378,14 +431,17 @@ const RegisterPage = () => {
                   onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError('confirmPassword'); }}
                   error={!!fieldErrors.confirmPassword}
                   helperText={fieldErrors.confirmPassword}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" size="small">
-                          {showConfirmPassword ? <i className="fi fi-rr-eye-crossed" style={{ fontSize: '16px' }}></i> : <i className="fi fi-rr-eye" style={{ fontSize: '16px' }}></i>}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  sx={{ '& input::-ms-reveal, & input::-ms-clear': { display: 'none' } }}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} onMouseDown={(e) => e.preventDefault()} edge="end" size="small">
+                            {showConfirmPassword ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }
                   }}
                 />
               </Grid>
@@ -404,38 +460,58 @@ const RegisterPage = () => {
               </Grid>
 
               <Grid item xs={12} sm={4}>
-                <TextField
-                  select
-                  fullWidth
-                  label="City / Municipality"
-                  required
-                  size="small"
-                  value={city}
-                  onChange={handleCityChange}
-                  error={!!fieldErrors.city}
-                  helperText={fieldErrors.city}
-                >
-                  <MenuItem value="" disabled>Select City</MenuItem>
-                  {getLocationsForProvince(province).map(loc => (
-                    <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
-                  ))}
-                </TextField>
+                <Box ref={cityBoxRef} onMouseEnter={handleCityMouseEnter}>
+                  <FormControl fullWidth size="small" required error={!!fieldErrors.city}>
+                    <InputLabel id="city-label">City / Municipality</InputLabel>
+                    <Select
+                      labelId="city-label"
+                      value={city}
+                      onChange={handleCityChange}
+                      label="City / Municipality"
+                      open={cityOpen}
+                      onOpen={() => setCityOpen(true)}
+                      onClose={() => setCityOpen(false)}
+                      MenuProps={{
+                        disableScrollLock: true,
+                        slotProps: { backdrop: { sx: { pointerEvents: 'none' } } },
+                      }}
+                    >
+                      <MenuItem value="" disabled>Select City</MenuItem>
+                      {getLocationsForProvince(province).map(loc => (
+                        <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
+                      ))}
+                    </Select>
+                    {fieldErrors.city && <FormHelperText>{fieldErrors.city}</FormHelperText>}
+                  </FormControl>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={4}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Province"
-                  required
-                  size="small"
-                  value={province}
-                  onChange={(e) => setProvince(e.target.value)}
-                  disabled
-                >
-                  {getAvailableProvinces().map(prov => (
-                    <MenuItem key={prov} value={prov}>{prov}</MenuItem>
-                  ))}
-                </TextField>
+                <Box ref={provinceBoxRef} onMouseEnter={handleProvinceMouseEnter}>
+                  <FormControl fullWidth size="small" required>
+                    <InputLabel id="province-label">Province</InputLabel>
+                    <Select
+                      labelId="province-label"
+                      value={province}
+                      onChange={(e) => {
+                        setProvince(e.target.value);
+                        setCity('');
+                        setZipCode('');
+                      }}
+                      label="Province"
+                      open={provinceOpen}
+                      onOpen={() => setProvinceOpen(true)}
+                      onClose={() => setProvinceOpen(false)}
+                      MenuProps={{
+                        disableScrollLock: true,
+                        slotProps: { backdrop: { sx: { pointerEvents: 'none' } } },
+                      }}
+                    >
+                      {getAvailableProvinces().map(prov => (
+                        <MenuItem key={prov} value={prov}>{prov}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
               </Grid>
               <Grid item xs={12} sm={4}>
                 <TextField
@@ -444,7 +520,11 @@ const RegisterPage = () => {
                   required
                   size="small"
                   value={zipCode}
-                  InputProps={{ readOnly: true }}
+                  slotProps={{
+                    input: {
+                      readOnly: true,
+                    }
+                  }}
                   sx={{ bgcolor: 'action.hover' }}
                 />
               </Grid>
@@ -474,7 +554,7 @@ const RegisterPage = () => {
         </Box>
       </Box>
 
-      {/* ─── Registration Success Dialog ──────────────────────── */}
+      {/*  Registration Success Dialog  */}
       <Dialog
         open={successDialogOpen}
         maxWidth="xs"
@@ -519,7 +599,7 @@ const RegisterPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ─── Account Restoration Dialog ──────────────────────── */}
+      {/*  Account Restoration Dialog  */}
       <Dialog
         open={restorationDialogOpen}
         maxWidth="xs"

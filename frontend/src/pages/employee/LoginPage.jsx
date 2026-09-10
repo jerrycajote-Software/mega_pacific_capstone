@@ -103,7 +103,7 @@ const LoginPage = () => {
     const result = await login(email, password);
     if (result.success) {
       if (result.user?.role === 'employee') {
-        navigate('/employee/dashboard');
+        navigate('/employee/dashboard', { replace: true });
       } else {
         logout();
         setError('Access denied. Employee portal requires employee privileges.');

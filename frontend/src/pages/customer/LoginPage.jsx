@@ -75,7 +75,7 @@ const CustomerLoginPage = () => {
         setLoading(false);
         return;
       }
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } else {
       if (result.error === 'Email not verified' && result.email) {
         navigate('/verify-email', { state: { email: result.email } });
@@ -170,23 +170,7 @@ const CustomerLoginPage = () => {
             </Typography>
           </Box>
 
-          {/* Lock icon */}
-          <Box
-            sx={{
-              width: 52,
-              height: 52,
-              borderRadius: 3,
-              bgcolor: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 3,
-              background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
-              boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
-            }}
-          >
-            <i className="fi fi-rr-lock" style={{ color: '#ffffff', fontSize: '24px' }}></i>
-          </Box>
+
 
           <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Welcome back
@@ -227,6 +211,11 @@ const CustomerLoginPage = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                sx={{
+                  '& input::-ms-reveal, & input::-ms-clear': {
+                    display: 'none',
+                  },
+                }}
                 endAdornment={
                   <InputAdornment position="end">
                     <IconButton

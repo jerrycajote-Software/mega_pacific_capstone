@@ -68,17 +68,41 @@ const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
   return children;
 };
 
+const GuestRoute = ({ children }) => {
+  const { token, user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (token) {
+    if (user?.role === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    if (user?.role === 'employee') {
+      return <Navigate to="/employee/dashboard" replace />;
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 const App = () => {
   const { user, token } = useAuth();
   return (
     <CartProvider userId={user?.id} token={token}>
       <Routes>
        
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<CustomerLoginPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+        <Route path="/login" element={<GuestRoute><CustomerLoginPage /></GuestRoute>} />
+        <Route path="/verify-email" element={<GuestRoute><VerifyEmailPage /></GuestRoute>} />
+        <Route path="/forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+        <Route path="/reset-password" element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
 
       
         <Route path="/" element={
@@ -97,7 +121,7 @@ const App = () => {
         </Route>
 
        
-        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path="/admin/login" element={<GuestRoute><AdminLoginPage /></GuestRoute>} />
         
         <Route path="/admin" element={
           <ProtectedRoute redirectTo="/admin/login" requiredRole="admin">
@@ -115,7 +139,7 @@ const App = () => {
         </Route>
 
         {/* Employee routes */}
-        <Route path="/employee/login" element={<EmployeeLoginPage />} />
+        <Route path="/employee/login" element={<GuestRoute><EmployeeLoginPage /></GuestRoute>} />
         <Route path="/employee" element={
           <ProtectedRoute redirectTo="/employee/login" requiredRole="employee">
             <EmployeeLayout />
