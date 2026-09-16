@@ -3,7 +3,10 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CustomerHeader from '../components/CustomerHeader';
+import CustomerHeaderV2 from '../components/CustomerHeaderV2';
+import { CustomerUiProvider, useCustomerUi } from '../context/CustomerUiContext';
 import Footer from '../components/Footer';
+
 import CustomerServiceWidget from '../components/CustomerServiceWidget';
 import {
   Box,
@@ -19,11 +22,7 @@ import {
   Badge,
   Tooltip,
 } from '@mui/material';
-import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
-import CloseIcon from '@mui/icons-material/Close';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
+
 
 /* ─── Floating Cart Pulse Keyframe ─────────────────────────────────────── */
 const pulseKeyframes = `
@@ -34,8 +33,9 @@ const pulseKeyframes = `
   }
 `;
 
-const CustomerLayout = () => {
+const CustomerLayoutContent = () => {
   const { user, logout } = useAuth();
+  const { uiVersion } = useCustomerUi();
   const navigate = useNavigate();
   const { cartItems, cartCount, updateQuantity, removeFromCart, updateCartValidation, clearCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -101,7 +101,7 @@ const CustomerLayout = () => {
       {/* Inject pulse keyframe once */}
       <style>{pulseKeyframes}</style>
 
-      <CustomerHeader />
+      {uiVersion === 'v2' ? <CustomerHeaderV2 /> : <CustomerHeader />}
 
       {/* Main Content Area */}
       <Box
@@ -155,7 +155,7 @@ const CustomerLayout = () => {
               },
             }}
           >
-            <ShoppingBasketIcon sx={{ fontSize: 26, color: '#ffffff' }} />
+            <i className="fi fi-rr-shopping-bag" style={{ fontSize: '22px', color: '#ffffff' }}></i>
           </Badge>
         </Fab>
       </Tooltip>
@@ -206,7 +206,7 @@ const CustomerLayout = () => {
             </Box>
           </Typography>
           <IconButton onClick={() => setIsCartOpen(false)} size="small" sx={{ color: '#ffffff', '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' } }}>
-            <CloseIcon />
+            <i className="fi fi-rr-cross" style={{ fontSize: '14px', color: '#ffffff' }}></i>
           </IconButton>
         </Box>
 
@@ -272,7 +272,7 @@ const CustomerLayout = () => {
                         {getProductImage(item.product) ? (
                           <Box component="img" src={getProductImage(item.product)} alt={item.product.name} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <Inventory2Icon color="disabled" />
+                          <i className="fi fi-rr-box" style={{ fontSize: '24px', color: '#cbd5e1' }}></i>
                         )}
                       </Box>
                       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -286,7 +286,7 @@ const CustomerLayout = () => {
                             {item.product.name}
                           </Typography>
                           <IconButton size="small" onClick={() => removeFromCart(item.id)} sx={{ p: 0.5, color: 'text.disabled', '&:hover': { color: 'error.main' } }}>
-                            <CloseIcon fontSize="small" />
+                            <i className="fi fi-rr-cross" style={{ fontSize: '12px' }}></i>
                           </IconButton>
                         </Box>
 
@@ -300,13 +300,13 @@ const CustomerLayout = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto', pt: 1 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
                             <IconButton size="small" disabled={item.quantity <= 1} onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-                              <RemoveIcon fontSize="small" />
+                              <i className="fi fi-rr-minus" style={{ fontSize: '12px' }}></i>
                             </IconButton>
                             <Typography variant="caption" fontWeight="bold" sx={{ width: 28, textAlign: 'center' }}>
                               {item.quantity}
                             </Typography>
                             <IconButton size="small" disabled={item.quantity >= (item.variant ? item.variant.stock : item.product.stock)} onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                              <AddIcon fontSize="small" />
+                              <i className="fi fi-rr-plus" style={{ fontSize: '12px' }}></i>
                             </IconButton>
                           </Box>
                           <Button size="small" variant="outlined" color="primary" sx={{ py: 0.5, textTransform: 'none', borderRadius: 2 }} onClick={() => handleSingleCheckout(item)}>
@@ -343,7 +343,7 @@ const CustomerLayout = () => {
                               {item.product.name}
                             </Typography>
                             <IconButton size="small" onClick={() => removeFromCart(item.id)} sx={{ p: 0.5 }}>
-                              <CloseIcon fontSize="small" />
+                              <i className="fi fi-rr-cross" style={{ fontSize: '12px' }}></i>
                             </IconButton>
                           </Box>
                           <Typography variant="caption" color="text.secondary" display="block">
@@ -422,4 +422,11 @@ const CustomerLayout = () => {
   );
 };
 
+const CustomerLayout = () => (
+  <CustomerUiProvider>
+    <CustomerLayoutContent />
+  </CustomerUiProvider>
+);
+
 export default CustomerLayout;
+

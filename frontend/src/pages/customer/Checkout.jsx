@@ -20,12 +20,7 @@ import {
   Stack,
   Avatar,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import CategoryIcon from '@mui/icons-material/Category';
+
 
 const Checkout = () => {
   const location = useLocation();
@@ -85,7 +80,7 @@ const Checkout = () => {
 
     const fetchProfile = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const API_URL = import.meta.env.VITE_API_URL || '';
         const res = await axios.get(`${API_URL}/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -182,7 +177,7 @@ const Checkout = () => {
 
   const saveProfileAddress = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       await axios.put(`${API_URL}/api/auth/profile`, {
         contactNumber: formData.contactNumber,
         address: formData.address,
@@ -210,7 +205,7 @@ const Checkout = () => {
     }
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       
       let res;
       if (state.isBulk || orderItems.length > 1) {
@@ -297,7 +292,7 @@ const Checkout = () => {
     return (
       <Box sx={{ py: 10, textAlign: 'center', animation: 'fadeIn 0.5s ease-in-out' }}>
         <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 80, height: 80, mx: 'auto', mb: 3 }}>
-          <CheckCircleIcon fontSize="large" />
+          <i className="fi fi-sr-check-circle" style={{ fontSize: '40px' }}></i>
         </Avatar>
         <Typography variant="h3" fontWeight="bold" gutterBottom>Order Placed Successfully!</Typography>
         <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
@@ -307,7 +302,8 @@ const Checkout = () => {
           <Button variant="outlined" color="inherit" onClick={() => navigate('/dashboard')}>
             Return to Dashboard
           </Button>
-          <Button variant="contained" color="primary" startIcon={<Inventory2Icon />} onClick={() => navigate(`/order/${success}`)}>
+          <Button variant="contained" color="primary" onClick={() => navigate(`/order/${success}`)} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <i className="fi fi-rr-box" style={{ fontSize: '14px' }}></i>
             View Order
           </Button>
         </Stack>
@@ -317,12 +313,13 @@ const Checkout = () => {
 
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10 }}>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary' }}>
+      <Button onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <i className="fi fi-rr-arrow-left" style={{ fontSize: '14px' }}></i>
         Back to Previous
       </Button>
 
       <Typography variant="h3" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, color: 'text.primary' }}>
-        <CreditCardIcon fontSize="large" color="primary" /> Secure Checkout
+        <i className="fi fi-rr-credit-card" style={{ fontSize: '28px', color: '#1e3a8a' }}></i> Secure Checkout
       </Typography>
 
       <Grid container spacing={4}>
@@ -362,7 +359,7 @@ const Checkout = () => {
         <Grid item xs={12} lg={4}>
           <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', position: 'sticky', top: 90 }}>
             <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <ShoppingBagIcon color="action" /> Order Summary
+              <i className="fi fi-rr-shopping-bag" style={{ fontSize: '18px', color: '#64748b' }}></i> Order Summary
             </Typography>
 
             <Box sx={{ maxHeight: 400, overflowY: 'auto', pr: 1, mb: 3 }}>
@@ -372,7 +369,7 @@ const Checkout = () => {
                     {(item.product.imageUrls?.[0] || item.product.imageUrl) ? (
                       <Box component="img" src={item.product.imageUrls?.[0] || item.product.imageUrl} alt={item.product.name} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <Inventory2Icon sx={{ color: 'text.disabled' }} />
+                      <i className="fi fi-rr-box" style={{ fontSize: '24px', color: '#cbd5e1' }}></i>
                     )}
                   </Box>
                   <Box sx={{ flex: 1 }}>
@@ -380,7 +377,7 @@ const Checkout = () => {
                       {item.product.name}
                     </Typography>
                     {item.variant && (
-                      <Chip icon={<CategoryIcon fontSize="small" />} label={item.variant.name} size="small" variant="outlined" sx={{ height: 20, mt: 0.5, fontSize: '0.65rem' }} />
+                      <Chip label={item.variant.name} size="small" variant="outlined" sx={{ height: 20, mt: 0.5, fontSize: '0.65rem' }} />
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                       <Typography variant="caption" color="text.secondary">Qty: {item.quantity}</Typography>

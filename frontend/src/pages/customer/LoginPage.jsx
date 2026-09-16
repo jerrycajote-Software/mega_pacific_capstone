@@ -12,11 +12,13 @@ import {
   CircularProgress,
   Paper,
   Link,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+
 
 const BRAND_FEATURES = [
   'Premium quality roofing & steel materials',
@@ -73,7 +75,7 @@ const CustomerLoginPage = () => {
         setLoading(false);
         return;
       }
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } else {
       if (result.error === 'Email not verified' && result.email) {
         navigate('/verify-email', { state: { email: result.email } });
@@ -135,7 +137,7 @@ const CustomerLoginPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
           {BRAND_FEATURES.map((feat, i) => (
             <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <CheckCircleOutlinedIcon sx={{ color: '#ecf39e', fontSize: 20, flexShrink: 0 }} />
+              <i className="fi fi-sr-check-circle" style={{ color: '#ecf39e', fontSize: '18px', flexShrink: 0 }}></i>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
                 {feat}
               </Typography>
@@ -168,23 +170,7 @@ const CustomerLoginPage = () => {
             </Typography>
           </Box>
 
-          {/* Lock icon */}
-          <Box
-            sx={{
-              width: 52,
-              height: 52,
-              borderRadius: 3,
-              bgcolor: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 3,
-              background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
-              boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
-            }}
-          >
-            <LockOutlinedIcon sx={{ color: '#ffffff', fontSize: 26 }} />
-          </Box>
+
 
           <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Welcome back
@@ -218,30 +204,35 @@ const CustomerLoginPage = () => {
               sx={{ mb: 0 }}
             />
 
-            <TextField
-              fullWidth
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              variant="outlined"
-              margin="normal"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              InputProps={{
-                endAdornment: (
+            <FormControl fullWidth variant="outlined" margin="normal" required>
+              <InputLabel htmlFor="password">Password</InputLabel>
+              <OutlinedInput
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                sx={{
+                  '& input::-ms-reveal, & input::-ms-clear': {
+                    display: 'none',
+                  },
+                }}
+                endAdornment={
                   <InputAdornment position="end">
                     <IconButton
                       aria-label="toggle password visibility"
                       onClick={() => setShowPassword(!showPassword)}
+                      onMouseDown={(e) => e.preventDefault()}
                       edge="end"
                       size="small"
+                      sx={{ color: 'text.primary', bgcolor: 'rgba(255,255,255,0.1)' }}
                     >
-                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      {showPassword ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
                     </IconButton>
                   </InputAdornment>
-                ),
-              }}
-            />
+                }
+                label="Password"
+              />
+            </FormControl>
 
             {/* Forgot Password link */}
             <Box sx={{ textAlign: 'right', mt: 0.5, mb: 1 }}>

@@ -22,18 +22,17 @@ import {
   Stack
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
-import CloseIcon from '@mui/icons-material/Close';
-import ImageNotSupportedIcon from '@mui/icons-material/ImageNotSupported';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import ShieldIcon from '@mui/icons-material/Shield';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
-import CategoryIcon from '@mui/icons-material/Category';
+
+const extractShortDesc = (htmlStr) => {
+  if (!htmlStr) return 'Premium quality material designed for long-lasting durability.';
+  // Replace non-breaking spaces with regular spaces and strip HTML tags
+  const cleanText = htmlStr.replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, ' ').trim();
+  const words = cleanText.split(/\s+/);
+  if (words.length > 12) {
+    return words.slice(0, 12).join(' ') + '...';
+  }
+  return cleanText;
+};
 
 const ZOOM_SCALE = 2.5;
 
@@ -72,7 +71,7 @@ const ImageGallery = ({ images, productName }) => {
   if (!hasImages) {
     return (
       <Paper elevation={1} sx={{ height: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 4, bgcolor: 'background.paper' }}>
-        <ImageNotSupportedIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+        <i className="fi fi-rr-picture" style={{ fontSize: '48px', color: '#cbd5e1', marginBottom: '16px' }}></i>
         <Typography color="text.secondary">No images uploaded for this product</Typography>
       </Paper>
     );
@@ -200,16 +199,16 @@ const ImageGallery = ({ images, productName }) => {
       <Modal open={lightboxOpen} onClose={() => setLightboxOpen(false)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Box sx={{ position: 'relative', width: '90vw', height: '90vh', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <IconButton onClick={() => setLightboxOpen(false)} sx={{ position: 'absolute', top: 16, right: 16, color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
-            <CloseIcon />
+            <i className="fi fi-rr-cross" style={{ fontSize: '16px' }}></i>
           </IconButton>
           <Box component="img" src={imgs[activeIndex]} alt={`${productName} full size`} sx={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
           {imgs.length > 1 && (
             <>
               <IconButton onClick={handlePrev} sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
-                <ChevronLeftIcon fontSize="large" />
+                <i className="fi fi-rr-angle-left" style={{ fontSize: '20px' }}></i>
               </IconButton>
               <IconButton onClick={handleNext} sx={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
-                <ChevronRightIcon fontSize="large" />
+                <i className="fi fi-rr-angle-right" style={{ fontSize: '20px' }}></i>
               </IconButton>
             </>
           )}
@@ -286,7 +285,7 @@ const ProductDetails = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const API_URL = import.meta.env.VITE_API_URL || '';
         const res = await axios.get(`${API_URL}/api/customer/products/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -310,7 +309,7 @@ const ProductDetails = () => {
 
     const fetchReviews = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const API_URL = import.meta.env.VITE_API_URL || '';
         const res = await axios.get(`${API_URL}/api/customer/reviews/product/${id}`);
         if (res.data.success) setReviews(res.data.data);
       } catch (err) {
@@ -404,7 +403,8 @@ const ProductDetails = () => {
 
   return (
     <Container maxWidth="lg" sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, pt: 4 }}>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary' }}>
+      <Button onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <i className="fi fi-rr-arrow-left" style={{ fontSize: '14px' }}></i>
         BACK TO PRODUCT
       </Button>
 
@@ -445,17 +445,13 @@ const ProductDetails = () => {
             {!hasOptions && <Typography variant="subtitle1" color="text.secondary">/ {product.unit}</Typography>}
           </Box>
 
-          <Typography variant="body1" color="text.secondary" mb={4} sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }} onClick={() => longDescRef.current?.scrollIntoView({ behavior: 'smooth' })}>
-            {product.description ? 
-              (product.description.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).length > 15 
-                ? product.description.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).slice(0, 15).join(' ') + '...' 
-                : product.description.replace(/<[^>]+>/g, ' ').trim())
-              : 'Premium quality material designed for long-lasting durability.'}
+          <Typography variant="body1" color="text.secondary" mb={4} sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' }, lineHeight: 1.6 }} onClick={() => longDescRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+            {extractShortDesc(product.description)}
           </Typography>
 
           <Stack direction="row" spacing={3} mb={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 32, height: 32 }}><ShieldIcon fontSize="small" /></Avatar>
+              <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 32, height: 32 }}><i className="fi fi-sr-shield-check" style={{ fontSize: '16px' }}></i></Avatar>
               <Typography variant="body2" fontWeight="bold">Quality Guaranteed</Typography>
             </Box>
           </Stack>
@@ -480,9 +476,9 @@ const ProductDetails = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
               <Typography variant="subtitle2" fontWeight="bold">Quantity</Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                <IconButton onClick={handleDecrease} disabled={quantity <= 1} size="small"><RemoveIcon /></IconButton>
+                <IconButton onClick={handleDecrease} disabled={quantity <= 1} size="small"><i className="fi fi-rr-minus" style={{ fontSize: '12px' }}></i></IconButton>
                 <Typography sx={{ px: 2, fontWeight: 'bold' }}>{quantity}</Typography>
-                <IconButton onClick={handleIncrease} disabled={quantity >= activeStock || activeStock === 0} size="small"><AddIcon /></IconButton>
+                <IconButton onClick={handleIncrease} disabled={quantity >= activeStock || activeStock === 0} size="small"><i className="fi fi-rr-plus" style={{ fontSize: '12px' }}></i></IconButton>
               </Box>
             </Box>
 
@@ -499,11 +495,11 @@ const ProductDetails = () => {
                 <Button 
                   variant="outlined" 
                   color="inherit" 
-                  startIcon={<ShoppingCartIcon />} 
                   onClick={handleAddToCart}
                   disabled={!canBuy}
-                  sx={{ borderRadius: 2, py: 1.5, px: 3, fontWeight: 'bold' }}
+                  sx={{ borderRadius: 2, py: 1.5, px: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}
                 >
+                  <i className="fi fi-rr-shopping-cart" style={{ fontSize: '14px' }}></i>
                   Add
                 </Button>
                 <Button 
@@ -539,7 +535,7 @@ const ProductDetails = () => {
               '& p': { mb: 2 },
               '& a': { color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }
             }}
-            dangerouslySetInnerHTML={{ __html: product.description || '<p>Detailed specifications and descriptions will appear here.</p>' }}
+            dangerouslySetInnerHTML={{ __html: product.description ? product.description.replace(/&nbsp;/g, ' ') : '<p>Detailed specifications and descriptions will appear here.</p>' }}
           />
         </Paper>
       </Box>
@@ -547,7 +543,7 @@ const ProductDetails = () => {
       {/* Reviews Section */}
       <Box sx={{ mt: 8 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
-          <ChatBubbleOutlineIcon color="action" />
+          <i className="fi fi-rr-comment-alt" style={{ fontSize: '20px', color: '#64748b' }}></i>
           <Typography variant="h5" fontWeight="bold" color="text.primary">Customer Reviews</Typography>
           <Chip label={product.reviewCount || 0} size="small" sx={{ fontWeight: 'bold' }} />
         </Box>
@@ -556,7 +552,7 @@ const ProductDetails = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
         ) : reviews.length === 0 ? (
           <Paper elevation={0} sx={{ p: 6, textAlign: 'center', borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <ChatBubbleOutlineIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+            <i className="fi fi-rr-comment-alt" style={{ fontSize: '40px', color: '#cbd5e1', marginBottom: '16px', display: 'block' }}></i>
             <Typography variant="h6" fontWeight="bold" gutterBottom>No reviews yet</Typography>
             <Typography color="text.secondary">Customer reviews will appear here once this product has been purchased and rated by our community.</Typography>
           </Paper>

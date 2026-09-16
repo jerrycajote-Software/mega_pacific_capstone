@@ -95,7 +95,7 @@ const DashboardPage = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('appToken');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/admin/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });

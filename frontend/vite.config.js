@@ -7,5 +7,13 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: true,
+    allowedHosts: true, // Required for ngrok
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000', // Points to local Express backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 })

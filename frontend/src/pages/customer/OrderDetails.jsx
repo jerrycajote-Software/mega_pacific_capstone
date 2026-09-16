@@ -19,25 +19,15 @@ import {
   Stack,
   Divider
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import EventIcon from '@mui/icons-material/Event';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import CategoryIcon from '@mui/icons-material/Category';
 import StarIcon from '@mui/icons-material/Star';
-import CloseIcon from '@mui/icons-material/Close';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
+
 
 const statusSteps = [
-  { key: 'pending', label: 'Order Placed', Icon: AccessTimeIcon },
-  { key: 'processing', label: 'Processing', Icon: Inventory2Icon },
-  { key: 'out_for_delivery', label: 'Out for Delivery', Icon: LocalShippingIcon },
-  { key: 'delivered', label: 'Delivered', Icon: CheckCircleIcon }
+  { key: 'pending', label: 'Order Placed', iconClass: 'fi fi-rr-time-fast' },
+  { key: 'processing', label: 'Processing', iconClass: 'fi fi-rr-box' },
+  { key: 'out_for_delivery', label: 'Out for Delivery', iconClass: 'fi fi-rr-truck-side' },
+  { key: 'delivered', label: 'Delivered', iconClass: 'fi fi-sr-check-circle' }
 ];
 
 const OrderDetails = () => {
@@ -58,7 +48,7 @@ const OrderDetails = () => {
 
   const fetchOrder = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/customer/orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -135,7 +125,7 @@ const OrderDetails = () => {
     setReviewSuccess('');
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.post(`${API_URL}/api/customer/reviews`, {
         productId: selectedProduct.id,
         rating: reviewForm.rating,
@@ -169,7 +159,8 @@ const OrderDetails = () => {
 
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, maxWidth: 1000, mx: 'auto' }}>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary' }}>
+      <Button onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <i className="fi fi-rr-arrow-left" style={{ fontSize: '14px' }}></i>
         Back to Orders
       </Button>
 
@@ -179,7 +170,7 @@ const OrderDetails = () => {
             Order <Typography component="span" variant="h4" color="text.secondary">#{order.id.toString().padStart(4, '0')}</Typography>
           </Typography>
           <Typography color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, fontWeight: 'medium' }}>
-            <EventIcon fontSize="small" />
+            <i className="fi fi-rr-calendar" style={{ fontSize: '14px' }}></i>
             Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </Typography>
         </Box>
@@ -187,7 +178,7 @@ const OrderDetails = () => {
           <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Typography variant="overline" color="text.secondary" fontWeight="bold">Estimated Delivery</Typography>
             <Typography variant="body1" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <LocalShippingIcon color="action" />
+              <i className="fi fi-rr-truck-side" style={{ fontSize: '18px', color: '#1e3a8a' }}></i>
               {new Date(order.estimatedDeliveryDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </Typography>
           </Paper>
@@ -199,7 +190,7 @@ const OrderDetails = () => {
         {isCancelled ? (
           <Box sx={{ textAlign: 'center', py: 3 }}>
             <Avatar sx={{ bgcolor: 'error.50', color: 'error.main', width: 64, height: 64, mx: 'auto', mb: 2 }}>
-              <CancelIcon fontSize="large" />
+              <i className="fi fi-rr-cross-circle" style={{ fontSize: '32px' }}></i>
             </Avatar>
             <Typography variant="h5" fontWeight="bold" color="error.main">Order Cancelled</Typography>
             <Typography color="text.secondary" sx={{ mt: 1 }}>This order has been cancelled and will not be delivered.</Typography>
@@ -226,7 +217,7 @@ const OrderDetails = () => {
                       zIndex: 1,
                       transition: 'background-color 0.5s'
                     }}>
-                      <step.Icon />
+                      <i className={step.iconClass} style={{ fontSize: '18px' }}></i>
                     </Avatar>
                     <Typography sx={{ mt: 1, fontSize: '0.875rem', fontWeight: isCurrent ? 'bold' : isCompleted ? 'medium' : 'normal', color: isCurrent ? 'text.primary' : isCompleted ? 'text.secondary' : 'text.disabled' }}>
                       {step.label}
@@ -252,14 +243,14 @@ const OrderDetails = () => {
                     {(item.product.imageUrls?.[0] || item.product.imageUrl) ? (
                       <Box component="img" src={item.product.imageUrls?.[0] || item.product.imageUrl} alt={item.product.name} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                      <Inventory2Icon color="disabled" />
+                      <i className="fi fi-rr-box" style={{ fontSize: '24px', color: '#cbd5e1' }}></i>
                     )}
                   </Box>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="subtitle1" fontWeight="bold">{item.product.name}</Typography>
                     <Typography variant="body2" color="text.secondary">{item.product.type}</Typography>
                     {(item.variantName || item.variant?.name) && (
-                      <Chip icon={<CategoryIcon fontSize="small" />} label={item.variantName || item.variant?.name} size="small" variant="outlined" sx={{ mt: 1, height: 24 }} />
+                      <Chip label={item.variantName || item.variant?.name} size="small" variant="outlined" sx={{ mt: 1, height: 24 }} />
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 2 }}>
                       <Typography variant="body2" color="text.secondary">Qty: <Typography component="span" fontWeight="bold" color="text.primary">{item.quantity}</Typography></Typography>
@@ -269,8 +260,7 @@ const OrderDetails = () => {
                           <Button 
                             variant="outlined" 
                             size="small" 
-                            startIcon={<StarIcon sx={{ color: 'warning.main' }} />}
-                            sx={{ mt: 1, borderRadius: 4, textTransform: 'none', py: 0.5 }}
+                            sx={{ mt: 1, borderRadius: 4, textTransform: 'none', py: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}
                             onClick={() => {
                               setSelectedProduct(item.product);
                               setReviewModalOpen(true);
@@ -279,6 +269,7 @@ const OrderDetails = () => {
                               setReviewForm({ rating: 5, title: '', comment: '', images: [] });
                             }}
                           >
+                            <i className="fi fi-sr-star" style={{ color: '#f59e0b', fontSize: '13px' }}></i>
                             Write Review
                           </Button>
                         )}
@@ -311,7 +302,7 @@ const OrderDetails = () => {
                 <Typography variant="h5" fontWeight="900">₱{order.total.toLocaleString()}</Typography>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <CreditCardIcon color={order.paymentStatus === 'paid' ? 'success' : 'action'} />
+                <i className="fi fi-rr-credit-card" style={{ fontSize: '20px', color: order.paymentStatus === 'paid' ? '#16a34a' : '#64748b' }}></i>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" color="text.secondary" fontWeight="bold" display="block">Payment Method</Typography>
                   <Typography variant="body2" fontWeight="bold">{order.paymentMode}</Typography>
@@ -323,7 +314,7 @@ const OrderDetails = () => {
             {/* Delivery Info */}
             <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LocationOnIcon color="action" /> Delivery Info
+                <i className="fi fi-rr-marker" style={{ fontSize: '18px', color: '#1e3a8a' }}></i> Delivery Info
               </Typography>
               <Stack spacing={2} sx={{ mt: 3 }}>
                 <Box>
@@ -356,7 +347,7 @@ const OrderDetails = () => {
       <Modal open={reviewModalOpen} onClose={() => setReviewModalOpen(false)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Paper elevation={24} sx={{ width: '90%', maxWidth: 800, maxHeight: '90vh', overflowY: 'auto', p: { xs: 3, md: 5 }, borderRadius: 4, position: 'relative' }}>
           <IconButton onClick={() => setReviewModalOpen(false)} sx={{ position: 'absolute', top: 16, right: 16 }}>
-            <CloseIcon />
+            <i className="fi fi-rr-cross" style={{ fontSize: '16px' }}></i>
           </IconButton>
           
           <Typography variant="h5" fontWeight="bold" gutterBottom>Write a Review</Typography>
@@ -364,7 +355,7 @@ const OrderDetails = () => {
 
           {reviewSuccess ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
-              <CheckCircleIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
+              <i className="fi fi-sr-check-circle" style={{ fontSize: '48px', color: '#16a34a', marginBottom: '16px', display: 'block' }}></i>
               <Typography variant="h6" fontWeight="bold">{reviewSuccess}</Typography>
               <Typography color="text.secondary">Thank you for sharing your experience!</Typography>
             </Box>
@@ -398,13 +389,13 @@ const OrderDetails = () => {
                       <Box key={index} sx={{ position: 'relative', width: 80, height: 80, borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
                         <Box component="img" src={img} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <IconButton size="small" onClick={() => removeImage(index)} sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' }, p: 0.5 }}>
-                          <CloseIcon fontSize="small" />
+                          <i className="fi fi-rr-cross" style={{ fontSize: '12px' }}></i>
                         </IconButton>
                       </Box>
                     ))}
                     {reviewForm.images.length < 3 && (
                       <Box component="label" sx={{ width: 80, height: 80, borderRadius: 2, border: '2px dashed', borderColor: 'divider', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', '&:hover': { borderColor: 'primary.main', color: 'primary.main' } }}>
-                        <UploadFileIcon fontSize="small" />
+                        <i className="fi fi-rr-upload" style={{ fontSize: '16px' }}></i>
                         <Typography variant="caption">Upload</Typography>
                         <input type="file" accept="image/*" multiple onChange={handleImageUpload} hidden />
                       </Box>

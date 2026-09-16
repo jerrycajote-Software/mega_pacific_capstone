@@ -3,55 +3,86 @@ import axios from 'axios';
 
 const CartContext = createContext();
 
-// Build the localStorage key for a given user (or guest)
-const getCartKey = (userId) =>
-  userId ? `mega_pacific_cart_${userId}` : 'mega_pacific_cart_guest';
+export const CartProvider = ({ userId, token, children }) => {
+  const [cartItems, setCartItems] = useState([]);
+  const API_URL = import.meta.env.VITE_API_URL || '';
 
-export const CartProvider = ({ userId, children }) => {
-  const cartKey = getCartKey(userId);
+  const mapBackendCartToFrontend = (backendCart) => {
+    return backendCart.map(item => {
+      return {
+        id: `${item.productId}-${item.variantId || 'base'}`, // Keep string ID for UI consistency
+        dbId: item.id, // Store DB ID for removal/updates
+        product: item.product,
+        variant: item.variant,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        price: item.variant ? item.variant.price : item.product.price,
+        isDeleted: false,
+        isOutOfStock: false
+      };
+    });
+  };
 
-  // Load cart from the correct per-user key
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const saved = localStorage.getItem(cartKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error('Failed to load cart from localStorage', e);
-      return [];
-    }
-  });
-
-  // Track the previous cartKey so we can detect user switches
-  const prevCartKeyRef = useRef(cartKey);
-
-  // When the user changes (login / logout / switch), load that user's cart
+  // Load and sync cart whenever auth state changes
   useEffect(() => {
-    if (prevCartKeyRef.current !== cartKey) {
-      prevCartKeyRef.current = cartKey;
+    const loadCart = async () => {
+      if (token) {
+        try {
+          const guestCartJson = localStorage.getItem('mega_pacific_cart_guest');
+          let guestCart = [];
+          if (guestCartJson) {
+             guestCart = JSON.parse(guestCartJson);
+          }
+          
+          if (guestCart.length > 0) {
+             // Sync guest cart to backend
+             const syncPayload = guestCart.map(item => ({
+               productId: item.product.id,
+               variantId: item.variant?.id || null,
+               quantity: item.quantity
+             }));
+             const res = await axios.put(`${API_URL}/api/customer/cart/sync`, { items: syncPayload }, {
+               headers: { Authorization: `Bearer ${token}` }
+             });
+             setCartItems(mapBackendCartToFrontend(res.data.data));
+             localStorage.removeItem('mega_pacific_cart_guest'); // Clear guest cart after successful sync
+          } else {
+             // Just fetch backend cart
+             const res = await axios.get(`${API_URL}/api/customer/cart`, {
+               headers: { Authorization: `Bearer ${token}` }
+             });
+             setCartItems(mapBackendCartToFrontend(res.data.data));
+          }
+        } catch (e) {
+          console.error("Failed to load/sync remote cart", e);
+        }
+      } else {
+        // Guest mode: load from localStorage
+        try {
+          const saved = localStorage.getItem('mega_pacific_cart_guest');
+          setCartItems(saved ? JSON.parse(saved) : []);
+        } catch (e) {
+          console.error("Failed to load guest cart", e);
+        }
+      }
+    };
+    loadCart();
+  }, [token]); // Run when token changes
+
+  // Persist to local storage for guests only, whenever cartItems changes
+  useEffect(() => {
+    if (!token) {
       try {
-        const saved = localStorage.getItem(cartKey);
-        setCartItems(saved ? JSON.parse(saved) : []);
+        localStorage.setItem('mega_pacific_cart_guest', JSON.stringify(cartItems));
       } catch (e) {
-        console.error('Failed to load cart on user switch', e);
-        setCartItems([]);
+        console.error('Failed to save guest cart to localStorage', e);
       }
     }
-  }, [cartKey]);
-
-  // Persist cart to the correct per-user key whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(cartKey, JSON.stringify(cartItems));
-    } catch (e) {
-      console.error('Failed to save cart to localStorage', e);
-    }
-  }, [cartItems, cartKey]);
+  }, [cartItems, token]);
 
   const updateCartValidation = async () => {
     if (cartItems.length === 0) return;
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
       const validatedItems = await Promise.all(cartItems.map(async (item) => {
         try {
           const res = await axios.get(`${API_URL}/api/customer/products/${item.product.id}`);
@@ -93,52 +124,110 @@ export const CartProvider = ({ userId, children }) => {
     }
   };
 
-  const addToCart = (product, variant, quantity) => {
-    setCartItems(prev => {
-      const variantId = variant ? variant.id : null;
-      const existingItemIndex = prev.findIndex(
-        item => item.product.id === product.id && item.variantId === variantId
-      );
-
-      if (existingItemIndex > -1) {
-        const updated = [...prev];
-        updated[existingItemIndex] = {
-          ...updated[existingItemIndex],
-          quantity: updated[existingItemIndex].quantity + quantity
-        };
-        return updated;
-      } else {
-        return [
-          ...prev,
-          {
-            id: `${product.id}-${variantId || 'base'}`,
-            product,
-            variant,
-            variantId,
-            quantity,
-            price: variant ? variant.price : product.price,
-            isDeleted: false,
-            isOutOfStock: false
-          }
-        ];
+  const addToCart = async (product, variant, quantity) => {
+    const variantId = variant ? variant.id : null;
+    
+    if (token) {
+      // API Call
+      try {
+        const res = await axios.post(`${API_URL}/api/customer/cart`, {
+          productId: product.id,
+          variantId,
+          quantity
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // After adding, we should refetch the cart to ensure consistency
+        const fetchRes = await axios.get(`${API_URL}/api/customer/cart`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCartItems(mapBackendCartToFrontend(fetchRes.data.data));
+      } catch (e) {
+        console.error("Failed to add to remote cart", e);
       }
-    });
+    } else {
+      // Local state update
+      setCartItems(prev => {
+        const existingItemIndex = prev.findIndex(
+          item => item.product.id === product.id && item.variantId === variantId
+        );
+
+        if (existingItemIndex > -1) {
+          const updated = [...prev];
+          updated[existingItemIndex] = {
+            ...updated[existingItemIndex],
+            quantity: updated[existingItemIndex].quantity + quantity
+          };
+          return updated;
+        } else {
+          return [
+            ...prev,
+            {
+              id: `${product.id}-${variantId || 'base'}`,
+              product,
+              variant,
+              variantId,
+              quantity,
+              price: variant ? variant.price : product.price,
+              isDeleted: false,
+              isOutOfStock: false
+            }
+          ];
+        }
+      });
+    }
   };
 
-  const removeFromCart = (itemId) => {
-    setCartItems(prev => prev.filter(item => item.id !== itemId));
+  const removeFromCart = async (itemId) => {
+    const item = cartItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    if (token && item.dbId) {
+      try {
+        await axios.delete(`${API_URL}/api/customer/cart/${item.dbId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (e) {
+        console.error("Failed to remove from remote cart", e);
+      }
+    }
+    // Update local state in either case
+    setCartItems(prev => prev.filter(i => i.id !== itemId));
   };
 
-  const updateQuantity = (itemId, newQuantity) => {
+  const updateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
+    const item = cartItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    if (token && item.dbId) {
+      try {
+        await axios.put(`${API_URL}/api/customer/cart/${item.dbId}`, {
+          quantity: newQuantity
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (e) {
+        console.error("Failed to update remote cart quantity", e);
+      }
+    }
+    
     setCartItems(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
+      prev.map(i => i.id === itemId ? { ...i, quantity: newQuantity } : i)
     );
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
+    if (token) {
+      try {
+        await axios.delete(`${API_URL}/api/customer/cart`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (e) {
+        console.error("Failed to clear remote cart", e);
+      }
+    }
     setCartItems([]);
   };
 

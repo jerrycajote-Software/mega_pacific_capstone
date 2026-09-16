@@ -107,7 +107,7 @@ const LoginPage = () => {
     const result = await login(email, password);
     if (result.success) {
       if (result.user?.role === 'admin') {
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else {
         logout();
         setError('Access denied. Admin portal requires administrator privileges.');
@@ -373,11 +373,11 @@ const LoginPage = () => {
                       padding: 4, display: 'flex',
                       transition: 'color 0.15s',
                     }}
-                    aria-label={showPw ? 'Hide password' : 'Show password'}
+                    aria-label={showPw ? 'Show password' : 'Hide password'}
                   >
                     {showPw
-                      ? <VisibilityOffIcon sx={{ fontSize: 15 }} />
-                      : <VisibilityIcon sx={{ fontSize: 15 }} />
+                      ? <VisibilityIcon sx={{ fontSize: 15 }} />
+                      : <VisibilityOffIcon sx={{ fontSize: 15 }} />
                     }
                   </button>
                 </div>

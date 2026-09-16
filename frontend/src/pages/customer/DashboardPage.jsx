@@ -20,13 +20,18 @@ import {
   IconButton,
   Paper
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
 import HeroSection from '../../components/HeroSection';
 import { buildProductOptions, getDefaultOption } from './buildProductOptions';
+import { useCustomerUi } from '../../context/CustomerUiContext';
+import DashboardPageV2 from './DashboardPageV2';
 
 const DashboardPage = ({ showHero = true }) => {
+  const { uiVersion } = useCustomerUi();
+
+  if (uiVersion === 'v2') {
+    return <DashboardPageV2 showHero={showHero} />;
+  }
+
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -35,9 +40,10 @@ const DashboardPage = ({ showHero = true }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
 
+
   const fetchProducts = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || '';
       const response = await axios.get(`${API_URL}/api/admin/products`);
       setProducts(response.data);
       setLoading(false);
@@ -108,7 +114,7 @@ const DashboardPage = ({ showHero = true }) => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" sx={{ fontSize: 20 }} />
+                  <i className="fi fi-rr-search" style={{ fontSize: '18px', color: '#94a3b8' }}></i>
                 </InputAdornment>
               ),
             }}
@@ -146,7 +152,7 @@ const DashboardPage = ({ showHero = true }) => {
               borderColor: 'divider',
             }}
           >
-            <Inventory2Icon sx={{ fontSize: 64, color: 'text.disabled', opacity: 0.4, mb: 2 }} />
+            <i className="fi fi-rr-box-open" style={{ fontSize: '48px', color: '#cbd5e1', marginBottom: '16px', display: 'block' }}></i>
             <Typography variant="h5" fontWeight="bold" gutterBottom color="text.primary">
               {t('No products found')}
             </Typography>
@@ -224,7 +230,7 @@ const DashboardPage = ({ showHero = true }) => {
                         }}
                       />
                     ) : (
-                      <Inventory2Icon sx={{ fontSize: 56, color: 'text.disabled' }} />
+                      <i className="fi fi-rr-box" style={{ fontSize: '44px', color: '#94a3b8' }}></i>
                     )}
 
                     {/* Type chip */}
@@ -381,7 +387,7 @@ const DashboardPage = ({ showHero = true }) => {
                           transition: 'all 0.2s ease',
                         }}
                       >
-                        <ArrowForwardIcon fontSize="small" />
+                        <i className="fi fi-rr-arrow-right" style={{ fontSize: '13px' }}></i>
                       </IconButton>
                     </Box>
                   </CardContent>

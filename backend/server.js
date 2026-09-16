@@ -36,6 +36,7 @@ const employeeReviewRoutes = require("./routes/employee/reviewRoutes");
 const customerProductRoutes = require("./routes/customer/productRoutes");
 const customerOrderRoutes = require("./routes/customer/orderRoutes");
 const customerReviewRoutes = require("./routes/customer/reviewRoutes");
+const customerCartRoutes = require("./routes/customer/cartRoutes");
 const inquiryRoutes = require("./routes/inquiryRoutes");
 
 app.use("/api/auth", authRoutes);
@@ -52,6 +53,7 @@ app.use("/api/employee/reviews", employeeReviewRoutes);
 app.use("/api/customer/products", customerProductRoutes);
 app.use("/api/customer/orders", customerOrderRoutes);
 app.use("/api/customer/reviews", customerReviewRoutes);
+app.use("/api/customer/cart", customerCartRoutes);
 app.use("/api/inquiries", inquiryRoutes);
 
 app.get("/", (req, res) => {
