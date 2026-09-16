@@ -170,6 +170,7 @@ const RegisterPage = () => {
     if (!email.trim())           errors.email     = 'Email address is required.';
     else if (!validateEmail(email)) errors.email  = 'Please enter a valid email address.';
     if (!contactNumber.trim())   errors.contactNumber = 'Contact number is required.';
+    else if (!/^09[0-9]{9}$/.test(contactNumber)) errors.contactNumber = 'Must be an 11-digit number starting with 09.';
     if (!address.trim())         errors.address   = 'Address is required.';
     if (!city)                   errors.city      = 'Please select a city.';
     if (!password)               errors.password  = 'Password is required.';
@@ -374,7 +375,7 @@ const RegisterPage = () => {
                   size="small"
                   value={contactNumber}
                   onChange={(e) => { 
-                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, '');
+                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
                     setContactNumber(onlyNumbers); 
                     clearFieldError('contactNumber'); 
                   }}

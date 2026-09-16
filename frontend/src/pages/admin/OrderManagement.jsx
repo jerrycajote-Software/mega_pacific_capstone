@@ -72,6 +72,7 @@ const StatusBadge = ({ status, type = 'order' }) => {
 const OrderManagement = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isEmployee = user?.role === 'employee';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(false);
@@ -107,6 +108,9 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
+    // Auto-refresh every 30s so employees see automated status changes in near-real-time
+    const autoRefresh = setInterval(() => fetchOrders(), 30 * 1000);
+    return () => clearInterval(autoRefresh);
   }, []);
 
   const refresh = () => {
@@ -224,7 +228,9 @@ const OrderManagement = () => {
         <div>
           <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Order Management</h2>
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            View and manage all customer orders from the platform.
+            {isEmployee
+              ? 'Order statuses update automatically every ~5 minutes. You may only cancel orders.'
+              : 'View and manage all customer orders from the platform.'}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -569,59 +575,114 @@ const OrderManagement = () => {
                   <h4 className="text-text-primary font-semibold mb-3 flex items-center gap-2 text-sm border-b border-border pb-2">
                     <CalendarTodayIcon sx={{ fontSize: 16 }} /> Estimated Delivery
                   </h4>
-                  <div className="flex flex-col gap-3">
-                    <input
-                      type="date"
-                      min={EstimatedDeliveryValidator.getMinDate()}
-                      value={deliveryDate}
-                      onChange={(e) => setDeliveryDate(e.target.value)}
-                      disabled={isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)}
-                      className="bg-bg-secondary border border-border text-sm text-text-primary rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    {(isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)) && (
-                      <p className="text-xs text-amber-500/80 italic">
-                        {isAdmin ? 'Delivery date can only be modified by Employees.' : `Delivery date locked because the order is ${selectedOrder.orderStatus.replace(/_/g, ' ')}.`}
-                      </p>
-                    )}
-                    {!isAdmin && (
-                      <button
-                        onClick={handleUpdateDeliveryDate}
-                        disabled={isUpdating || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)}
-                        className="bg-bg-tertiary hover:bg-bg-secondary border border-border text-sm text-text-primary py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Update Date
-                      </button>
-                    )}
-                  </div>
+                  {isEmployee ? (
+                    // Employees: delivery date is fully automated — display only
+                    <div className="flex flex-col gap-2">
+                      {selectedOrder.estimatedDeliveryDate ? (
+                        <p className="text-sm text-text-primary font-medium">
+                          {new Date(selectedOrder.estimatedDeliveryDate).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-text-muted italic">Not yet set — will be assigned automatically upon delivery.</p>
+                      )}
+                      <p className="text-xs text-amber-500/80 italic mt-1">Delivery date is managed automatically by the system.</p>
+                    </div>
+                  ) : (
+                    // Admin: view-only
+                    <div className="flex flex-col gap-3">
+                      <input
+                        type="date"
+                        min={EstimatedDeliveryValidator.getMinDate()}
+                        value={deliveryDate}
+                        onChange={(e) => setDeliveryDate(e.target.value)}
+                        disabled={isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)}
+                        className="bg-bg-secondary border border-border text-sm text-text-primary rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      {(isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)) && (
+                        <p className="text-xs text-amber-500/80 italic">
+                          {isAdmin ? 'Delivery date can only be modified by Employees.' : `Delivery date locked because the order is ${selectedOrder.orderStatus.replace(/_/g, ' ')}.`}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                
                 <div className="bg-bg-primary border border-border rounded-2xl p-5">
                   <h4 className="text-text-primary font-semibold mb-3 flex items-center gap-2 text-sm border-b border-border pb-2">
-                    <CheckCircleIcon sx={{ fontSize: 16 }} /> Update Order Status
+                    <CheckCircleIcon sx={{ fontSize: 16 }} /> Order Status
                   </h4>
                   <div className="flex flex-col gap-2">
-                    {!isAdmin && (selectedOrder.orderStatus.toLowerCase() === 'pending' || selectedOrder.orderStatus.toLowerCase() === 'shipped') && (
-                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-medium rounded-lg transition-colors border border-blue-500/20 flex items-center gap-2">
-                        <LocalShippingIcon sx={{ fontSize: 14 }} /> Out for Delivery
-                      </button>
-                    )}
-                    {!isAdmin && selectedOrder.orderStatus.toLowerCase() === 'out_for_delivery' && (
-                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'delivered', 'paid')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-sm font-medium rounded-lg transition-colors border border-green-500/20 flex items-center gap-2">
-                        <CheckCircleIcon sx={{ fontSize: 14 }} /> Mark Delivered & Paid
-                      </button>
-                    )}
-                    {!isAdmin && ['pending', 'shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus.toLowerCase()) && (
-                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-2">
-                        <CancelIcon sx={{ fontSize: 14 }} /> Cancel Order
-                      </button>
+
+                    {/*  EMPLOYEE VIEW: only Cancel is manual, rest is automated  */}
+                    {isEmployee && (
+                      <>
+                        {/* Automated status info banner */}
+                        <div style={{
+                          background: 'rgba(59,130,246,0.08)',
+                          border: '1px solid rgba(59,130,246,0.25)',
+                          borderRadius: 10,
+                          padding: '10px 12px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 8,
+                          marginBottom: 4
+                        }}>
+                          <AccessTimeIcon sx={{ fontSize: 15, color: '#60a5fa', marginTop: '2px', flexShrink: 0 }} />
+                          <p style={{ fontSize: '0.78rem', color: '#93c5fd', margin: 0, lineHeight: 1.5 }}>
+                            Order status is <strong>managed automatically</strong> by the system.
+                            Updates occur every ~5 minutes and are reflected in real-time.
+                          </p>
+                        </div>
+
+                        {/* Keep Cancel for employees */}
+                        {['pending', 'processing', 'out_for_delivery'].includes(selectedOrder.orderStatus.toLowerCase()) && (
+                          <button
+                            onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')}
+                            disabled={isUpdating}
+                            className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-1"
+                          >
+                            <CancelIcon sx={{ fontSize: 14 }} /> Cancel Order
+                          </button>
+                        )}
+
+                        {['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase()) && (
+                          <p className="text-xs text-text-muted italic text-center py-2">No further actions available.</p>
+                        )}
+                      </>
                     )}
 
-                    {(isAdmin || ['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase())) && (
+                    {/* ── ADMIN VIEW: full read-only message ── */}
+                    {isAdmin && (
                       <p className="text-xs text-text-muted italic text-center py-2">
-                        {isAdmin ? 'Status updates can only be modified by Employees.' : 'No further status updates available.'}
+                        Status updates are managed automatically by the system.
                       </p>
                     )}
+
+                    {/* ── FALLBACK (non-admin, non-employee — shouldn't occur) ── */}
+                    {!isAdmin && !isEmployee && (
+                      <>
+                        {(selectedOrder.orderStatus.toLowerCase() === 'pending' || selectedOrder.orderStatus.toLowerCase() === 'shipped') && (
+                          <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-medium rounded-lg transition-colors border border-blue-500/20 flex items-center gap-2">
+                            <LocalShippingIcon sx={{ fontSize: 14 }} /> Out for Delivery
+                          </button>
+                        )}
+                        {selectedOrder.orderStatus.toLowerCase() === 'out_for_delivery' && (
+                          <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'delivered', 'paid')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-sm font-medium rounded-lg transition-colors border border-green-500/20 flex items-center gap-2">
+                            <CheckCircleIcon sx={{ fontSize: 14 }} /> Mark Delivered & Paid
+                          </button>
+                        )}
+                        {['pending', 'shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus.toLowerCase()) && (
+                          <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-2">
+                            <CancelIcon sx={{ fontSize: 14 }} /> Cancel Order
+                          </button>
+                        )}
+                        {['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase()) && (
+                          <p className="text-xs text-text-muted italic text-center py-2">No further status updates available.</p>
+                        )}
+                      </>
+                    )}
+
                   </div>
                 </div>
 

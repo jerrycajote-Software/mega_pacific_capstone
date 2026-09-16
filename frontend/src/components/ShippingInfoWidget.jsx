@@ -24,6 +24,9 @@ const ShippingInfoWidget = ({
   onEdit,
   onCancelEdit,
   onInputChange,
+  addresses = [],
+  selectedAddressId,
+  onSelectAddress
 }) => {
   const showAddressForm = !hasProfile || isEditingAddress;
 
@@ -54,50 +57,7 @@ const ShippingInfoWidget = ({
           </Typography>
         </Box>
 
-        {hasProfile && !isEditingAddress && (
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={onEdit}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              borderColor: 'primary.main',
-              color: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              '&:hover': {
-                borderColor: 'primary.dark',
-                bgcolor: 'rgba(79,119,45,0.04)',
-              },
-            }}
-          >
-            <i className="fi fi-rr-edit" style={{ fontSize: '13px' }}></i>
-            Edit
-          </Button>
-        )}
-        {isEditingAddress && hasProfile && (
-          <Button
-            variant="outlined"
-            size="small"
-            color="error"
-            onClick={onCancelEdit}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              '&:hover': { bgcolor: 'error.light' },
-            }}
-          >
-            <i className="fi fi-rr-cross" style={{ fontSize: '13px' }}></i>
-            Cancel
-          </Button>
-        )}
+
       </Box>
 
       <Divider sx={{ mb: 3 }} />
@@ -241,66 +201,86 @@ const ShippingInfoWidget = ({
             </Grid>
           ) : (
             /* ── Read-Only Summary Card ── */
-            <Box
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                bgcolor: 'grey.50',
-                border: '1px solid',
-                borderColor: 'divider',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  borderColor: 'primary.light',
-                  boxShadow: '0 2px 12px rgba(79,119,45,0.08)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                <Avatar
-                  sx={{
-                    bgcolor: 'primary.50',
-                    color: 'primary.main',
-                    width: 44,
-                    height: 44,
-                  }}
-                >
-                  <i className="fi fi-rr-marker" style={{ fontSize: '20px', color: '#1e3a8a' }}></i>
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                    {formData.customerName}
-                  </Typography>
-                  <Box
+            <Box>
+              {addresses.length > 1 && (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ mb: 1, color: 'text.secondary' }}>Select Shipping Address</Typography>
+                  <TextField
+                    select
+                    fullWidth
+                    value={selectedAddressId || ''}
+                    onChange={(e) => onSelectAddress(e.target.value)}
+                    size="small"
+                  >
+                    {addresses.map((addr) => (
+                      <MenuItem key={addr.id} value={addr.id}>
+                        {addr.address}, {addr.city} {addr.isDefault && "(Default)"}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              )}
+              <Box
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  bgcolor: 'grey.50',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: 'primary.light',
+                    boxShadow: '0 2px 12px rgba(79,119,45,0.08)',
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <Avatar
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      mb: 0.5,
+                      bgcolor: 'primary.50',
+                      color: 'primary.main',
+                      width: 44,
+                      height: 44,
                     }}
                   >
-                    <i className="fi fi-rr-phone-call" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
-                    <Typography variant="body2" color="text.secondary">
-                      {formData.contactNumber}
+                    <i className="fi fi-rr-marker" style={{ fontSize: '20px', color: '#1e3a8a' }}></i>
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                      {formData.customerName}
                     </Typography>
-                  </Box>
-                  <Typography variant="body1" sx={{ mb: 0.5 }}>
-                    {formData.address}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {formData.city}, {formData.province} {formData.zipCode}
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      mt: 1,
-                    }}
-                  >
-                    <i className="fi fi-rr-envelope" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
-                    <Typography variant="body2" color="text.secondary">
-                      {formData.customerEmail}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        mb: 0.5,
+                      }}
+                    >
+                      <i className="fi fi-rr-phone-call" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
+                      <Typography variant="body2" color="text.secondary">
+                        {formData.contactNumber}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" sx={{ mb: 0.5 }}>
+                      {formData.address}
                     </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formData.city}, {formData.province} {formData.zipCode}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        mt: 1,
+                      }}
+                    >
+                      <i className="fi fi-rr-envelope" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
+                      <Typography variant="body2" color="text.secondary">
+                        {formData.customerEmail}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
               </Box>

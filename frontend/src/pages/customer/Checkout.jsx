@@ -71,6 +71,8 @@ const Checkout = () => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
 
   useEffect(() => {
     if (!token) {
@@ -86,19 +88,31 @@ const Checkout = () => {
         });
         if (res.data.data) {
           const profile = res.data.data;
-          setFormData(prev => ({
-            ...prev,
-            customerName: profile.name || prev.customerName,
-            customerEmail: profile.email || prev.customerEmail,
-            contactNumber: profile.contactNumber || '',
-            address: profile.address || '',
-            city: profile.city || '',
-            province: profile.province || 'Cavite',
-            zipCode: profile.zipCode || ''
-          }));
-          
-          if (profile.address && profile.contactNumber && profile.city && profile.province && profile.zipCode) {
+          const userAddresses = profile.addresses || [];
+          setAddresses(userAddresses);
+
+          const defaultAddr = userAddresses.find(a => a.isDefault) || userAddresses[0];
+
+          if (defaultAddr) {
+            setSelectedAddressId(defaultAddr.id);
+            setFormData(prev => ({
+              ...prev,
+              customerName: profile.name || prev.customerName,
+              customerEmail: profile.email || prev.customerEmail,
+              contactNumber: defaultAddr.contactNumber || '',
+              address: defaultAddr.address || '',
+              city: defaultAddr.city || '',
+              province: defaultAddr.province || 'Cavite',
+              zipCode: defaultAddr.zipCode || ''
+            }));
             setHasProfile(true);
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              customerName: profile.name || prev.customerName,
+              customerEmail: profile.email || prev.customerEmail
+            }));
+            setHasProfile(false);
           }
         }
       } catch (err) {
@@ -178,19 +192,51 @@ const Checkout = () => {
   const saveProfileAddress = async () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
-      await axios.put(`${API_URL}/api/auth/profile`, {
-        contactNumber: formData.contactNumber,
-        address: formData.address,
-        city: formData.city,
-        province: formData.province,
-        zipCode: formData.zipCode
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      let res;
+      if (selectedAddressId && hasProfile) {
+        res = await axios.put(`${API_URL}/api/auth/addresses/${selectedAddressId}`, {
+          contactNumber: formData.contactNumber,
+          address: formData.address,
+          city: formData.city,
+          province: formData.province,
+          zipCode: formData.zipCode
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        res = await axios.post(`${API_URL}/api/auth/addresses`, {
+          contactNumber: formData.contactNumber,
+          address: formData.address,
+          city: formData.city,
+          province: formData.province,
+          zipCode: formData.zipCode,
+          isDefault: true
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.data) {
+          setSelectedAddressId(res.data.data.id);
+        }
+      }
       setHasProfile(true);
       setIsEditingAddress(false);
     } catch (err) {
       console.error("Failed to save profile address", err);
+    }
+  };
+
+  const handleSelectAddress = (id) => {
+    setSelectedAddressId(id);
+    const addr = addresses.find(a => a.id === id);
+    if (addr) {
+      setFormData(prev => ({
+        ...prev,
+        contactNumber: addr.contactNumber || '',
+        address: addr.address || '',
+        city: addr.city || '',
+        province: addr.province || 'Cavite',
+        zipCode: addr.zipCode || ''
+      }));
     }
   };
 
@@ -333,6 +379,9 @@ const Checkout = () => {
               onEdit={() => setIsEditingAddress(true)}
               onCancelEdit={() => { setIsEditingAddress(false); setErrors({}); }}
               onInputChange={handleInputChange}
+              addresses={addresses}
+              selectedAddressId={selectedAddressId}
+              onSelectAddress={handleSelectAddress}
             />
 
             <form onSubmit={handleSubmit}>

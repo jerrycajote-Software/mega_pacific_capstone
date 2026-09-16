@@ -41,7 +41,7 @@ const CustomerHeaderV2 = () => {
 
   return (
     <>
-      {/* ── Top Announcement Ticker Bar (Light Mode / Temu Style) ─────────── */}
+      {/*  Top Announcement Ticker Bar (Light Mode / Temu Style) */}
       <Box
         sx={{
           bgcolor: '#f8fafc',
@@ -108,7 +108,7 @@ const CustomerHeaderV2 = () => {
         </Box>
       </Box>
 
-      {/* ── Main Clean Light E-Commerce Header ─────────────────────────────── */}
+      {/*  Main Clean Light E-Commerce Header  */}
       <AppBar
         position="sticky"
         elevation={0}

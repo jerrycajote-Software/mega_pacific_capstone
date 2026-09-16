@@ -60,7 +60,7 @@ const DashboardPageV2 = ({ showHero = true }) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.shortDescription && product.shortDescription.toLowerCase().includes(searchTerm.toLowerCase()));
+      (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesCategory = selectedCategory === 'All' || product.type === selectedCategory;
 
@@ -359,7 +359,7 @@ const DashboardPageV2 = ({ showHero = true }) => {
                         lineHeight: 1.4,
                       }}
                     >
-                      {product.shortDescription || 'Commercial metal standard supplied directly per mill specs.'}
+                      {product.description ? product.description.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ') : 'Commercial metal standard supplied directly per mill specs.'}
                     </Typography>
 
                     {/* Stock & Rating Indicator */}
@@ -417,7 +417,6 @@ const DashboardPageV2 = ({ showHero = true }) => {
                         }}
                       >
                         Buy Now
-                        <i className="fi fi-rr-arrow-right" style={{ fontSize: '11px' }}></i>
                       </Button>
                     </Box>
                   </Box>
@@ -494,7 +493,7 @@ const DashboardPageV2 = ({ showHero = true }) => {
                               {product.name}
                             </Typography>
                             <Typography variant="caption" color="#64748b">
-                              {product.shortDescription || 'Commercial metal standard'}
+                              {product.description || 'Commercial metal standard'}
                             </Typography>
                           </Box>
                         </Box>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -37,6 +37,8 @@ import Checkout from './pages/customer/Checkout';
 import OrderDetails from './pages/customer/OrderDetails';
 import OrdersPage from './pages/customer/OrdersPage';
 import ProfilePage from './pages/customer/ProfilePage';
+
+const RoofDesignerPage = React.lazy(() => import('./pages/customer/roof-designer/RoofDesignerPage'));
 
 
 const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
@@ -119,6 +121,22 @@ const App = () => {
           <Route path="order/:id" element={<OrderDetails />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
+
+        {/* 3D Roof Designer — standalone full-screen (no header/footer/FABs) */}
+        <Route path="/roof-designer" element={
+          <ProtectedRoute redirectTo="/login" requiredRole="customer">
+            <Suspense fallback={
+              <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', color: '#64748b' }}>
+                  <div style={{ width: 48, height: 48, border: '4px solid #e2e8f0', borderTopColor: '#4f772d', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+                  <span>Loading 3D Roof Designer…</span>
+                </div>
+              </div>
+            }>
+              <RoofDesignerPage />
+            </Suspense>
+          </ProtectedRoute>
+        } />
 
        
         <Route path="/admin/login" element={<GuestRoute><AdminLoginPage /></GuestRoute>} />

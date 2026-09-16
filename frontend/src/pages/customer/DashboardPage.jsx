@@ -38,8 +38,8 @@ const DashboardPage = ({ showHero = true }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const { user } = useAuth();
-
 
   const fetchProducts = async () => {
     try {
@@ -58,10 +58,17 @@ const DashboardPage = ({ showHero = true }) => {
     fetchProducts();
   }, []);
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const categories = ['All', ...new Set(products.map((p) => p.type).filter(Boolean))];
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.type.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'All' || product.type === selectedCategory;
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out' }}>
@@ -121,14 +128,29 @@ const DashboardPage = ({ showHero = true }) => {
           />
 
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              sx={{ borderRadius: 3, px: 2.5, fontWeight: 700 }}
-            >
-              {t('All Products')}
-            </Button>
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? "contained" : "outlined"}
+                color={selectedCategory === cat ? "primary" : "inherit"}
+                size="small"
+                onClick={() => setSelectedCategory(cat)}
+                sx={{ 
+                  borderRadius: 3, 
+                  px: 2.5, 
+                  fontWeight: 700,
+                  borderColor: selectedCategory === cat ? 'transparent' : 'divider',
+                  color: selectedCategory === cat ? 'white' : 'text.primary',
+                  bgcolor: selectedCategory === cat ? 'primary.main' : 'background.paper',
+                  '&:hover': {
+                    bgcolor: selectedCategory === cat ? 'primary.dark' : 'action.hover',
+                    borderColor: selectedCategory === cat ? 'transparent' : 'divider',
+                  }
+                }}
+              >
+                {cat === 'All' ? t('All Products') : cat}
+              </Button>
+            ))}
           </Box>
         </Box>
 
@@ -185,7 +207,8 @@ const DashboardPage = ({ showHero = true }) => {
                   sx={{
                     /* CSS grid already controls column width; card fills the cell */
                     width: '100%',
-                    height: 300,   /* every card is exactly 300px tall */
+                    height: '100%',
+                    minHeight: 320,
                     display: 'flex',
                     flexDirection: 'column',
                     cursor: 'pointer',
@@ -318,8 +341,17 @@ const DashboardPage = ({ showHero = true }) => {
                         lineHeight: '16px',
                       }}
                     >
-                      {product.shortDescription || t('No description')}
+                      {product.description ? product.description.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ') : t('No description')}
                     </Typography>
+
+                    {/* Ratings */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5, color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700 }}>
+                      <i className="fi fi-sr-star" style={{ fontSize: '12px' }}></i>
+                      {product.averageRating ? product.averageRating.toFixed(1) : '0.0'} 
+                      <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '0.7rem' }}>
+                        ({product.reviewCount || 0} reviews)
+                      </span>
+                    </Box>
 
                     {/* Price + Arrow */}
                     <Box
@@ -371,24 +403,29 @@ const DashboardPage = ({ showHero = true }) => {
                         </Box>
                       </Box>
 
-                      <IconButton
+                      <Button
                         size="small"
                         sx={{
                           flexShrink: 0,
                           bgcolor: 'primary.main',
                           color: '#ffffff',
                           borderRadius: 2,
-                          p: 1,
+                          px: 1.5,
+                          py: 0.75,
                           boxShadow: '0 4px 12px rgba(79,119,45,0.35)',
                           '&:hover': {
                             bgcolor: 'primary.dark',
-                            transform: 'scale(1.1)',
+                            transform: 'scale(1.05)',
                           },
                           transition: 'all 0.2s ease',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          textTransform: 'none',
+                          minWidth: 'auto',
                         }}
                       >
-                        <i className="fi fi-rr-arrow-right" style={{ fontSize: '13px' }}></i>
-                      </IconButton>
+                        Buy Now
+                      </Button>
                     </Box>
                   </CardContent>
                 </Card>

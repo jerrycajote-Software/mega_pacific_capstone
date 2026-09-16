@@ -379,6 +379,30 @@ const ProductDetails = () => {
     }
   };
 
+  const handleQuantityChange = (e) => {
+    const val = e.target.value;
+    if (val === '') {
+      setQuantity('');
+      return;
+    }
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      if (activeStock === 0) {
+        setQuantity(0);
+      } else if (num > activeStock) {
+        setQuantity(activeStock);
+      } else {
+        setQuantity(num);
+      }
+    }
+  };
+
+  const handleQuantityBlur = () => {
+    if (quantity === '' || quantity < 1) {
+      setQuantity(activeStock === 0 ? 0 : 1);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 10 }}>
@@ -477,7 +501,30 @@ const ProductDetails = () => {
               <Typography variant="subtitle2" fontWeight="bold">Quantity</Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <IconButton onClick={handleDecrease} disabled={quantity <= 1} size="small"><i className="fi fi-rr-minus" style={{ fontSize: '12px' }}></i></IconButton>
-                <Typography sx={{ px: 2, fontWeight: 'bold' }}>{quantity}</Typography>
+                <Box 
+                  component="input"
+                  type="number"
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  onBlur={handleQuantityBlur}
+                  disabled={activeStock === 0}
+                  sx={{ 
+                    width: 48,
+                    textAlign: 'center', 
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    color: 'text.primary',
+                    border: 'none',
+                    outline: 'none',
+                    bgcolor: 'transparent',
+                    fontFamily: 'inherit',
+                    MozAppearance: 'textfield',
+                    '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0
+                    }
+                  }} 
+                />
                 <IconButton onClick={handleIncrease} disabled={quantity >= activeStock || activeStock === 0} size="small"><i className="fi fi-rr-plus" style={{ fontSize: '12px' }}></i></IconButton>
               </Box>
             </Box>

@@ -300,25 +300,25 @@ const OrdersPage = () => {
       {!loading && !error && (
         <Grid container spacing={3} sx={{ mb: 6 }}>
           <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
               <Typography variant="overline" color="text.secondary" fontWeight="bold">Total Orders</Typography>
               <Typography variant="h4" fontWeight="bold" color="text.primary">{stats.total}</Typography>
             </Paper>
           </Grid>
           <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
               <Typography variant="overline" color="text.secondary" fontWeight="bold">Delivered</Typography>
               <Typography variant="h4" fontWeight="bold" color="success.main">{stats.delivered}</Typography>
             </Paper>
           </Grid>
           <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
               <Typography variant="overline" color="text.secondary" fontWeight="bold">In Progress</Typography>
               <Typography variant="h4" fontWeight="bold" color="warning.main">{stats.pending}</Typography>
             </Paper>
           </Grid>
           <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
               <Typography variant="overline" color="text.secondary" fontWeight="bold">Total Spent</Typography>
               <Typography variant="h5" fontWeight="bold" color="text.primary" sx={{ mt: 1 }}>{formatCurrency(stats.totalSpent)}</Typography>
             </Paper>
@@ -406,16 +406,15 @@ const OrdersPage = () => {
           <Typography variant="body2" color="text.secondary" fontWeight="bold" sx={{ mb: 2 }}>
             Showing <Typography component="span" fontWeight="900" color="text.primary">{filteredOrders.length}</Typography> order{filteredOrders.length !== 1 ? 's' : ''}
           </Typography>
-          <Grid container spacing={3}>
+          <Stack spacing={3}>
             {filteredOrders.map((order) => (
-              <Grid item xs={12} md={6} key={order.id}>
-                <OrderCard
-                  order={order}
-                  onClick={() => navigate(`/order/${order.id}`)}
-                />
-              </Grid>
+              <OrderCard
+                key={order.id}
+                order={order}
+                onClick={() => navigate(`/order/${order.id}`)}
+              />
             ))}
-          </Grid>
+          </Stack>
         </Box>
       )}
     </Box>

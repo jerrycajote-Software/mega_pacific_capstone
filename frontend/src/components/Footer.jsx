@@ -10,10 +10,10 @@ const Footer = () => {
           <Grid item xs={12} md={4}>
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 24, letterSpacing: '0.05em', lineHeight: 1 }}>
-                <Typography variant="span" sx={{ color: 'primary.main', WebkitTextStroke: '1px #31572c' }}>MEGA</Typography>
-                <Typography variant="span" sx={{ color: 'secondary.main', WebkitTextStroke: '1px #4f772d' }}>PACIFIC</Typography>
+                <Typography variant="span" sx={{ color: '#1e3a8a' }}>MEGA</Typography>
+                <Typography variant="span" sx={{ color: '#0f172a' }}>PACIFIC</Typography>
               </Box>
-              <Typography sx={{ color: 'success.main', fontSize: '10px', fontWeight: 800, letterSpacing: '0.2em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+              <Typography sx={{ color: '#64748b', fontSize: '10px', fontWeight: 800, letterSpacing: '0.2em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
                 METAL AND STEEL CORP
               </Typography>
             </Box>
@@ -69,24 +69,6 @@ const Footer = () => {
             </Link>
           </Grid>
 
-          {/* Product Categories */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
-              Products
-            </Typography>
-            <Link href="#" color="text.secondary" display="block" variant="body2" sx={{ mb: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-              Corrugated Roofing
-            </Link>
-            <Link href="#" color="text.secondary" display="block" variant="body2" sx={{ mb: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-              Rib Type Roofing
-            </Link>
-            <Link href="#" color="text.secondary" display="block" variant="body2" sx={{ mb: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-              Spandrel
-            </Link>
-            <Link href="#" color="text.secondary" display="block" variant="body2" sx={{ mb: 1, textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-              Steel Trusses
-            </Link>
-          </Grid>
         </Grid>
 
         <Divider sx={{ my: 3 }} />

@@ -55,6 +55,29 @@ const HeroSection = () => {
               Shop Now
               <i className="fi fi-rr-arrow-right" style={{ fontSize: '14px' }}></i>
             </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              onClick={() => navigate('/roof-designer')}
+              sx={{
+                px: 4,
+                py: 1.5,
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                borderWidth: 2,
+                fontWeight: 700,
+                '&:hover': {
+                  borderWidth: 2,
+                  bgcolor: 'rgba(79,119,45,0.06)',
+                },
+              }}
+            >
+              <i className="fi fi-rr-home" style={{ fontSize: '16px' }}></i>
+              3D Roof Designer
+            </Button>
           </Box>
         </Box>
       </Container>

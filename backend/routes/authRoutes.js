@@ -14,4 +14,9 @@ router.post("/reset-password", validateResetPassword, resetPassword);
 router.get("/profile", verifyToken, getProfile);
 router.put("/profile", verifyToken, updateProfile);
 
+router.post("/addresses", verifyToken, require("../controllers/authController").addAddress);
+router.put("/addresses/:id", verifyToken, require("../controllers/authController").updateAddress);
+router.delete("/addresses/:id", verifyToken, require("../controllers/authController").deleteAddress);
+router.put("/addresses/:id/default", verifyToken, require("../controllers/authController").setDefaultAddress);
+
 module.exports = router;

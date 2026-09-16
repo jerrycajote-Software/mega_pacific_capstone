@@ -164,7 +164,10 @@ const getProfile = async (req, res) => {
         address: true,
         city: true,
         province: true,
-        zipCode: true
+        zipCode: true,
+        addresses: {
+          orderBy: { createdAt: 'desc' }
+        }
       }
     });
     if (!user) {
@@ -381,4 +384,129 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile, verifyOtp, resendOtp, forgotPassword, resetPassword };
+const addAddress = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { contactNumber, address, city, province, zipCode, isDefault } = req.body;
+
+    if (isDefault) {
+      await prisma.address.updateMany({
+        where: { userId },
+        data: { isDefault: false }
+      });
+    }
+
+    // If it's the first address, make it default automatically
+    const existingCount = await prisma.address.count({ where: { userId } });
+    const makeDefault = existingCount === 0 ? true : (isDefault || false);
+
+    const newAddress = await prisma.address.create({
+      data: {
+        userId,
+        contactNumber,
+        address,
+        city,
+        province,
+        zipCode,
+        isDefault: makeDefault
+      }
+    });
+
+    res.status(201).json({ message: "Address added successfully", data: newAddress });
+  } catch (error) {
+    console.error("Add Address Error:", error);
+    res.status(500).json({ error: "Failed to add address" });
+  }
+};
+
+const updateAddress = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const { contactNumber, address, city, province, zipCode } = req.body;
+
+    // Verify ownership
+    const existing = await prisma.address.findFirst({ where: { id: Number(id), userId } });
+    if (!existing) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+
+    const updated = await prisma.address.update({
+      where: { id: Number(id) },
+      data: {
+        contactNumber,
+        address,
+        city,
+        province,
+        zipCode
+      }
+    });
+
+    res.status(200).json({ message: "Address updated successfully", data: updated });
+  } catch (error) {
+    console.error("Update Address Error:", error);
+    res.status(500).json({ error: "Failed to update address" });
+  }
+};
+
+const deleteAddress = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    const existing = await prisma.address.findFirst({ where: { id: Number(id), userId } });
+    if (!existing) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+
+    await prisma.address.delete({ where: { id: Number(id) } });
+
+    // If it was default and there are others left, make the newest one default
+    if (existing.isDefault) {
+      const fallback = await prisma.address.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+      });
+      if (fallback) {
+        await prisma.address.update({
+          where: { id: fallback.id },
+          data: { isDefault: true }
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Address deleted successfully" });
+  } catch (error) {
+    console.error("Delete Address Error:", error);
+    res.status(500).json({ error: "Failed to delete address" });
+  }
+};
+
+const setDefaultAddress = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    const existing = await prisma.address.findFirst({ where: { id: Number(id), userId } });
+    if (!existing) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+
+    await prisma.address.updateMany({
+      where: { userId },
+      data: { isDefault: false }
+    });
+
+    await prisma.address.update({
+      where: { id: Number(id) },
+      data: { isDefault: true }
+    });
+
+    res.status(200).json({ message: "Default address updated" });
+  } catch (error) {
+    console.error("Set Default Address Error:", error);
+    res.status(500).json({ error: "Failed to set default address" });
+  }
+};
+
+module.exports = { register, login, getProfile, updateProfile, verifyOtp, resendOtp, forgotPassword, resetPassword, addAddress, updateAddress, deleteAddress, setDefaultAddress };

@@ -77,6 +77,10 @@ io.on("connection", (socket) => {
 const { initDeliveryScheduler } = require("./services/deliveryScheduler");
 initDeliveryScheduler();
 
+// Start Automated Order Status Progression Scheduler
+const { initOrderStatusScheduler } = require("./services/orderStatusScheduler");
+initOrderStatusScheduler(io);
+
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Network: http://0.0.0.0:${PORT}`);

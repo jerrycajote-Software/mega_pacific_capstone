@@ -12,14 +12,29 @@ import {
   Avatar,
   CircularProgress,
   Alert,
-  Chip
+  Chip,
+  Card,
+  CardContent,
+  CardActions,
+  MenuItem,
+  Divider,
+  FormControl,
+  InputLabel,
+  Select
 } from '@mui/material';
-
+import {
+  getAvailableProvinces,
+  getLocationsForProvince,
+  getZipCodeForLocation
+} from '../../utils/locationService';
 
 const ProfilePage = () => {
   const { user, token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [addresses, setAddresses] = useState([]);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -27,40 +42,43 @@ const ProfilePage = () => {
     contactNumber: '',
     address: '',
     city: '',
-    province: '',
-    zipCode: ''
+    province: 'Cavite',
+    zipCode: '',
+    isDefault: false
   });
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const API_URL = import.meta.env.VITE_API_URL || '';
-        const res = await axios.get(`${API_URL}/api/auth/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.data.data) {
-          const profile = res.data.data;
-          setFormData({
-            contactNumber: profile.contactNumber || '',
-            address: profile.address || '',
-            city: profile.city || '',
-            province: profile.province || '',
-            zipCode: profile.zipCode || ''
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch profile", err);
-        setErrorMsg("Failed to load your profile data.");
-      } finally {
-        setLoading(false);
+  const fetchProfile = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.get(`${API_URL}/api/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.data) {
+        setAddresses(res.data.data.addresses || []);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch profile", err);
+      setErrorMsg("Failed to load your profile data.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (token) fetchProfile();
   }, [token]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'city') {
+      const zipCode = getZipCodeForLocation(formData.province || 'Cavite', value);
+      setFormData(prev => ({ ...prev, city: value, zipCode }));
+      setErrorMsg('');
+      setSuccessMsg('');
+      return;
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrorMsg('');
     setSuccessMsg('');
@@ -84,6 +102,63 @@ const ProfilePage = () => {
     return true;
   };
 
+  const handleAddNew = () => {
+    setIsEditMode(true);
+    setEditingAddressId(null);
+    setFormData({
+      contactNumber: '',
+      address: '',
+      city: '',
+      province: 'Cavite',
+      zipCode: '',
+      isDefault: addresses.length === 0
+    });
+    setErrorMsg('');
+    setSuccessMsg('');
+  };
+
+  const handleEdit = (addr) => {
+    setIsEditMode(true);
+    setEditingAddressId(addr.id);
+    setFormData({
+      contactNumber: addr.contactNumber || '',
+      address: addr.address || '',
+      city: addr.city || '',
+      province: addr.province || '',
+      zipCode: addr.zipCode || '',
+      isDefault: addr.isDefault
+    });
+    setErrorMsg('');
+    setSuccessMsg('');
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) return;
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      await axios.delete(`${API_URL}/api/auth/addresses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchProfile();
+      setSuccessMsg("Address deleted successfully");
+    } catch (err) {
+      setErrorMsg("Failed to delete address");
+    }
+  };
+
+  const handleSetDefault = async (id) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      await axios.put(`${API_URL}/api/auth/addresses/${id}/default`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchProfile();
+      setSuccessMsg("Default address updated");
+    } catch (err) {
+      setErrorMsg("Failed to set default address");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -91,13 +166,22 @@ const ProfilePage = () => {
     setSuccessMsg('');
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
-      await axios.put(`${API_URL}/api/auth/profile`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSuccessMsg("Profile updated successfully!");
+      if (editingAddressId) {
+        await axios.put(`${API_URL}/api/auth/addresses/${editingAddressId}`, formData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSuccessMsg("Address updated successfully!");
+      } else {
+        await axios.post(`${API_URL}/api/auth/addresses`, formData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSuccessMsg("Address added successfully!");
+      }
+      setIsEditMode(false);
+      fetchProfile();
     } catch (err) {
       console.error("Failed to update profile", err);
-      setErrorMsg(err.response?.data?.error || "Failed to update profile.");
+      setErrorMsg(err.response?.data?.error || "Failed to save address.");
     } finally {
       setSaving(false);
     }
@@ -111,6 +195,9 @@ const ProfilePage = () => {
       </Box>
     );
   }
+
+  const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
+  const otherAddresses = addresses.filter(a => a.id !== defaultAddress?.id);
 
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, maxWidth: 1000, mx: 'auto' }}>
@@ -135,88 +222,194 @@ const ProfilePage = () => {
               sx={{ mt: 2, fontWeight: 'bold' }} 
             />
           </Paper>
-        </Grid>
+        </Grid>=
 
         <Grid item xs={12} md={8}>
           <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-              <i className="fi fi-rr-marker" style={{ fontSize: '18px', color: '#1e3a8a' }}></i> Default Shipping Address
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <i className="fi fi-rr-marker" style={{ fontSize: '18px', color: '#1e3a8a' }}></i> 
+                {isEditMode ? (editingAddressId ? 'Edit Address' : 'Add New Address') : 'Your Address'}
+              </Typography>
+              {!isEditMode && (
+                <Button
+                  onClick={handleAddNew}
+                  sx={{ borderRadius: 20, textTransform: 'none', fontWeight: 'bold' }}
+                  variant="contained"
+                  color="primary"
+                >
+                  + Add New Address
+                </Button>
+              )}
+            </Box>
 
             {errorMsg && <Alert severity="error" sx={{ mb: 3 }}>{errorMsg}</Alert>}
             {successMsg && <Alert severity="success" sx={{ mb: 3 }}>{successMsg}</Alert>}
 
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField 
-                    fullWidth 
-                    label="Contact Number" 
-                    name="contactNumber" 
-                    value={formData.contactNumber} 
-                    onChange={handleInputChange} 
-                    placeholder="09123456789" 
-                    required 
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField 
-                    fullWidth 
-                    label="Complete Address" 
-                    name="address" 
-                    value={formData.address} 
-                    onChange={handleInputChange} 
-                    placeholder="Street Name, Building, House No." 
-                    required 
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField 
-                    fullWidth 
-                    label="City / Municipality" 
-                    name="city" 
-                    value={formData.city} 
-                    onChange={handleInputChange} 
-                    placeholder="e.g. Quezon City" 
-                    required 
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField 
-                    fullWidth 
-                    label="Province" 
-                    name="province" 
-                    value={formData.province} 
-                    onChange={handleInputChange} 
-                    placeholder="e.g. Metro Manila" 
-                    required 
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField 
-                    fullWidth 
-                    label="Zip Code" 
-                    name="zipCode" 
-                    value={formData.zipCode} 
-                    onChange={handleInputChange} 
-                    placeholder="e.g. 1000" 
-                    required 
-                  />
-                </Grid>
-              </Grid>
+            {isEditMode ? (
+              <Box>
+                <form onSubmit={handleSubmit} autoComplete="off">
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <TextField 
+                        fullWidth 
+                        label="Contact Number" 
+                        name="contactNumber" 
+                        autoComplete="off" 
+                        value={formData.contactNumber} 
+                        onChange={(e) => {
+                          const onlyNumbers = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+                          setFormData(prev => ({ ...prev, contactNumber: onlyNumbers }));
+                          setErrorMsg('');
+                          setSuccessMsg('');
+                        }}
+                        placeholder="09123456789" 
+                        required 
+                        inputProps={{ maxLength: 11, pattern: '^09[0-9]{9}$', title: 'Must be an 11-digit number starting with 09' }}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField 
+                        fullWidth 
+                        label="Complete Address" 
+                        name="address" 
+                        value={formData.address} 
+                        onChange={handleInputChange} 
+                        placeholder="Street Name, Building, House No." 
+                        required 
+                        autoComplete="off"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>City / Municipality</InputLabel>
+                        <Select
+                          native
+                          label="City / Municipality"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                        >
+                          <option value="" disabled>Select City</option>
+                          {getLocationsForProvince(formData.province || 'Cavite').map((loc) => (
+                            <option key={loc.name} value={loc.name}>{loc.name}</option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required disabled={!!editingAddressId}>
+                        <InputLabel>Province</InputLabel>
+                        <Select
+                          native
+                          label="Province"
+                          name="province"
+                          value={formData.province || 'Cavite'}
+                          onChange={handleInputChange}
+                        >
+                          {getAvailableProvinces().map((prov) => (
+                            <option key={prov} value={prov}>{prov}</option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField 
+                        fullWidth 
+                        label="Zip Code" 
+                        name="zipCode" 
+                        value={formData.zipCode} 
+                        InputProps={{
+                          readOnly: true,
+                        }}
+                        sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}
+                        required 
+                      />
+                    </Grid>
+                  </Grid>
 
-              <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'flex-end' }}>
-                <Button 
-                  type="submit" 
-                  variant="contained" 
-                  color="primary" 
-                  disabled={saving} 
-                  sx={{ borderRadius: 2, px: 4, py: 1.5, fontWeight: 'bold' }}
-                >
-                  {saving ? <CircularProgress size={24} color="inherit" /> : 'Save Profile Changes'}
-                </Button>
+                  <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                    <Button 
+                      onClick={() => setIsEditMode(false)}
+                      variant="text" 
+                      color="inherit" 
+                      sx={{ borderRadius: 2, px: 4, py: 1.5, fontWeight: 'bold' }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      variant="contained" 
+                      color="primary" 
+                      disabled={saving} 
+                      sx={{ borderRadius: 2, px: 4, py: 1.5, fontWeight: 'bold' }}
+                    >
+                      {saving ? <CircularProgress size={24} color="inherit" /> : 'Save Profile Changes'}
+                    </Button>
+                  </Box>
+                </form>
               </Box>
-            </form>
+            ) : (
+              <Box>
+                {addresses.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 5 }}>
+                    <i className="fi fi-rr-marker" style={{ fontSize: '48px', color: '#cbd5e1' }}></i>
+                    <Typography color="text.secondary" sx={{ mt: 2 }}>No saved addresses yet.</Typography>
+                  </Box>
+                ) : (
+                  <Grid container spacing={3}>
+                    {defaultAddress && (
+                      <Grid item xs={12} sm={6}>
+                        <Card variant="outlined" sx={{ 
+                          borderColor: 'primary.main', 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          boxShadow: '0 4px 12px rgba(79,119,45,0.08)'
+                        }}>
+                          <Box sx={{ px: 2, pt: 2, pb: 0 }}>
+                            <Chip 
+                              icon={<i className="fi fi-sr-star" style={{ fontSize: '12px', marginLeft: '4px' }}></i>}
+                              label="Current Address" 
+                              color="primary" 
+                              size="small" 
+                              sx={{ fontWeight: 'bold' }} 
+                            />
+                          </Box>
+                          <CardContent sx={{ flexGrow: 1 }}>
+                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>{defaultAddress.contactNumber}</Typography>
+                            <Typography variant="body2" color="text.secondary">{defaultAddress.address}</Typography>
+                            <Typography variant="body2" color="text.secondary">{defaultAddress.city}, {defaultAddress.province} {defaultAddress.zipCode}</Typography>
+                          </CardContent>
+                          <Divider />
+                          <CardActions sx={{ px: 2, py: 1.5, bgcolor: 'rgba(0,0,0,0.02)' }}>
+                            <Button size="small" variant="outlined" onClick={() => handleEdit(defaultAddress)} sx={{ borderRadius: 2, fontWeight: 'bold' }}>Edit</Button>
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    )}
+                    {otherAddresses.map((addr) => (
+                      <Grid item xs={12} sm={6} key={addr.id}>
+                        <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                          <CardContent sx={{ flexGrow: 1, pt: 3 }}>
+                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>{addr.contactNumber}</Typography>
+                            <Typography variant="body2" color="text.secondary">{addr.address}</Typography>
+                            <Typography variant="body2" color="text.secondary">{addr.city}, {addr.province} {addr.zipCode}</Typography>
+                          </CardContent>
+                          <Divider />
+                          <CardActions sx={{ px: 2, py: 1.5, bgcolor: 'rgba(0,0,0,0.02)', flexWrap: 'wrap', gap: 1 }}>
+                            <Button size="small" variant="outlined" onClick={() => handleEdit(addr)} sx={{ borderRadius: 2, fontWeight: 'bold' }}>Edit</Button>
+                            <Button size="small" variant="text" color="error" onClick={() => handleDelete(addr.id)} sx={{ fontWeight: 'bold' }}>Delete</Button>
+                            <Box sx={{ flexGrow: 1 }} />
+                            <Button size="small" variant="text" onClick={() => handleSetDefault(addr.id)} sx={{ fontWeight: 'bold' }}>Set Default</Button>
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </Box>
+            )}
           </Paper>
         </Grid>
       </Grid>

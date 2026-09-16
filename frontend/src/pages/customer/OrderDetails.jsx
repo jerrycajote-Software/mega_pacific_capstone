@@ -158,7 +158,7 @@ const OrderDetails = () => {
   const isCancelled = order.status.toLowerCase() === 'cancelled';
 
   return (
-    <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, maxWidth: 1000, mx: 'auto' }}>
+    <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, maxWidth: 1200, mx: 'auto' }}>
       <Button onClick={() => navigate(-1)} sx={{ mb: 4, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
         <i className="fi fi-rr-arrow-left" style={{ fontSize: '14px' }}></i>
         Back to Orders
@@ -231,7 +231,7 @@ const OrderDetails = () => {
       </Paper>
 
       <Grid container spacing={4}>
-        <Grid item xs={12} lg={8}>
+        <Grid item xs={12} lg={6}>
           <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2, mb: 3 }}>
               Ordered Products
@@ -282,8 +282,8 @@ const OrderDetails = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
-          <Stack spacing={4}>
+        <Grid item xs={12} md={6} lg={3}>
+          <Stack spacing={4} sx={{ height: '100%' }}>
             {/* Payment Summary */}
             <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>Payment Summary</Typography>
@@ -310,7 +310,11 @@ const OrderDetails = () => {
                 <Chip label={order.paymentStatus} color={order.paymentStatus === 'paid' ? 'success' : 'warning'} size="small" sx={{ textTransform: 'uppercase', fontWeight: 'bold' }} />
               </Box>
             </Paper>
+          </Stack>
+        </Grid>
 
+        <Grid item xs={12} md={6} lg={3}>
+          <Stack spacing={4} sx={{ height: '100%' }}>
             {/* Delivery Info */}
             <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
