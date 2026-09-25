@@ -12,6 +12,7 @@ const {
 const {
   getVariants,
   createVariant,
+  updateVariant,
   deleteVariant,
 } = require("../../controllers/admin/variantController");
 const { verifyToken } = require("../../middleware/authMiddleware");
@@ -28,6 +29,7 @@ router.get("/stock-logs", verifyToken, getStockLogs);
 
 router.get("/:productId/variants", getVariants);
 router.post("/:productId/variants", createVariant);
+router.put("/:productId/variants/:id", updateVariant);
 router.delete("/:productId/variants/:id", deleteVariant);
 
 module.exports = router;

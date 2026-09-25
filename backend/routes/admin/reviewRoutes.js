@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getAllReviews } = require("../../controllers/employee/reviewController");
+const { getAllReviews } = require("../../controllers/sales/reviewController");
 const { verifyAdmin } = require("../../middleware/authMiddleware");
 
 // @route   GET /api/admin/reviews

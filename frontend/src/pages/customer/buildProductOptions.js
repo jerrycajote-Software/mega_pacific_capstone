@@ -25,6 +25,7 @@ export function buildProductOptions(product) {
       price: product.price ?? 0,
       stock: product.stock ?? 0,
       status: (product.stock ?? 0) > 0 ? 'available' : 'out_of_stock',
+      color: product.color || null,
       isBaseProduct: true,
     });
   }
@@ -39,6 +40,7 @@ export function buildProductOptions(product) {
         stock: v.stock,
         status: v.status,
         sku: v.sku || null,
+        color: v.color || null,
         isBaseProduct: false,
       });
     });

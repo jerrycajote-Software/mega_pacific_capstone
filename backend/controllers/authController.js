@@ -17,16 +17,16 @@ const register = async (req, res) => {
         await prisma.user.update({
           where: { email },
           data: {
-            name,
             password: hashedPassword,
-            contactNumber,
-            address,
-            city,
-            province,
-            zipCode,
             otpCode: otp,
             otpExpiresAt,
-            lastOtpSentAt: new Date()
+            lastOtpSentAt: new Date(),
+            customerProfile: {
+              upsert: {
+                create: { name, contactNumber, address, city, province, zipCode },
+                update: { name, contactNumber, address, city, province, zipCode }
+              }
+            }
           }
         });
 
@@ -55,19 +55,23 @@ const register = async (req, res) => {
 
     const user = await prisma.user.create({
       data: {
-        name,
         email,
         password: hashedPassword,
         role: "customer",
-        contactNumber,
-        address,
-        city,
-        province,
-        zipCode,
         isEmailVerified: false,
         otpCode: otp,
         otpExpiresAt,
-        lastOtpSentAt: new Date()
+        lastOtpSentAt: new Date(),
+        customerProfile: {
+          create: {
+            name,
+            contactNumber,
+            address,
+            city,
+            province,
+            zipCode
+          }
+        }
       },
     });
 
@@ -90,9 +94,20 @@ const register = async (req, res) => {
 
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, otp, expectedRoles } = req.body;
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      include: {
+        customerProfile: true,
+        adminProfile: true,
+        superAdminProfile: true,
+        ownerProfile: true,
+        salesProfile: true,
+        logisticProfile: true,
+        financeProfile: true
+      }
+    });
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
@@ -102,19 +117,163 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    // Validate the role against expected roles for the specific portal FIRST
+    if (expectedRoles && expectedRoles.length > 0) {
+      if (!expectedRoles.includes(user.role)) {
+        return res.status(403).json({ error: "Access Denied: You are not authorized to access this portal." });
+      }
+    }
+
+    // Ensure the account is fully active AFTER verifying they are in the right portal
+    if (user.status !== "active") {
+      let statusMsg = "Your account is currently disabled.";
+      if (user.status === "pending") statusMsg = "Your account is pending approval by a Super Admin.";
+      else if (user.status === "suspended") statusMsg = "Your account has been suspended.";
+      else if (user.status === "deleted") statusMsg = "Your account has been deleted.";
+      return res.status(403).json({ error: statusMsg });
+    }
+
     // Check if email is verified for customer role
     if (user.role === "customer" && !user.isEmailVerified) {
       return res.status(403).json({ error: "Email not verified", email: user.email });
     }
 
+    // Require OTP for customer on every login
+    if (user.role === "customer") {
+      if (!otp) {
+        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            otpCode: newOtp,
+            otpExpiresAt,
+            lastOtpSentAt: new Date()
+          }
+        });
+
+        try {
+          const { sendOtpEmail } = require("../utils/emailService");
+          await sendOtpEmail(user.email, newOtp);
+        } catch (emailError) {
+          console.error("WARNING: OTP email failed to send (customer login):", emailError.message);
+        }
+
+        return res.status(200).json({ requiresOtp: true, message: "OTP sent to your email to verify login." });
+      } else {
+        if (!user.otpCode || user.otpCode !== otp) {
+          return res.status(400).json({ error: "Invalid OTP code" });
+        }
+        if (new Date() > new Date(user.otpExpiresAt)) {
+          return res.status(400).json({ error: "OTP has expired. Please log in again." });
+        }
+        
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { otpCode: null, otpExpiresAt: null }
+        });
+      }
+    }
+
     let sessionToken = null;
-    if (user.role === "admin" || user.role === "employee") {
+    if (user.role === "admin" || user.role === "sales" || user.role === "owner" || user.role === "superadmin" || user.role === "finance" || user.role === "logistic") {
+      // 1. Clean up stale sessions (inactive for > 12 hours)
+      const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+      await prisma.userSession.updateMany({
+        where: { userId: user.id, isActive: true, lastActive: { lt: twelveHoursAgo } },
+        data: { isActive: false, loggedOutAt: new Date() }
+      });
+
+      let activeSessionsCount = await prisma.userSession.count({
+        where: { userId: user.id, isActive: true }
+      });
+
+      const setting = await prisma.systemSetting.findUnique({ where: { key: "max_sales_devices" } });
+      const maxDevices = setting ? parseInt(setting.value, 10) : 3;
+
+      if (activeSessionsCount >= maxDevices && user.role !== "superadmin") {
+        // 2. Instead of blocking, invalidate the oldest session(s) to make room
+        const excessCount = activeSessionsCount - maxDevices + 1; // +1 to allow the current new login
+        const oldestSessions = await prisma.userSession.findMany({
+          where: { userId: user.id, isActive: true },
+          orderBy: { lastActive: 'asc' },
+          take: excessCount
+        });
+
+        if (oldestSessions.length > 0) {
+          const sessionIdsToInvalidate = oldestSessions.map(s => s.id);
+          await prisma.userSession.updateMany({
+            where: { id: { in: sessionIdsToInvalidate } },
+            data: { isActive: false, loggedOutAt: new Date() }
+          });
+          activeSessionsCount -= excessCount;
+        }
+      }
+
+      if (activeSessionsCount > 0 && !otp && user.role !== "superadmin") {
+        // Requires OTP for another device login
+        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            otpCode: newOtp,
+            otpExpiresAt,
+            lastOtpSentAt: new Date()
+          }
+        });
+
+        try {
+          const { sendOtpEmail } = require("../utils/emailService");
+          await sendOtpEmail(user.email, newOtp);
+        } catch (emailError) {
+          console.error("WARNING: OTP email failed to send (new device login):", emailError.message);
+        }
+
+        return res.status(200).json({ requiresOtp: true, message: "OTP sent to your email to verify new device login." });
+      }
+
+      if (otp) {
+        if (!user.otpCode || user.otpCode !== otp) {
+          return res.status(400).json({ error: "Invalid OTP code" });
+        }
+        if (new Date() > new Date(user.otpExpiresAt)) {
+          return res.status(400).json({ error: "OTP has expired. Please log in again." });
+        }
+        
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { otpCode: null, otpExpiresAt: null }
+        });
+      }
+
       const crypto = require("crypto");
       sessionToken = crypto.randomUUID();
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { sessionToken }
+      const ipAddress = req.ip || req.connection.remoteAddress || "Unknown IP";
+      const userAgent = req.headers['user-agent'] || "Unknown Device";
+
+      await prisma.userSession.create({
+        data: {
+          userId: user.id,
+          sessionToken,
+          deviceInfo: userAgent,
+          ipAddress: ipAddress
+        }
       });
+
+      if (activeSessionsCount > 0) {
+        const io = req.app.get("io");
+        if (io) {
+          io.to(`user_${user.id}`).emit("new_device_login", {
+            message: "Another device has logged into your account.",
+            deviceInfo: userAgent,
+            ipAddress: ipAddress,
+            time: new Date()
+          });
+        }
+      }
     }
 
     const jwtSecret = process.env.JWT_SECRET;
@@ -134,11 +293,20 @@ const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    let profile = null;
+    if (user.role === 'customer') profile = user.customerProfile;
+    else if (user.role === 'admin') profile = user.adminProfile;
+    else if (user.role === 'super_admin') profile = user.superAdminProfile;
+    else if (user.role === 'owner') profile = user.ownerProfile;
+    else if (user.role === 'sales') profile = user.salesProfile;
+    else if (user.role === 'logistic') profile = user.logisticProfile;
+    else if (user.role === 'finance') profile = user.financeProfile;
+
     res.status(200).json({
       token,
       user: {
         id: user.id,
-        name: user.name,
+        name: profile?.name || user.email.split('@')[0],
         email: user.email,
         role: user.role
       }
@@ -155,16 +323,14 @@ const getProfile = async (req, res) => {
     const userId = req.user.userId;
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        contactNumber: true,
-        address: true,
-        city: true,
-        province: true,
-        zipCode: true,
+      include: {
+        customerProfile: true,
+        adminProfile: true,
+        superAdminProfile: true,
+        ownerProfile: true,
+        salesProfile: true,
+        logisticProfile: true,
+        financeProfile: true,
         addresses: {
           orderBy: { createdAt: 'desc' }
         }
@@ -173,7 +339,32 @@ const getProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.status(200).json({ data: user });
+    
+    let profile = null;
+    if (user.role === 'customer') profile = user.customerProfile;
+    else if (user.role === 'admin') profile = user.adminProfile;
+    else if (user.role === 'super_admin') profile = user.superAdminProfile;
+    else if (user.role === 'owner') profile = user.ownerProfile;
+    else if (user.role === 'sales') profile = user.salesProfile;
+    else if (user.role === 'logistic') profile = user.logisticProfile;
+    else if (user.role === 'finance') profile = user.financeProfile;
+
+    const flattenedUser = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      name: profile?.name || null,
+      contactNumber: profile?.contactNumber || null,
+      address: profile?.address || null,
+      city: profile?.city || null,
+      province: profile?.province || null,
+      zipCode: profile?.zipCode || null,
+      avatarUrl: profile?.avatarUrl || null,
+      addresses: user.addresses || []
+    };
+
+    res.status(200).json({ data: flattenedUser });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch profile" });
   }
@@ -185,28 +376,30 @@ const updateProfile = async (req, res) => {
     const userId = req.user.userId;
     const { contactNumber, address, city, province, zipCode } = req.body;
     
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        contactNumber,
-        address,
-        city,
-        province,
-        zipCode
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        contactNumber: true,
-        address: true,
-        city: true,
-        province: true,
-        zipCode: true
-      }
-    });
-    res.status(200).json({ data: updatedUser });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const profileData = { contactNumber, address, city, province, zipCode };
+    const role = user.role;
+    
+    if (role === 'customer') {
+      await prisma.customerProfile.update({ where: { userId }, data: profileData });
+    } else if (role === 'admin') {
+      await prisma.adminProfile.update({ where: { userId }, data: { contactNumber } });
+    } else if (role === 'super_admin') {
+      await prisma.superAdminProfile.update({ where: { userId }, data: { contactNumber } });
+    } else if (role === 'owner') {
+      await prisma.ownerProfile.update({ where: { userId }, data: { contactNumber } });
+    } else if (role === 'sales') {
+      await prisma.salesProfile.update({ where: { userId }, data: { contactNumber } });
+    } else if (role === 'logistic') {
+      await prisma.logisticProfile.update({ where: { userId }, data: { contactNumber } });
+    } else if (role === 'finance') {
+      await prisma.financeProfile.update({ where: { userId }, data: { contactNumber } });
+    }
+
+    // Return the updated data (simplification for response)
+    res.status(200).json({ data: { id: userId, email: user.email, role, ...profileData } });
   } catch (error) {
     res.status(500).json({ error: "Failed to update profile" });
   }
@@ -509,4 +702,19 @@ const setDefaultAddress = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile, verifyOtp, resendOtp, forgotPassword, resetPassword, addAddress, updateAddress, deleteAddress, setDefaultAddress };
+const logout = async (req, res) => {
+  try {
+    if (req.user && req.user.sessionToken) {
+      await prisma.userSession.updateMany({
+        where: { sessionToken: req.user.sessionToken, isActive: true },
+        data: { isActive: false, loggedOutAt: new Date() }
+      });
+    }
+    res.status(200).json({ message: "Logged out successfully." });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    res.status(500).json({ error: "Failed to log out." });
+  }
+};
+
+module.exports = { register, login, logout, getProfile, updateProfile, verifyOtp, resendOtp, forgotPassword, resetPassword, addAddress, updateAddress, deleteAddress, setDefaultAddress };

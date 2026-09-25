@@ -16,8 +16,6 @@ const prisma = require("../config/db");
 
 // ── Timing Constants (testing mode) ──────────────────────────────────────────
 const PENDING_TO_PROCESSING_DELAY_MS    = 1.5 * 60 * 1000; //  1 min 30 sec
-const PROCESSING_TO_DELIVERY_DELAY_MS   = 1.5 * 60 * 1000; //  1 min 30 sec
-const DELIVERY_TO_DELIVERED_DELAY_MS    =   2 * 60 * 1000; //  2 min
 const SCHEDULER_INTERVAL_MS             =      30 * 1000;   // check every 30 sec
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -63,49 +61,13 @@ const runOrderStatusScheduler = async (io) => {
           orderId: order.id,
           status: "processing",
         });
-        // Also broadcast to employee/admin rooms
+        // Also broadcast to sales/admin rooms
         io?.emit("admin_order_updated", { orderId: order.id, status: "processing" });
       }
     }
 
-    // ── 2. processing → out_for_delivery ────────────────────────────────────
-    const processingOrders = await prisma.order.findMany({
-      where: { status: "processing" },
-    });
-
-    for (const order of processingOrders) {
-      if (elapsedMs(order) >= PROCESSING_TO_DELIVERY_DELAY_MS) {
-        await progressOrder(order.id, "out_for_delivery");
-        console.log(`[Order Scheduler] #${order.id}: processing → out_for_delivery`);
-        io?.to(`order_${order.id}`).emit("order_status_updated", {
-          orderId: order.id,
-          status: "out_for_delivery",
-        });
-        io?.emit("admin_order_updated", { orderId: order.id, status: "out_for_delivery" });
-      }
-    }
-
-    // ── 3. out_for_delivery → delivered ─────────────────────────────────────
-    const outForDeliveryOrders = await prisma.order.findMany({
-      where: { status: "out_for_delivery" },
-    });
-
-    for (const order of outForDeliveryOrders) {
-      if (elapsedMs(order) >= DELIVERY_TO_DELIVERED_DELAY_MS) {
-        await progressOrder(order.id, "delivered", {
-          paymentStatus: "paid",
-          // Set estimated delivery date to actual delivery time if not already set
-          estimatedDeliveryDate: order.estimatedDeliveryDate || new Date(),
-        });
-        console.log(`[Order Scheduler] #${order.id}: out_for_delivery → delivered ✓`);
-        io?.to(`order_${order.id}`).emit("order_status_updated", {
-          orderId: order.id,
-          status: "delivered",
-          paymentStatus: "paid",
-        });
-        io?.emit("admin_order_updated", { orderId: order.id, status: "delivered" });
-      }
-    }
+    // ── 2. processing → out_for_delivery is now MANUAL ──
+    // ── 3. out_for_delivery → delivered is now MANUAL ──
 
   } catch (error) {
     console.error("[Order Scheduler] Error during status progression:", error);
@@ -123,7 +85,7 @@ const initOrderStatusScheduler = (io) => {
   setInterval(() => runOrderStatusScheduler(io), SCHEDULER_INTERVAL_MS);
 
   console.log(
-    `[Order Scheduler] Started — Intervals: pending→processing: ${PENDING_TO_PROCESSING_DELAY_MS / 1000}s, processing→delivery: ${PROCESSING_TO_DELIVERY_DELAY_MS / 1000}s, delivery→delivered: ${DELIVERY_TO_DELIVERED_DELAY_MS / 1000}s | Check every ${SCHEDULER_INTERVAL_MS / 1000}s`
+    `[Order Scheduler] Started — Intervals: pending→processing: ${PENDING_TO_PROCESSING_DELAY_MS / 1000}s | Check every ${SCHEDULER_INTERVAL_MS / 1000}s`
   );
 };
 

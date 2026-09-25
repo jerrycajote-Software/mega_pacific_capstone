@@ -124,7 +124,7 @@ export const CartProvider = ({ userId, token, children }) => {
     }
   };
 
-  const addToCart = async (product, variant, quantity) => {
+  const addToCart = async (product, variant, quantity, color = null) => {
     const variantId = variant ? variant.id : null;
     
     if (token) {
@@ -133,7 +133,8 @@ export const CartProvider = ({ userId, token, children }) => {
         const res = await axios.post(`${API_URL}/api/customer/cart`, {
           productId: product.id,
           variantId,
-          quantity
+          quantity,
+          color
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -150,7 +151,7 @@ export const CartProvider = ({ userId, token, children }) => {
       // Local state update
       setCartItems(prev => {
         const existingItemIndex = prev.findIndex(
-          item => item.product.id === product.id && item.variantId === variantId
+          item => item.product.id === product.id && item.variantId === variantId && item.color === color
         );
 
         if (existingItemIndex > -1) {
@@ -164,12 +165,13 @@ export const CartProvider = ({ userId, token, children }) => {
           return [
             ...prev,
             {
-              id: `${product.id}-${variantId || 'base'}`,
+              id: `${product.id}-${variantId || 'base'}-${color || 'nocolor'}`,
               product,
               variant,
               variantId,
               quantity,
               price: variant ? variant.price : product.price,
+              color,
               isDeleted: false,
               isOutOfStock: false
             }

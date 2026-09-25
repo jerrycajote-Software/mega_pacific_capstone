@@ -139,15 +139,13 @@ const getProductReviews = async (req, res) => {
       include: {
         user: {
           select: {
-            name: true,
-            avatarUrl: true
+            email: true
           }
         },
         reply: {
           include: {
             user: {
               select: {
-                name: true,
                 role: true
               }
             }

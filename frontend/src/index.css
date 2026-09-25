@@ -128,23 +128,23 @@ html {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Main content: full width minus sidebar on the right */
+/* Main content: full width minus sidebar on the left */
 .admin-main {
   flex: 1;
-  margin-right: calc(var(--sidebar-w) + 2rem);
+  margin-left: calc(var(--sidebar-w) + 2rem);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-width: 0;
-  transition: margin-right 0.25s ease;
+  transition: margin-left 0.25s ease;
 }
 
-/* Sidebar: fixed to the RIGHT and floating */
+/* Sidebar: fixed to the LEFT and floating */
 .admin-sidebar {
   width: var(--sidebar-w);
   position: fixed;
   top: 1rem;
-  right: 1rem;
+  left: 1rem;
   height: calc(100vh - 2rem);
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);

@@ -35,6 +35,9 @@ const CustomerLoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  const [requiresOtp, setRequiresOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+
   const { login, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,9 +69,12 @@ const CustomerLoginPage = () => {
 
     setLoading(true);
 
-    const result = await login(email, password);
+    const result = await login(email, password, requiresOtp ? otp : null, ['customer']);
 
-    if (result.success) {
+    if (result.requiresOtp) {
+      setRequiresOtp(true);
+      setSuccessMessage(result.message || 'OTP sent to your email.');
+    } else if (result.success) {
       if (result.user?.role !== 'customer') {
         logout();
         setError('Staff accounts cannot access the customer portal. Please use the staff login.');
@@ -248,6 +254,24 @@ const CustomerLoginPage = () => {
               </Link>
             </Box>
 
+            {requiresOtp && (
+              <TextField
+                fullWidth
+                label="OTP Code"
+                type="text"
+                variant="outlined"
+                margin="normal"
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter 6-digit OTP"
+                sx={{ mb: 1 }}
+                inputProps={{
+                  style: { letterSpacing: '0.2em', textAlign: 'center' }
+                }}
+              />
+            )}
+
             <Button
               type="submit"
               fullWidth
@@ -257,7 +281,7 @@ const CustomerLoginPage = () => {
               disabled={loading}
               sx={{ mt: 3, mb: 2, py: 1.6, borderRadius: 2, fontSize: '1rem', fontWeight: 700 }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : (requiresOtp ? 'Verify OTP & Sign In' : 'Sign In')}
             </Button>
           </Box>
 

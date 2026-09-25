@@ -5,9 +5,10 @@ const createOrder = async (req, res) => {
   const {
     userId,
     productId,
-    variantId,      // NEW: Optional variant selection
+    variantId,      // Optional variant selection
     quantity,
     paymentMode,
+    fulfillmentType,
     customerEmail,
     shippingName,
     shippingContactNumber,
@@ -15,7 +16,8 @@ const createOrder = async (req, res) => {
     shippingCity,
     shippingProvince,
     shippingZipCode,
-    notes
+    notes,
+    color
   } = req.body;
 
   try {
@@ -67,6 +69,7 @@ const createOrder = async (req, res) => {
           status: "pending",
           paymentStatus: "unpaid",
           paymentMode,
+          fulfillmentType: fulfillmentType || "Delivery",
           customerEmail,
           shippingName,
           shippingContactNumber,
@@ -75,7 +78,7 @@ const createOrder = async (req, res) => {
           shippingProvince,
           shippingZipCode,
           notes,
-          estimatedDeliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Default 2 days delivery
+          estimatedDeliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
           items: {
             create: {
               productId: parseInt(productId),
@@ -83,6 +86,7 @@ const createOrder = async (req, res) => {
               variantName,       // Snapshot stored for order history
               quantity: parseInt(quantity),
               price: unitPrice,
+              color: color || null,
             }
           }
         }
@@ -224,6 +228,7 @@ const createBulkOrder = async (req, res) => {
     userId,
     items, // Array of { productId, variantId, quantity }
     paymentMode,
+    fulfillmentType,
     customerEmail,
     shippingName,
     shippingContactNumber,
@@ -297,7 +302,8 @@ const createBulkOrder = async (req, res) => {
           variantId: parsedVariantId,
           variantName,
           quantity: parseInt(quantity),
-          price: unitPrice
+          price: unitPrice,
+          color: item.color || null
         });
       }
 
@@ -308,6 +314,7 @@ const createBulkOrder = async (req, res) => {
           status: "pending",
           paymentStatus: "unpaid",
           paymentMode,
+          fulfillmentType: fulfillmentType || "Delivery",
           customerEmail,
           shippingName,
           shippingContactNumber,
@@ -316,7 +323,7 @@ const createBulkOrder = async (req, res) => {
           shippingProvince,
           shippingZipCode,
           notes,
-          estimatedDeliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Default 2 days delivery
+          estimatedDeliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
           items: {
             create: orderItemsData
           }

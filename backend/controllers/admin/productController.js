@@ -61,7 +61,7 @@ const getProducts = async (req, res) => {
 
 
 const createProduct = async (req, res) => {
-  const { name, type, description, price, unit, stock, imageUrl, imageUrls, variants } = req.body;
+  const { name, type, description, price, unit, stock, imageUrl, imageUrls, variants, color } = req.body;
   try {
     // Check for duplicate product name (case-insensitive and ignoring leading/trailing spaces)
     const normalizedName = name.trim();
@@ -75,7 +75,7 @@ const createProduct = async (req, res) => {
     });
 
     if (existingProduct) {
-      return res.status(400).json({ error: "Product name already exists. Please enter a unique product name." });
+      return res.status(400).json({ error: "The Product is already exists. Please enter a new product." });
     }
 
     const product = await prisma.product.create({
@@ -88,12 +88,14 @@ const createProduct = async (req, res) => {
         stock: parseInt(stock) || 0,
         imageUrl: imageUrl || null,
         imageUrls: imageUrls || [],
+        color: color || null,
         
         variants:
           variants && variants.length > 0
             ? {
                 create: variants.map((v) => ({
                   name: v.name,
+                  color: v.color || null,
                   price: parseFloat(v.price),
                   stock: parseInt(v.stock),
                   sku: v.sku || null,
@@ -114,7 +116,7 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { name, type, description, price, unit, stock, imageUrl, imageUrls } = req.body;
+  const { name, type, description, price, unit, stock, imageUrl, imageUrls, color } = req.body;
   
   try {
     const normalizedName = name.trim();
@@ -133,7 +135,7 @@ const updateProduct = async (req, res) => {
     });
 
     if (existingProduct) {
-      return res.status(400).json({ error: "Product name already exists. Please enter a unique product name." });
+      return res.status(400).json({ error: "The Product is already exists. Please enter a new product." });
     }
 
     const updatedProduct = await prisma.product.update({
@@ -147,6 +149,7 @@ const updateProduct = async (req, res) => {
         stock: parseInt(stock) || 0,
         imageUrl: imageUrl || null,
         imageUrls: imageUrls || [],
+        color: color || null,
       },
       include: { variants: true },
     });
@@ -221,7 +224,7 @@ const adjustStock = async (req, res) => {
           include: {
             product: { select: { name: true } },
             variant: { select: { name: true } },
-            user: { select: { name: true, email: true } }
+            user: { select: { email: true } }
           }
         })
       ]);
@@ -254,7 +257,7 @@ const adjustStock = async (req, res) => {
           },
           include: {
             product: { select: { name: true } },
-            user: { select: { name: true, email: true } }
+            user: { select: { email: true } }
           }
         })
       ]);
@@ -359,7 +362,7 @@ const getStockLogs = async (req, res) => {
       include: {
         product: { select: { id: true, name: true, type: true } },
         variant: { select: { id: true, name: true } },
-        user: { select: { id: true, name: true, email: true, role: true } }
+        user: { select: { id: true, email: true, role: true } }
       },
       take: 200
     });

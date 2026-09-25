@@ -291,7 +291,7 @@ const CustomerLayoutContent = () => {
                         </Box>
 
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                          {item.variant && !item.variant.isBaseProduct ? item.variant.name : 'Default'}
+                          {item.variant && !item.variant.isBaseProduct ? item.variant.name : 'Default'} {item.color ? ` - ${item.color}` : ''}
                         </Typography>
                         <Typography variant="caption" color="primary.main" fontWeight="bold">
                           ₱{Number(item.price).toLocaleString()}
@@ -347,7 +347,7 @@ const CustomerLayoutContent = () => {
                             </IconButton>
                           </Box>
                           <Typography variant="caption" color="text.secondary" display="block">
-                            {item.variant ? item.variant.name : 'Default'}
+                            {item.variant ? item.variant.name : 'Default'} {item.color ? ` - ${item.color}` : ''}
                           </Typography>
                         </Box>
                       </Box>

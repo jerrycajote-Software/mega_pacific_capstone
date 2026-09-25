@@ -72,7 +72,7 @@ const StatusBadge = ({ status, type = 'order' }) => {
 const OrderManagement = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const isEmployee = user?.role === 'employee';
+  const isSales = user?.role === 'sales';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(false);
@@ -108,7 +108,7 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
-    // Auto-refresh every 30s so employees see automated status changes in near-real-time
+    // Auto-refresh every 30s so saless see automated status changes in near-real-time
     const autoRefresh = setInterval(() => fetchOrders(), 30 * 1000);
     return () => clearInterval(autoRefresh);
   }, []);
@@ -228,8 +228,8 @@ const OrderManagement = () => {
         <div>
           <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Order Management</h2>
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            {isEmployee
-              ? 'Order statuses update automatically every ~5 minutes. You may only cancel orders.'
+            {isSales
+              ? 'Pending orders are processed automatically. Dispatch and Delivery are managed manually.'
               : 'View and manage all customer orders from the platform.'}
           </p>
         </div>
@@ -575,8 +575,8 @@ const OrderManagement = () => {
                   <h4 className="text-text-primary font-semibold mb-3 flex items-center gap-2 text-sm border-b border-border pb-2">
                     <CalendarTodayIcon sx={{ fontSize: 16 }} /> Estimated Delivery
                   </h4>
-                  {isEmployee ? (
-                    // Employees: delivery date is fully automated — display only
+                  {isSales ? (
+                    // Saless: delivery date is fully automated — display only
                     <div className="flex flex-col gap-2">
                       {selectedOrder.estimatedDeliveryDate ? (
                         <p className="text-sm text-text-primary font-medium">
@@ -600,7 +600,7 @@ const OrderManagement = () => {
                       />
                       {(isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)) && (
                         <p className="text-xs text-amber-500/80 italic">
-                          {isAdmin ? 'Delivery date can only be modified by Employees.' : `Delivery date locked because the order is ${selectedOrder.orderStatus.replace(/_/g, ' ')}.`}
+                          {isAdmin ? 'Delivery date can only be modified by Saless.' : `Delivery date locked because the order is ${selectedOrder.orderStatus.replace(/_/g, ' ')}.`}
                         </p>
                       )}
                     </div>
@@ -614,75 +614,44 @@ const OrderManagement = () => {
                   </h4>
                   <div className="flex flex-col gap-2">
 
-                    {/*  EMPLOYEE VIEW: only Cancel is manual, rest is automated  */}
-                    {isEmployee && (
-                      <>
-                        {/* Automated status info banner */}
-                        <div style={{
-                          background: 'rgba(59,130,246,0.08)',
-                          border: '1px solid rgba(59,130,246,0.25)',
-                          borderRadius: 10,
-                          padding: '10px 12px',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 8,
-                          marginBottom: 4
-                        }}>
-                          <AccessTimeIcon sx={{ fontSize: 15, color: '#60a5fa', marginTop: '2px', flexShrink: 0 }} />
-                          <p style={{ fontSize: '0.78rem', color: '#93c5fd', margin: 0, lineHeight: 1.5 }}>
-                            Order status is <strong>managed automatically</strong> by the system.
-                            Updates occur every ~5 minutes and are reflected in real-time.
-                          </p>
-                        </div>
-
-                        {/* Keep Cancel for employees */}
-                        {['pending', 'processing', 'out_for_delivery'].includes(selectedOrder.orderStatus.toLowerCase()) && (
-                          <button
-                            onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')}
-                            disabled={isUpdating}
-                            className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-1"
-                          >
-                            <CancelIcon sx={{ fontSize: 14 }} /> Cancel Order
-                          </button>
-                        )}
-
-                        {['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase()) && (
-                          <p className="text-xs text-text-muted italic text-center py-2">No further actions available.</p>
-                        )}
-                      </>
+                    {isSales && (
+                      <div style={{
+                        background: 'rgba(59,130,246,0.08)',
+                        border: '1px solid rgba(59,130,246,0.25)',
+                        borderRadius: 10,
+                        padding: '10px 12px',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 8,
+                        marginBottom: 4
+                      }}>
+                        <AccessTimeIcon sx={{ fontSize: 15, color: '#60a5fa', marginTop: '2px', flexShrink: 0 }} />
+                        <p style={{ fontSize: '0.78rem', color: '#93c5fd', margin: 0, lineHeight: 1.5 }}>
+                          <strong>Pending</strong> orders progress automatically. Dispatch and Delivery must be updated manually.
+                        </p>
+                      </div>
                     )}
 
-                    {/* ── ADMIN VIEW: full read-only message ── */}
-                    {isAdmin && (
+                    {!isAdmin && (selectedOrder.orderStatus.toLowerCase() === 'pending' || selectedOrder.orderStatus.toLowerCase() === 'processing' || selectedOrder.orderStatus.toLowerCase() === 'shipped') && (
+                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-medium rounded-lg transition-colors border border-blue-500/20 flex items-center gap-2">
+                        <LocalShippingIcon sx={{ fontSize: 14 }} /> Out for Delivery
+                      </button>
+                    )}
+                    {!isAdmin && selectedOrder.orderStatus.toLowerCase() === 'out_for_delivery' && (
+                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'delivered', 'paid')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-sm font-medium rounded-lg transition-colors border border-green-500/20 flex items-center gap-2">
+                        <CheckCircleIcon sx={{ fontSize: 14 }} /> Mark Delivered & Paid
+                      </button>
+                    )}
+                    {!isAdmin && ['pending', 'processing', 'shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus.toLowerCase()) && (
+                      <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-2">
+                        <CancelIcon sx={{ fontSize: 14 }} /> Cancel Order
+                      </button>
+                    )}
+                    {(isAdmin || ['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase())) && (
                       <p className="text-xs text-text-muted italic text-center py-2">
-                        Status updates are managed automatically by the system.
+                        {isAdmin ? 'Status updates can only be modified by Saless.' : 'No further status updates available.'}
                       </p>
                     )}
-
-                    {/* ── FALLBACK (non-admin, non-employee — shouldn't occur) ── */}
-                    {!isAdmin && !isEmployee && (
-                      <>
-                        {(selectedOrder.orderStatus.toLowerCase() === 'pending' || selectedOrder.orderStatus.toLowerCase() === 'shipped') && (
-                          <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-medium rounded-lg transition-colors border border-blue-500/20 flex items-center gap-2">
-                            <LocalShippingIcon sx={{ fontSize: 14 }} /> Out for Delivery
-                          </button>
-                        )}
-                        {selectedOrder.orderStatus.toLowerCase() === 'out_for_delivery' && (
-                          <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'delivered', 'paid')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-sm font-medium rounded-lg transition-colors border border-green-500/20 flex items-center gap-2">
-                            <CheckCircleIcon sx={{ fontSize: 14 }} /> Mark Delivered & Paid
-                          </button>
-                        )}
-                        {['pending', 'shipped', 'out_for_delivery'].includes(selectedOrder.orderStatus.toLowerCase()) && (
-                          <button onClick={() => handleUpdateStatus(selectedOrder.rawId, 'cancelled')} disabled={isUpdating} className="w-full text-left px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20 flex items-center gap-2 mt-2">
-                            <CancelIcon sx={{ fontSize: 14 }} /> Cancel Order
-                          </button>
-                        )}
-                        {['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase()) && (
-                          <p className="text-xs text-text-muted italic text-center py-2">No further status updates available.</p>
-                        )}
-                      </>
-                    )}
-
                   </div>
                 </div>
 

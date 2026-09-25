@@ -250,7 +250,10 @@ const OrderDetails = () => {
                     <Typography variant="subtitle1" fontWeight="bold">{item.product.name}</Typography>
                     <Typography variant="body2" color="text.secondary">{item.product.type}</Typography>
                     {(item.variantName || item.variant?.name) && (
-                      <Chip label={item.variantName || item.variant?.name} size="small" variant="outlined" sx={{ mt: 1, height: 24 }} />
+                      <Chip label={item.variantName || item.variant?.name} size="small" variant="outlined" sx={{ mt: 1, mr: 0.5, height: 24 }} />
+                    )}
+                    {item.color && (
+                      <Chip label={item.color} size="small" variant="outlined" sx={{ mt: 1, height: 24 }} />
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 2 }}>
                       <Typography variant="body2" color="text.secondary">Qty: <Typography component="span" fontWeight="bold" color="text.primary">{item.quantity}</Typography></Typography>
@@ -318,23 +321,40 @@ const OrderDetails = () => {
             {/* Delivery Info */}
             <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
               <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <i className="fi fi-rr-marker" style={{ fontSize: '18px', color: '#1e3a8a' }}></i> Delivery Info
+                <i className="fi fi-rr-marker" style={{ fontSize: '18px', color: '#1e3a8a' }}></i> {order.fulfillmentType === 'Pickup' ? 'Pick-up Info' : 'Delivery Info'}
               </Typography>
               <Stack spacing={2} sx={{ mt: 3 }}>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight="bold">Customer Name</Typography>
-                  <Typography variant="body2" fontWeight="bold">{order.customerName}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight="bold">Contact</Typography>
-                  <Typography variant="body2">{order.contactNumber}</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight="bold">Customer</Typography>
+                  <Typography variant="body2" fontWeight="bold">{order.shippingName || order.customerName}</Typography>
                   <Typography variant="body2" color="text.secondary">{order.customerEmail}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight="bold">Shipping Address</Typography>
-                  <Typography variant="body2">{order.address}</Typography>
-                  <Typography variant="body2" color="text.secondary">{order.cityProvince}, {order.zipCode}</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight="bold">Contact</Typography>
+                  <Typography variant="body2">{order.shippingContactNumber || 'N/A'}</Typography>
                 </Box>
+
+                {order.fulfillmentType === 'Pickup' ? (
+                  <Box sx={{ mt: 1, p: 2, bgcolor: 'success.50', borderRadius: 2, border: '1px solid', borderColor: 'success.light' }}>
+                    <Typography variant="caption" color="success.dark" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                      <i className="fi fi-rr-shop" style={{ fontSize: '14px' }}></i> Store Pick-up
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold">Mega Pacific Roofing — Main Branch</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      Please wait for our staff to contact you regarding your pick-up schedule.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" fontWeight="bold">Shipping Address</Typography>
+                    <Typography variant="body2">{order.shippingAddress || 'N/A'}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {order.shippingCity || 'N/A'}, {order.shippingProvince || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">{order.shippingZipCode || 'N/A'}</Typography>
+                  </Box>
+                )}
+
                 {order.notes && (
                   <Box sx={{ pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" fontWeight="bold">Notes</Typography>

@@ -12,6 +12,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import MailIcon from '@mui/icons-material/Mail';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import WarningIcon from '@mui/icons-material/Warning';
 
 const th = {
   padding: '1rem 1.25rem',
@@ -42,6 +43,8 @@ const UserManagement = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null, actionText: '', newStatus: '' });
 
   const fetchUsers = async () => {
     try {
@@ -69,13 +72,41 @@ const UserManagement = () => {
     fetchUsers().then(() => setTimeout(() => setSpin(false), 800));
   };
 
-  
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const handleDisableUserClick = (user) => {
+    const newStatus = user.status === 'active' ? 'suspended' : 'active';
+    const actionText = user.status === 'active' ? 'disable' : 'activate';
+    setConfirmModal({ isOpen: true, user, actionText, newStatus });
+  };
+
+  const handleConfirmAction = async () => {
+    const { user, newStatus } = confirmModal;
+    setConfirmModal({ isOpen: false, user: null, actionText: '', newStatus: '' });
     
-    const matchesFilter = filterRole === 'All' || user.role.toLowerCase() === filterRole.toLowerCase();
+    try {
+      const token = localStorage.getItem('appToken');
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      await axios.patch(`${API_URL}/api/admin/users/${user.id}/status`, 
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to update user status', error);
+      // Fallback custom alert could be added here if needed
+    }
+  };
+
+  
+  const filteredUsers = (Array.isArray(users) ? users : []).filter(user => {
+    const name = user?.name || '';
+    const email = user?.email || '';
+    const role = user?.role || '';
+
+    const matchesSearch = 
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterRole === 'All' || role.toLowerCase() === filterRole.toLowerCase();
     
     return matchesSearch && matchesFilter;
   });
@@ -158,7 +189,7 @@ const UserManagement = () => {
             >
               <option value="All">All Roles</option>
               <option value="customer">Customer</option>
-              <option value="employee">Employee</option>
+              <option value="sales">Sales</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -203,24 +234,24 @@ const UserManagement = () => {
                           color: '#fff', fontWeight: 700, fontSize: '1.1rem', flexShrink: 0,
                           boxShadow: '0 4px 10px rgba(59,130,246,0.3)'
                         }}>
-                          {user.name.charAt(0).toUpperCase()}
+                          {(user?.name || 'U').charAt(0).toUpperCase()}
                         </div>
                       )}
                       <div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{user.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: #{user.id.toString().padStart(4, '0')}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{user?.name || 'Unknown'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: #{user?.id?.toString().padStart(4, '0') || '0000'}</div>
                       </div>
                     </div>
                   </td>
                   <td style={td}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                       <MailIcon sx={{ fontSize: 14 }} />
-                      {user.email}
+                      {user?.email || 'N/A'}
                     </div>
                   </td>
                   <td style={td}>
-                    <span className={user.role === 'admin' ? 'badge-amber' : user.role === 'employee' ? 'badge-green' : 'badge-blue'} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 99 }}>
-                      {user.role === 'admin' ? <AdminPanelSettingsIcon sx={{ fontSize: 12 }} /> : user.role === 'employee' ? <BadgeIcon sx={{ fontSize: 12 }} /> : <AccountCircleIcon sx={{ fontSize: 12 }} />}
+                    <span className={user.role === 'admin' ? 'badge-amber' : user.role === 'sales' ? 'badge-green' : 'badge-blue'} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 99 }}>
+                      {user.role === 'admin' ? <AdminPanelSettingsIcon sx={{ fontSize: 12 }} /> : user.role === 'sales' ? <BadgeIcon sx={{ fontSize: 12 }} /> : <AccountCircleIcon sx={{ fontSize: 12 }} />}
                       <span style={{ textTransform: 'capitalize' }}>{user.role}</span>
                     </span>
                   </td>
@@ -231,14 +262,15 @@ const UserManagement = () => {
                     </span>
                   </td>
                   <td style={{ ...td, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    {new Date(user.createdAt).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
                   </td>
                   <td style={{ ...td, textAlign: 'right' }}>
                     <button 
+                      onClick={() => handleDisableUserClick(user)}
                       style={{ background: 'transparent', border: 'none', padding: '6px', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-                      title="More Options"
+                      title={user.status === 'active' ? "Disable User" : "Activate User"}
                     >
                       <MoreVertIcon sx={{ fontSize: 16 }} />
                     </button>
@@ -302,6 +334,37 @@ const UserManagement = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+          <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth: 400, padding: '2rem', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: confirmModal.newStatus === 'suspended' ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', color: confirmModal.newStatus === 'suspended' ? '#ef4444' : '#22c55e' }}>
+              <WarningIcon sx={{ fontSize: 32 }} />
+            </div>
+            <h3 style={{ margin: '0 0 0.5rem', fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.25rem', textTransform: 'capitalize' }}>
+              {confirmModal.actionText} User?
+            </h3>
+            <p style={{ margin: '0 0 1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Are you sure you want to {confirmModal.actionText} <strong>{confirmModal.user.name || confirmModal.user.email}</strong>?
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={() => setConfirmModal({ isOpen: false, user: null, actionText: '', newStatus: '' })}
+                style={{ flex: 1, background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-light)', padding: '0.75rem', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleConfirmAction}
+                style={{ flex: 1, background: confirmModal.newStatus === 'suspended' ? '#ef4444' : '#22c55e', color: '#fff', border: 'none', padding: '0.75rem', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

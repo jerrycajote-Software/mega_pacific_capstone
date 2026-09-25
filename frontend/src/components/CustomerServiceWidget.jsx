@@ -32,7 +32,9 @@ const CustomerServiceWidget = () => {
     if (!user || user.role !== 'customer') return;
 
     // Connect to Socket.io
-    const newSocket = io(API_URL);
+    const newSocket = io(API_URL, {
+      auth: { user }
+    });
     setSocket(newSocket);
 
     return () => newSocket.close();
@@ -199,7 +201,7 @@ const CustomerServiceWidget = () => {
                   }}>
                     {!isCustomer && (
                       <Typography variant="caption" sx={{ display: 'block', mb: 0.5, fontWeight: 'bold', color: 'secondary.main' }}>
-                        {msg.sender?.name || 'Employee'}
+                        {msg.sender?.name || 'Sales'}
                       </Typography>
                     )}
                     <Typography variant="body2">{msg.content}</Typography>

@@ -27,7 +27,7 @@ exports.getCart = async (req, res) => {
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
-    const { productId, variantId, quantity } = req.body;
+    const { productId, variantId, quantity, color } = req.body;
 
     if (!productId || !quantity) {
       return res.status(400).json({ success: false, error: 'Product ID and quantity are required' });
@@ -53,6 +53,7 @@ exports.addToCart = async (req, res) => {
         userId,
         productId,
         variantId: variantId || null,
+        color: color || null,
       }
     });
 
@@ -71,7 +72,8 @@ exports.addToCart = async (req, res) => {
           userId,
           productId,
           variantId: variantId || null,
-          quantity
+          quantity,
+          color: color || null
         },
         include: { product: true, variant: true }
       });
@@ -173,6 +175,7 @@ exports.syncCart = async (req, res) => {
           userId,
           productId: item.productId,
           variantId: item.variantId || null,
+          color: item.color || null,
         }
       });
 
@@ -187,7 +190,8 @@ exports.syncCart = async (req, res) => {
             userId,
             productId: item.productId,
             variantId: item.variantId || null,
-            quantity: item.quantity
+            quantity: item.quantity,
+            color: item.color || null
           }
         });
       }

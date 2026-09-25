@@ -40,7 +40,7 @@ const getVariants = async (req, res) => {
 
 const createVariant = async (req, res) => {
   const { productId } = req.params;
-  const { name, price, stock, sku, status } = req.body;
+  const { name, color, price, stock, sku, status } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
       
@@ -48,6 +48,7 @@ const createVariant = async (req, res) => {
         data: {
           productId: parseInt(productId),
           name,
+          color: color || null,
           price: parseFloat(price),
           stock: parseInt(stock),
           sku: sku || null,
@@ -89,8 +90,35 @@ const deleteVariant = async (req, res) => {
   }
 };
 
+const updateVariant = async (req, res) => {
+  const { productId, id } = req.params;
+  const { name, color, price, stock, sku, status } = req.body;
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const variant = await tx.productVariant.update({
+        where: { id: parseInt(id) },
+        data: {
+          name,
+          color: color || null,
+          price: parseFloat(price),
+          stock: parseInt(stock),
+          sku: sku || null,
+          status: status || "available",
+        },
+      });
+      await syncParentProductAggregates(tx, parseInt(productId));
+      return variant;
+    });
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error("Failed to update variant:", error);
+    res.status(500).json({ success: false, error: "Failed to update variant" });
+  }
+};
+
 module.exports = {
   getVariants,
   createVariant,
+  updateVariant,
   deleteVariant,
 };

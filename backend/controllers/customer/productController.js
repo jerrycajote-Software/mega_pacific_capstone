@@ -13,7 +13,7 @@ const getProductById = async (req, res) => {
         },
         reviews: {
           include: {
-            user: { select: { name: true, avatarUrl: true } }
+            user: { select: { id: true, email: true } }
           },
           orderBy: { createdAt: "desc" }
         }

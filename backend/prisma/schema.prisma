@@ -11,35 +11,117 @@ datasource db {
 }
 
 model User {
+  id                 Int      @id @default(autoincrement())
+  email              String   @unique
+  password           String
+  role               String   @default("customer")
+  status             String   @default("active") // active, pending, suspended, deleted
+  deletedAt          DateTime?
+  createdAt          DateTime @default(now())
+  orders             Order[]
+  reviews            Review[]
+  inquiries          Inquiry[]
+  sentMessages       Message[]
+  isEmailVerified    Boolean   @default(false)
+  otpCode            String?
+  otpExpiresAt       DateTime?
+  lastOtpSentAt      DateTime?
+  resetOtpCode       String?   // For forgot-password flow
+  resetOtpExpiresAt  DateTime?
+  replies            ReviewReply[]
+  inventoryLogs      InventoryLog[]
+  cartItems          CartItem[]
+  addresses          Address[]
+  sessions           UserSession[]
+  
+  customerProfile    CustomerProfile?
+  adminProfile       AdminProfile?
+  superAdminProfile  SuperAdminProfile?
+  ownerProfile       OwnerProfile?
+  salesProfile       SalesProfile?
+  logisticProfile    LogisticProfile?
+  financeProfile     FinanceProfile?
+}
+
+model CustomerProfile {
   id            Int      @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  password      String
-  role          String   @default("customer")
-  status        String   @default("active") // active, suspended, deleted
-  deletedAt     DateTime?
-  avatarUrl     String? // Profile Avatar
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String?
   contactNumber String?
   address       String?
   city          String?
   province      String?
   zipCode       String?
+  avatarUrl     String?
   createdAt     DateTime @default(now())
-  orders        Order[]
-  reviews       Review[]
-  inquiries     Inquiry[]
-  sentMessages  Message[]
-  isEmailVerified    Boolean   @default(false)
-  otpCode            String?
-  otpExpiresAt       DateTime?
-  lastOtpSentAt      DateTime?
-  resetOtpCode       String?   // For forgot-password flow (separate from email verification OTP)
-  resetOtpExpiresAt  DateTime?
-  sessionToken       String?   // For tracking single active sessions for admin/employee
-  replies            ReviewReply[]
-  inventoryLogs      InventoryLog[]
-  cartItems          CartItem[]
-  addresses          Address[]
+  updatedAt     DateTime @updatedAt
+}
+
+model AdminProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String?
+  contactNumber String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SuperAdminProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String?
+  contactNumber String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model OwnerProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String?
+  contactNumber String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SalesProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String?
+  contactNumber String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model LogisticProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String?
+  contactNumber String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model FinanceProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String?
+  contactNumber String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Address {
@@ -66,6 +148,7 @@ model Product {
   stock            Int // Base stock (fallback when no variants)
   imageUrl         String?
   imageUrls        String[]         @default([])
+  color            String?
   averageRating    Float            @default(0)
   reviewCount      Int              @default(0)
   createdAt        DateTime         @default(now())
@@ -82,6 +165,7 @@ model ProductVariant {
   productId     Int
   product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   name          String // e.g. "Per Meter", "2 Meters", "Bundle"
+  color         String?
   price         Float
   stock         Int
   sku           String? // Optional SKU
@@ -117,6 +201,7 @@ model Order {
   status                String      @default("pending") // pending, processing, shipped, completed
   paymentStatus         String      @default("unpaid")
   paymentMode           String      @default("Cash on Delivery")
+  fulfillmentType       String      @default("Delivery") // "Delivery" | "Pickup"
   customerName          String?
   customerEmail         String?
   shippingName          String?
@@ -144,6 +229,7 @@ model OrderItem {
   variantName String? // Snapshot of variant name at time of purchase
   quantity    Int
   price       Float // Price at time of purchase (variant price or base price)
+  color       String?
 }
 
 model ProductType {
@@ -208,9 +294,30 @@ model CartItem {
   variantId   Int?            
   variant     ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
   quantity    Int             @default(1)
+  color       String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  @@unique([userId, productId, variantId])
+  @@unique([userId, productId, variantId, color])
 }
 
+model UserSession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  deviceInfo   String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  lastActive   DateTime @default(now())
+  isActive     Boolean  @default(true)
+  loggedOutAt  DateTime?
+}
+
+model SystemSetting {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}

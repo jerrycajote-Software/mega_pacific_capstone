@@ -13,15 +13,13 @@ import { useAuth } from '../context/AuthContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
+import { io } from 'socket.io-client';
 
 const navItems = [
-  { name: 'Dashboard',  path: '/admin/dashboard',  icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Inventory',  path: '/admin/inventory',   icon: <InventoryIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Orders',     path: '/admin/orders',      icon: <ShoppingCartIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Users',      path: '/admin/users',       icon: <PeopleIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Employees',  path: '/admin/employees',   icon: <BadgeIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Reviews',    path: '/admin/reviews',     icon: <RateReviewIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Settings',   path: '/admin/settings',    icon: <SettingsIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Users', path: '/admin/users', icon: <PeopleIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Account Creation', path: '/admin/accounts', icon: <BadgeIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon sx={{ fontSize: 18 }} /> },
 ];
 
 const AdminLayout = () => {
@@ -29,47 +27,26 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
+  React.useEffect(() => {
+    if (!user) return;
+    const API_URL = import.meta.env.VITE_API_URL || '';
+    const socket = io(API_URL, {
+      auth: { user }
+    });
+
+    socket.emit("join_room", "admin");
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
+
   const handleLogout = () => {
     setIsLogoutOpen(true);
   };
 
   return (
     <div className="admin-shell">
-
-      <div className="admin-main">
-
-        {/* Floating top bar */}
-        <header className="admin-topbar">
-          {/* Brand */}
-          <Link to="/admin/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
-              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
-              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
-            </div>
-            
-            <div style={{
-              color: '#7a90e8',
-              fontSize: '10px',
-              fontWeight: 800,
-              letterSpacing: '0.2em',
-              marginTop: '4px',
-              fontFamily: 'Arial, sans-serif'
-            }}>
-              METAL AND STEEL CORP
-            </div>
-          </Link>
-
-          {/* Right actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <ThemeSwitcher />
-          </div>
-        </header>
-
-        {/* Page content */}
-        <div className="admin-content">
-          <Outlet />
-        </div>
-      </div>
 
       <aside className="admin-sidebar">
 
@@ -125,6 +102,41 @@ const AdminLayout = () => {
           </button>
         </div>
       </aside>
+
+      <div className="admin-main">
+
+        {/* Floating top bar */}
+        <header className="admin-topbar">
+          {/* Brand */}
+          <Link to="/admin/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
+              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
+              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
+            </div>
+            
+            <div style={{
+              color: '#7a90e8',
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '0.2em',
+              marginTop: '4px',
+              fontFamily: 'Arial, sans-serif'
+            }}>
+              METAL AND STEEL CORP
+            </div>
+          </Link>
+
+          {/* Right actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ThemeSwitcher />
+          </div>
+        </header>
+
+        {/* Page content */}
+        <div className="admin-content">
+          <Outlet />
+        </div>
+      </div>
       {isLogoutOpen && (
         <LogoutConfirmModal
           onClose={() => setIsLogoutOpen(false)}

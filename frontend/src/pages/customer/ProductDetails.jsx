@@ -348,7 +348,8 @@ const ProductDetails = () => {
           product,
           variant: variantForCheckout,
           quantity,
-          total: activePrice * quantity
+          total: activePrice * quantity,
+          color: selectedOption?.color || null
         }
       });
     }
@@ -364,7 +365,7 @@ const ProductDetails = () => {
       if (selectedOption && !selectedOption.isBaseProduct) {
         variantForCart = product.variants.find(v => v.id === selectedOption.id) || null;
       }
-      addToCart(product, variantForCart, quantity);
+      addToCart(product, variantForCart, quantity, selectedOption?.color || null);
     }
   };
   const handleDecrease = () => {
@@ -464,6 +465,7 @@ const ProductDetails = () => {
             {selectedOption && (
               <Typography variant="subtitle1" color="text.secondary">
                 — {selectedOption.name}
+                {selectedOption.color && ` (${selectedOption.color})`}
               </Typography>
             )}
             {!hasOptions && <Typography variant="subtitle1" color="text.secondary">/ {product.unit}</Typography>}
@@ -486,6 +488,8 @@ const ProductDetails = () => {
               selectedOption={selectedOption}
               onSelect={handleOptionSelect}
             />
+
+
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="subtitle2" fontWeight="bold">Available Stock</Typography>

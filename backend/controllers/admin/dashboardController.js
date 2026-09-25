@@ -18,12 +18,12 @@ const getDashboardStats = async (req, res) => {
     const recentOrdersData = await prisma.order.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
-      include: { user: { select: { name: true, email: true } } }
+      include: { user: { select: { email: true } } }
     });
 
     const recentOrders = recentOrdersData.map(o => ({
       id: `#ORD-${o.id.toString().padStart(3, "0")}`,
-      customer: o.user.name,
+      customer: o.customerName || o.shippingName || (o.user ? o.user.email.split('@')[0] : "Anonymous"),
       date: new Date(o.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
       status: o.status.charAt(0).toUpperCase() + o.status.slice(1),
       total: `₱${o.total.toLocaleString()}`

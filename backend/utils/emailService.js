@@ -52,7 +52,7 @@ const sendOtpEmail = async (email, otp) => {
   }
 };
 
-// ─── Forgot Password OTP ──────────────────────────────────────────────────────
+//  Forgot Password OTP
 
 const sendForgotPasswordEmail = async (email, otp) => {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {

@@ -8,7 +8,7 @@ const getOrders = async (req, res) => {
       orderBy: { createdAt: "desc" },
       include: {
         user: {
-          select: { name: true, email: true }
+          select: { email: true }
         },
         items: {
           include: {

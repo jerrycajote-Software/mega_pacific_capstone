@@ -32,7 +32,7 @@ const InventoryDataGrid = ({
   onViewProduct,
   onEditProduct,
   onDeleteProduct,
-  isAdmin,
+  isReadOnly,
   loading,
 }) => {
   const theme = useTheme();
@@ -333,7 +333,7 @@ const InventoryDataGrid = ({
                   <VisibilityIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-              {!isAdmin && (
+              {!isReadOnly && (
                 <Tooltip title="Edit">
                   <IconButton
                     size="small"
@@ -344,7 +344,7 @@ const InventoryDataGrid = ({
                   </IconButton>
                 </Tooltip>
               )}
-              {!isAdmin && (
+              {!isReadOnly && (
                 <Tooltip title="Delete">
                   <IconButton
                     size="small"
@@ -369,7 +369,7 @@ const InventoryDataGrid = ({
     }
 
     return baseColumns;
-  }, [isAdmin, onViewProduct, onEditProduct, onDeleteProduct, isSmallScreen, expandedRows]);
+  }, [isReadOnly, onViewProduct, onEditProduct, onDeleteProduct, isSmallScreen, expandedRows]);
 
   const CustomToolbar = () => (
     <GridToolbarContainer sx={{ justifyContent: 'space-between', p: 1.5, borderBottom: 1, borderColor: 'divider' }}>

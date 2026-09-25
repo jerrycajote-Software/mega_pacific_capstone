@@ -15,7 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 const ReviewManagement = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const isEmployee = user?.role === 'employee';
+  const isSales = user?.role === 'sales';
 
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +35,8 @@ const ReviewManagement = () => {
     try {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
-      const endpoint = isEmployee 
-        ? `${API_URL}/api/employee/reviews` 
+      const endpoint = isSales 
+        ? `${API_URL}/api/sales/reviews` 
         : `${API_URL}/api/admin/reviews`;
       
       const res = await axios.get(endpoint, {
@@ -89,7 +89,7 @@ const ReviewManagement = () => {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.post(
-        `${API_URL}/api/employee/reviews/${replyReviewId}/reply`,
+        `${API_URL}/api/sales/reviews/${replyReviewId}/reply`,
         { comment: replyComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -150,7 +150,7 @@ const ReviewManagement = () => {
             Customer Reviews
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            {isAdmin ? 'Read customer feedback and employee replies.' : 'Read and reply to customer product feedback.'}
+            {isAdmin ? 'Read customer feedback and sales replies.' : 'Read and reply to customer product feedback.'}
           </p>
         </div>
         <button
@@ -308,7 +308,7 @@ const ReviewManagement = () => {
                       <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#22c55e' }}>{review.reply.user?.name}</span>
                       <Chip label={review.reply.user?.role} size="small" color="success" variant="outlined" sx={{ height: 16, fontSize: '0.6rem', textTransform: 'uppercase', borderRadius: 1, fontWeight: 'bold' }} />
                     </div>
-                    {isEmployee && (
+                    {isSales && (
                       <button 
                         onClick={() => handleOpenReply(review)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem' }}
@@ -327,7 +327,7 @@ const ReviewManagement = () => {
                   </div>
                 </div>
               ) : (
-                isEmployee && (
+                isSales && (
                   <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: '2rem' }}>
                     <button
                       onClick={() => handleOpenReply(review)}

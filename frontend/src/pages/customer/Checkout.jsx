@@ -19,6 +19,8 @@ import {
   Divider,
   Stack,
   Avatar,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 
 
@@ -44,7 +46,8 @@ const Checkout = () => {
       variant: state.variant,
       variantId: state.variant?.id || null,
       quantity: state.quantity,
-      price: state.total / state.quantity
+      price: state.total / state.quantity,
+      color: state.color || null
     }];
     initialOrderTotal = state.total;
   }
@@ -61,7 +64,8 @@ const Checkout = () => {
     province: 'Cavite',
     zipCode: '',
     notes: '',
-    paymentMode: 'Cash on Delivery'
+    paymentMode: 'Cash on Delivery',
+    fulfillmentType: 'Delivery',
   });
 
   const [errors, setErrors] = useState({});
@@ -180,11 +184,15 @@ const Checkout = () => {
     if (!formData.customerName.trim()) newErrors.customerName = 'Full Name is required';
     if (!formData.customerEmail.trim()) newErrors.customerEmail = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail)) newErrors.customerEmail = 'Invalid email format';
-    if (!formData.contactNumber?.trim()) newErrors.contactNumber = 'Contact Number is required';
-    if (!formData.address?.trim()) newErrors.address = 'Complete Address is required';
-    if (!formData.city?.trim()) newErrors.city = 'City is required';
-    if (!formData.province?.trim()) newErrors.province = 'Province is required';
-    if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+
+    if (formData.fulfillmentType === 'Delivery') {
+      if (!formData.contactNumber?.trim()) newErrors.contactNumber = 'Contact Number is required';
+      if (!formData.address?.trim()) newErrors.address = 'Complete Address is required';
+      if (!formData.city?.trim()) newErrors.city = 'City is required';
+      if (!formData.province?.trim()) newErrors.province = 'Province is required';
+      if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -258,6 +266,7 @@ const Checkout = () => {
         const bulkPayload = {
           userId: user?.id,
           paymentMode: formData.paymentMode,
+          fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
           shippingName: formData.customerName,
           shippingContactNumber: formData.contactNumber,
@@ -286,6 +295,7 @@ const Checkout = () => {
           variantId: singleItem.variant?.id || singleItem.variantId || null,
           quantity: singleItem.quantity,
           paymentMode: formData.paymentMode,
+          fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
           shippingName: formData.customerName,
           shippingContactNumber: formData.contactNumber,
@@ -371,22 +381,121 @@ const Checkout = () => {
       <Grid container spacing={4}>
         <Grid item xs={12} lg={8}>
           <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <ShippingInfoWidget
-              formData={formData}
-              errors={errors}
-              hasProfile={hasProfile}
-              isEditingAddress={isEditingAddress}
-              onEdit={() => setIsEditingAddress(true)}
-              onCancelEdit={() => { setIsEditingAddress(false); setErrors({}); }}
-              onInputChange={handleInputChange}
-              addresses={addresses}
-              selectedAddressId={selectedAddressId}
-              onSelectAddress={handleSelectAddress}
-            />
 
             <form onSubmit={handleSubmit}>
-              <Box sx={{ mt: 4, mb: 6 }}>
-                <TextField fullWidth label="Additional Notes (Optional)" name="notes" multiline rows={3} value={formData.notes} onChange={handleInputChange} placeholder="Any special instructions for delivery?" />
+
+              {/* Fulfillment Type Selector */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <i className="fi fi-rr-box-open" style={{ fontSize: '16px', color: '#64748b' }}></i>
+                  Fulfillment Method
+                </Typography>
+                <ToggleButtonGroup
+                  value={formData.fulfillmentType}
+                  exclusive
+                  onChange={(_, val) => {
+                    if (val) setFormData(prev => ({ ...prev, fulfillmentType: val }));
+                  }}
+                  fullWidth
+                  sx={{ gap: 2 }}
+                >
+                  <ToggleButton
+                    value="Delivery"
+                    sx={{
+                      flex: 1,
+                      py: 2,
+                      borderRadius: '12px !important',
+                      border: '1.5px solid',
+                      borderColor: formData.fulfillmentType === 'Delivery' ? 'primary.main' : 'divider',
+                      bgcolor: formData.fulfillmentType === 'Delivery' ? 'primary.50' : 'transparent',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.50',
+                        borderColor: 'primary.main',
+                        color: 'primary.dark',
+                        '&:hover': { bgcolor: 'primary.100' },
+                      },
+                    }}
+                  >
+                    <i className="fi fi-rr-truck-side" style={{ fontSize: '22px' }}></i>
+                    <Typography variant="caption" fontWeight={700}>Home Delivery</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Delivered to your address</Typography>
+                  </ToggleButton>
+
+                  <ToggleButton
+                    value="Pickup"
+                    sx={{
+                      flex: 1,
+                      py: 2,
+                      borderRadius: '12px !important',
+                      border: '1.5px solid',
+                      borderColor: formData.fulfillmentType === 'Pickup' ? 'primary.main' : 'divider',
+                      bgcolor: formData.fulfillmentType === 'Pickup' ? 'primary.50' : 'transparent',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.50',
+                        borderColor: 'primary.main',
+                        color: 'primary.dark',
+                        '&:hover': { bgcolor: 'primary.100' },
+                      },
+                    }}
+                  >
+                    <i className="fi fi-rr-shop" style={{ fontSize: '22px' }}></i>
+                    <Typography variant="caption" fontWeight={700}>Store Pick-up</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Pick up at our store</Typography>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              {/* Pickup Notice */}
+              {formData.fulfillmentType === 'Pickup' && (
+                <Box
+                  sx={{
+                    mb: 4,
+                    p: 2.5,
+                    borderRadius: 3,
+                    bgcolor: 'success.50',
+                    border: '1.5px solid',
+                    borderColor: 'success.light',
+                    display: 'flex',
+                    gap: 2,
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 44, height: 44, flexShrink: 0 }}>
+                    <i className="fi fi-rr-shop" style={{ fontSize: '20px' }}></i>
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={700} gutterBottom>Mega Pacific Roofing — Imus Branch</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Our staff will contact you to confirm your pick-up schedule after your order is placed.
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
+              {/* Shipping Info — shown only for Delivery */}
+              {formData.fulfillmentType === 'Delivery' && (
+                <Box sx={{ mb: 4 }}>
+                  <ShippingInfoWidget
+                    formData={formData}
+                    errors={errors}
+                    hasProfile={hasProfile}
+                    isEditingAddress={isEditingAddress}
+                    onEdit={() => setIsEditingAddress(true)}
+                    onCancelEdit={() => { setIsEditingAddress(false); setErrors({}); }}
+                    onInputChange={handleInputChange}
+                    addresses={addresses}
+                    selectedAddressId={selectedAddressId}
+                    onSelectAddress={handleSelectAddress}
+                  />
+                </Box>
+              )}
+
+              <Box sx={{ mb: 6 }}>
+                <TextField fullWidth label="Additional Notes (Optional)" name="notes" multiline rows={3} value={formData.notes} onChange={handleInputChange} placeholder={formData.fulfillmentType === 'Pickup' ? 'Any notes for your pick-up?' : 'Any special instructions for delivery?'} />
               </Box>
 
               <PaymentMethodWidget
@@ -426,7 +535,10 @@ const Checkout = () => {
                       {item.product.name}
                     </Typography>
                     {item.variant && (
-                      <Chip label={item.variant.name} size="small" variant="outlined" sx={{ height: 20, mt: 0.5, fontSize: '0.65rem' }} />
+                      <Chip label={item.variant.name} size="small" variant="outlined" sx={{ height: 20, mt: 0.5, mr: 0.5, fontSize: '0.65rem' }} />
+                    )}
+                    {item.color && (
+                      <Chip label={item.color} size="small" variant="outlined" sx={{ height: 20, mt: 0.5, fontSize: '0.65rem' }} />
                     )}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
                       <Typography variant="caption" color="text.secondary">Qty: {item.quantity}</Typography>

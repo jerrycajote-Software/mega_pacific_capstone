@@ -26,7 +26,7 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
     };
   }, []);
 
-  const isStaffPortal = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/employee');
+  const isStaffPortal = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/sales');
 
   // Themes matching: emerald gradient for staff, forest gradient for customer
   const confirmBtnBg = isStaffPortal 

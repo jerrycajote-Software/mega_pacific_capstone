@@ -176,7 +176,7 @@ const focusStyle = `
   }
 `;
 
-const EMPTY_VARIANT = { name: '', price: '', stock: '', status: 'available' };
+const EMPTY_VARIANT = { name: '', color: '', price: '', stock: '', status: 'available' };
 
 const quillModules = {
   toolbar: [
@@ -203,7 +203,7 @@ const ProductManagement = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const theme = useTheme();
-  const isAdmin = user?.role === 'admin';
+  const isReadOnly = user?.role === 'admin' || user?.role === 'sales';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'stock'
@@ -217,7 +217,7 @@ const ProductManagement = () => {
 
   const [formData, setFormData] = useState({
     name: '', type: 'Rib Type', description: '',
-    price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: []
+    price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [], color: ''
   });
 
  
@@ -336,7 +336,7 @@ const ProductManagement = () => {
         const payload = { ...formData };
         if (payload.price === '' || payload.price === null) payload.price = editingProduct.price;
         if (payload.stock === '' || payload.stock === null) payload.stock = editingProduct.stock;
-        
+
         let variantsPayload = [];
         if (variants && variants.length > 0) {
           variantsPayload = variants
@@ -345,6 +345,7 @@ const ProductManagement = () => {
               return {
                  id: v.id,
                  name: v.name,
+                 color: v.color || '',
                  price: (v.price !== '' && v.price !== null) ? v.price : v.originalPrice,
                  stock: (v.stock !== '' && v.stock !== null) ? v.stock : v.originalStock,
                  sku: v.sku || '',
@@ -407,6 +408,7 @@ const ProductManagement = () => {
     setEditingVariantId(v.id);
     setEditingVariantData({
       name: v.name,
+      color: v.color || '',
       price: v.price !== '' ? v.price : v.originalPrice,
       stock: v.stock !== '' ? v.stock : v.originalStock,
       sku: v.sku || '',
@@ -451,12 +453,12 @@ const ProductManagement = () => {
       setEditingProduct(product);
       let initialImageUrls = product.imageUrls || [];
       if (initialImageUrls.length === 0 && product.imageUrl) initialImageUrls = [product.imageUrl];
-      setFormData({ name: product.name, type: product.type, description: product.description || '', price: '', unit: product.unit, stock: '', imageUrl: product.imageUrl || '', imageUrls: initialImageUrls });
+      setFormData({ name: product.name, type: product.type, description: product.description || '', price: '', unit: product.unit, stock: '', imageUrl: product.imageUrl || '', imageUrls: initialImageUrls, color: product.color || '' });
       fetchVariants(product.id);
     } else {
       setEditingProduct(null);
       setVariants([]);
-      setFormData({ name: '', type: productTypes.length > 0 ? productTypes[0].name : '', description: '', price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [] });
+      setFormData({ name: '', type: productTypes.length > 0 ? productTypes[0].name : '', description: '', price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [], color: '' });
     }
     setIsDragging(false);
     setIsModalOpen(true);
@@ -484,6 +486,9 @@ const ProductManagement = () => {
     <tr>
       <td style={S.variantTd}>
         <input className="pm-variant-input" style={S.variantInput} value={editingVariantData.name} onChange={e => setEditingVariantData(p => ({ ...p, name: e.target.value }))} placeholder="Name" />
+      </td>
+      <td style={S.variantTd}>
+        <input className="pm-variant-input" style={S.variantInput} value={editingVariantData.color} onChange={e => setEditingVariantData(p => ({ ...p, color: e.target.value }))} placeholder="Color" />
       </td>
       <td style={S.variantTd}>
         <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={editingVariantData.price} onChange={e => setEditingVariantData(p => ({ ...p, price: e.target.value }))} placeholder="0" />
@@ -522,7 +527,7 @@ const ProductManagement = () => {
                 {t('Manage your products, stock levels and pricing.')}
               </Typography>
             </div>
-            {!isAdmin && (
+            {!isReadOnly && (
               <button
                 type="button"
                 className="pm-btn-primary"
@@ -587,7 +592,7 @@ const ProductManagement = () => {
                 onViewProduct={(product) => openModal(product)}
                 onEditProduct={(product) => openModal(product)}
                 onDeleteProduct={handleDelete}
-                isAdmin={isAdmin}
+                isReadOnly={isReadOnly}
                 loading={loading}
               />
             </Paper>
@@ -630,7 +635,7 @@ const ProductManagement = () => {
                     <div
                       className="pm-upload-zone"
                       style={{ ...S.uploadZone, ...(isDragging ? S.uploadZoneDragging : {}), minHeight: 280, display: 'flex', flexDirection: 'column' }}
-                      onClick={() => { if (!isAdmin && (!formData.imageUrls || formData.imageUrls.length < 12)) fileInputRef.current?.click(); }}
+                      onClick={() => { if (!isReadOnly && (!formData.imageUrls || formData.imageUrls.length < 12)) fileInputRef.current?.click(); }}
                       onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                     >
                       {formData.imageUrls && formData.imageUrls.length > 0 ? (
@@ -639,12 +644,12 @@ const ProductManagement = () => {
                             {formData.imageUrls.map((url, idx) => (
                               <div key={idx} style={S.galleryItem} onClick={(e) => e.stopPropagation()}>
                                 <img src={url} alt={`Preview ${idx + 1}`} style={S.uploadPreviewImg} />
-                                {!isAdmin && (
+                                {!isReadOnly && (
                                   <button type="button" className="pm-upload-remove" style={S.uploadRemoveBtn} onClick={(e) => handleRemoveImage(e, idx)} title={t('Remove image')}><CloseIcon sx={{ fontSize: 12 }} /></button>
                                 )}
                               </div>
                             ))}
-                            {formData.imageUrls.length < 12 && !isAdmin && (
+                            {formData.imageUrls.length < 12 && !isReadOnly && (
                               <div style={{ ...S.galleryItem, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed #3e3e3e', cursor: 'pointer' }} onClick={() => fileInputRef.current?.click()}>
                                 <AddIcon sx={{ fontSize: 20, color: '#6b7280' }} />
                               </div>
@@ -675,7 +680,7 @@ const ProductManagement = () => {
                   
                   <div style={{ ...S.formGroup, marginBottom: 0 }}>
                     <label style={S.label}><Inventory2Icon sx={{ fontSize: 11 }} /> {t('Product Name')}</label>
-                    <input className="pm-input" name="name" type="text" required disabled={isAdmin} value={formData.name} onChange={handleInputChange} placeholder={t('e.g. Rib Type Blue')} style={S.inputBase} />
+                    <input className="pm-input" name="name" type="text" required disabled={isReadOnly} value={formData.name} onChange={handleInputChange} placeholder={t('e.g. Rib Type Blue')} style={S.inputBase} />
                   </div>
 
                  
@@ -683,12 +688,17 @@ const ProductManagement = () => {
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('ORIGINAL PRICE (₱)')}</label>
-                      <input className="pm-input" name="price" type="number" min="0" disabled={isAdmin} value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
+                      <input className="pm-input" name="price" type="number" min="0" disabled={isReadOnly} value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LayersIcon sx={{ fontSize: 11 }} /> {t('Unit')}</label>
-                      <input className="pm-input" name="unit" type="text" disabled={isAdmin} value={formData.unit} onChange={handleInputChange} placeholder={t('per meter')} style={S.inputBase} />
+                      <input className="pm-input" name="unit" type="text" disabled={isReadOnly} value={formData.unit} onChange={handleInputChange} placeholder={t('per meter')} style={S.inputBase} />
                     </div>
+                  </div>
+
+                  <div style={{ ...S.formGroup, marginBottom: 0 }}>
+                    <label style={S.label}>{t('COLOR')}</label>
+                    <input className="pm-input" name="color" type="text" disabled={isReadOnly} value={formData.color} onChange={handleInputChange} placeholder={t('e.g. Red')} style={S.inputBase} />
                   </div>
 
                  
@@ -696,12 +706,12 @@ const ProductManagement = () => {
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('BASE STOCK QTY')}</label>
-                      <input className="pm-input" name="stock" type="number" min="0" disabled={isAdmin} value={formData.stock} onChange={handleInputChange} placeholder={editingProduct ? t("New Stock") : "0"} style={S.inputBase} />
+                      <input className="pm-input" name="stock" type="number" min="0" disabled={isReadOnly} value={formData.stock} onChange={handleInputChange} placeholder={editingProduct ? t("New Stock") : "0"} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LocalOfferIcon sx={{ fontSize: 11 }} /> {t('Category Type')}</label>
                       <div style={S.selectWrap}>
-                        <select className="pm-select" name="type" disabled={isAdmin} value={formData.type} onChange={handleInputChange} style={S.selectBase}>
+                        <select className="pm-select" name="type" disabled={isReadOnly} value={formData.type} onChange={handleInputChange} style={S.selectBase}>
                           {productTypes.length === 0 && (
                             <option value="">{t('Loading types…')}</option>
                           )}
@@ -711,7 +721,7 @@ const ProductManagement = () => {
                         </select>
                         <KeyboardArrowDownIcon sx={{ fontSize: 13, ...S.selectChevron }} />
                       </div>
-                      {!isAdmin && (
+                      {!isReadOnly && (
                         <button
                           type="button"
                           onClick={() => setShowAddTypeModal(true)}
@@ -739,7 +749,7 @@ const ProductManagement = () => {
                           theme="snow"
                           value={formData.description || ''}
                           onChange={(value) => setFormData({ ...formData, description: value })}
-                          readOnly={isAdmin || false}
+                          readOnly={isReadOnly || false}
                           style={{ height: '200px', display: 'flex', flexDirection: 'column' }}
                           modules={quillModules}
                         />
@@ -764,6 +774,7 @@ const ProductManagement = () => {
                       <thead>
                         <tr>
                           <th style={S.variantTh}>{t('Variant Name')}</th>
+                          <th style={S.variantTh}>{t('Color')}</th>
                           <th style={S.variantTh}>{t('Price (₱)')}</th>
                           <th style={S.variantTh}>{t('Stock')}</th>
                           <th style={S.variantTh}>{t('Status')}</th>
@@ -778,6 +789,7 @@ const ProductManagement = () => {
                           ) : (
                             <tr key={v.id}>
                               <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
+                              <td style={S.variantTd}><span style={{ fontWeight: 500, color: '#e5e7eb' }}>{v.color || '-'}</span></td>
                               <td style={S.variantTd}>
                                 <span style={{ color: '#e5e7eb', fontWeight: 500 }}>₱{Number(v.originalPrice).toLocaleString()}</span>
                               </td>
@@ -791,7 +803,7 @@ const ProductManagement = () => {
                               </td>
                               <td style={{ ...S.variantTd, textAlign: 'right' }}>
                                 <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                                  {!isAdmin && (
+                                  {!isReadOnly && (
                                     <button type="button" className="pm-variant-del" style={S.variantDeleteBtn} onClick={() => handleDeleteVariant(v.id)}><Trash2 size={12} /></button>
                                   )}
                                 </div>
@@ -804,6 +816,7 @@ const ProductManagement = () => {
                         {pendingVariants.map((v) => (
                           <tr key={v._tempId} style={{ background: 'rgba(34,197,94,0.03)' }}>
                             <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
+                            <td style={S.variantTd}><span style={{ fontWeight: 500, color: '#e5e7eb' }}>{v.color || '-'}</span></td>
                             <td style={S.variantTd}><span style={{ color: '#4ade80', fontWeight: 600 }}>₱{Number(v.price).toLocaleString()}</span></td>
                             <td style={S.variantTd}><StockBadge stock={parseInt(v.stock)} /></td>
                             <td style={S.variantTd}>
@@ -816,10 +829,13 @@ const ProductManagement = () => {
                         ))}
 
                        
-                        {!isAdmin && (
+                        {!isReadOnly && (
                           <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
                             <td style={S.variantTd}>
                               <input className="pm-variant-input" style={S.variantInput} value={newVariant.name} onChange={e => setNewVariant(p => ({ ...p, name: e.target.value }))} placeholder={t('e.g. Per Meter')} />
+                            </td>
+                            <td style={S.variantTd}>
+                              <input className="pm-variant-input" style={S.variantInput} value={newVariant.color} onChange={e => setNewVariant(p => ({ ...p, color: e.target.value }))} placeholder={t('e.g. Red')} />
                             </td>
                             <td style={S.variantTd}>
                               <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={newVariant.price} onChange={e => setNewVariant(p => ({ ...p, price: e.target.value }))} placeholder="0" />
@@ -855,8 +871,8 @@ const ProductManagement = () => {
 
               
               <div style={S.modalFooter}>
-                <button type="button" className="pm-btn-cancel" onClick={closeModal} style={S.btnCancel}>{isAdmin ? t('Close') : t('Cancel')}</button>
-                {!isAdmin && (
+                <button type="button" className="pm-btn-cancel" onClick={closeModal} style={S.btnCancel}>{isReadOnly ? t('Close') : t('Cancel')}</button>
+                {!isReadOnly && (
                   <button type="submit" className="pm-btn-save" style={S.btnSave}>
                     {editingProduct ? t('Update Product') : t('Create Product')}
                   </button>
