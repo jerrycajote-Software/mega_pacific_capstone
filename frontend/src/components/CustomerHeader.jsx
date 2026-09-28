@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useCustomerUi } from '../context/CustomerUiContext';
 import {
   AppBar,
   Toolbar,
@@ -22,7 +21,6 @@ const NAV_LINKS = [
 
 const CustomerHeader = () => {
   const { user, logout } = useAuth();
-  const { uiVersion, toggleUiVersion } = useCustomerUi();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
@@ -107,50 +105,7 @@ const CustomerHeader = () => {
 
           {/* Right side: Avatar + Logout */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, ml: 'auto' }}>
-            {/* UI Version Switcher Pill */}
-            <Box
-              sx={{
-                bgcolor: '#f1f5f9',
-                p: 0.4,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <Button
-                size="small"
-                onClick={() => toggleUiVersion()}
-                sx={{
-                  px: 1.2,
-                  py: 0.3,
-                  fontSize: '0.725rem',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  bgcolor: uiVersion === 'v1' ? '#2563eb' : 'transparent',
-                  color: uiVersion === 'v1' ? '#ffffff' : '#64748b',
-                  '&:hover': { bgcolor: uiVersion === 'v1' ? '#1d4ed8' : '#e2e8f0' },
-                }}
-              >
-                V1 Classic
-              </Button>
-              <Button
-                size="small"
-                onClick={() => toggleUiVersion()}
-                sx={{
-                  px: 1.2,
-                  py: 0.3,
-                  fontSize: '0.725rem',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  bgcolor: uiVersion === 'v2' ? '#1e3a8a' : 'transparent',
-                  color: uiVersion === 'v2' ? '#ffffff' : '#64748b',
-                  '&:hover': { bgcolor: uiVersion === 'v2' ? '#1e293b' : '#e2e8f0' },
-                }}
-              >
-                V2 Light Store
-              </Button>
-            </Box>
+
 
             <Avatar
               sx={{

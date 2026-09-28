@@ -15,7 +15,6 @@ import { Snackbar, Alert } from '@mui/material';
 const navItems = [
   { name: 'Dashboard',  path: '/logistic/dashboard',  icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
   { name: 'Deliveries', path: '/logistic/deliveries', icon: <LocalShippingIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Shipments',  path: '/logistic/shipments',  icon: <MapIcon sx={{ fontSize: 18 }} /> },
   { name: 'Products',   path: '/logistic/products',   icon: <Inventory2Icon sx={{ fontSize: 18 }} /> },
 ];
 

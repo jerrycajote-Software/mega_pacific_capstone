@@ -167,24 +167,40 @@ const DeliveriesPage = () => {
                 <p style={{ margin: '0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Actions:</p>
                 {(selectedOrder.fulfillmentType === 'Delivery' || !selectedOrder.fulfillmentType) ? (
                   <>
-                    <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'shipped')} style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
-                      Mark as <strong>Shipped</strong>
-                    </button>
-                    <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
-                      Mark as <strong>Out for Delivery</strong>
-                    </button>
-                    <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'completed')} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 'bold' }}>
-                      Mark as <strong>Delivered (Completed)</strong>
-                    </button>
+                    {(selectedOrder.orderStatus === 'finance_verified' || selectedOrder.orderStatus === 'processing') && (
+                      <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'shipped')} style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
+                        Mark as <strong>Shipped</strong>
+                      </button>
+                    )}
+                    {selectedOrder.orderStatus === 'shipped' && (
+                      <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')} style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
+                        Mark as <strong>Out for Delivery</strong>
+                      </button>
+                    )}
+                    {selectedOrder.orderStatus === 'out_for_delivery' && (
+                      <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'completed')} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 'bold' }}>
+                        Mark as <strong>Delivered (Completed)</strong>
+                      </button>
+                    )}
+                    {(selectedOrder.orderStatus === 'completed' || selectedOrder.orderStatus === 'delivered') && (
+                      <p style={{ color: '#22c55e', fontWeight: 'bold', margin: 0, padding: '10px 0' }}>✅ This order has been completed.</p>
+                    )}
                   </>
                 ) : (
                   <>
-                    <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'ready_for_pickup')} style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
-                      Mark as <strong>Ready for Pickup</strong>
-                    </button>
-                    <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'completed')} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 'bold' }}>
-                      Mark as <strong>Picked Up (Completed)</strong>
-                    </button>
+                    {(selectedOrder.orderStatus === 'finance_verified' || selectedOrder.orderStatus === 'processing') && (
+                      <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'ready_for_pickup')} style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}>
+                        Mark as <strong>Ready for Pickup</strong>
+                      </button>
+                    )}
+                    {selectedOrder.orderStatus === 'ready_for_pickup' && (
+                      <button disabled={updating} onClick={() => handleUpdateStatus(selectedOrder.rawId, 'completed')} style={{ background: '#22c55e', color: 'white', border: 'none', padding: '10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 'bold' }}>
+                        Mark as <strong>Picked Up (Completed)</strong>
+                      </button>
+                    )}
+                    {(selectedOrder.orderStatus === 'completed' || selectedOrder.orderStatus === 'delivered') && (
+                      <p style={{ color: '#22c55e', fontWeight: 'bold', margin: 0, padding: '10px 0' }}>✅ This order has been completed.</p>
+                    )}
                   </>
                 )}
               </div>

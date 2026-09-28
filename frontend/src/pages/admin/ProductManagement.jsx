@@ -335,7 +335,14 @@ const ProductManagement = () => {
         
         const payload = { ...formData };
         if (payload.price === '' || payload.price === null) payload.price = editingProduct.price;
-        if (payload.stock === '' || payload.stock === null) payload.stock = editingProduct.stock;
+
+        const currentStock = parseInt(editingProduct.stock, 10) || 0;
+        if (payload.stock !== '' && payload.stock !== null && payload.stock !== undefined) {
+          const addedStock = parseInt(payload.stock, 10);
+          payload.stock = isNaN(addedStock) ? currentStock : Math.max(0, currentStock + addedStock);
+        } else {
+          payload.stock = currentStock;
+        }
 
         let variantsPayload = [];
         if (variants && variants.length > 0) {
@@ -705,8 +712,40 @@ const ProductManagement = () => {
                  
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
-                      <label style={S.label}>{t('BASE STOCK QTY')}</label>
-                      <input className="pm-input" name="stock" type="number" min="0" disabled={isReadOnly} value={formData.stock} onChange={handleInputChange} placeholder={editingProduct ? t("New Stock") : "0"} style={S.inputBase} />
+                      <label style={S.label}>
+                        {t('BASE STOCK QTY')}
+                        {editingProduct && (
+                          <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400, marginLeft: '6px' }}>
+                            ({t('Current:')} <strong style={{ color: '#4ade80' }}>{editingProduct.stock ?? 0}</strong>)
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        className="pm-input"
+                        name="stock"
+                        type="number"
+                        min="0"
+                        disabled={isReadOnly}
+                        value={formData.stock}
+                        onChange={handleInputChange}
+                        placeholder={editingProduct ? t("+ Qty to add") : "0"}
+                        style={S.inputBase}
+                      />
+                      {editingProduct && (
+                        <div style={{ fontSize: '0.72rem', marginTop: '4px', color: formData.stock !== '' ? '#4ade80' : '#6b7280' }}>
+                          {formData.stock !== '' ? (
+                            <span>
+                              {t('New total stock:')}{' '}
+                              <strong style={{ color: '#22c55e' }}>
+                                {Math.max(0, (parseInt(editingProduct.stock, 10) || 0) + (parseInt(formData.stock, 10) || 0))}
+                              </strong>{' '}
+                              ({editingProduct.stock || 0} existing + {formData.stock} added)
+                            </span>
+                          ) : (
+                            <span>{t('Enter quantity to add to existing stock (leave blank for no change)')}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LocalOfferIcon sx={{ fontSize: 11 }} /> {t('Category Type')}</label>

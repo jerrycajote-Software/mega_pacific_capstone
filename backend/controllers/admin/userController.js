@@ -3,9 +3,15 @@ const prisma = require("../../config/db");
 
 const getUsers = async (req, res) => {
   try {
+    const rolesToExclude = ['superadmin', 'super_admin'];
+    if (req.user.role !== 'owner' && req.user.role !== 'superadmin' && req.user.role !== 'super_admin') {
+       rolesToExclude.push('owner');
+    }
+
     const users = await prisma.user.findMany({
       where: {
-        role: { not: 'superadmin' }
+        role: { notIn: rolesToExclude },
+        id: { not: req.user.userId }
       },
       orderBy: { createdAt: "desc" },
       select: {

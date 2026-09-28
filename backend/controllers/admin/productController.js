@@ -138,6 +138,19 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({ error: "The Product is already exists. Please enter a new product." });
     }
 
+    const currentProduct = await prisma.product.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!currentProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const previousStock = currentProduct.stock;
+    const finalStock = (stock !== undefined && stock !== null && stock !== '')
+      ? parseInt(stock)
+      : previousStock;
+
     const updatedProduct = await prisma.product.update({
       where: { id: parseInt(id) },
       data: {
@@ -146,13 +159,44 @@ const updateProduct = async (req, res) => {
         description,
         price: parseFloat(price) || 0,
         unit: unit || "per meter",
-        stock: parseInt(stock) || 0,
+        stock: isNaN(finalStock) ? 0 : finalStock,
         imageUrl: imageUrl || null,
         imageUrls: imageUrls || [],
         color: color || null,
       },
       include: { variants: true },
     });
+
+    if (finalStock !== previousStock) {
+      try {
+        let userId = req.user?.userId || null;
+        if (!userId && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+          try {
+            const jwt = require("jsonwebtoken");
+            const token = req.headers.authorization.split(" ")[1];
+            const decoded = jwt.decode(token);
+            if (decoded && decoded.userId) {
+              userId = decoded.userId;
+            }
+          } catch (e) {
+            // ignore token parse error
+          }
+        }
+
+        await prisma.inventoryLog.create({
+          data: {
+            productId: parseInt(id),
+            addedBy: userId,
+            previousStock,
+            addedQuantity: finalStock - previousStock,
+            newStock: finalStock,
+            reason: req.body.reason || "Inventory Item Update"
+          }
+        });
+      } catch (logErr) {
+        console.error("Failed to create inventory log for product update:", logErr);
+      }
+    }
     
     res.status(200).json(updatedProduct);
   } catch (error) {

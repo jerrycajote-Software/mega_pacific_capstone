@@ -25,7 +25,8 @@ import {
 import {
   getAvailableProvinces,
   getLocationsForProvince,
-  getZipCodeForLocation
+  getZipCodeForLocation,
+  getBarangaysForLocation
 } from '../../utils/locationService';
 
 const ProfilePage = () => {
@@ -71,6 +72,18 @@ const ProfilePage = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
+    if (name === 'province') {
+      setFormData(prev => ({
+        ...prev,
+        province: value,
+        city: '',
+        zipCode: ''
+      }));
+      setErrorMsg('');
+      setSuccessMsg('');
+      return;
+    }
+
     if (name === 'city') {
       const zipCode = getZipCodeForLocation(formData.province || 'Cavite', value);
       setFormData(prev => ({ ...prev, city: value, zipCode }));
@@ -268,37 +281,8 @@ const ProfilePage = () => {
                         inputProps={{ maxLength: 11, pattern: '^09[0-9]{9}$', title: 'Must be an 11-digit number starting with 09' }}
                       />
                     </Grid>
-                    <Grid item xs={12}>
-                      <TextField 
-                        fullWidth 
-                        label="Complete Address" 
-                        name="address" 
-                        value={formData.address} 
-                        onChange={handleInputChange} 
-                        placeholder="Street Name, Building, House No." 
-                        required 
-                        autoComplete="off"
-                      />
-                    </Grid>
                     <Grid item xs={12} sm={6}>
                       <FormControl fullWidth required>
-                        <InputLabel>City / Municipality</InputLabel>
-                        <Select
-                          native
-                          label="City / Municipality"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                        >
-                          <option value="" disabled>Select City</option>
-                          {getLocationsForProvince(formData.province || 'Cavite').map((loc) => (
-                            <option key={loc.name} value={loc.name}>{loc.name}</option>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth required disabled={!!editingAddressId}>
                         <InputLabel>Province</InputLabel>
                         <Select
                           native
@@ -314,6 +298,23 @@ const ProfilePage = () => {
                       </FormControl>
                     </Grid>
                     <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required disabled={!formData.province}>
+                        <InputLabel>City / Municipality</InputLabel>
+                        <Select
+                          native
+                          label="City / Municipality"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                        >
+                          <option value="" disabled>Select City / Municipality</option>
+                          {getLocationsForProvince(formData.province || 'Cavite').map((loc) => (
+                            <option key={loc.name} value={loc.name}>{loc.name}</option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
                       <TextField 
                         fullWidth 
                         label="Zip Code" 
@@ -323,7 +324,20 @@ const ProfilePage = () => {
                           readOnly: true,
                         }}
                         sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}
+                        helperText={formData.zipCode ? "Auto-filled based on City / Municipality" : ""}
                         required 
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField 
+                        fullWidth 
+                        label="Complete Address (Street, Building, Barangay)" 
+                        name="address" 
+                        value={formData.address} 
+                        onChange={handleInputChange} 
+                        placeholder="e.g. Unit 4B, 123 Emerald St., Brgy. San Isidro" 
+                        required 
+                        autoComplete="off"
                       />
                     </Grid>
                   </Grid>

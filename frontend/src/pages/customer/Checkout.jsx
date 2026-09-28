@@ -55,6 +55,9 @@ const Checkout = () => {
   const [orderItems, setOrderItems] = useState(initialOrderItems);
   const [orderTotal, setOrderTotal] = useState(initialOrderTotal);
 
+  const SHIPPING_FEE = 100;
+  const grandTotal = (orderTotal || 0) + SHIPPING_FEE;
+
   const [formData, setFormData] = useState({
     customerName: user?.name || '',
     customerEmail: user?.email || '',
@@ -64,8 +67,13 @@ const Checkout = () => {
     province: 'Cavite',
     zipCode: '',
     notes: '',
-    paymentMode: 'Cash on Delivery',
+    paymentPlan: 'COD_50', // 'COD_50' | 'FULL_PAYMENT'
+    paymentChannel: 'Card', // 'Card' | 'GCash'
     fulfillmentType: 'Delivery',
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvv: '',
+    gcashNumber: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -167,6 +175,14 @@ const Checkout = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
+    if (name === 'province') {
+      setFormData(prev => ({ ...prev, province: value, city: '', zipCode: '' }));
+      if (errors.province) setErrors(prev => ({ ...prev, province: '' }));
+      if (errors.city) setErrors(prev => ({ ...prev, city: '' }));
+      if (errors.zipCode) setErrors(prev => ({ ...prev, zipCode: '' }));
+      return;
+    }
+
     if (name === 'city') {
       const zipCode = getZipCodeForLocation(formData.province || 'Cavite', value);
       setFormData(prev => ({ ...prev, city: value, zipCode }));
@@ -191,6 +207,36 @@ const Checkout = () => {
       if (!formData.city?.trim()) newErrors.city = 'City is required';
       if (!formData.province?.trim()) newErrors.province = 'Province is required';
       if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
+    }
+
+    if (formData.paymentChannel === 'Card') {
+      const cleanCard = (formData.cardNumber || '').replace(/\s+/g, '');
+      if (!cleanCard) {
+        newErrors.cardNumber = 'Card number is required';
+      } else if (cleanCard.length < 15) {
+        newErrors.cardNumber = 'Card number must be 15 or 16 digits';
+      }
+
+      const expiry = (formData.cardExpiry || '').trim();
+      if (!expiry) {
+        newErrors.cardExpiry = 'Expiration date is required';
+      } else if (!/^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(expiry)) {
+        newErrors.cardExpiry = 'Enter valid MM/YY';
+      }
+
+      const cvv = (formData.cardCvv || '').trim();
+      if (!cvv) {
+        newErrors.cardCvv = 'Security code is required';
+      } else if (cvv.length < 3) {
+        newErrors.cardCvv = 'Security code must be 3 or 4 digits';
+      }
+    } else if (formData.paymentChannel === 'GCash') {
+      const cleanGcash = (formData.gcashNumber || '').replace(/\s+/g, '');
+      if (!cleanGcash) {
+        newErrors.gcashNumber = 'GCash mobile number is required';
+      } else if (!/^09\d{9}$/.test(cleanGcash)) {
+        newErrors.gcashNumber = 'Must be an 11-digit mobile number starting with 09';
+      }
     }
 
     setErrors(newErrors);
@@ -261,11 +307,27 @@ const Checkout = () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
       
+      const paymentModeDescription = formData.paymentPlan === 'COD_50'
+        ? 'Cash on Delivery (50% Downpayment)'
+        : 'Bank Transfer - Full Payment';
+
+      const paymentDetails = {
+        paymentPlan: formData.paymentPlan,
+        paymentChannel: formData.paymentChannel,
+        paymentMode: paymentModeDescription,
+        shippingFee: SHIPPING_FEE,
+        cardDetails: formData.paymentChannel === 'Card' ? {
+          cardNumber: formData.cardNumber,
+          cardExpiry: formData.cardExpiry,
+          cardCvv: formData.cardCvv,
+        } : undefined,
+        gcashNumber: formData.paymentChannel === 'GCash' ? formData.gcashNumber : undefined,
+      };
+
       let res;
       if (state.isBulk || orderItems.length > 1) {
         const bulkPayload = {
           userId: user?.id,
-          paymentMode: formData.paymentMode,
           fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
           shippingName: formData.customerName,
@@ -275,6 +337,7 @@ const Checkout = () => {
           shippingProvince: formData.province,
           shippingZipCode: formData.zipCode,
           notes: formData.notes,
+          ...paymentDetails,
           items: orderItems.map(item => ({
             productId: item.product.id,
             variantId: item.variant?.id || item.variantId || null,
@@ -294,7 +357,6 @@ const Checkout = () => {
           productId: singleItem.product.id,
           variantId: singleItem.variant?.id || singleItem.variantId || null,
           quantity: singleItem.quantity,
-          paymentMode: formData.paymentMode,
           fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
           shippingName: formData.customerName,
@@ -303,7 +365,8 @@ const Checkout = () => {
           shippingCity: formData.city,
           shippingProvince: formData.province,
           shippingZipCode: formData.zipCode,
-          notes: formData.notes
+          notes: formData.notes,
+          ...paymentDetails
         };
         res = await axios.post(`${API_URL}/api/customer/orders`, singlePayload, {
           headers: { Authorization: `Bearer ${token}` }
@@ -351,9 +414,39 @@ const Checkout = () => {
           <i className="fi fi-sr-check-circle" style={{ fontSize: '40px' }}></i>
         </Avatar>
         <Typography variant="h3" fontWeight="bold" gutterBottom>Order Placed Successfully!</Typography>
-        <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
+        <Typography color="text.secondary" sx={{ mb: 2.5, maxWidth: 500, mx: 'auto' }}>
           Thank you for your purchase. We have received your order and will process it shortly.
         </Typography>
+        {formData.customerEmail && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 4,
+              maxWidth: 500,
+              mx: 'auto',
+              bgcolor: '#f0fdf4',
+              border: '1.5px solid #86efac',
+              borderRadius: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              textAlign: 'left'
+            }}
+          >
+            <Avatar sx={{ bgcolor: '#dcfce7', color: '#16a34a', width: 38, height: 38, flexShrink: 0 }}>
+              <i className="fi fi-rr-envelope-check" style={{ fontSize: '18px' }}></i>
+            </Avatar>
+            <Box>
+              <Typography variant="body2" fontWeight={700} color="#166534">
+                Receipt Sent to Your Email
+              </Typography>
+              <Typography variant="caption" color="#15803d">
+                An official order receipt has been sent to <strong>{formData.customerEmail}</strong>.
+              </Typography>
+            </Box>
+          </Paper>
+        )}
         <Stack direction="row" spacing={2} justifyContent="center">
           <Button variant="outlined" color="inherit" onClick={() => navigate('/dashboard')}>
             Return to Dashboard
@@ -499,15 +592,29 @@ const Checkout = () => {
               </Box>
 
               <PaymentMethodWidget
-                paymentMode={formData.paymentMode}
+                paymentPlan={formData.paymentPlan}
+                paymentChannel={formData.paymentChannel}
+                subtotal={orderTotal}
+                shippingFee={SHIPPING_FEE}
+                cardNumber={formData.cardNumber}
+                cardExpiry={formData.cardExpiry}
+                cardCvv={formData.cardCvv}
+                gcashNumber={formData.gcashNumber}
+                errors={errors}
                 onChange={handleInputChange}
               />
 
               {errors.submit && <Alert severity="error" sx={{ mb: 4 }}>{errors.submit}</Alert>}
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                <Button type="submit" variant="contained" color="primary" size="large" disabled={isSubmitting} sx={{ px: 6, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}>
-                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Complete Order'}
+                <Button type="submit" variant="contained" color="primary" size="large" disabled={isSubmitting} sx={{ px: 5, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}>
+                  {isSubmitting ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : formData.paymentPlan === 'COD_50' ? (
+                    `Pay 50% Downpayment (₱${(grandTotal * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
+                  ) : (
+                    `Pay Full Amount (₱${grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
+                  )}
                 </Button>
               </Box>
             </form>
@@ -554,19 +661,34 @@ const Checkout = () => {
             <Stack spacing={1.5} sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2" color="text.secondary">Subtotal</Typography>
-                <Typography variant="body2" fontWeight="bold">₱{orderTotal.toLocaleString()}</Typography>
+                <Typography variant="body2" fontWeight="bold">₱{orderTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="body2" color="text.secondary">Shipping</Typography>
-                <Typography variant="body2" color="success.main" fontWeight="bold">Calculated later</Typography>
+                <Typography variant="body2" color="text.secondary">Shipping Fee</Typography>
+                <Typography variant="body2" fontWeight="bold" color="text.primary">₱100.00</Typography>
               </Box>
+              {formData.paymentPlan === 'COD_50' && (
+                <Box sx={{ bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', p: 1.25, borderRadius: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="caption" fontWeight={700} color="#166534">50% Downpayment (Pay Now):</Typography>
+                    <Typography variant="caption" fontWeight={800} color="#166534">₱{(grandTotal * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" fontWeight={700} color="#9a3412">50% Balance on Delivery:</Typography>
+                    <Typography variant="caption" fontWeight={800} color="#9a3412">₱{(grandTotal * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+                  </Box>
+                </Box>
+              )}
             </Stack>
 
             <Divider sx={{ mb: 2 }} />
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <Typography variant="subtitle1" fontWeight="bold">Total Amount</Typography>
-              <Typography variant="h5" fontWeight="900" color="primary">₱{orderTotal.toLocaleString()}</Typography>
+              <Box>
+                <Typography variant="subtitle1" fontWeight="bold">Total Amount</Typography>
+                <Typography variant="caption" color="text.secondary">Includes ₱100 shipping fee</Typography>
+              </Box>
+              <Typography variant="h5" fontWeight="900" color="primary">₱{grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
             </Box>
           </Paper>
         </Grid>

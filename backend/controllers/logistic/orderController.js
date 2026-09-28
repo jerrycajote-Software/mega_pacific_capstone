@@ -34,7 +34,7 @@ const getLogisticOrders = async (req, res) => {
       return {
         id: `#ORD-${o.id.toString().padStart(3, "0")}`,
         rawId: o.id,
-        customerName: o.customerName || (o.user && o.user.name) || "Unknown",
+        customerName: o.customerName || o.shippingName || "Unknown",
         customerEmail: o.customerEmail || (o.user && o.user.email) || "Unknown",
         productsSummary,
         totalQuantity: o.items.reduce((acc, item) => acc + item.quantity, 0),
@@ -46,9 +46,9 @@ const getLogisticOrders = async (req, res) => {
         deliveryStatus: o.status === "shipped" || o.status === "completed" || o.status === "delivered" || o.status === "out_for_delivery" ? o.status.replace(/_/g, " ") : "Pending",
         estimatedDeliveryDate: o.estimatedDeliveryDate,
         dateOrdered: new Date(o.createdAt).toISOString(),
-        address: o.address,
-        cityProvince: o.cityProvince,
-        zipCode: o.zipCode,
+        address: o.shippingAddress,
+        cityProvince: o.shippingProvince ? `${o.shippingCity || ''}, ${o.shippingProvince}` : o.shippingCity,
+        zipCode: o.shippingZipCode,
         items: o.items.map(item => ({
           productName: item.product.name,
           variantName: item.variantName || item.variant?.name || null,

@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { getAvailableProvinces, getLocationsForProvince, getZipCodeForLocation } from '../../utils/locationService';
+import { getAvailableProvinces, getLocationsForProvince, getZipCodeForLocation, getBarangaysForLocation } from '../../utils/locationService';
 import {
   Box,
   Typography,
@@ -68,53 +68,9 @@ const RegisterPage = () => {
   const [address, setAddress]                 = useState('');
   const [province, setProvince]               = useState(getAvailableProvinces()[0] || 'Cavite');
   const [city, setCity]                       = useState('');
+  const [barangay, setBarangay]               = useState('');
   const [zipCode, setZipCode]                 = useState('');
-  const [cityOpen, setCityOpen]               = useState(false);
-  const [provinceOpen, setProvinceOpen]       = useState(false);
 
-  const cityBoxRef = useRef(null);
-  const provinceBoxRef = useRef(null);
-
-  useEffect(() => {
-    if (!cityOpen && !provinceOpen) return;
-    let frameId;
-    let lastEvent = null;
-
-    const checkHover = () => {
-      if (!lastEvent) return;
-      const e = lastEvent;
-      const isOverCityBox = cityBoxRef.current && cityBoxRef.current.contains(e.target);
-      const isOverProvinceBox = provinceBoxRef.current && provinceBoxRef.current.contains(e.target);
-      const isOverMenu = e.target.closest && e.target.closest('.MuiMenu-paper, .MuiPopover-paper');
-
-      if (cityOpen && !isOverCityBox && !isOverMenu) {
-        setCityOpen(false);
-      }
-      if (provinceOpen && !isOverProvinceBox && !isOverMenu) {
-        setProvinceOpen(false);
-      }
-    };
-
-    const handleMouseMove = (e) => {
-      lastEvent = e;
-      if (frameId) cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(checkHover);
-    };
-
-    // Slight delay before attaching listener to avoid instantly closing on open
-    const delayTimer = setTimeout(() => {
-      document.addEventListener('mousemove', handleMouseMove);
-    }, 150);
-
-    return () => {
-      clearTimeout(delayTimer);
-      document.removeEventListener('mousemove', handleMouseMove);
-      if (frameId) cancelAnimationFrame(frameId);
-    };
-  }, [cityOpen, provinceOpen]);
-
-  const handleCityMouseEnter = () => setCityOpen(true);
-  const handleProvinceMouseEnter = () => setProvinceOpen(true);
 
   // Per-field error state
   const [fieldErrors, setFieldErrors] = useState({});
@@ -141,18 +97,21 @@ const RegisterPage = () => {
       confirmPassword &&
       contactNumber.trim() &&
       address.trim() &&
+      province &&
       city &&
+      barangay &&
       zipCode &&
       allPasswordChecksPassed &&
       password === confirmPassword
     );
-  }, [firstName, lastName, email, password, confirmPassword, contactNumber, address, city, zipCode, allPasswordChecksPassed]);
+  }, [firstName, lastName, email, password, confirmPassword, contactNumber, address, province, city, barangay, zipCode, allPasswordChecksPassed]);
 
   const handleCityChange = (e) => {
     const selectedCity = e.target.value;
     setCity(selectedCity);
+    setBarangay('');
     setZipCode(getZipCodeForLocation(province, selectedCity));
-    setFieldErrors((prev) => ({ ...prev, city: '' }));
+    setFieldErrors((prev) => ({ ...prev, city: '', barangay: '' }));
   };
 
   const { register } = useAuth();
@@ -171,8 +130,10 @@ const RegisterPage = () => {
     else if (!validateEmail(email)) errors.email  = 'Please enter a valid email address.';
     if (!contactNumber.trim())   errors.contactNumber = 'Contact number is required.';
     else if (!/^09[0-9]{9}$/.test(contactNumber)) errors.contactNumber = 'Must be an 11-digit number starting with 09.';
-    if (!address.trim())         errors.address   = 'Address is required.';
+    if (!address.trim())         errors.address   = 'Street / House address is required.';
+    if (!province)               errors.province  = 'Please select a province.';
     if (!city)                   errors.city      = 'Please select a city.';
+    if (!barangay)               errors.barangay  = 'Please select a barangay.';
     if (!password)               errors.password  = 'Password is required.';
     else if (!allPasswordChecksPassed) errors.password = 'Password does not meet all requirements.';
     if (!confirmPassword)        errors.confirmPassword = 'Please confirm your password.';
@@ -194,7 +155,8 @@ const RegisterPage = () => {
     setFieldErrors({});
     setLoading(true);
     const fullName = `${firstName} ${lastName}`.trim();
-    const result = await register(fullName, email, password, contactNumber, address, city, province, zipCode);
+    const fullAddress = barangay ? `${address.trim()}, Brgy. ${barangay}` : address.trim();
+    const result = await register(fullName, email, password, contactNumber, fullAddress, city, province, zipCode);
 
     if (result.success) {
       clearCart();
@@ -447,74 +409,73 @@ const RegisterPage = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Complete Address"
-                  required
-                  size="small"
-                  value={address}
-                  onChange={(e) => { setAddress(e.target.value); clearFieldError('address'); }}
-                  error={!!fieldErrors.address}
-                  helperText={fieldErrors.address}
-                />
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required error={!!fieldErrors.province}>
+                  <InputLabel id="province-label">Province</InputLabel>
+                  <Select
+                    labelId="province-label"
+                    value={province}
+                    onChange={(e) => {
+                      setProvince(e.target.value);
+                      setCity('');
+                      setBarangay('');
+                      setZipCode('');
+                      setFieldErrors((prev) => ({ ...prev, province: '', city: '', barangay: '' }));
+                    }}
+                    label="Province"
+                    MenuProps={{ disableScrollLock: true }}
+                  >
+                    {getAvailableProvinces().map(prov => (
+                      <MenuItem key={prov} value={prov}>{prov}</MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.province && <FormHelperText>{fieldErrors.province}</FormHelperText>}
+                </FormControl>
               </Grid>
 
-              <Grid item xs={12} sm={4}>
-                <Box ref={cityBoxRef} onMouseEnter={handleCityMouseEnter}>
-                  <FormControl fullWidth size="small" required error={!!fieldErrors.city}>
-                    <InputLabel id="city-label">City / Municipality</InputLabel>
-                    <Select
-                      labelId="city-label"
-                      value={city}
-                      onChange={handleCityChange}
-                      label="City / Municipality"
-                      open={cityOpen}
-                      onOpen={() => setCityOpen(true)}
-                      onClose={() => setCityOpen(false)}
-                      MenuProps={{
-                        disableScrollLock: true,
-                        slotProps: { backdrop: { sx: { pointerEvents: 'none' } } },
-                      }}
-                    >
-                      <MenuItem value="" disabled>Select City</MenuItem>
-                      {getLocationsForProvince(province).map(loc => (
-                        <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.city && <FormHelperText>{fieldErrors.city}</FormHelperText>}
-                  </FormControl>
-                </Box>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required error={!!fieldErrors.city} disabled={!province}>
+                  <InputLabel id="city-label">City / Municipality</InputLabel>
+                  <Select
+                    labelId="city-label"
+                    value={city}
+                    onChange={handleCityChange}
+                    label="City / Municipality"
+                    MenuProps={{ disableScrollLock: true }}
+                  >
+                    <MenuItem value="" disabled>Select City / Municipality</MenuItem>
+                    {getLocationsForProvince(province).map(loc => (
+                      <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.city && <FormHelperText>{fieldErrors.city}</FormHelperText>}
+                </FormControl>
               </Grid>
-              <Grid item xs={12} sm={4}>
-                <Box ref={provinceBoxRef} onMouseEnter={handleProvinceMouseEnter}>
-                  <FormControl fullWidth size="small" required>
-                    <InputLabel id="province-label">Province</InputLabel>
-                    <Select
-                      labelId="province-label"
-                      value={province}
-                      onChange={(e) => {
-                        setProvince(e.target.value);
-                        setCity('');
-                        setZipCode('');
-                      }}
-                      label="Province"
-                      open={provinceOpen}
-                      onOpen={() => setProvinceOpen(true)}
-                      onClose={() => setProvinceOpen(false)}
-                      MenuProps={{
-                        disableScrollLock: true,
-                        slotProps: { backdrop: { sx: { pointerEvents: 'none' } } },
-                      }}
-                    >
-                      {getAvailableProvinces().map(prov => (
-                        <MenuItem key={prov} value={prov}>{prov}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required error={!!fieldErrors.barangay} disabled={!city}>
+                  <InputLabel id="barangay-label">Barangay</InputLabel>
+                  <Select
+                    labelId="barangay-label"
+                    value={barangay}
+                    onChange={(e) => {
+                      setBarangay(e.target.value);
+                      setFieldErrors((prev) => ({ ...prev, barangay: '' }));
+                    }}
+                    label="Barangay"
+                    MenuProps={{ disableScrollLock: true }}
+                  >
+                    <MenuItem value="" disabled>Select Barangay</MenuItem>
+                    {getBarangaysForLocation(province, city).map(brgy => (
+                      <MenuItem key={brgy} value={brgy}>{brgy}</MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.barangay && <FormHelperText>{fieldErrors.barangay}</FormHelperText>}
+                </FormControl>
               </Grid>
-              <Grid item xs={12} sm={4}>
+
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Zip Code"
@@ -527,6 +488,22 @@ const RegisterPage = () => {
                     }
                   }}
                   sx={{ bgcolor: 'action.hover' }}
+                  helperText={zipCode ? "Auto-filled based on City / Municipality" : "Auto-filled"}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Street Name, Building, House No."
+                  placeholder="e.g. Unit 4B, 123 Emerald St., Phase 2"
+                  variant="outlined"
+                  size="small"
+                  required
+                  value={address}
+                  onChange={(e) => { setAddress(e.target.value); clearFieldError('address'); }}
+                  error={!!fieldErrors.address}
+                  helperText={fieldErrors.address}
                 />
               </Grid>
             </Grid>

@@ -122,6 +122,50 @@ const ShippingInfoWidget = ({
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
+                  select
+                  fullWidth
+                  label="Province"
+                  name="province"
+                  required
+                  value={formData.province || 'Cavite'}
+                  onChange={onInputChange}
+                  error={!!errors.province}
+                  helperText={errors.province}
+                >
+                  {getAvailableProvinces().map((prov) => (
+                    <MenuItem key={prov} value={prov}>
+                      {prov}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  fullWidth
+                  label="City / Municipality"
+                  name="city"
+                  required
+                  value={formData.city}
+                  onChange={onInputChange}
+                  error={!!errors.city}
+                  helperText={errors.city}
+                  disabled={!formData.province}
+                >
+                  <MenuItem value="" disabled>
+                    Select City / Municipality
+                  </MenuItem>
+                  {getLocationsForProvince(
+                    formData.province || 'Cavite'
+                  ).map((loc) => (
+                    <MenuItem key={loc.name} value={loc.name}>
+                      {loc.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
                   fullWidth
                   label="Zip Code"
                   name="zipCode"
@@ -135,15 +179,16 @@ const ShippingInfoWidget = ({
                   }}
                   sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}
                   error={!!errors.zipCode}
-                  helperText={errors.zipCode}
+                  helperText={formData.zipCode ? "Auto-filled based on City / Municipality" : (errors.zipCode || "")}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Complete Address"
+                  label="Complete Address (Street, Building, Barangay)"
                   name="address"
                   required
+                  placeholder="e.g. Unit 4B, 123 Emerald St., Brgy. San Isidro"
                   value={formData.address}
                   onChange={onInputChange}
                   error={!!errors.address}
@@ -154,49 +199,6 @@ const ShippingInfoWidget = ({
                     ),
                   }}
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  select
-                  fullWidth
-                  label="City / Municipality"
-                  name="city"
-                  required
-                  value={formData.city}
-                  onChange={onInputChange}
-                  error={!!errors.city}
-                  helperText={errors.city}
-                >
-                  <MenuItem value="" disabled>
-                    Select City
-                  </MenuItem>
-                  {getLocationsForProvince(
-                    formData.province || 'Cavite'
-                  ).map((loc) => (
-                    <MenuItem key={loc.name} value={loc.name}>
-                      {loc.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Province"
-                  name="province"
-                  required
-                  value={formData.province}
-                  disabled
-                  error={!!errors.province}
-                  helperText={errors.province}
-                >
-                  {getAvailableProvinces().map((prov) => (
-                    <MenuItem key={prov} value={prov}>
-                      {prov}
-                    </MenuItem>
-                  ))}
-                </TextField>
               </Grid>
             </Grid>
           ) : (

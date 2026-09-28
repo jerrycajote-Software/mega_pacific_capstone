@@ -43,7 +43,6 @@ import FinanceReportsPage from './pages/finance/ReportsPage';
 import LogisticLoginPage from './pages/logistic/LoginPage';
 import LogisticDashboardPage from './pages/logistic/LogisticDashboardPage';
 import LogisticDeliveriesPage from './pages/logistic/DeliveriesPage';
-import LogisticShipmentsPage from './pages/logistic/ShipmentsPage';
 import LogisticProductsPage from './pages/logistic/ProductsPage';
 
 import SuperAdminLoginPage from './pages/superadmin/LoginPage';
@@ -324,7 +323,6 @@ const App = () => {
           <Route index element={<Navigate to="/logistic/dashboard" />} />
           <Route path="dashboard" element={<LogisticDashboardPage />} />
           <Route path="deliveries" element={<LogisticDeliveriesPage />} />
-          <Route path="shipments" element={<LogisticShipmentsPage />} />
           <Route path="products" element={<LogisticProductsPage />} />
         </Route>
 

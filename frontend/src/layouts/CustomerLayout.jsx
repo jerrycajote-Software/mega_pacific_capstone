@@ -3,8 +3,6 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import CustomerHeader from '../components/CustomerHeader';
-import CustomerHeaderV2 from '../components/CustomerHeaderV2';
-import { CustomerUiProvider, useCustomerUi } from '../context/CustomerUiContext';
 import Footer from '../components/Footer';
 
 import CustomerServiceWidget from '../components/CustomerServiceWidget';
@@ -35,7 +33,6 @@ const pulseKeyframes = `
 
 const CustomerLayoutContent = () => {
   const { user, logout } = useAuth();
-  const { uiVersion } = useCustomerUi();
   const navigate = useNavigate();
   const { cartItems, cartCount, updateQuantity, removeFromCart, updateCartValidation, clearCart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -101,7 +98,7 @@ const CustomerLayoutContent = () => {
       {/* Inject pulse keyframe once */}
       <style>{pulseKeyframes}</style>
 
-      {uiVersion === 'v2' ? <CustomerHeaderV2 /> : <CustomerHeader />}
+      <CustomerHeader />
 
       {/* Main Content Area */}
       <Box
@@ -423,9 +420,7 @@ const CustomerLayoutContent = () => {
 };
 
 const CustomerLayout = () => (
-  <CustomerUiProvider>
-    <CustomerLayoutContent />
-  </CustomerUiProvider>
+  <CustomerLayoutContent />
 );
 
 export default CustomerLayout;

@@ -200,8 +200,17 @@ export const AuthProvider = ({ children }) => {
             <button 
               onClick={() => {
                 setSuspendedModal(false);
+                const role = user?.role;
+                let redirectUrl = '/login';
+                if (role === 'admin') redirectUrl = '/admin/login';
+                else if (role === 'sales') redirectUrl = '/sales/login';
+                else if (role === 'finance') redirectUrl = '/finance/login';
+                else if (role === 'logistic') redirectUrl = '/logistic/login';
+                else if (role === 'owner') redirectUrl = '/owner/login';
+                else if (role === 'superadmin' || role === 'super_admin') redirectUrl = '/superadmin/login';
+                
                 logout();
-                window.location.href = user?.role === 'customer' ? '/login' : '/admin/login';
+                window.location.href = redirectUrl;
               }}
               style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.75rem 2rem', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', width: '100%' }}
             >

@@ -7,8 +7,18 @@ const bcrypt = require("bcryptjs");
  */
 const getAccounts = async (req, res) => {
   try {
+    const rolesToInclude = ["sales", "logistic", "finance"];
+    if (req.user.role === 'owner') {
+      rolesToInclude.push('admin');
+    } else if (req.user.role === 'superadmin' || req.user.role === 'super_admin') {
+      rolesToInclude.push('admin', 'owner', 'super_admin');
+    }
+
     const saless = await prisma.user.findMany({
-      where: { role: { in: ["sales", "logistic", "finance", "admin", "owner", "super_admin"] } },
+      where: { 
+        role: { in: rolesToInclude },
+        id: { not: req.user.userId }
+      },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,

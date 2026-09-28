@@ -1,4 +1,44 @@
 const prisma = require("../../config/db");
+const { sendOrderReceiptEmail } = require("../../utils/emailService");
+
+const HARDCODED_SHIPPING_FEE = 100;
+
+// Helper to determine payment mode description and status
+const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel) => {
+  const mode = (paymentMode || '').trim();
+  const plan = paymentPlan || (mode.toLowerCase().includes('50%') || mode.toLowerCase().includes('cash on delivery') ? 'COD_50' : 'FULL_PAYMENT');
+  const channel = paymentChannel || (cardDetails && cardDetails.cardNumber ? 'Card' : gcashNumber ? 'GCash' : (mode.toLowerCase().includes('card') ? 'Card' : 'Card'));
+
+  let channelDetails = '';
+  if (channel === 'Card' || (cardDetails && cardDetails.cardNumber)) {
+    const rawNumber = (cardDetails?.cardNumber || '').replace(/\D/g, '');
+    let brand = 'Card';
+    if (/^4/.test(rawNumber)) brand = 'Visa';
+    else if (/^(5[1-5]|2[2-7])/.test(rawNumber)) brand = 'Mastercard';
+    else if (/^3[47]/.test(rawNumber)) brand = 'American Express';
+    else if (/^(?:2131|1800|35)/.test(rawNumber)) brand = 'JCB';
+
+    const last4 = rawNumber.slice(-4) || '••••';
+    channelDetails = `Bank Card (${brand} ending in ${last4})`;
+  } else if (channel === 'GCash' || gcashNumber) {
+    const cleanGcash = (gcashNumber || '').trim();
+    channelDetails = `GCash (${cleanGcash || 'Verified'})`;
+  } else {
+    channelDetails = 'Bank Transfer';
+  }
+
+  if (plan === 'COD_50') {
+    return {
+      paymentMode: `Cash on Delivery (50% Downpayment via ${channelDetails}, 50% on Delivery)`,
+      paymentStatus: '50% Downpayment Paid'
+    };
+  }
+
+  return {
+    paymentMode: `Bank Transfer - Full Payment (${channelDetails})`,
+    paymentStatus: 'paid'
+  };
+};
 
 // Create a new order from checkout
 const createOrder = async (req, res) => {
@@ -8,6 +48,10 @@ const createOrder = async (req, res) => {
     variantId,      // Optional variant selection
     quantity,
     paymentMode,
+    paymentPlan,
+    paymentChannel,
+    cardDetails,
+    gcashNumber,
     fulfillmentType,
     customerEmail,
     shippingName,
@@ -58,7 +102,17 @@ const createOrder = async (req, res) => {
       unitPrice = product.price;
     }
 
-    const total = unitPrice * parseInt(quantity);
+    const itemsTotal = unitPrice * parseInt(quantity);
+    const shippingFee = parseFloat(req.body.shippingFee) || HARDCODED_SHIPPING_FEE;
+    const total = itemsTotal + shippingFee;
+
+    const { paymentMode: finalPaymentMode, paymentStatus: finalPaymentStatus } = resolvePaymentInfo(
+      paymentMode,
+      cardDetails,
+      gcashNumber,
+      paymentPlan,
+      paymentChannel
+    );
 
     // Create order + item + deduct stock in a transaction
     const newOrder = await prisma.$transaction(async (tx) => {
@@ -67,9 +121,10 @@ const createOrder = async (req, res) => {
           userId: parseInt(userId),
           total,
           status: "pending",
-          paymentStatus: "unpaid",
-          paymentMode,
+          paymentStatus: finalPaymentStatus,
+          paymentMode: finalPaymentMode,
           fulfillmentType: fulfillmentType || "Delivery",
+          customerName: shippingName || req.body.customerName || null,
           customerEmail,
           shippingName,
           shippingContactNumber,
@@ -117,7 +172,28 @@ const createOrder = async (req, res) => {
       return order;
     });
 
-    res.status(201).json({ success: true, data: newOrder });
+    // Fetch full order for receipt email and response
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: newOrder.id },
+      include: {
+        items: {
+          include: {
+            product: { select: { id: true, name: true, type: true } },
+            variant: { select: { id: true, name: true, price: true } }
+          }
+        },
+        user: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    const targetEmail = customerEmail || fullOrder?.user?.email;
+    if (targetEmail && fullOrder) {
+      sendOrderReceiptEmail(targetEmail, fullOrder).catch((err) => {
+        console.error("[RECEIPT EMAIL DISPATCH ERROR]:", err.message);
+      });
+    }
+
+    res.status(201).json({ success: true, data: fullOrder || newOrder });
   } catch (error) {
     console.error("Failed to create order:", error);
     if (error.type === 'STOCK_ERROR') {
@@ -228,6 +304,10 @@ const createBulkOrder = async (req, res) => {
     userId,
     items, // Array of { productId, variantId, quantity }
     paymentMode,
+    paymentPlan,
+    paymentChannel,
+    cardDetails,
+    gcashNumber,
     fulfillmentType,
     customerEmail,
     shippingName,
@@ -242,6 +322,14 @@ const createBulkOrder = async (req, res) => {
   if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ success: false, error: "Order items are required" });
   }
+
+  const { paymentMode: finalPaymentMode, paymentStatus: finalPaymentStatus } = resolvePaymentInfo(
+    paymentMode,
+    cardDetails,
+    gcashNumber,
+    paymentPlan,
+    paymentChannel
+  );
 
   try {
     const newOrder = await prisma.$transaction(async (tx) => {
@@ -307,14 +395,18 @@ const createBulkOrder = async (req, res) => {
         });
       }
 
+      const shippingFee = parseFloat(req.body.shippingFee) || HARDCODED_SHIPPING_FEE;
+      const finalTotal = totalAmount + shippingFee;
+
       const order = await tx.order.create({
         data: {
           userId: parseInt(userId),
-          total: totalAmount,
+          total: finalTotal,
           status: "pending",
-          paymentStatus: "unpaid",
-          paymentMode,
+          paymentStatus: finalPaymentStatus,
+          paymentMode: finalPaymentMode,
           fulfillmentType: fulfillmentType || "Delivery",
+          customerName: shippingName || req.body.customerName || null,
           customerEmail,
           shippingName,
           shippingContactNumber,
@@ -333,7 +425,28 @@ const createBulkOrder = async (req, res) => {
       return order;
     });
 
-    res.status(201).json({ success: true, data: newOrder });
+    // Fetch full order for receipt email and response
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: newOrder.id },
+      include: {
+        items: {
+          include: {
+            product: { select: { id: true, name: true, type: true } },
+            variant: { select: { id: true, name: true, price: true } }
+          }
+        },
+        user: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    const targetEmail = customerEmail || fullOrder?.user?.email;
+    if (targetEmail && fullOrder) {
+      sendOrderReceiptEmail(targetEmail, fullOrder).catch((err) => {
+        console.error("[RECEIPT EMAIL DISPATCH ERROR]:", err.message);
+      });
+    }
+
+    res.status(201).json({ success: true, data: fullOrder || newOrder });
   } catch (error) {
     console.error("Failed to create bulk order:", error);
     if (error.type === 'STOCK_ERROR') {

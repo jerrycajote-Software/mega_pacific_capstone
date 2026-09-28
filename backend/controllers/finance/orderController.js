@@ -34,7 +34,7 @@ const getFinanceOrders = async (req, res) => {
       return {
         id: `#ORD-${o.id.toString().padStart(3, "0")}`,
         rawId: o.id,
-        customerName: o.customerName || (o.user && o.user.name) || "Unknown",
+        customerName: o.customerName || o.shippingName || "Unknown",
         customerEmail: o.customerEmail || (o.user && o.user.email) || "Unknown",
         productsSummary,
         totalQuantity: o.items.reduce((acc, item) => acc + item.quantity, 0),

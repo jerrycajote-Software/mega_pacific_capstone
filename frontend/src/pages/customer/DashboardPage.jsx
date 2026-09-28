@@ -22,15 +22,8 @@ import {
 } from '@mui/material';
 import HeroSection from '../../components/HeroSection';
 import { buildProductOptions, getDefaultOption } from './buildProductOptions';
-import { useCustomerUi } from '../../context/CustomerUiContext';
-import DashboardPageV2 from './DashboardPageV2';
 
 const DashboardPage = ({ showHero = true }) => {
-  const { uiVersion } = useCustomerUi();
-
-  if (uiVersion === 'v2') {
-    return <DashboardPageV2 showHero={showHero} />;
-  }
 
   const { t } = useTranslation();
   const navigate = useNavigate();
