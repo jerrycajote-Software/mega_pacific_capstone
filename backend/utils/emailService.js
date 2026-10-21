@@ -1,18 +1,87 @@
 const nodemailer = require("nodemailer");
 
+const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: false, // true for port 465, false for 587 (STARTTLS)
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
     user: process.env.SMTP_USER || "",
     pass: process.env.SMTP_PASS || ""
-  }
+  },
+  connectionTimeout: 10000
 });
+
+const isEmailConfigured = () => {
+  return Boolean(
+    process.env.BREVO_API_KEY ||
+    (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith("xkeysib-")) ||
+    process.env.RESEND_API_KEY ||
+    (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+  );
+};
+
+const deliverMail = async (mailOptions) => {
+  const brevoApiKey = process.env.BREVO_API_KEY ||
+    (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith("xkeysib-") ? process.env.SMTP_PASS : null);
+  const resendApiKey = process.env.RESEND_API_KEY;
+
+  if (brevoApiKey) {
+    const senderEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@megapacific.com";
+    const senderName = "Mega Pacific Metal and Steel Corp";
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "api-key": brevoApiKey,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: mailOptions.to }],
+        subject: mailOptions.subject,
+        htmlContent: mailOptions.html,
+        textContent: mailOptions.text
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`Brevo API Error (${res.status}): ${data.message || JSON.stringify(data)}`);
+    }
+    return { success: true, messageId: data.messageId };
+  }
+
+  if (resendApiKey) {
+    const sender = process.env.SMTP_FROM || "Mega Pacific <onboarding@resend.dev>";
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: sender,
+        to: [mailOptions.to],
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+        text: mailOptions.text
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`Resend API Error (${res.status}): ${data.message || JSON.stringify(data)}`);
+    }
+    return { success: true, messageId: data.id };
+  }
+
+  return await transporter.sendMail(mailOptions);
+};
 
 
 const sendOtpEmail = async (email, otp) => {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!isEmailConfigured()) {
     console.log(`\n======================================================`);
     console.log(`[EMAIL FALLBACK - Email Verification]`);
     console.log(`To: ${email}`);
@@ -43,7 +112,7 @@ const sendOtpEmail = async (email, otp) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await deliverMail(mailOptions);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Failed to send verification email:", error.message);
@@ -53,7 +122,7 @@ const sendOtpEmail = async (email, otp) => {
 
 
 const sendForgotPasswordEmail = async (email, otp) => {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!isEmailConfigured()) {
     console.log(`\n======================================================`);
     console.log(`[EMAIL FALLBACK - Password Reset]`);
     console.log(`To: ${email}`);
@@ -84,7 +153,7 @@ const sendForgotPasswordEmail = async (email, otp) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await deliverMail(mailOptions);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error("Failed to send password reset email:", error.message);
@@ -176,7 +245,7 @@ const sendOrderReceiptEmail = async (email, order) => {
 
   const totalAmount = orderTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!isEmailConfigured()) {
     console.log(`\n======================================================`);
     console.log(`[EMAIL FALLBACK - Order Receipt]`);
     console.log(`To: ${email}`);
@@ -345,7 +414,7 @@ const sendOrderReceiptEmail = async (email, order) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await deliverMail(mailOptions);
     console.log(`[EMAIL RECEIPT SUCCESS] Sent order receipt for ${orderNum} to ${email} (Message ID: ${info.messageId})`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -382,7 +451,7 @@ const sendReadyForPickupEmail = async (email, order) => {
     `;
   }).join('');
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!isEmailConfigured()) {
     console.log(`[EMAIL FALLBACK - Order Ready for Pick-up]`);
     console.log(`To: ${email}`);
     console.log(`Order: ${orderNum}`);
@@ -475,7 +544,7 @@ const sendReadyForPickupEmail = async (email, order) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await deliverMail(mailOptions);
     console.log(`[EMAIL PICKUP SUCCESS] Sent ready for pickup alert for ${orderNum} to ${email}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
@@ -504,7 +573,7 @@ const sendRefundNotificationEmail = async (email, { order, refund, transactionRe
     minute: '2-digit'
   });
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  if (!isEmailConfigured()) {
     console.log(`\n[EMAIL FALLBACK - Customer Payment Refunded]`);
     console.log(`To: ${email}`);
     console.log(`Customer: ${name}`);
@@ -609,7 +678,7 @@ const sendRefundNotificationEmail = async (email, { order, refund, transactionRe
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    const info = await deliverMail(mailOptions);
     console.log(`[EMAIL REFUND SUCCESS] Sent refund receipt for ${orderNum} (${refundNum}) to ${email}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
