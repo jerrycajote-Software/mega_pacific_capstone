@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getAvailableProvinces, getLocationsForProvince, getZipCodeForLocation, getBarangaysForLocation } from '../../utils/locationService';
+import { validateRealisticEmail } from '../../utils/emailValidator';
 import {
   Box,
   Typography,
@@ -105,16 +106,19 @@ const RegisterPage = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const validateEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
   // Validate all fields and highlight which ones are empty
   const validateForm = () => {
     const errors = {};
     if (!firstName.trim())       errors.firstName = 'First name is required.';
     if (!lastName.trim())        errors.lastName  = 'Last name is required.';
-    if (!email.trim())           errors.email     = 'Email address is required.';
-    else if (!validateEmail(email)) errors.email  = 'Please enter a valid email address.';
+    if (!email.trim()) {
+      errors.email = 'Email address is required.';
+    } else {
+      const emailCheck = validateRealisticEmail(email.trim());
+      if (!emailCheck.isValid) {
+        errors.email = emailCheck.error;
+      }
+    }
     if (!contactNumber.trim())   errors.contactNumber = 'Contact number is required.';
     else if (!/^09[0-9]{9}$/.test(contactNumber)) errors.contactNumber = 'Must be an 11-digit number starting with 09.';
     if (!address.trim())         errors.address   = 'Street / House address is required.';

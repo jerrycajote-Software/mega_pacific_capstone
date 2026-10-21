@@ -22,6 +22,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
+import { validateRealisticEmail } from '../../utils/emailValidator';
+
 const getPasswordChecks = (password) => ({
   minLength:  password.length >= 8,
   hasUpper:   /[A-Z]/.test(password),
@@ -44,10 +46,12 @@ const PasswordCheckItem = ({ passed, label }) => (
 const ResetPasswordPage = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const email     = location.state?.email || '';
+  const email     = (location.state?.email || '').trim();
 
   useEffect(() => {
-    if (!email) navigate('/forgot-password');
+    if (!email || !validateRealisticEmail(email).isValid) {
+      navigate('/forgot-password', { replace: true });
+    }
   }, [email, navigate]);
 
   const [otp, setOtp]                               = useState(['', '', '', '', '', '']);

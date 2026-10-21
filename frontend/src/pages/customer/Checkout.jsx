@@ -28,6 +28,7 @@ import {
   DialogActions,
 } from '@mui/material';
 import { fetchDeliveryFee, computeClientDeliveryFee } from '../../utils/deliveryFeeCalculator';
+import { validateRealisticEmail } from '../../utils/emailValidator';
 
 
 const Checkout = () => {
@@ -381,8 +382,14 @@ const Checkout = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.customerName.trim()) newErrors.customerName = 'Full Name is required';
-    if (!formData.customerEmail.trim()) newErrors.customerEmail = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customerEmail)) newErrors.customerEmail = 'Invalid email format';
+    if (!formData.customerEmail.trim()) {
+      newErrors.customerEmail = 'Email is required';
+    } else {
+      const emailCheck = validateRealisticEmail(formData.customerEmail.trim());
+      if (!emailCheck.isValid) {
+        newErrors.customerEmail = emailCheck.error;
+      }
+    }
 
     if (formData.fulfillmentType === 'Delivery') {
       if (!formData.contactNumber?.trim()) newErrors.contactNumber = 'Contact Number is required';

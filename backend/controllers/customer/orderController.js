@@ -1,6 +1,7 @@
 const prisma = require("../../config/db");
 const { sendOrderReceiptEmail } = require("../../utils/emailService");
 const { calculateDeliveryFee } = require("../../services/deliveryFeeService");
+const { validateRealisticEmail } = require("../../utils/emailValidator");
 
 const HARDCODED_SHIPPING_FEE = 100;
 
@@ -62,6 +63,13 @@ const createOrder = async (req, res) => {
     notes,
     color
   } = req.body;
+
+  if (customerEmail) {
+    const emailCheck = validateRealisticEmail(customerEmail);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ success: false, error: emailCheck.error });
+    }
+  }
 
   try {
     const product = await prisma.product.findUnique({
@@ -441,6 +449,13 @@ const createBulkOrder = async (req, res) => {
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ success: false, error: "Order items are required" });
+  }
+
+  if (customerEmail) {
+    const emailCheck = validateRealisticEmail(customerEmail);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ success: false, error: emailCheck.error });
+    }
   }
 
   const { paymentMode: finalPaymentMode, paymentStatus: finalPaymentStatus } = resolvePaymentInfo(

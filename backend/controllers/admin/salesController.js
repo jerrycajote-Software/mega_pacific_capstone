@@ -1,5 +1,6 @@
 const prisma = require("../../config/db");
 const bcrypt = require("bcryptjs");
+const { validateRealisticEmail } = require("../../utils/emailValidator");
 
 /**
  * GET /api/admin/sales
@@ -90,6 +91,11 @@ const createAccount = async (req, res) => {
         success: false,
         error: "Admins cannot create accounts. Staff accounts must be provisioned via Super Admin Mission Control.",
       });
+    }
+
+    const emailCheck = validateRealisticEmail(email);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ success: false, error: emailCheck.error });
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });
