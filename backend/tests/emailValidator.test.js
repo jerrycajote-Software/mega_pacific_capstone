@@ -21,7 +21,7 @@ function runEmailValidatorTests() {
   assert.strictEqual(jerrcajoteResult.isValid, false);
   assert.strictEqual(
     jerrcajoteResult.error,
-    "Please enter a complete email address including domain (e.g., name@gmail.com)."
+    "Please enter a complete email address including domain (@gmail.com)."
   );
   console.log("PASS: Unadorned username 'jerrcajote' strictly rejected with helpful guidance");
 

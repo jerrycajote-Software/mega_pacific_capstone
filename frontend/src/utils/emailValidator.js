@@ -102,7 +102,7 @@ export function validateRealisticEmail(rawEmail) {
   }
 
   if (!email.includes('@')) {
-    return { isValid: false, error: 'Please enter a complete email address including domain (e.g., name@gmail.com).' };
+    return { isValid: false, error: 'Please enter a complete email address including domain (@gmail.com).' };
   }
 
   const parts = email.split('@');
@@ -134,7 +134,7 @@ export function validateRealisticEmail(rawEmail) {
   }
 
   if (!domain) {
-    return { isValid: false, error: 'Email address is missing a domain after "@" (e.g., gmail.com).' };
+    return { isValid: false, error: 'Email address is missing a domain after "@" (gmail.com).' };
   }
 
   // Check known provider typos
