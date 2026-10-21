@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { validateRealisticEmail } from '../../utils/emailValidator';
 import {
   Box,
   Typography,
@@ -60,15 +61,20 @@ const CustomerLoginPage = () => {
     setSuccessMessage('');
 
     if (!email && !password) {
-      setError('please type your valid credentials');
+      setError('Please type your valid credentials');
       return;
     }
-    if (email && !password) {
-      setError('Please type your correct password');
-      return;
-    }
-    if (!email && password) {
+    if (!email) {
       setError('Please type your email address');
+      return;
+    }
+    const emailCheck = validateRealisticEmail(email.trim());
+    if (!emailCheck.isValid) {
+      setError(emailCheck.error);
+      return;
+    }
+    if (!password) {
+      setError('Please type your correct password');
       return;
     }
 

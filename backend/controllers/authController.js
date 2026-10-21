@@ -1,10 +1,17 @@
 const prisma = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { validateRealisticEmail } = require("../utils/emailValidator");
 
 
 const register = async (req, res) => {
   const { name, email, password, contactNumber, address, city, province, zipCode } = req.body;
+
+  const emailCheck = validateRealisticEmail(email);
+  if (!emailCheck.isValid) {
+    return res.status(400).json({ error: emailCheck.error });
+  }
+
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -93,6 +100,14 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password, otp, expectedRoles } = req.body;
+
+  if (email) {
+    const emailCheck = validateRealisticEmail(email);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ error: emailCheck.error });
+    }
+  }
+
   try {
     const user = await prisma.user.findUnique({ 
       where: { email },
@@ -405,6 +420,11 @@ const verifyOtp = async (req, res) => {
     return res.status(400).json({ error: "Email and OTP are required" });
   }
 
+  const emailCheck = validateRealisticEmail(email);
+  if (!emailCheck.isValid) {
+    return res.status(400).json({ error: emailCheck.error });
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -450,6 +470,11 @@ const resendOtp = async (req, res) => {
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ error: "Email is required" });
+  }
+
+  const emailCheck = validateRealisticEmail(email);
+  if (!emailCheck.isValid) {
+    return res.status(400).json({ error: emailCheck.error });
   }
 
   try {
@@ -502,6 +527,11 @@ const forgotPassword = async (req, res) => {
     return res.status(400).json({ error: "Email is required." });
   }
 
+  const emailCheck = validateRealisticEmail(email);
+  if (!emailCheck.isValid) {
+    return res.status(400).json({ error: emailCheck.error });
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     // Always return 200 to avoid exposing whether the email is registered
@@ -535,6 +565,11 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
+
+  const emailCheck = validateRealisticEmail(email);
+  if (!emailCheck.isValid) {
+    return res.status(400).json({ error: emailCheck.error });
+  }
 
   try {
     const user = await prisma.user.findUnique({ where: { email } });

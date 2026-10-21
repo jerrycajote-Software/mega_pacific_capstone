@@ -12,28 +12,45 @@ import {
   Paper,
 } from '@mui/material';
 
+import { validateRealisticEmail } from '../../utils/emailValidator';
+
 const ForgotPasswordPage = () => {
-  const [email, setEmail]       = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
+  const [email, setEmail]           = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
 
   const navigate = useNavigate();
+
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (emailError) setEmailError('');
+    if (error) setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setEmailError('');
 
-    if (!email.trim()) {
-      setError('Please enter your registered email address.');
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setEmailError('Please enter your registered email address.');
+      return;
+    }
+
+    const check = validateRealisticEmail(trimmed);
+    if (!check.isValid) {
+      setEmailError(check.error);
       return;
     }
 
     setLoading(true);
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
-      await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
+      await axios.post(`${API_URL}/api/auth/forgot-password`, { email: trimmed });
       // Always navigate regardless — backend returns 200 even for unknown emails (security best practice)
-      navigate('/reset-password', { state: { email } });
+      navigate('/reset-password', { state: { email: trimmed } });
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || 'Failed to send reset code. Please try again.');
@@ -136,7 +153,9 @@ const ForgotPasswordPage = () => {
               variant="outlined"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
+              error={Boolean(emailError)}
+              helperText={emailError || 'Enter your registered email (e.g., name@gmail.com)'}
               sx={{ mb: 3 }}
             />
 

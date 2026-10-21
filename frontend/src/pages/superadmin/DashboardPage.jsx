@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { io } from 'socket.io-client';
 import { toast, Toaster } from 'react-hot-toast';
 import { usePreventBackToLogin } from '../../hooks/usePreventBackToLogin';
+import { validateRealisticEmail } from '../../utils/emailValidator';
 import {
   Shield,
   ShieldCheck,
@@ -461,6 +462,11 @@ const SuperAdminDashboardPage = () => {
     e.preventDefault();
     if (!createForm.email || !createForm.password || !createForm.name) {
       setCreateError('Name, email, and password are required.');
+      return;
+    }
+    const emailCheck = validateRealisticEmail(createForm.email.trim());
+    if (!emailCheck.isValid) {
+      setCreateError(emailCheck.error);
       return;
     }
     setCreatingAccount(true);
