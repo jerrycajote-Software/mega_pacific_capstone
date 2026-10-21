@@ -24,7 +24,6 @@ const refreshCache = async () => {
   }
 };
 
-// Initial load
 refreshCache();
 
 const getStatuses = () => {

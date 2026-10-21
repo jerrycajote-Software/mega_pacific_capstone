@@ -335,7 +335,6 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* Confirmation Modal */}
       {confirmModal.isOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth: 400, padding: '2rem', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>

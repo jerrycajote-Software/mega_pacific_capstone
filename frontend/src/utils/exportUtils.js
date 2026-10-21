@@ -79,10 +79,8 @@ const applyHeaderStyles = (ws) => {
 export const exportToExcel = (orders, filename = 'Orders_Report') => {
   const formattedData = formatOrderData(orders);
   
-  // Calculate total amount for the summary row
   const totalAmountSum = orders.reduce((sum, order) => sum + (order.totalAmount || order.total || 0), 0);
   
-  // Append a Total row
   formattedData.push({
     'Order Number': 'TOTAL',
     'Customer Name': '',
@@ -100,12 +98,10 @@ export const exportToExcel = (orders, filename = 'Orders_Report') => {
 
   const wb = XLSX.utils.book_new();
 
-  // Create Orders Sheet
   const wsOrders = XLSX.utils.json_to_sheet(formattedData);
   wsOrders['!cols'] = fitToColumn(formattedData);
   applyHeaderStyles(wsOrders);
   
-  // Make the last row bold (the TOTAL row)
   const range = XLSX.utils.decode_range(wsOrders['!ref']);
   const lastRow = range.e.r;
   for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -116,7 +112,6 @@ export const exportToExcel = (orders, filename = 'Orders_Report') => {
 
   XLSX.utils.book_append_sheet(wb, wsOrders, 'Orders');
 
-  // Create Summary Sheet
   const wsSummary = XLSX.utils.aoa_to_sheet([
     ['Report Summary'],
     [],
@@ -126,7 +121,6 @@ export const exportToExcel = (orders, filename = 'Orders_Report') => {
   wsSummary['!cols'] = [{ wch: 25 }, { wch: 15 }];
   XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
 
-  // Export
   XLSX.writeFile(wb, `${filename}.xlsx`);
 };
 
@@ -134,7 +128,6 @@ export const exportToPDF = (orders, filename = 'Orders_Report') => {
   try {
     const doc = new jsPDF('landscape');
     
-    // Title
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(79, 119, 45); // match header color
@@ -143,11 +136,9 @@ export const exportToPDF = (orders, filename = 'Orders_Report') => {
     const pageWidth = doc.internal.pageSize.width || (doc.internal.pageSize.getWidth ? doc.internal.pageSize.getWidth() : 297);
     doc.text(title, pageWidth / 2, 22, { align: 'center' });
     
-    // Reset fonts
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
 
-    // Summary Table
     const summaryData = calculateSummary(orders);
     doc.autoTable({
       startY: 30,
@@ -161,10 +152,8 @@ export const exportToPDF = (orders, filename = 'Orders_Report') => {
 
     const finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY : (doc.autoTable && doc.autoTable.previous && doc.autoTable.previous.finalY) ? doc.autoTable.previous.finalY : 30;
 
-    // Orders Table
     const formattedData = formatOrderData(orders);
     
-    // Calculate total amount for the summary row
     const totalAmountSum = orders.reduce((sum, order) => sum + (order.totalAmount || order.total || 0), 0);
     formattedData.push({
       'Order Number': 'TOTAL',

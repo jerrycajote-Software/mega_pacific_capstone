@@ -18,7 +18,6 @@ import {
   TableRow,
   Tabs,
   Tab,
-  Divider
 } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -66,7 +65,6 @@ const ReportsPage = () => {
       const doc = new jsPDF();
       const summary = reportData.summary;
 
-      // Header
       doc.setFillColor(37, 99, 235);
       doc.rect(0, 0, 210, 28, 'F');
       doc.setTextColor(255, 255, 255);
@@ -77,13 +75,11 @@ const ReportsPage = () => {
       doc.setFont('helvetica', 'normal');
       doc.text('OFFICIAL FINANCIAL STATEMENT & P&L REPORT', 14, 21);
 
-      // Metadata
       doc.setTextColor(51, 65, 85);
       doc.setFontSize(9);
       doc.text(`Reporting Period: ${reportData.periodLabel}`, 14, 36);
       doc.text(`Generated: ${new Date(reportData.generatedAt).toLocaleString('en-PH')}`, 14, 42);
 
-      // Summary Table
       autoTable(doc, {
         startY: 48,
         head: [['Key Metric', 'Financial Figure']],
@@ -100,7 +96,6 @@ const ReportsPage = () => {
         styles: { fontSize: 9 }
       });
 
-      // Income Statement Breakdown Table
       const finalY = doc.lastAutoTable.finalY + 8;
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
@@ -121,7 +116,6 @@ const ReportsPage = () => {
         styles: { fontSize: 8.5 }
       });
 
-      // Footer
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -212,7 +206,6 @@ const ReportsPage = () => {
 
   return (
     <Box sx={{ p: { xs: 2.5, md: 4 }, animation: 'fadeIn 0.4s ease-in-out' }}>
-      {/* Top Header */}
       <Box
         sx={{
           display: 'flex',
@@ -239,7 +232,6 @@ const ReportsPage = () => {
           </Typography>
         </Box>
 
-        {/* Period Selector & Export Actions */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
           <TextField
             select
@@ -306,9 +298,8 @@ const ReportsPage = () => {
         </Box>
       ) : (
         <>
-          {/* Summary Metric Cards */}
           <Grid container spacing={2.5} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -317,7 +308,8 @@ const ReportsPage = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderTop: '3px solid #10B981',
-                  bgcolor: 'background.paper'
+                  bgcolor: 'background.paper',
+                  height: '100%'
                 }}
               >
                 <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -332,7 +324,7 @@ const ReportsPage = () => {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -341,7 +333,8 @@ const ReportsPage = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderTop: '3px solid #EF4444',
-                  bgcolor: 'background.paper'
+                  bgcolor: 'background.paper',
+                  height: '100%'
                 }}
               >
                 <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -356,7 +349,7 @@ const ReportsPage = () => {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -365,7 +358,8 @@ const ReportsPage = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderTop: '3px solid #2563EB',
-                  bgcolor: 'background.paper'
+                  bgcolor: 'background.paper',
+                  height: '100%'
                 }}
               >
                 <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -380,7 +374,7 @@ const ReportsPage = () => {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -389,7 +383,8 @@ const ReportsPage = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderTop: '3px solid #F59E0B',
-                  bgcolor: 'background.paper'
+                  bgcolor: 'background.paper',
+                  height: '100%'
                 }}
               >
                 <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -405,7 +400,6 @@ const ReportsPage = () => {
             </Grid>
           </Grid>
 
-          {/* Detailed Statement Table Container */}
           <Paper
             elevation={0}
             sx={{
@@ -434,7 +428,6 @@ const ReportsPage = () => {
               </Tabs>
             </Box>
 
-            {/* TAB 0: INCOME STATEMENT */}
             {activeTab === 0 && (
               <TableContainer>
                 <Table>
@@ -499,11 +492,10 @@ const ReportsPage = () => {
               </TableContainer>
             )}
 
-            {/* TAB 1: EXPENSES BY CATEGORY */}
             {activeTab === 1 && (
               <Box sx={{ p: 3 }}>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2 }}>
                       Category Disbursements Summary
                     </Typography>
@@ -533,7 +525,7 @@ const ReportsPage = () => {
                     </Stack>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2 }}>
                       Recent Expense Records
                     </Typography>
@@ -562,7 +554,6 @@ const ReportsPage = () => {
               </Box>
             )}
 
-            {/* TAB 2: ORDER SETTLEMENT LEDGER */}
             {activeTab === 2 && (
               <TableContainer>
                 <Table>

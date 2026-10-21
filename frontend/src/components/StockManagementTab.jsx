@@ -7,15 +7,13 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Tooltip,
-  IconButton
+  IconButton,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import HistoryIcon from '@mui/icons-material/History';
 import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 
@@ -193,18 +191,15 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   
-  // Stock Addition state: key is `p-${productId}` or `v-${variantId}`
-  // value: { addedQty: number, reason: string }
+  // key: `p-${productId}` or `v-${variantId}`, value: { addedQty: number, reason: string }
   const [stockInputs, setStockInputs] = useState({});
   const [submittingKey, setSubmittingKey] = useState(null);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ type: '', message: '' });
 
-  // Audit Logs State
   const [logs, setLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
 
-  // Fetch logs when log tab opens
   useEffect(() => {
     if (subTab === 'logs') {
       fetchLogs();
@@ -265,7 +260,6 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
 
       if (res.data.success) {
         setAlertInfo({ type: 'success', message: `Successfully added +${qty} units to stock!` });
-        // Clear input for this item
         setStockInputs(prev => {
           const next = { ...prev };
           delete next[itemKey];
@@ -290,7 +284,6 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
         const isVariant = key.startsWith('v-');
         const id = parseInt(key.replace(/^[pv]-/, ''));
         if (isVariant) {
-          // Find product ID for this variant
           let pId = null;
           products.forEach(p => {
             if (p.variants?.some(v => v.id === id)) {
@@ -383,12 +376,10 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
     }
   });
 
-  // Calculate count of modified bulk items
   const modifiedCount = Object.keys(stockInputs).filter(k => parseInt(stockInputs[k]?.addedQty) > 0).length;
 
   return (
     <Box style={S.container}>
-      {/* Top Header Bar & Sub-Tab Controls */}
       <Box style={S.headerBar}>
         <Box style={S.titleGroup}>
           <Box style={S.titleIcon}>
@@ -424,10 +415,8 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
         </Alert>
       )}
 
-      {/* SUB-TAB 1: STOCK IN / RESTOCK */}
       {subTab === 'restock' && (
         <>
-          {/* Controls Bar */}
           <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <Box style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, flexWrap: 'wrap' }}>
               <Box style={S.searchBar}>
@@ -468,7 +457,6 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
             )}
           </Box>
 
-          {/* Bulk Restock Action Banner */}
           {modifiedCount > 0 && (
             <Box style={S.bulkBanner}>
               <Box style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -498,7 +486,6 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
             </Box>
           )}
 
-          {/* Items Stock Table */}
           <Paper style={S.tableCard}>
             <table style={S.table}>
               <thead>
@@ -612,7 +599,6 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
         </>
       )}
 
-      {/* SUB-TAB 2: RESTOCK AUDIT LOGS */}
       {subTab === 'logs' && (
         <Paper style={S.tableCard}>
           <Box style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

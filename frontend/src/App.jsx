@@ -1,11 +1,10 @@
 import React, { Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth, parseJwt } from './context/AuthContext';
 import axios from 'axios';
 import io from 'socket.io-client';
 import MaintenancePage from './pages/MaintenancePage';
-
+import { getDashboardForRole, LOGIN_ROUTES } from './hooks/usePreventBackToLogin';
 
 import AdminLayout from './layouts/AdminLayout';
 import CustomerLayout from './layouts/CustomerLayout';
@@ -30,7 +29,7 @@ import AdminSettingsPage from './pages/admin/SettingsPage';
 import SalesLoginPage from './pages/sales/LoginPage';
 import SalesDashboard from './pages/sales/DashboardPage';
 import SalesOrders from './pages/sales/OrderManagement';
-import SalesInventory from './pages/sales/InventoryPage';
+import SalesPreOrderProducts from './pages/sales/PreOrderProductsPage';
 import SalesCustomerService from './pages/sales/CustomerService';
 import SalesReviews from './pages/sales/ReviewManagement';
 
@@ -38,6 +37,7 @@ import FinanceLoginPage from './pages/finance/LoginPage';
 import FinanceDashboardPage from './pages/finance/FinanceDashboardPage';
 import FinanceExpensesPage from './pages/finance/ExpensesPage';
 import FinancePaymentsPage from './pages/finance/PaymentsPage';
+import FinanceRefundsPage from './pages/finance/RefundsPage';
 import FinanceReportsPage from './pages/finance/ReportsPage';
 
 import LogisticLoginPage from './pages/logistic/LoginPage';
@@ -63,7 +63,6 @@ import ProfilePage from './pages/customer/ProfilePage';
 
 const RoofDesignerPage = React.lazy(() => import('./pages/customer/roof-designer/RoofDesignerPage'));
 
-
 const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
   const { token, user, loading } = useAuth();
 
@@ -76,30 +75,20 @@ const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
   }
 
   if (!token) {
-    return <Navigate to={redirectTo} />;
+    return <Navigate to={redirectTo} replace />;
   }
 
+  let role = user?.role;
+  if (!role && token) {
+    const decoded = parseJwt(token);
+    role = decoded?.role;
+  }
 
-  if (requiredRole && user?.role !== requiredRole) {
-    if (user?.role === 'admin') {
-      return <Navigate to="/admin/dashboard" replace />;
+  if (requiredRole) {
+    const isSuperAdminMatch = (requiredRole === 'superadmin' || requiredRole === 'admin') && (role === 'superadmin' || role === 'super_admin');
+    if (role !== requiredRole && !isSuperAdminMatch) {
+      return <Navigate to={getDashboardForRole(role)} replace />;
     }
-    if (user?.role === 'owner') {
-      return <Navigate to="/owner/dashboard" replace />;
-    }
-    if (user?.role === 'sales') {
-      return <Navigate to="/sales/dashboard" replace />;
-    }
-    if (user?.role === 'finance') {
-      return <Navigate to="/finance/dashboard" replace />;
-    }
-    if (user?.role === 'logistic') {
-      return <Navigate to="/logistic/dashboard" replace />;
-    }
-    if (user?.role === 'superadmin') {
-      return <Navigate to="/superadmin/dashboard" replace />;
-    }
-    return <Navigate to={redirectTo} replace />;
   }
 
   return children;
@@ -117,25 +106,12 @@ const GuestRoute = ({ children }) => {
   }
 
   if (token) {
-    if (user?.role === 'admin') {
-      return <Navigate to="/admin/dashboard" replace />;
+    let role = user?.role;
+    if (!role && token) {
+      const decoded = parseJwt(token);
+      role = decoded?.role;
     }
-    if (user?.role === 'owner') {
-      return <Navigate to="/owner/dashboard" replace />;
-    }
-    if (user?.role === 'sales') {
-      return <Navigate to="/sales/dashboard" replace />;
-    }
-    if (user?.role === 'finance') {
-      return <Navigate to="/finance/dashboard" replace />;
-    }
-    if (user?.role === 'logistic') {
-      return <Navigate to="/logistic/dashboard" replace />;
-    }
-    if (user?.role === 'superadmin') {
-      return <Navigate to="/superadmin/dashboard" replace />;
-    }
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDashboardForRole(role)} replace />;
   }
 
   return children;
@@ -186,6 +162,43 @@ const App = () => {
     };
   }, []);
 
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (!token) return;
+
+    const checkAndRedirectLoginRoute = () => {
+      const currentPath = window.location.pathname;
+      if (LOGIN_ROUTES.includes(currentPath)) {
+        let role = user?.role;
+        if (!role && token) {
+          const decoded = parseJwt(token);
+          role = decoded?.role;
+        }
+        navigate(getDashboardForRole(role), { replace: true });
+      }
+    };
+
+    checkAndRedirectLoginRoute();
+
+    const handlePopState = () => {
+      checkAndRedirectLoginRoute();
+    };
+
+    const handlePageShow = (e) => {
+      if (e.persisted) {
+        checkAndRedirectLoginRoute();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('pageshow', handlePageShow);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, [token, user?.role, navigate]);
+
   if (authLoading || systemLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
@@ -195,8 +208,7 @@ const App = () => {
   }
 
   return (
-    <CartProvider userId={user?.id} token={token}>
-      <Routes>
+    <Routes>
        
         <Route path="/register" element={
           systemStatuses.customer_portal_status === 'offline' ? <MaintenancePage /> : <GuestRoute><RegisterPage /></GuestRoute>
@@ -216,7 +228,7 @@ const App = () => {
             </ProtectedRoute>
           )
         }>
-          <Route index element={<Navigate to="/dashboard" />} />
+          <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<CustomerDashboardPage showHero={true} />} />
           <Route path="products" element={<CustomerDashboardPage showHero={false} />} />
           <Route path="product/:id" element={<ProductDetails />} />
@@ -248,14 +260,13 @@ const App = () => {
           systemStatuses.admin_portal_status === 'offline' ? <MaintenancePage /> : <GuestRoute><AdminLoginPage /></GuestRoute>
         } />
         
-        {/* Owner routes */}
         <Route path="/owner/login" element={<GuestRoute><OwnerLoginPage /></GuestRoute>} />
         <Route path="/owner" element={
           <ProtectedRoute redirectTo="/owner/login" requiredRole="owner">
             <OwnerLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Navigate to="/owner/dashboard" />} />
+          <Route index element={<Navigate to="/owner/dashboard" replace />} />
           <Route path="dashboard" element={<OwnerDashboardPage />} />
         </Route>
 
@@ -266,7 +277,7 @@ const App = () => {
             </ProtectedRoute>
           )
         }>
-          <Route index element={<Navigate to="/admin/dashboard" />} />
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="inventory" element={<ProductManagement />} />
           <Route path="orders" element={<OrderManagement />} />
@@ -280,7 +291,6 @@ const App = () => {
         <Route path="/employee/login" element={<Navigate to="/sales/login" replace />} />
         <Route path="/employee/*" element={<Navigate to="/sales" replace />} />
 
-        {/* Sales routes */}
         <Route path="/sales/login" element={
           systemStatuses.sales_portal_status === 'offline' ? <MaintenancePage /> : <GuestRoute><SalesLoginPage /></GuestRoute>
         } />
@@ -291,42 +301,41 @@ const App = () => {
             </ProtectedRoute>
           )
         }>
-          <Route index element={<Navigate to="/sales/dashboard" />} />
+          <Route index element={<Navigate to="/sales/dashboard" replace />} />
           <Route path="dashboard" element={<SalesDashboard />} />
+          <Route path="pre-order-products" element={<SalesPreOrderProducts />} />
           <Route path="orders" element={<SalesOrders />} />
-          <Route path="inventory" element={<SalesInventory />} />
+          <Route path="inventory" element={<Navigate to="/sales/pre-order-products" replace />} />
           <Route path="reviews" element={<SalesReviews />} />
           <Route path="customer-service" element={<SalesCustomerService />} />
         </Route>
 
-        {/* Finance routes */}
         <Route path="/finance/login" element={<GuestRoute><FinanceLoginPage /></GuestRoute>} />
         <Route path="/finance" element={
           <ProtectedRoute redirectTo="/finance/login" requiredRole="finance">
             <FinanceLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Navigate to="/finance/dashboard" />} />
+          <Route index element={<Navigate to="/finance/dashboard" replace />} />
           <Route path="dashboard" element={<FinanceDashboardPage />} />
           <Route path="expenses" element={<FinanceExpensesPage />} />
           <Route path="payments" element={<FinancePaymentsPage />} />
+          <Route path="refunds" element={<FinanceRefundsPage />} />
           <Route path="reports" element={<FinanceReportsPage />} />
         </Route>
 
-        {/* Logistic routes */}
         <Route path="/logistic/login" element={<GuestRoute><LogisticLoginPage /></GuestRoute>} />
         <Route path="/logistic" element={
           <ProtectedRoute redirectTo="/logistic/login" requiredRole="logistic">
             <LogisticLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Navigate to="/logistic/dashboard" />} />
+          <Route index element={<Navigate to="/logistic/dashboard" replace />} />
           <Route path="dashboard" element={<LogisticDashboardPage />} />
           <Route path="deliveries" element={<LogisticDeliveriesPage />} />
           <Route path="products" element={<LogisticProductsPage />} />
         </Route>
 
-        {/* Super Admin routes */}
         <Route path="/superadmin/login" element={<GuestRoute><SuperAdminLoginPage /></GuestRoute>} />
         <Route path="/superadmin/dashboard" element={
           <ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin">
@@ -337,7 +346,6 @@ const App = () => {
        
         <Route path="*" element={<div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">404 - Page Not Found</div>} />
       </Routes>
-    </CartProvider>
   );
 };
 

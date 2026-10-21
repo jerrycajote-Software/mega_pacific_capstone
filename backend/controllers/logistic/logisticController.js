@@ -2,7 +2,6 @@ const prisma = require('../../config/db');
 
 const getDashboardData = async (req, res) => {
   try {
-    // KPI Data
     const readyToShip = await prisma.order.count({
       where: { status: 'processing', fulfillmentType: 'Delivery' },
     });
@@ -21,19 +20,28 @@ const getDashboardData = async (req, res) => {
     });
 
     const pendingPickups = await prisma.order.count({
-      where: { status: 'processing', fulfillmentType: 'Pickup' },
+      where: {
+        status: { in: ['processing', 'finance_verified', 'ready_for_pickup'] },
+        fulfillmentType: 'Pickup'
+      },
     });
 
-    // Recent deliveries
+    const readyForPickupCount = await prisma.order.count({
+      where: { status: 'ready_for_pickup', fulfillmentType: 'Pickup' },
+    });
+
     const recentOrders = await prisma.order.findMany({
       take: 8,
-      where: { fulfillmentType: 'Delivery' },
+      where: {
+        status: { in: ['finance_verified', 'processing', 'shipped', 'out_for_delivery', 'ready_for_pickup', 'completed', 'delivered'] }
+      },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         createdAt: true,
         statusUpdatedAt: true,
         status: true,
+        fulfillmentType: true,
         customerName: true,
         shippingAddress: true,
         shippingName: true
@@ -41,14 +49,15 @@ const getDashboardData = async (req, res) => {
     });
 
     const recentDeliveries = recentOrders.map(o => ({
-      id: `#ORD-${o.id.toString().padStart(3, '0')}`,
+      id: `#ORD-${o.id.toString().padStart(4, '0')}`,
+      rawId: o.id,
       customer: o.shippingName || o.customerName || 'Customer',
-      address: o.shippingAddress || 'Store Pickup',
+      address: o.fulfillmentType === 'Pickup' ? 'Plant Store Pick-up' : (o.shippingAddress || 'Jobsite Delivery'),
+      fulfillmentType: o.fulfillmentType || 'Delivery',
       status: o.status,
       date: (o.statusUpdatedAt || o.createdAt).toISOString().split('T')[0]
     }));
 
-    // Total deliveries and pickups count
     const totalDeliveries = await prisma.order.count({
       where: { fulfillmentType: 'Delivery' }
     });
@@ -94,13 +103,11 @@ const getDashboardData = async (req, res) => {
 
     const fulfillmentTrend = Object.values(trendMap);
 
-    // Fulfillment distribution
     const fulfillmentDistribution = [
       { name: 'Standard Delivery', value: totalDeliveries || 1, count: totalDeliveries, color: '#2563EB' },
       { name: 'Store Pickup', value: totalPickups || 1, count: totalPickups, color: '#8B5CF6' }
     ];
 
-    // Dynamic operational alerts
     const alerts = [];
     if (readyToShip > 0) {
       alerts.push({
@@ -147,6 +154,7 @@ const getDashboardData = async (req, res) => {
           outForDelivery,
           completedToday,
           pendingPickups,
+          readyForPickup: readyForPickupCount,
           totalDeliveries,
           totalPickups,
           onTimeRate: '98.8%'

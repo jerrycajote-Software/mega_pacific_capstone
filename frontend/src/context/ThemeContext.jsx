@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom';
 
 const ThemeContext = createContext();
 
-// Color Tokens 
 const getTypography = (isCustomerRoute) => {
   const defaultFont = '"Inter", "Roboto", "Helvetica", "Arial", sans-serif';
   const headingFont = isCustomerRoute ? '"Inter", sans-serif' : '"Poppins", sans-serif';
@@ -104,7 +103,6 @@ const buildTheme = (mode, isCustomerRoute) =>
     },
   });
 
-// ─── Provider ──────────────────────────────────────────────────────────────
 export const ThemeProvider = ({ children }) => {
   const location = useLocation();
   const isCustomerRoute = !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/sales');

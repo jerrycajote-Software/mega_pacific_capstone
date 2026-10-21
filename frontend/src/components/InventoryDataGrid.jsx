@@ -45,7 +45,6 @@ const InventoryDataGrid = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRows, setExpandedRows] = useState({});
 
-  // Prepare rows with computed values
   const rows = useMemo(() => {
     if (!products || !Array.isArray(products)) return [];
     
@@ -85,6 +84,8 @@ const InventoryDataGrid = ({
         type: product.type || '',
         unit: product.unit || '',
         price: product.price || 0,
+        originalPrice: product.originalPrice ?? (product.price ? Math.round((product.price / 0.7) * 100) / 100 : 0),
+        discountPercent: product.discountPercent ?? 30,
         stock: product.stock || 0,
         imageUrl: product.imageUrl || '',
         imageUrls: product.imageUrls || [],
@@ -102,10 +103,8 @@ const InventoryDataGrid = ({
     });
   }, [products]);
 
-  // Apply filters and search
   const filteredRows = useMemo(() => {
     return rows.filter(row => {
-      // Filter by status
       let passesFilter = true;
       if (filter === 'in_stock') {
         passesFilter = row.status === 'in_stock';
@@ -115,7 +114,6 @@ const InventoryDataGrid = ({
         passesFilter = row.status === 'low_stock';
       }
 
-      // Apply search
       let passesSearch = true;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -133,9 +131,6 @@ const InventoryDataGrid = ({
     return row.variants && row.variants.length > 0;
   };
 
-  const handleExpandedRowsChange = (newExpandedRows) => {
-    setExpandedRows(newExpandedRows);
-  };
 
   const columns = useMemo(() => {
     const baseColumns = [
@@ -239,14 +234,45 @@ const InventoryDataGrid = ({
       {
         field: 'price',
         headerName: 'Price',
-        minWidth: 80,
-        flex: 0.7,
+        minWidth: 120,
+        flex: 1,
         type: 'number',
-        renderCell: (params) => (
-          <Box sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-            ₱{Number(params.row.price || 0).toLocaleString()}
-          </Box>
-        ),
+        renderCell: (params) => {
+          const sellingPrice = Number(params.row.price || 0);
+          const origPrice = Number(params.row.originalPrice || 0);
+          const hasDiscount = origPrice > sellingPrice;
+          const discountPct = params.row.discountPercent || 30;
+
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#16a34a' }}>
+                  ₱{sellingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </Typography>
+                {hasDiscount && (
+                  <Chip
+                    label={`-${discountPct}%`}
+                    size="small"
+                    sx={{
+                      height: 18,
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      bgcolor: 'rgba(239,68,68,0.1)',
+                      color: '#dc2626',
+                      borderRadius: 1,
+                      px: 0.25,
+                    }}
+                  />
+                )}
+              </Box>
+              {hasDiscount && (
+                <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.72rem' }}>
+                  ₱{origPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </Typography>
+              )}
+            </Box>
+          );
+        },
       },
       {
         field: 'totalStock',
@@ -361,7 +387,6 @@ const InventoryDataGrid = ({
       },
     ];
 
-    // Adjust columns for small screens
     if (isSmallScreen) {
       return baseColumns.filter((col) =>
         ['expand', 'image', 'price', 'totalStock', 'status', 'actions'].includes(col.field)
@@ -432,76 +457,6 @@ const InventoryDataGrid = ({
     </GridToolbarContainer>
   );
 
-  const getDetailPanelContent = ({ row }) => {
-    if (!hasVariants(row)) return null;
-    
-    return (
-      <Box sx={{ p: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-          Variants ({row.variants.length})
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {row.variants.map((variant, index) => {
-            let variantStatusColor = 'success';
-            let variantStatusLabel = 'Available';
-            if (variant.stock === 0) {
-              variantStatusColor = 'error';
-              variantStatusLabel = 'Out of Stock';
-            } else if (variant.stock <= 10) {
-              variantStatusColor = 'warning';
-              variantStatusLabel = 'Low Stock';
-            }
-            
-            return (
-              <Box 
-                key={variant.id || index} 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 2, 
-                  p: 1.5, 
-                  border: 1, 
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  bgcolor: 'background.default'
-                }}
-              >
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {variant.name || 'Variant'}
-                  </Typography>
-                </Box>
-                <Box sx={{ minWidth: 80, textAlign: 'center' }}>
-                  <Typography variant="body2">{row.unit}</Typography>
-                </Box>
-                <Box sx={{ minWidth: 100, textAlign: 'center' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    ₱{Number(variant.price || 0).toLocaleString()}
-                  </Typography>
-                </Box>
-                <Box sx={{ minWidth: 80, textAlign: 'center' }}>
-                  <Chip 
-                    label={variant.stock} 
-                    size="small" 
-                    color={variantStatusColor}
-                    variant="filled"
-                  />
-                </Box>
-                <Box sx={{ minWidth: 100, textAlign: 'center' }}>
-                  <Chip 
-                    label={variantStatusLabel} 
-                    size="small" 
-                    color={variantStatusColor}
-                    variant="outlined"
-                  />
-                </Box>
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
-    );
-  };
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -532,7 +487,6 @@ const InventoryDataGrid = ({
           },
         }}
       />
-      {/* Render expanded variants manually for free version */}
       <Box sx={{ mt: 2 }}>
         {Object.keys(expandedRows).map((rowId) => {
           const row = filteredRows.find((r) => String(r.id) === String(rowId));

@@ -10,7 +10,6 @@ const {
   deleteAccount,
 } = require("../../controllers/admin/salesController");
 
-// All account management routes are admin-only
 router.get("/", verifyAdmin, getAccounts);
 router.post("/", verifyAdmin, createAccount);
 router.put("/:id", verifyAdmin, updateAccount);

@@ -2,8 +2,8 @@ const prisma = require("../../config/db");
 const bcrypt = require("bcryptjs");
 
 /**
- * GET /api/admin/saless
- * List all saless
+ * GET /api/admin/sales
+ * List staff accounts
  */
 const getAccounts = async (req, res) => {
   try {
@@ -58,46 +58,57 @@ const getAccounts = async (req, res) => {
     });
     res.status(200).json({ success: true, data: flattenedSaless });
   } catch (error) {
-    console.error("Failed to fetch saless:", error);
-    res.status(500).json({ success: false, error: "Failed to fetch saless" });
+    console.error("Failed to fetch staff accounts:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch accounts" });
   }
 };
 
 /**
- * POST /api/admin/saless
+ * POST /api/admin/sales
  * Create a new account (admin sets password)
  */
 const createAccount = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role, name, status, contactNumber } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, error: "Email and password are required." });
     }
 
-    const assignedRole = ["sales", "logistic", "finance", "admin", "owner", "super_admin", "superadmin"].includes(role) ? role : "sales";
-
-    // Enforce role restrictions
-    const currentUserRole = req.user.role;
-    if (currentUserRole === 'admin' && ['admin', 'owner', 'super_admin', 'superadmin'].includes(assignedRole)) {
-      return res.status(403).json({ success: false, error: "Admins cannot create accounts with this role." });
+    if (role === "super_admin" || role === "superadmin") {
+      return res.status(403).json({
+        success: false,
+        error: "Super Admin accounts are reserved exclusively for system developers and cannot be provisioned.",
+      });
     }
 
-    // Check for existing email
+    let assignedRole = ["sales", "logistic", "finance", "admin", "owner"].includes(role) ? role : "sales";
+
+    const currentUserRole = req.user.role;
+    if (currentUserRole === 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: "Admins cannot create accounts. Staff accounts must be provisioned via Super Admin Mission Control.",
+      });
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return res.status(409).json({ success: false, error: "An account with this email already exists." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const generatedName = email.split('@')[0];
+    const accountName = (name && name.trim()) || email.split('@')[0];
+    const isSuperOrOwner = currentUserRole === 'super_admin' || currentUserRole === 'superadmin' || currentUserRole === 'owner';
+    const initialStatus = isSuperOrOwner ? (status || "active") : "pending";
 
     const account = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         role: assignedRole,
-        status: "pending",
+        status: initialStatus,
+        isEmailVerified: isSuperOrOwner ? true : false,
       },
       select: {
         id: true,
@@ -108,7 +119,11 @@ const createAccount = async (req, res) => {
       },
     });
 
-    const profileData = { userId: account.id, name: generatedName };
+    const profileData = { 
+      userId: account.id, 
+      name: accountName,
+      contactNumber: contactNumber || null 
+    };
     switch(assignedRole) {
       case "admin": await prisma.adminProfile.create({ data: profileData }); break;
       case "logistic": await prisma.logisticProfile.create({ data: profileData }); break;
@@ -118,7 +133,14 @@ const createAccount = async (req, res) => {
       case "super_admin": await prisma.superAdminProfile.create({ data: profileData }); break;
     }
 
-    res.status(201).json({ success: true, data: { ...account, name: generatedName } });
+    res.status(201).json({ 
+      success: true, 
+      data: { 
+        ...account, 
+        name: accountName,
+        contactNumber: contactNumber || null 
+      } 
+    });
   } catch (error) {
     console.error("Failed to create account:", error);
     res.status(500).json({ success: false, error: "Failed to create account" });
@@ -126,7 +148,7 @@ const createAccount = async (req, res) => {
 };
 
 /**
- * PUT /api/admin/saless/:id
+ * PUT /api/admin/sales/:id
  * Update account info (name, contact, status)
  */
 const updateAccount = async (req, res) => {
@@ -148,7 +170,6 @@ const updateAccount = async (req, res) => {
       },
     });
 
-    // Update profile depending on role
     const profileUpdate = {};
     if (name) profileUpdate.name = name;
     if (contactNumber !== undefined) profileUpdate.contactNumber = contactNumber;
@@ -171,8 +192,8 @@ const updateAccount = async (req, res) => {
 };
 
 /**
- * PATCH /api/admin/saless/:id/reset-password
- * Admin resets sales password
+ * PATCH /api/admin/sales/:id/reset-password
+ * Admin resets staff password
  */
 const resetAccountPassword = async (req, res) => {
   try {
@@ -187,7 +208,6 @@ const resetAccountPassword = async (req, res) => {
       return res.status(400).json({ success: false, error: "Password must be at least 6 characters." });
     }
 
-    // 1. Verify admin password
     const adminUser = await prisma.user.findUnique({ where: { id: req.user.userId } });
     if (!adminUser) {
       return res.status(404).json({ success: false, error: "Admin user not found." });
@@ -222,8 +242,8 @@ const resetAccountPassword = async (req, res) => {
 };
 
 /**
- * PATCH /api/admin/saless/:id/status
- * Activate or deactivate an sales
+ * PATCH /api/admin/sales/:id/status
+ * Activate or deactivate an account
  */
 const updateAccountStatus = async (req, res) => {
   try {
@@ -232,6 +252,14 @@ const updateAccountStatus = async (req, res) => {
 
     if (!["active", "suspended"].includes(status)) {
       return res.status(400).json({ success: false, error: "Invalid status. Use 'active' or 'suspended'." });
+    }
+
+    const targetUser = await prisma.user.findUnique({ where: { id: parseInt(id) } });
+    if (!targetUser) {
+      return res.status(404).json({ success: false, error: "Account not found." });
+    }
+    if ((targetUser.role === 'super_admin' || targetUser.role === 'superadmin') && status === 'suspended') {
+      return res.status(403).json({ success: false, error: "Developer Super Admin accounts cannot be suspended." });
     }
 
     if (status === 'active') {
@@ -260,7 +288,7 @@ const updateAccountStatus = async (req, res) => {
 };
 
 /**
- * DELETE /api/admin/saless/:id
+ * DELETE /api/admin/sales/:id
  * Reject/Delete an account
  */
 const deleteAccount = async (req, res) => {
@@ -276,6 +304,14 @@ const deleteAccount = async (req, res) => {
     const isMatch = await bcrypt.compare(adminPassword, admin.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, error: "Invalid Super Admin password." });
+    }
+
+    const targetUser = await prisma.user.findUnique({ where: { id: parseInt(id) } });
+    if (!targetUser) {
+      return res.status(404).json({ success: false, error: "Account not found." });
+    }
+    if (targetUser.role === 'super_admin' || targetUser.role === 'superadmin') {
+      return res.status(403).json({ success: false, error: "Developer Super Admin accounts cannot be deleted." });
     }
 
     // Delete the user; cascading deletes should handle profiles if configured correctly,

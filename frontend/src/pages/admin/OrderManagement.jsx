@@ -8,7 +8,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
@@ -22,6 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { exportToExcel, exportToPDF } from '../../utils/exportUtils';
 import DownloadIcon from '@mui/icons-material/Download';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { generateReceiptPDF } from '../../utils/documentGenerator';
 
 const th = {
   padding: '1rem 1.25rem',
@@ -108,7 +108,7 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
-    // Auto-refresh every 30s so saless see automated status changes in near-real-time
+    // Auto-refresh every 30s so sales see automated status changes in near-real-time
     const autoRefresh = setInterval(() => fetchOrders(), 30 * 1000);
     return () => clearInterval(autoRefresh);
   }, []);
@@ -144,27 +144,6 @@ const OrderManagement = () => {
     }
   };
 
-  const handleUpdateDeliveryDate = async () => {
-    if (!selectedOrder || !deliveryDate) return;
-    try {
-      setIsUpdating(true);
-      const token = localStorage.getItem('appToken');
-      const API_URL = import.meta.env.VITE_API_URL || '';
-
-      const res = await axios.patch(`${API_URL}/api/admin/orders/${selectedOrder.rawId}/status`, { estimatedDeliveryDate: deliveryDate }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.data.success) {
-        await fetchOrders();
-        setSelectedOrder(prev => ({ ...prev, estimatedDeliveryDate: deliveryDate }));
-      }
-    } catch (err) {
-      console.error('Failed to update delivery date', err);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
   const openModal = (order) => {
     setSelectedOrder(order);
@@ -395,7 +374,14 @@ const OrderManagement = () => {
                         <VisibilityIcon sx={{ fontSize: 16 }} />
                       </button>
 
-                      {/* Action Shortcuts */}
+                      <button
+                        style={{ background: 'rgba(79,119,45,0.15)', border: 'none', padding: '6px', borderRadius: 6, color: '#4ade80', cursor: 'pointer' }}
+                        onClick={() => generateReceiptPDF(order)}
+                        title="Download Official Receipt (PDF)"
+                      >
+                        <i className="fi fi-rr-receipt" style={{ fontSize: 14 }} />
+                      </button>
+
                       {/* {order.orderStatus === 'pending' && (
                         <button
                           onClick={() => handleUpdateStatus(order.rawId, 'shipped')}
@@ -483,12 +469,33 @@ const OrderManagement = () => {
                   Placed on {new Date(selectedOrder.dateOrdered).toLocaleString()}
                 </p>
               </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-2 text-text-muted hover:text-text-primary bg-bg-tertiary hover:bg-bg-primary rounded-full transition-colors"
-              >
-                <CloseIcon sx={{ fontSize: 20 }} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button
+                  onClick={() => generateReceiptPDF(selectedOrder)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    border: '1px solid rgba(74, 222, 128, 0.4)',
+                    background: 'rgba(79, 119, 45, 0.15)',
+                    color: '#4ade80',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                  title="Download Official Receipt (PDF)"
+                >
+                  <i className="fi fi-rr-receipt" style={{ fontSize: 14 }} /> Official Receipt (PDF)
+                </button>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-2 text-text-muted hover:text-text-primary bg-bg-tertiary hover:bg-bg-primary rounded-full transition-colors"
+                >
+                  <CloseIcon sx={{ fontSize: 20 }} />
+                </button>
+              </div>
             </div>
 
            
@@ -576,7 +583,7 @@ const OrderManagement = () => {
                     <CalendarTodayIcon sx={{ fontSize: 16 }} /> Estimated Delivery
                   </h4>
                   {isSales ? (
-                    // Saless: delivery date is fully automated — display only
+                    // Sales: delivery date is fully automated — display only
                     <div className="flex flex-col gap-2">
                       {selectedOrder.estimatedDeliveryDate ? (
                         <p className="text-sm text-text-primary font-medium">
@@ -588,7 +595,6 @@ const OrderManagement = () => {
                       <p className="text-xs text-amber-500/80 italic mt-1">Delivery date is managed automatically by the system.</p>
                     </div>
                   ) : (
-                    // Admin: view-only
                     <div className="flex flex-col gap-3">
                       <input
                         type="date"
@@ -600,7 +606,7 @@ const OrderManagement = () => {
                       />
                       {(isAdmin || !EstimatedDeliveryValidator.canEditDate(selectedOrder.orderStatus)) && (
                         <p className="text-xs text-amber-500/80 italic">
-                          {isAdmin ? 'Delivery date can only be modified by Saless.' : `Delivery date locked because the order is ${selectedOrder.orderStatus.replace(/_/g, ' ')}.`}
+                          {isAdmin ? 'Delivery date can only be modified by Sales.' : `Delivery date locked because the order is ${selectedOrder.orderStatus.replace(/_/g, ' ')}.`}
                         </p>
                       )}
                     </div>
@@ -649,7 +655,7 @@ const OrderManagement = () => {
                     )}
                     {(isAdmin || ['delivered', 'cancelled', 'completed'].includes(selectedOrder.orderStatus.toLowerCase())) && (
                       <p className="text-xs text-text-muted italic text-center py-2">
-                        {isAdmin ? 'Status updates can only be modified by Saless.' : 'No further status updates available.'}
+                        {isAdmin ? 'Status updates can only be modified by Sales.' : 'No further status updates available.'}
                       </p>
                     )}
                   </div>

@@ -14,7 +14,7 @@ const runDeliveryScheduler = async () => {
     const activeOrders = await prisma.order.findMany({
       where: {
         status: {
-          notIn: ["delivered", "completed", "cancelled"]
+          notIn: ["delivered", "completed", "cancelled", "rejected"]
         },
         estimatedDeliveryDate: {
           not: null
@@ -29,7 +29,6 @@ const runDeliveryScheduler = async () => {
 
     const beforeCount = activeOrders.map(o => ({ id: o.id, date: o.estimatedDeliveryDate?.toISOString() }));
     
-    // Run the extension logic
     await checkAndExtendDeliveryDates(activeOrders);
     
     console.log(`[Delivery Scheduler] Checked ${activeOrders.length} orders for updates.`);
@@ -38,9 +37,7 @@ const runDeliveryScheduler = async () => {
   }
 };
 
-// Initialize the scheduler
 const initDeliveryScheduler = () => {
-  // Run on startup
   runDeliveryScheduler();
 
   // Run every 12 hours

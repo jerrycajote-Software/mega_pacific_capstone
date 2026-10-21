@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import MapIcon from '@mui/icons-material/Map';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
-import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import { io } from 'socket.io-client';
 import { Snackbar, Alert } from '@mui/material';
+import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
-  { name: 'Dashboard',  path: '/logistic/dashboard',  icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Deliveries', path: '/logistic/deliveries', icon: <LocalShippingIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Products',   path: '/logistic/products',   icon: <Inventory2Icon sx={{ fontSize: 18 }} /> },
+  { name: 'Dashboard',       path: '/logistic/dashboard',   icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Deliveries',      path: '/logistic/deliveries',  icon: <LocalShippingIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Coil Inventory',  path: '/logistic/products',    icon: <Inventory2Icon sx={{ fontSize: 18 }} /> },
 ];
 
 const LogisticLayout = () => {
+  usePreventBackToLogin();
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
@@ -54,7 +54,6 @@ const LogisticLayout = () => {
 
       <aside className="admin-sidebar">
 
-        {/* User info */}
         <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid var(--border-light)' }}>
           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontWeight: 600 }}>
             Logistics
@@ -112,7 +111,6 @@ const LogisticLayout = () => {
 
       <div className="admin-main">
 
-        {/* Floating top bar */}
         <header className="admin-topbar">
           <Link to="/logistic/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
@@ -129,7 +127,6 @@ const LogisticLayout = () => {
           </div>
         </header>
 
-        {/* Page content */}
         <div className="admin-content">
           <Outlet />
         </div>
@@ -140,7 +137,7 @@ const LogisticLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/logistic/login');
+            navigate('/logistic/login', { replace: true });
           }}
         />
       )}

@@ -16,7 +16,14 @@ import {
   Button,
   Tabs,
   Tab,
-  LinearProgress
+  LinearProgress,
+  TextField,
+  InputAdornment,
+  FormControlLabel,
+  Switch,
+  Collapse,
+  Avatar,
+  Divider
 } from '@mui/material';
 import {
   AreaChart,
@@ -81,6 +88,49 @@ const FinanceDashboardPage = () => {
     recentActivity: []
   });
 
+  const [deliverySettings, setDeliverySettings] = useState({
+    dieselPrice: 105.00,
+    adminCostPct: 20.0,
+    includeDepreciation: true,
+    plantOrigin: 'Mega Pacific Imus Plant (Imus, Cavite)'
+  });
+  const [savingDelivery, setSavingDelivery] = useState(false);
+  const [showVehicleRatesModal, setShowVehicleRatesModal] = useState(false);
+
+  const fetchDeliverySettings = async () => {
+    try {
+      const token = localStorage.getItem('appToken');
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.get(`${API_URL}/api/finance/delivery-settings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success && res.data.data) {
+        setDeliverySettings(res.data.data);
+      }
+    } catch (err) {
+      console.warn('Failed to load delivery settings:', err.message);
+    }
+  };
+
+  const handleSaveDeliverySettings = async () => {
+    setSavingDelivery(true);
+    try {
+      const token = localStorage.getItem('appToken');
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.put(`${API_URL}/api/finance/delivery-settings`, deliverySettings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        toast.success('Delivery and fuel rates updated successfully!');
+      }
+    } catch (err) {
+      console.error('Failed to update delivery settings:', err);
+      toast.error('Failed to save delivery settings');
+    } finally {
+      setSavingDelivery(false);
+    }
+  };
+
   const fetchDashboardData = async (isManual = false) => {
     if (isManual) setRefreshing(true);
     try {
@@ -104,6 +154,7 @@ const FinanceDashboardPage = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchDeliverySettings();
   }, []);
 
   const filteredActivity = useMemo(() => {
@@ -165,7 +216,6 @@ const FinanceDashboardPage = () => {
 
   return (
     <Box sx={{ p: { xs: 2.5, md: 4 }, animation: 'fadeIn 0.4s ease-in-out' }}>
-      {/* Header with Title and Action Tools */}
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 4 }}>
         <Box>
           <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
@@ -193,10 +243,9 @@ const FinanceDashboardPage = () => {
         </Stack>
       </Box>
 
-      {/* KPI Cards */}
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
         {kpis.map((kpi, idx) => (
-          <Grid item xs={12} sm={6} md={3} key={idx}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
             <Paper
               elevation={0}
               sx={{
@@ -205,6 +254,10 @@ const FinanceDashboardPage = () => {
                 border: '1px solid',
                 borderColor: 'divider',
                 bgcolor: 'background.paper',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
                 transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   transform: 'translateY(-3px)',
@@ -254,10 +307,177 @@ const FinanceDashboardPage = () => {
         ))}
       </Grid>
 
-      {/* Interactive Charts Row */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          mb: 4,
+          borderRadius: 3.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          boxShadow: '0 4px 20px -8px rgba(0,0,0,0.05)'
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2, mb: 3 }}>
+          <Box>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Avatar sx={{ bgcolor: 'primary.main', width: 38, height: 38, borderRadius: 2.5 }}>
+                <i className="fi fi-rr-gas-pump" style={{ fontSize: 18, color: '#fff' }} />
+              </Avatar>
+              <Box>
+                <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em' }}>
+                  Delivery Fee & Fuel Rate Controls
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Origin: <strong>Mega Pacific Imus Plant</strong> • Live formula parameters for all customer orders
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setShowVehicleRatesModal(!showVehicleRatesModal)}
+              startIcon={<i className="fi fi-rr-truck-side" style={{ fontSize: 13 }} />}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
+            >
+              {showVehicleRatesModal ? 'Hide Vehicle Matrix' : 'View Vehicle Matrix'}
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSaveDeliverySettings}
+              disabled={savingDelivery}
+              startIcon={savingDelivery ? <CircularProgress size={14} color="inherit" /> : <i className="fi fi-rr-disk" style={{ fontSize: 13 }} />}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, px: 2.5, bgcolor: 'primary.main' }}
+            >
+              {savingDelivery ? 'Saving...' : 'Save Settings'}
+            </Button>
+          </Stack>
+        </Box>
+
+        <Grid container spacing={2.5} alignItems="center">
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Current Diesel Price (DP)"
+              value={deliverySettings.dieselPrice}
+              onChange={(e) => setDeliverySettings(prev => ({ ...prev, dieselPrice: e.target.value }))}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">₱</InputAdornment>,
+                endAdornment: <InputAdornment position="end">/ Liter</InputAdornment>
+              }}
+              helperText="Gas station unit price (Guidelines: ₱105.00)"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Admin Cost / PMS Rate"
+              value={deliverySettings.adminCostPct}
+              onChange={(e) => setDeliverySettings(prev => ({ ...prev, adminCostPct: e.target.value }))}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">%</InputAdornment>
+              }}
+              helperText="Operation cost & PMS (Guidelines: 20%)"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              size="small"
+              disabled
+              label="Manufacturing Plant Origin"
+              value={deliverySettings.plantOrigin}
+              InputProps={{
+                startAdornment: <InputAdornment position="start"><i className="fi fi-rr-marker" style={{ fontSize: 13 }} /></InputAdornment>
+              }}
+              helperText="Origin for CALABARZON route calculations"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={deliverySettings.includeDepreciation}
+                  onChange={(e) => setDeliverySettings(prev => ({ ...prev, includeDepreciation: e.target.checked }))}
+                  color="primary"
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>Vehicle Depreciation</Typography>
+                  <Typography variant="caption" color="text.secondary">Include in base subtotal</Typography>
+                </Box>
+              }
+            />
+          </Grid>
+        </Grid>
+
+        <Collapse in={showVehicleRatesModal} timeout="auto" unmountOnExit>
+          <Divider sx={{ my: 2.5 }} />
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <i className="fi fi-rr-info" style={{ color: '#2563EB', fontSize: 14 }} />
+            Delivery Fleet Rate Reference Table (from Guidelines)
+          </Typography>
+          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
+            <Table size="small">
+              <TableHead sx={{ bgcolor: 'grey.50' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Truck Type</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Fuel Economy (KL)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Manpower (TM)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Bed Load Capacity</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Top Load Capacity & Surcharge (TLA)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Depreciation (VD)</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody sx={{ fontSize: '0.75rem' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Elf 6-Wheeler</TableCell>
+                  <TableCell>7 km/L</TableCell>
+                  <TableCell>₱1,900.00</TableCell>
+                  <TableCell>Up to 6m, 5 mt</TableCell>
+                  <TableCell>7–9m: ₱1,000 | 9.01–12m: ₱2,000 (Max 4 mt)</TableCell>
+                  <TableCell>₱2,000.00</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Forward 6-Wheeler</TableCell>
+                  <TableCell>5 km/L</TableCell>
+                  <TableCell>₱2,100.00</TableCell>
+                  <TableCell>Up to 8m, 8 mt</TableCell>
+                  <TableCell>9.01–13m: ₱2,000 | 13.1–16m: ₱3,000 (Max 4 mt)</TableCell>
+                  <TableCell>₱3,000.00</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>10-Wheeler Drop-side</TableCell>
+                  <TableCell>3 km/L</TableCell>
+                  <TableCell>₱2,200.00</TableCell>
+                  <TableCell>Up to 9m, 25 mt</TableCell>
+                  <TableCell>10–15m: ₱4,000 | 16–21m: ₱6,000 (Max 2.5 mt)</TableCell>
+                  <TableCell>₱6,000.00</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Tractor Head w/ Trailer</TableCell>
+                  <TableCell>2 km/L</TableCell>
+                  <TableCell>₱3,600.00</TableCell>
+                  <TableCell>Up to 12m, 40 mt</TableCell>
+                  <TableCell>Case-to-case / Heavy Rigging: ₱8,000</TableCell>
+                  <TableCell>₱12,000.00</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Collapse>
+      </Paper>
+
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Revenue vs Expenses Area Chart */}
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Paper
             elevation={0}
             sx={{
@@ -345,8 +565,7 @@ const FinanceDashboardPage = () => {
           </Paper>
         </Grid>
 
-        {/* Payment Methods Breakdown (Donut Chart) */}
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Paper
             elevation={0}
             sx={{
@@ -423,10 +642,8 @@ const FinanceDashboardPage = () => {
         </Grid>
       </Grid>
 
-      {/* Bottom Grid: Recent Activity & Expense Allocation */}
       <Grid container spacing={3}>
-        {/* Recent Financial Activity Table */}
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Paper
             elevation={0}
             sx={{
@@ -547,8 +764,7 @@ const FinanceDashboardPage = () => {
           </Paper>
         </Grid>
 
-        {/* Expense Category Allocations */}
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Paper
             elevation={0}
             sx={{

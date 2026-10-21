@@ -97,8 +97,20 @@ const LoginPage = () => {
   const [otp, setOtp]           = useState('');
   const [msg, setMsg]           = useState('');
 
-  const { login, logout }  = useAuth();
-  const navigate   = useNavigate();
+  const { login, logout, token, user } = useAuth();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (token) {
+      if (user?.role === 'logistic') {
+        navigate('/logistic/dashboard', { replace: true });
+      }
+    }
+  }, [token, user, navigate]);
+
+  if (token && user?.role === 'logistic') {
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

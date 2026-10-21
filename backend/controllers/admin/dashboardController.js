@@ -5,14 +5,19 @@ const getDashboardStats = async (req, res) => {
     
     const totalUsers = await prisma.user.count({ where: { role: "customer" } });
     const totalProducts = await prisma.product.count();
-    const totalOrders = await prisma.order.count();
+    const totalOrders = await prisma.order.count({
+      where: { status: { notIn: ["cancelled", "rejected"] } }
+    });
     
     const completedOrders = await prisma.order.findMany({
-      where: { status: { not: "cancelled" } },
+      where: {
+        status: { notIn: ["cancelled", "rejected"] },
+        paymentStatus: { not: "refunded" }
+      },
       select: { total: true, createdAt: true }
     });
     
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
 
     
     const recentOrdersData = await prisma.order.findMany({
@@ -79,6 +84,12 @@ const getDashboardStats = async (req, res) => {
     
     const topSelling = await prisma.orderItem.groupBy({
       by: ['productId'],
+      where: {
+        order: {
+          status: { notIn: ["cancelled", "rejected"] },
+          paymentStatus: { not: "refunded" }
+        }
+      },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
       take: 4
@@ -89,7 +100,16 @@ const getDashboardStats = async (req, res) => {
       if (!ts.productId) continue;
       const prod = await prisma.product.findUnique({
         where: { id: ts.productId },
-        include: { orderItems: true } 
+        include: {
+          orderItems: {
+            where: {
+              order: {
+                status: { notIn: ["cancelled", "rejected"] },
+                paymentStatus: { not: "refunded" }
+              }
+            }
+          }
+        } 
       });
       if (prod) {
         

@@ -4,7 +4,6 @@ import {
   Grid,
   Typography,
   TextField,
-  Button,
   MenuItem,
   Divider,
   Avatar,
@@ -32,7 +31,6 @@ const ShippingInfoWidget = ({
 
   return (
     <Box>
-      {/* ── Header ── */}
       <Box
         sx={{
           display: 'flex',
@@ -56,19 +54,16 @@ const ShippingInfoWidget = ({
             Shipping Information
           </Typography>
         </Box>
-
-
       </Box>
 
       <Divider sx={{ mb: 3 }} />
 
-      {/* ── Content ── */}
       <Fade in timeout={300}>
         <Box>
           {showAddressForm ? (
-            /* ── Editable Form ── */
+            /* Editable Form */
             <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Full Name"
@@ -85,7 +80,7 @@ const ShippingInfoWidget = ({
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Email Address"
@@ -103,7 +98,7 @@ const ShippingInfoWidget = ({
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Contact Number"
@@ -120,7 +115,7 @@ const ShippingInfoWidget = ({
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   select
                   fullWidth
@@ -139,7 +134,7 @@ const ShippingInfoWidget = ({
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   select
                   fullWidth
@@ -164,7 +159,7 @@ const ShippingInfoWidget = ({
                   ))}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Zip Code"
@@ -182,7 +177,7 @@ const ShippingInfoWidget = ({
                   helperText={formData.zipCode ? "Auto-filled based on City / Municipality" : (errors.zipCode || "")}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Complete Address (Street, Building, Barangay)"
@@ -202,7 +197,7 @@ const ShippingInfoWidget = ({
               </Grid>
             </Grid>
           ) : (
-            /* ── Read-Only Summary Card ── */
+            /* Read-Only Summary Card */
             <Box>
               {addresses.length > 1 && (
                 <Box sx={{ mb: 3 }}>

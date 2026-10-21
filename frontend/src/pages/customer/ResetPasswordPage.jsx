@@ -15,19 +15,12 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
+  Paper,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-
-
-const BRAND_FEATURES = [
-  'Premium quality roofing & steel materials',
-  'Fast and reliable order processing',
-  'Trusted by thousands of contractors',
-  'Secure and seamless checkout',
-];
 
 const getPasswordChecks = (password) => ({
   minLength:  password.length >= 8,
@@ -53,7 +46,6 @@ const ResetPasswordPage = () => {
   const location  = useLocation();
   const email     = location.state?.email || '';
 
-  // Redirect if no email in state
   useEffect(() => {
     if (!email) navigate('/forgot-password');
   }, [email, navigate]);
@@ -74,7 +66,6 @@ const ResetPasswordPage = () => {
   const otpComplete             = otp.every((d) => d !== '');
   const canSubmit               = otpComplete && allPasswordChecksPassed && newPassword === confirmPassword;
 
-  // ─── OTP input handlers ───────────────────────────────────────────────────
   const handleOtpChange = (element, index) => {
     const val = element.value;
     if (isNaN(val)) return;
@@ -107,7 +98,6 @@ const ResetPasswordPage = () => {
     }
   };
 
-  // ─── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -145,80 +135,62 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: 'background.default' }}>
-
-      {/* ─── Left Decorative Panel (md+) ─────────────────────── */}
-      <Box
-        sx={{
-          display: { xs: 'none', md: 'flex' },
-          width: '45%',
-          flexShrink: 0,
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          px: 6,
-          py: 8,
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(145deg, #31572c 0%, #4f772d 40%, #6b9840 75%, #90a955 100%)',
-        }}
-      >
-        <Box sx={{ position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.06)' }} />
-        <Box sx={{ position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.05)' }} />
-        <Box sx={{ position: 'absolute', top: '40%', right: 40, width: 100, height: 100, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.08)' }} />
-
-        <Box sx={{ mb: 4, position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 36, letterSpacing: '0.05em', lineHeight: 1 }}>
-            <Typography component="span" sx={{ color: '#ecf39e' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: '#ffffff' }}>PACIFIC</Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        px: { xs: 2.5, sm: 4 },
+        py: { xs: 4, sm: 6 },
+      }}
+    >
+      <Box sx={{ width: '100%', maxWidth: 460 }}>
+        <Box sx={{ textAlign: 'center', mb: 3.5 }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'Arial, sans-serif',
+              fontWeight: 900,
+              fontSize: { xs: 28, sm: 32 },
+              letterSpacing: '0.05em',
+              lineHeight: 1,
+              mb: 0.5,
+            }}
+          >
+            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px', fontWeight: 800, letterSpacing: '0.25em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '0.22em',
+              fontFamily: 'Arial, sans-serif',
+            }}
+          >
             METAL AND STEEL CORP
           </Typography>
         </Box>
 
-        <Typography variant="h4" fontWeight={700} sx={{ color: '#ffffff', mb: 1.5, lineHeight: 1.3, position: 'relative', zIndex: 1 }}>
-          Create Your<br />New Password
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.75)', mb: 5, maxWidth: 340, lineHeight: 1.8, position: 'relative', zIndex: 1 }}>
-          Enter the code sent to your email and choose a strong new password for your account.
-        </Typography>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
-          {BRAND_FEATURES.map((feat, i) => (
-            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <i className="fi fi-sr-check-circle" style={{ color: '#ecf39e', fontSize: '18px', flexShrink: 0 }}></i>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-                {feat}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      {/* ─── Right: Reset Form ────────────────────────────────── */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 3, sm: 6, md: 8 },
-          py: 6,
-          overflowY: 'auto',
-        }}
-      >
-        <Box sx={{ width: '100%', maxWidth: 440 }}>
-
-          {/* Mobile logo */}
-          <Box sx={{ textAlign: 'center', mb: 4, display: { xs: 'block', md: 'none' } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 28, letterSpacing: '0.05em', lineHeight: 1, mb: 0.5 }}>
-              <Typography component="span" sx={{ color: 'primary.main' }}>MEGA</Typography>
-              <Typography component="span" sx={{ color: 'secondary.main' }}>PACIFIC</Typography>
-            </Box>
-          </Box>
-
-          {/* Icon */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, sm: 4.5 },
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '0 12px 36px rgba(0,0,0,0.45)'
+                : '0 12px 36px rgba(15,23,42,0.06)',
+          }}
+        >
           <Box
             sx={{
               width: 52,
@@ -235,11 +207,11 @@ const ResetPasswordPage = () => {
             <i className="fi fi-rr-lock" style={{ color: '#ffffff', fontSize: '24px' }}></i>
           </Box>
 
-          <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
+          <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Reset password
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
-            Enter the 6-digit code sent to <strong>{email}</strong>, then set your new password.
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
+            Enter the 6-digit code sent to <strong>{email}</strong>, then set your new password. Your new password must be different from your previous password.
           </Typography>
 
           {error && (
@@ -249,11 +221,10 @@ const ResetPasswordPage = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
-            {/* OTP boxes */}
             <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mb: 1.5 }}>
               Verification Code
             </Typography>
-            <Stack direction="row" spacing={1.5} justifyContent="space-between" sx={{ mb: 3 }} onPaste={handleOtpPaste}>
+            <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} justifyContent="space-between" sx={{ mb: 3 }} onPaste={handleOtpPaste}>
               {otp.map((data, index) => (
                 <Box
                   key={index}
@@ -265,8 +236,8 @@ const ResetPasswordPage = () => {
                   onChange={(e) => handleOtpChange(e.target, index)}
                   onKeyDown={(e) => handleOtpKeyDown(e, index)}
                   sx={{
-                    width: { xs: 42, sm: 54 },
-                    height: { xs: 48, sm: 60 },
+                    width: { xs: 38, sm: 54 },
+                    height: { xs: 46, sm: 60 },
                     borderRadius: 2,
                     border: '1px solid',
                     borderColor: 'divider',
@@ -286,7 +257,6 @@ const ResetPasswordPage = () => {
               ))}
             </Stack>
 
-            {/* New password */}
             <TextField
               fullWidth
               label="New Password"
@@ -303,14 +273,13 @@ const ResetPasswordPage = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton onClick={() => setShowPassword(!showPassword)} onMouseDown={(e) => e.preventDefault()} edge="end" size="small">
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        {showPassword ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }
               }}
             />
-            {/* Real-time password checklist */}
             {newPassword.length > 0 && (
               <Box sx={{ mb: 2, pl: 0.5, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
                 <PasswordCheckItem passed={passwordChecks.minLength}  label="At least 8 characters" />
@@ -339,7 +308,7 @@ const ResetPasswordPage = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} onMouseDown={(e) => e.preventDefault()} edge="end" size="small">
-                        {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        {showConfirmPassword ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -360,7 +329,7 @@ const ResetPasswordPage = () => {
             </Button>
           </Box>
 
-          <Box textAlign="center">
+          <Box textAlign="center" sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Remembered your password?{' '}
               <Link component={RouterLink} to="/login" color="primary" fontWeight={700} underline="hover">
@@ -368,10 +337,9 @@ const ResetPasswordPage = () => {
               </Link>
             </Typography>
           </Box>
-        </Box>
+        </Paper>
       </Box>
 
-      {/* ─── Password Updated Successfully Dialog ─────────────── */}
       <Dialog
         open={successDialogOpen}
         maxWidth="xs"

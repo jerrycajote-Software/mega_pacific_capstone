@@ -10,13 +10,13 @@
  *   Step 4: Decking (Sheathing)
  *   Step 5: Eave Flashing (Drip Edge)
  *   Step 6: Underlayment
- *   Step 7: Rake & Valley Flashing
- *   Step 8: Battens (Purlins)
- *   Step 9: Hermosa Roof Tile — only after ALL steps 1-8 are complete
+ *   Step 7: Battens (Purlins)
+ *   Step 8: Hermosa Roof Tile — installed after steps 1–7
+ *   Step 9: Rake & Valley Flashing — LAST step, applied after the roof tile
  */
 
 export const ROOF_MATERIALS = [
-  // ── Step 1 ─────────────────────────────────────────────────────────
+  // Step 1
   {
     id: 'top_plate',
     step: 1,
@@ -32,7 +32,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0], // TODO: Adjust these coordinates to fit the house
   },
 
-  // ── Step 2 ─────────────────────────────────────────────────────────
+  // Step 2
   {
     id: 'roof_truss',
     step: 2,
@@ -48,7 +48,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // ── Step 3 ─────────────────────────────────────────────────────────
+  // Step 3
   {
     id: 'fascia_board',
     step: 3,
@@ -64,7 +64,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // ── Step 4 ─────────────────────────────────────────────────────────
+  // Step 4
   {
     id: 'roof_decking',
     step: 4,
@@ -80,7 +80,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // ── Step 5 ─────────────────────────────────────────────────────────
+  // Step 5
   {
     id: 'eave_flashing',
     step: 5,
@@ -96,7 +96,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // ── Step 6 ─────────────────────────────────────────────────────────
+  // Step 6
   {
     id: 'underlayment',
     step: 6,
@@ -112,26 +112,10 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // ── Step 7 ─────────────────────────────────────────────────────────
-  {
-    id: 'rake_valley_flashing',
-    step: 7,
-    name: 'Rake & Valley Flashing',
-    description: 'Metal strips installed at rake edges and roof valleys over the underlayment',
-    stepHint: 'Protects edges and valleys',
-    modelPath: '/models/accessories/Rake_and_Valley_Flashing.glb',
-    category: 'flashing',
-    unitPrice: 320,
-    unit: 'per meter',
-    defaultQty: 12,
-    icon: 'fi-rr-arrows-alt-v',
-    offset: [0, 0, 0],
-  },
-
-  // ── Step 8 ─────────────────────────────────────────────────────────
+  // Step 7
   {
     id: 'purlins',
-    step: 8,
+    step: 7,
     name: 'Battens (Purlins)',
     description: 'Horizontal strips nailed over the underlayment — tiles hook onto these for attachment',
     stepHint: 'Horizontal strips for tile attachment',
@@ -144,20 +128,37 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // ── Step 9 (ROOF) — requires ALL steps 1–8 ────────────────────────
+  // Step 8 — installed after steps 1–7
   {
     id: 'hermosa_tile',
-    step: 9,
+    step: 8,
     name: 'Hermosa Roof Tile',
-    description: 'Premium clay-look roof tile — can only be installed after all supporting layers are in place',
-    stepHint: 'Final roof covering',
+    description: 'Premium clay-look roof tile — installed after all supporting layers are in place',
+    stepHint: 'Roof covering — add one tile at a time',
     modelPath: '/models/roof/Hermosa_Tile.glb',
     category: 'roofing',
     unitPrice: 85,
     unit: 'per piece',
-    defaultQty: 120,
+    defaultQty: 1,
+    installByPcs: true,
     icon: 'fi-rr-home',
-    isRoof: true,
+    offset: [0, 0, 0],
+  },
+
+  // Step 9 (LAST) — applied over the installed roof tile
+  {
+    id: 'rake_valley_flashing',
+    step: 9,
+    name: 'Rake & Valley Flashing',
+    description: 'Metal strips applied at rake edges and roof valleys after the roof tile is installed — the final finishing step',
+    stepHint: 'Final finishing step — seals edges & valleys',
+    modelPath: '/models/accessories/Rake_and_Valley_Flashing.glb',
+    category: 'flashing',
+    unitPrice: 320,
+    unit: 'per meter',
+    defaultQty: 12,
+    icon: 'fi-rr-arrows-alt-v',
+    isLastStep: true,
     offset: [0, 0, 0],
   },
 ];
@@ -171,6 +172,24 @@ export const CATEGORY_LABELS = {
 };
 
 /**
+ * Available roof tile color options.
+ * Each entry has a display name and a hex color value.
+ * The first entry is the default (natural clay).
+ */
+export const ROOF_COLORS = [
+  { id: 'clay_red',      name: 'Clay Red',      hex: '#C0522A' },
+  { id: 'terracotta',    name: 'Terracotta',    hex: '#B85C38' },
+  { id: 'tuscan_brown',  name: 'Tuscan Brown',  hex: '#7A4020' },
+  { id: 'spanish_red',   name: 'Spanish Red',   hex: '#9B1B30' },
+  { id: 'sandstone',     name: 'Sandstone',     hex: '#C2A47E' },
+  { id: 'slate_gray',    name: 'Slate Gray',    hex: '#6B7F8A' },
+  { id: 'charcoal',      name: 'Charcoal',      hex: '#36454F' },
+  { id: 'forest_green',  name: 'Forest Green',  hex: '#2E6B3E' },
+  { id: 'dark_bronze',   name: 'Dark Bronze',   hex: '#5C3D1E' },
+  { id: 'pearl_white',   name: 'Pearl White',   hex: '#E8E0D4' },
+];
+
+/**
  * Correct construction sequence for tile roofing.
  * Each part can only be installed after ALL previous parts in this list.
  * The roof tile (step 9) additionally requires every step 1-8.
@@ -182,7 +201,7 @@ export const INSTALL_ORDER = [
   'roof_decking',         // Step 4
   'eave_flashing',        // Step 5
   'underlayment',         // Step 6
-  'rake_valley_flashing', // Step 7
-  'purlins',              // Step 8
-  'hermosa_tile',         // Step 9 (roof — only after all above)
+  'purlins',              // Step 7
+  'hermosa_tile',         // Step 8 (roof tile — after steps 1–7)
+  'rake_valley_flashing', // Step 9 (LAST — applied after the roof tile)
 ];

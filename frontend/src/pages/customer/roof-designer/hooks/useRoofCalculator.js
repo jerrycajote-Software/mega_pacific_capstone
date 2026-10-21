@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { ROOF_MATERIALS, INSTALL_ORDER } from '../data/roofPricingData';
+import { ROOF_MATERIALS, INSTALL_ORDER, ROOF_COLORS } from '../data/roofPricingData';
 
 /**
  * Custom hook for the sequential Roof Builder.
@@ -9,15 +9,14 @@ import { ROOF_MATERIALS, INSTALL_ORDER } from '../data/roofPricingData';
  *   2. The house model must be loaded FIRST (step 0)
  *   3. Materials can only be installed in construction order (step 1 → 9)
  *   4. A step is only available if ALL previous steps are installed
- *   5. The roof tile (step 9) is only available after steps 1–8 are ALL done
+ *   5. The roof tile (step 8) is only available after steps 1–7 are ALL done
  *   6. Removing a part also removes every part installed AFTER it (cascade)
  *   7. Quantities are adjustable on installed parts
+ *   8. Parts with installByPcs:true are installed one piece at a time via addOnePc()
  */
 const useRoofCalculator = () => {
-  // Whether the house base model is loaded
   const [houseLoaded, setHouseLoaded] = useState(false);
 
-  // Set of installed material IDs
   const [installedIds, setInstalledIds] = useState(new Set());
 
   // Quantity overrides (id → qty); defaults come from ROOF_MATERIALS
@@ -26,6 +25,9 @@ const useRoofCalculator = () => {
     ROOF_MATERIALS.forEach((m) => { map[m.id] = m.defaultQty; });
     return map;
   });
+
+  // Active roof tile color (hex string); defaults to first palette entry
+  const [tileColor, setTileColor] = useState(ROOF_COLORS[0].hex);
 
   /** Load the house model (step 0) */
   const loadHouse = useCallback(() => {
@@ -72,7 +74,6 @@ const useRoofCalculator = () => {
 
     setInstalledIds((prev) => {
       const next = new Set(prev);
-      // Remove this part and everything after it
       for (let i = idx; i < INSTALL_ORDER.length; i++) {
         next.delete(INSTALL_ORDER[i]);
       }
@@ -85,6 +86,37 @@ const useRoofCalculator = () => {
     const clamped = Math.max(1, Math.round(qty));
     setQuantities((prev) => ({ ...prev, [id]: clamped }));
   }, []);
+
+  /**
+   * Install one piece of an installByPcs material.
+   * - First call: marks the material as installed with qty = 1.
+   * - Subsequent calls: increments qty by 1 each time.
+   * Prerequisites (canInstall) must be met before the first piece can be added.
+   */
+  const addOnePc = useCallback((id) => {
+    if (installedIds.has(id)) {
+      // Already installed — just increment qty
+      setQuantities((prev) => ({ ...prev, [id]: (prev[id] || 1) + 1 }));
+    } else {
+      // First piece — install it and set qty to 1
+      if (!canInstall(id)) return;
+      setQuantities((prev) => ({ ...prev, [id]: 1 }));
+      setInstalledIds((prev) => new Set([...prev, id]));
+    }
+  }, [installedIds, canInstall]);
+
+  /**
+   * Remove one piece from an installByPcs material.
+   * If qty reaches 0, fully uninstalls it (with cascade).
+   */
+  const removeOnePc = useCallback((id) => {
+    const current = quantities[id] || 1;
+    if (current <= 1) {
+      removePart(id);
+    } else {
+      setQuantities((prev) => ({ ...prev, [id]: current - 1 }));
+    }
+  }, [quantities, removePart]);
 
   /** Reset everything to initial empty state */
   const resetAll = useCallback(() => {
@@ -106,14 +138,12 @@ const useRoofCalculator = () => {
       const isInstalled = installedIds.has(id);
       const qty = quantities[id] || material.defaultQty;
 
-      // Determine availability status
       let status; // 'locked' | 'available' | 'installed'
       if (isInstalled) {
         status = 'installed';
       } else if (!houseLoaded) {
         status = 'locked';
       } else {
-        // Check if all previous steps are installed
         let allPreviousDone = true;
         for (let i = 0; i < idx; i++) {
           if (!installedIds.has(INSTALL_ORDER[i])) {
@@ -149,34 +179,37 @@ const useRoofCalculator = () => {
     return next ? next.step : null;
   }, [steps]);
 
-  /** Are all pre-roof parts installed? (steps 1-8) */
+  /**
+   * Are all pre-tile supporting layers installed? (steps 1–7, before Hermosa Roof Tile).
+   * hermosa_tile is at index 7 in INSTALL_ORDER so we slice up to that index.
+   */
   const isRoofReady = useMemo(() => {
-    return INSTALL_ORDER.slice(0, 8).every((id) => installedIds.has(id));
+    const tileIdx = INSTALL_ORDER.indexOf('hermosa_tile');
+    return INSTALL_ORDER.slice(0, tileIdx).every((id) => installedIds.has(id));
   }, [installedIds]);
 
   /** Set of IDs currently visible in the 3D scene */
   const visibleIds = useMemo(() => installedIds, [installedIds]);
 
   return {
-    // House
     houseLoaded,
     loadHouse,
     unloadHouse,
-    // Steps
     steps,
     installPart,
     removePart,
     canInstall,
-    // Quantities
+    addOnePc,
+    removeOnePc,
+    quantities,
     setQty,
-    // Totals
     grandTotal,
     installedCount,
     nextStep,
     isRoofReady,
-    // Scene
     visibleIds,
-    // Actions
+    tileColor,
+    setTileColor,
     resetAll,
   };
 };

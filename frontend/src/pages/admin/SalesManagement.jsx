@@ -30,19 +30,18 @@ const td = {
 const SalesManagement = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [saless, setSaless] = useState([]);
+  const [salesList, setSalesList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spin, setSpin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('edit'); // 'create' | 'edit' | 'reset'
+  const [modalMode, setModalMode] = useState('edit'); // 'edit' | 'reset'
   const [selectedSales, setSelectedSales] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', contactNumber: '', role: 'sales' });
+  const [form, setForm] = useState({ name: '', contactNumber: '' });
   const [resetPassword, setResetPassword] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [logoutWarning, setLogoutWarning] = useState(false);
@@ -55,38 +54,31 @@ const SalesManagement = () => {
   const currentUser = appUserStr ? JSON.parse(appUserStr) : null;
   const isSuperAdmin = currentUser?.role === 'superadmin' || currentUser?.role === 'super_admin';
 
-  const fetchSaless = async () => {
+  const fetchSalesList = async () => {
     try {
       const token = localStorage.getItem('appToken');
-      const res = await axios.get(`${API_URL}/api/admin/saless`, {
+      const res = await axios.get(`${API_URL}/api/admin/sales`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.data.success) setSaless(res.data.data);
+      if (res.data.success) setSalesList(res.data.data);
     } catch (err) {
-      console.error('Failed to fetch saless', err);
+      console.error('Failed to fetch sales accounts', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchSaless(); }, []);
+  useEffect(() => { fetchSalesList(); }, []);
 
   const refresh = () => {
     setSpin(true);
-    fetchSaless().then(() => setTimeout(() => setSpin(false), 800));
-  };
-
-  const openCreate = () => {
-    setModalMode('create');
-    setForm({ name: '', email: '', contactNumber: '', password: '', role: 'sales' });
-    setFormError('');
-    setShowModal(true);
+    fetchSalesList().then(() => setTimeout(() => setSpin(false), 800));
   };
 
   const openEdit = (emp) => {
     setModalMode('edit');
     setSelectedSales(emp);
-    setForm({ name: emp.name || '', email: emp.email, contactNumber: emp.contactNumber || '', password: '', role: emp.role || 'sales' });
+    setForm({ name: emp.name || '', contactNumber: emp.contactNumber || '' });
     setFormError('');
     setShowModal(true);
   };
@@ -100,34 +92,16 @@ const SalesManagement = () => {
     setShowModal(true);
   };
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setFormError('');
-    try {
-      const token = localStorage.getItem('appToken');
-      await axios.post(`${API_URL}/api/admin/saless`, {
-        email: form.email, password: form.password, role: form.role
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      await fetchSaless();
-      setShowModal(false);
-    } catch (err) {
-      setFormError(err.response?.data?.error || 'Failed to create account.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleEdit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setFormError('');
     try {
       const token = localStorage.getItem('appToken');
-      await axios.put(`${API_URL}/api/admin/saless/${selectedSales.id}`, {
+      await axios.put(`${API_URL}/api/admin/sales/${selectedSales.id}`, {
         name: form.name, contactNumber: form.contactNumber
       }, { headers: { Authorization: `Bearer ${token}` } });
-      await fetchSaless();
+      await fetchSalesList();
       setShowModal(false);
     } catch (err) {
       setFormError(err.response?.data?.error || 'Failed to update sales.');
@@ -142,7 +116,7 @@ const SalesManagement = () => {
     setFormError('');
     try {
       const token = localStorage.getItem('appToken');
-      await axios.patch(`${API_URL}/api/admin/saless/${selectedSales.id}/reset-password`,
+      await axios.patch(`${API_URL}/api/admin/sales/${selectedSales.id}/reset-password`,
         { newPassword: resetPassword, adminPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -171,17 +145,17 @@ const SalesManagement = () => {
     setConfirmModal({ isOpen: false, emp: null, actionText: '', newStatus: '' });
     try {
       const token = localStorage.getItem('appToken');
-      await axios.patch(`${API_URL}/api/admin/saless/${emp.id}/status`,
+      await axios.patch(`${API_URL}/api/admin/sales/${emp.id}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      await fetchSaless();
+      await fetchSalesList();
     } catch (err) {
       console.error('Failed to toggle status', err);
     }
   };
 
-  const filtered = saless.filter(e =>
+  const filtered = salesList.filter(e =>
     e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -190,28 +164,23 @@ const SalesManagement = () => {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#9ca3af' }}>
         <RefreshIcon sx={{ fontSize: 24, animation: 'spin 1s linear infinite', marginRight: '10px' }} />
-        Loading Saless...
+        Loading Staff...
       </div>
     );
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <BadgeIcon sx={{ fontSize: 28, color: '#60a5fa' }} /> Account Creation
+            <BadgeIcon sx={{ fontSize: 28, color: '#60a5fa' }} /> Staff Management
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            Create and manage accounts for sales, logistics, and finance.
+            Manage operational staff accounts for sales, logistics, and finance.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={openCreate}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'var(--green)', border: 'none', borderRadius: 10, color: '#fff', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}>
-            Create Account
-          </button>
           <button onClick={refresh}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', borderRadius: 10, color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer' }}>
             <RefreshIcon sx={{ fontSize: 15, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? '#22c55e' : 'inherit' }} />
@@ -220,7 +189,6 @@ const SalesManagement = () => {
         </div>
       </div>
 
-      {/* Search */}
       <div style={{ position: 'relative', maxWidth: 360 }}>
         <SearchIcon sx={{ fontSize: 16, color: 'var(--text-muted)', position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
         <input
@@ -232,7 +200,6 @@ const SalesManagement = () => {
         />
       </div>
 
-      {/* Table */}
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
           <thead>
@@ -249,7 +216,7 @@ const SalesManagement = () => {
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  {saless.length === 0 ? 'No accounts yet.' : 'No accounts match your search.'}
+                  {salesList.length === 0 ? 'No accounts yet.' : 'No accounts match your search.'}
                 </td>
               </tr>
             ) : (
@@ -331,20 +298,18 @@ const SalesManagement = () => {
         </table>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
           onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth: 460, boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
 
-            {/* Modal header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
               <div>
                 <h3 style={{ margin: 0, fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem' }}>
-                  {modalMode === 'create' ? 'Create Account' : (modalMode === 'edit' ? 'Edit Account' : 'Reset Password')}
+                  {modalMode === 'edit' ? 'Edit Staff Profile' : 'Reset Staff Password'}
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {modalMode === 'create' ? 'Create a new account.' : (modalMode === 'edit' ? 'Update account info.' : `Reset password for ${selectedSales?.name}.`)}
+                  {modalMode === 'edit' ? 'Update name and contact number.' : `Reset password for ${selectedSales?.name}.`}
                 </p>
               </div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 8, padding: 6, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
@@ -352,8 +317,7 @@ const SalesManagement = () => {
               </button>
             </div>
 
-            {/* Modal body */}
-            <form onSubmit={modalMode === 'create' ? handleCreate : (modalMode === 'edit' ? handleEdit : handleReset)}>
+            <form onSubmit={modalMode === 'edit' ? handleEdit : handleReset}>
               <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {formError && (
                   <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '0.65rem 1rem', color: '#f87171', fontSize: '0.82rem' }}>
@@ -378,39 +342,6 @@ const SalesManagement = () => {
                   </>
                 )}
 
-                {modalMode === 'create' && (
-                  <>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Email *</label>
-                      <input required type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                        placeholder="account@megapacific.com"
-                        style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '0.65rem 0.85rem', color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Password *</label>
-                      <input required type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                        placeholder="Min. 6 characters" minLength={6}
-                        style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '0.65rem 0.85rem', color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Role *</label>
-                      <select required value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}
-                        style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '0.65rem 0.85rem', color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }}>
-                        <option value="sales">Sales</option>
-                        <option value="logistic">Logistic</option>
-                        <option value="finance">Finance</option>
-                        {isSuperAdmin && (
-                          <>
-                            <option value="admin">Admin</option>
-                            <option value="owner">Owner</option>
-                            <option value="superadmin">Super Admin</option>
-                          </>
-                        )}
-                      </select>
-                    </div>
-                  </>
-                )}
-
                 {modalMode === 'reset' && (
                   <>
                     <div>
@@ -429,7 +360,6 @@ const SalesManagement = () => {
                 )}
               </div>
 
-              {/* Footer */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '0 1.5rem 1.5rem' }}>
                 <button type="button" onClick={() => setShowModal(false)}
                   style={{ padding: '0.6rem 1.2rem', borderRadius: 10, border: '1px solid var(--border-light)', background: 'transparent', color: 'var(--text-muted)', fontSize: '0.84rem', cursor: 'pointer' }}>
@@ -438,7 +368,7 @@ const SalesManagement = () => {
                 <button type="submit" disabled={saving}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0.6rem 1.4rem', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #4f772d, #3d5c22)', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                   {saving ? <CircularProgress size={14} thickness={5} sx={{ color: '#fff' }} /> : null}
-                  {modalMode === 'create' ? 'Create Account' : (modalMode === 'edit' ? 'Save Changes' : 'Reset Password')}
+                  {modalMode === 'edit' ? 'Save Changes' : 'Confirm Reset'}
                 </button>
               </div>
             </form>
@@ -446,7 +376,6 @@ const SalesManagement = () => {
         </div>
       )}
 
-      {/* Logout Warning Modal */}
       {logoutWarning && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth: 400, padding: '2rem', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
@@ -463,7 +392,7 @@ const SalesManagement = () => {
               onClick={() => {
                 setLogoutWarning(false);
                 logout();
-                navigate('/admin/login');
+                navigate('/admin/login', { replace: true });
               }}
               style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.75rem 2rem', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', width: '100%' }}
             >
@@ -473,7 +402,6 @@ const SalesManagement = () => {
         </div>
       )}
 
-      {/* Confirmation Modal */}
       {confirmModal.isOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth: 400, padding: '2rem', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
@@ -504,7 +432,6 @@ const SalesManagement = () => {
         </div>
       )}
 
-      {/* Success Modal */}
       {successModal.isOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth: 400, padding: '2rem', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>

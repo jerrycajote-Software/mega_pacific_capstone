@@ -30,9 +30,11 @@ model User {
   resetOtpExpiresAt  DateTime?
   replies            ReviewReply[]
   inventoryLogs      InventoryLog[]
-  cartItems          CartItem[]
   addresses          Address[]
   sessions           UserSession[]
+  coilInventoryLogs  CoilInventoryLog[]
+  refunds            Refund[]          @relation("CustomerRefunds")
+  processedRefunds   Refund[]          @relation("FinanceProcessedRefunds")
   
   customerProfile    CustomerProfile?
   adminProfile       AdminProfile?
@@ -143,12 +145,22 @@ model Product {
   name             String           @unique
   type             String // e.g. Spandrel, Rib, Flat Type
   description      String?
-  price            Float // Base price (fallback when no variants)
+  price            Float // Base selling price (after discount)
+  originalPrice    Float? // Pre-discount original price
+  discountPercent  Float            @default(30) // Discount percentage
   unit             String           @default("per meter")
   stock            Int // Base stock (fallback when no variants)
   imageUrl         String?
   imageUrls        String[]         @default([])
   color            String?
+  isPreOrder       Boolean          @default(true)
+  isActive         Boolean          @default(true)
+  effectiveWidth   Float?
+  nominalWidth     Float?
+  ribHeight        Float?
+  thickness        String?          @default("0.35mm")
+  colors           String[]         @default([])
+  maxMeters        Float?           @default(21.0)
   averageRating    Float            @default(0)
   reviewCount      Int              @default(0)
   createdAt        DateTime         @default(now())
@@ -157,24 +169,25 @@ model Product {
   orderItems       OrderItem[]
   reviews          Review[]
   inventoryLogs    InventoryLog[]
-  cartItems        CartItem[]
 }
 
 model ProductVariant {
-  id            Int            @id @default(autoincrement())
-  productId     Int
-  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name          String // e.g. "Per Meter", "2 Meters", "Bundle"
-  color         String?
-  price         Float
-  stock         Int
-  sku           String? // Optional SKU
-  status        String         @default("available") // "available" | "out_of_stock"
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  orderItems    OrderItem[]
-  inventoryLogs InventoryLog[]
-  cartItems     CartItem[]
+  id              Int            @id @default(autoincrement())
+  productId       Int
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name            String // e.g. "Per Meter", "2 Meters", "Bundle"
+  color           String?
+  price           Float // Selling price (after discount)
+  originalPrice   Float? // Pre-discount original price
+  discountPercent Float          @default(30) // Discount percentage
+  stock           Int
+  thickness       String?
+  sku             String? // Optional SKU
+  status          String         @default("available") // "available" | "out_of_stock"
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  orderItems      OrderItem[]
+  inventoryLogs   InventoryLog[]
 }
 
 model Review {
@@ -216,6 +229,8 @@ model Order {
   createdAt             DateTime    @default(now())
   items                 OrderItem[]
   reviews               Review[]
+  coilLogs              CoilInventoryLog[]
+  refund                Refund?
 }
 
 model OrderItem {
@@ -230,6 +245,8 @@ model OrderItem {
   quantity    Int
   price       Float // Price at time of purchase (variant price or base price)
   color       String?
+  customLength Float?
+  thickness   String?
 }
 
 model ProductType {
@@ -285,22 +302,6 @@ model InventoryLog {
   createdAt     DateTime        @default(now())
 }
 
-model CartItem {
-  id          Int             @id @default(autoincrement())
-  userId      Int
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId   Int
-  product     Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variantId   Int?            
-  variant     ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  quantity    Int             @default(1)
-  color       String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-
-  @@unique([userId, productId, variantId, color])
-}
-
 model UserSession {
   id           Int      @id @default(autoincrement())
   userId       Int
@@ -334,3 +335,58 @@ model Expense {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model CoilInventory {
+  id              Int                @id @default(autoincrement())
+  name            String             @default("Steel Coil")
+  thickness       String             // e.g. "0.35mm", "0.40mm", "0.50mm", "0.60mm"
+  color           String             // e.g. "Marshall Dark Gray"
+  coilCount       Int                @default(1) // Physical count of coil rolls in stock
+  minAlertCount   Int                @default(1) // Alert threshold for low stock (default 1 roll)
+  availableMeters Float              @default(0) // Legacy / reference linear meters
+  minAlertMeters  Float              @default(200) // Legacy alert threshold
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  logs            CoilInventoryLog[]
+
+  @@unique([thickness, color])
+}
+
+model CoilInventoryLog {
+  id              Int            @id @default(autoincrement())
+  coilId          Int
+  coil            CoilInventory  @relation(fields: [coilId], references: [id], onDelete: Cascade)
+  userId          Int?
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderId         Int?
+  order           Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  previousCount   Int            @default(0)
+  coilsDeducted   Int            @default(0) // Positive for deduction, negative for restock
+  remainingCount  Int            @default(0)
+  previousMeters  Float          @default(0)
+  metersDeducted  Float          @default(0)
+  remainingMeters Float          @default(0)
+  actionType      String         @default("deduction") // "deduction", "restock", "adjustment"
+  reason          String?
+  createdAt       DateTime       @default(now())
+}
+
+model Refund {
+  id                   Int       @id @default(autoincrement())
+  orderId              Int       @unique
+  order                Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId               Int
+  user                 User      @relation("CustomerRefunds", fields: [userId], references: [id], onDelete: Cascade)
+  amount               Float
+  paymentMethod        String
+  reason               String?
+  status               String    @default("pending") // pending, completed, failed
+  processedBy          Int?
+  processedByUser      User?     @relation("FinanceProcessedRefunds", fields: [processedBy], references: [id], onDelete: SetNull)
+  transactionReference String?
+  notes                String?
+  refundedAt           DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+

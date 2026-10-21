@@ -1,7 +1,6 @@
 const prisma = require("../../config/db");
 const { refreshCache } = require("../../config/systemStatusCache");
 
-// Initial default statuses if not present in DB
 const defaultStatuses = {
   admin_portal_status: "online",
   sales_portal_status: "online",
@@ -131,3 +130,28 @@ exports.getSessionLogs = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+// GET /api/superadmin/system-info
+exports.getSystemInfo = async (req, res) => {
+  try {
+    const memory = process.memoryUsage();
+    const systemInfo = {
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      uptimeSeconds: Math.floor(process.uptime()),
+      memory: {
+        rssMB: Math.round(memory.rss / (1024 * 1024)),
+        heapUsedMB: Math.round(memory.heapUsed / (1024 * 1024)),
+        heapTotalMB: Math.round(memory.heapTotal / (1024 * 1024)),
+      },
+      dbStatus: "connected",
+      serverTime: new Date().toISOString()
+    };
+    res.json({ success: true, data: systemInfo });
+  } catch (error) {
+    console.error("Error fetching system info:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+

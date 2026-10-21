@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const parseJwt = (token) => {
+export const parseJwt = (token) => {
   try {
     return JSON.parse(atob(token.split('.')[1]));
   } catch (e) {
@@ -12,9 +12,16 @@ const parseJwt = (token) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('appToken'));
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('appUser');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [token, setToken] = useState(() => localStorage.getItem('appToken'));
+  const [loading, setLoading] = useState(false);
   const [suspendedModal, setSuspendedModal] = useState(false);
 
   const logout = useCallback(async () => {
@@ -67,7 +74,6 @@ export const AuthProvider = ({ children }) => {
         }
       );
 
-      // 2. Check token expiration
       const decoded = parseJwt(token);
       if (decoded && decoded.exp) {
         const expiresIn = (decoded.exp * 1000) - Date.now();
@@ -92,7 +98,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('lastActivity', Date.now().toString());
       };
 
-      // Throttle to update at most once per minute
       let lastUpdate = Date.now();
       const handleActivity = () => {
         const now = Date.now();
@@ -210,7 +215,7 @@ export const AuthProvider = ({ children }) => {
                 else if (role === 'superadmin' || role === 'super_admin') redirectUrl = '/superadmin/login';
                 
                 logout();
-                window.location.href = redirectUrl;
+                window.location.replace(redirectUrl);
               }}
               style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.75rem 2rem', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', width: '100%' }}
             >

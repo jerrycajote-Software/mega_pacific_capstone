@@ -3,7 +3,6 @@ const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
 
 const getFinanceOrders = async (req, res) => {
   try {
-    // Finance mainly sees orders approved by sales
     const orders = await prisma.order.findMany({
       where: {
         status: {
@@ -46,6 +45,7 @@ const getFinanceOrders = async (req, res) => {
         deliveryStatus: o.status === "shipped" || o.status === "completed" || o.status === "delivered" || o.status === "out_for_delivery" ? o.status.replace(/_/g, " ") : "Pending",
         estimatedDeliveryDate: o.estimatedDeliveryDate,
         dateOrdered: new Date(o.createdAt).toISOString(),
+        createdAt: o.createdAt,
         items: o.items.map(item => ({
           productName: item.product.name,
           variantName: item.variantName || item.variant?.name || null,

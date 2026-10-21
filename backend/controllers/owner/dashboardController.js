@@ -4,14 +4,19 @@ const getOwnerDashboardStats = async (req, res) => {
   try {
     const totalUsers = await prisma.user.count({ where: { role: "customer" } });
     const totalProducts = await prisma.product.count();
-    const totalOrders = await prisma.order.count();
+    const totalOrders = await prisma.order.count({
+      where: { status: { notIn: ["cancelled", "rejected"] } }
+    });
     
     const completedOrders = await prisma.order.findMany({
-      where: { status: { not: "cancelled" } },
+      where: {
+        status: { notIn: ["cancelled", "rejected"] },
+        paymentStatus: { not: "refunded" }
+      },
       select: { total: true, createdAt: true }
     });
     
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
 
     // Revenue Trend Chart Data (Last 30 Days)
     const now = new Date();
@@ -40,7 +45,6 @@ const getOwnerDashboardStats = async (req, res) => {
       revenue: chartDataMap[key]
     }));
 
-    // Recent Actionable Orders
     const recentOrdersData = await prisma.order.findMany({
       where: { status: "pending" },
       take: 5,
@@ -68,7 +72,6 @@ const getOwnerDashboardStats = async (req, res) => {
       type: p.type
     }));
 
-    // Inventory Value
     const products = await prisma.product.findMany({ select: { type: true, stock: true, price: true } });
     let totalStock = 0;
     let totalInventoryValue = 0;
@@ -78,9 +81,14 @@ const getOwnerDashboardStats = async (req, res) => {
       totalInventoryValue += (p.stock * p.price);
     });
 
-    // Top Selling Products
     const topSelling = await prisma.orderItem.groupBy({
       by: ['productId'],
+      where: {
+        order: {
+          status: { notIn: ["cancelled", "rejected"] },
+          paymentStatus: { not: "refunded" }
+        }
+      },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
       take: 5
@@ -91,7 +99,16 @@ const getOwnerDashboardStats = async (req, res) => {
       if (!ts.productId) continue;
       const prod = await prisma.product.findUnique({
         where: { id: ts.productId },
-        include: { orderItems: true } 
+        include: {
+          orderItems: {
+            where: {
+              order: {
+                status: { notIn: ["cancelled", "rejected"] },
+                paymentStatus: { not: "refunded" }
+              }
+            }
+          }
+        } 
       });
       if (prod) {
         const revenue = prod.orderItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -121,8 +138,13 @@ const getOwnerDashboardStats = async (req, res) => {
       });
     }
 
-    // Sort top products by revenue for owner
     topProducts.sort((a, b) => b.revenue - a.revenue);
+
+    const totalVariants = await prisma.coilInventory.count();
+    const coils = await prisma.coilInventory.findMany();
+    const totalRolls = coils.reduce((sum, c) => sum + (c.coilCount != null ? c.coilCount : 0), 0);
+    const lowCoils = coils.filter(c => (c.coilCount != null ? c.coilCount : 0) <= (c.minAlertCount || 1) && (c.coilCount != null ? c.coilCount : 0) > 0);
+    const criticalCoils = coils.filter(c => (c.coilCount != null ? c.coilCount : 0) === 0);
 
     const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
@@ -135,7 +157,21 @@ const getOwnerDashboardStats = async (req, res) => {
           products: totalProducts,
           orders: totalOrders,
           users: totalUsers,
-          avgOrderValue: `₱${Math.round(avgOrderValue).toLocaleString()}`
+          avgOrderValue: `₱${Math.round(avgOrderValue).toLocaleString()}`,
+          rawCoilMeters: `${totalRolls} Coils`
+        },
+        coilHealth: {
+          totalCoils: totalRolls,
+          totalVariants,
+          totalCoilMeters: totalRolls,
+          lowCount: lowCoils.length,
+          criticalCount: criticalCoils.length,
+          lowCoils: [...criticalCoils, ...lowCoils].slice(0, 6).map(c => ({
+            name: `${c.color} (${c.thickness})`,
+            availableMeters: c.coilCount != null ? c.coilCount : 0,
+            coilCount: c.coilCount != null ? c.coilCount : 0,
+            minAlertMeters: c.minAlertCount || 1
+          }))
         },
         revenueChartData,
         recentOrders,

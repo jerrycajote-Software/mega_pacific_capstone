@@ -2,27 +2,25 @@ import React, { useState } from 'react';
 
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import InventoryIcon from '@mui/icons-material/Inventory2';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import PeopleIcon from '@mui/icons-material/People';
 import BadgeIcon from '@mui/icons-material/Badge';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
-import RateReviewIcon from '@mui/icons-material/RateReview';
 import { useAuth } from '../context/AuthContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
-import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import { io } from 'socket.io-client';
+import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
   { name: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
   { name: 'Users', path: '/admin/users', icon: <PeopleIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Account Creation', path: '/admin/accounts', icon: <BadgeIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Staff Management', path: '/admin/accounts', icon: <BadgeIcon sx={{ fontSize: 18 }} /> },
   { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon sx={{ fontSize: 18 }} /> },
 ];
 
 const AdminLayout = () => {
+  usePreventBackToLogin();
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
@@ -105,9 +103,7 @@ const AdminLayout = () => {
 
       <div className="admin-main">
 
-        {/* Floating top bar */}
         <header className="admin-topbar">
-          {/* Brand */}
           <Link to="/admin/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
               <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
@@ -126,13 +122,11 @@ const AdminLayout = () => {
             </div>
           </Link>
 
-          {/* Right actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <ThemeSwitcher />
           </div>
         </header>
 
-        {/* Page content */}
         <div className="admin-content">
           <Outlet />
         </div>
@@ -143,7 +137,7 @@ const AdminLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/admin/login');
+            navigate('/admin/login', { replace: true });
           }}
         />
       )}

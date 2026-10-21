@@ -3,11 +3,9 @@ const router = express.Router();
 const inquiryController = require("../controllers/inquiryController");
 const { verifyToken } = require("../middleware/authMiddleware");
 
-// Customer routes
 router.post("/", verifyToken, inquiryController.createInquiry);
 router.get("/customer", verifyToken, inquiryController.getCustomerInquiries);
 
-// Shared route
 router.get("/:id", verifyToken, inquiryController.getInquiry);
 router.post("/:id/messages", verifyToken, inquiryController.addMessage);
 

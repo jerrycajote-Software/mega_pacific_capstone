@@ -33,6 +33,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { usePreventBackToLogin } from '../../hooks/usePreventBackToLogin';
 
 const DONUT_COLORS = ['#2563EB', '#8B5CF6', '#10B981', '#F59E0B'];
 
@@ -70,6 +71,7 @@ const CustomLogisticTooltip = ({ active, payload, label }) => {
 };
 
 const LogisticDashboardPage = () => {
+  usePreventBackToLogin();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -111,7 +113,8 @@ const LogisticDashboardPage = () => {
     if (!data.recentDeliveries) return [];
     if (dispatchFilter === 'completed') return data.recentDeliveries.filter(d => d.status === 'completed' || d.status === 'delivered');
     if (dispatchFilter === 'transit') return data.recentDeliveries.filter(d => d.status === 'shipped' || d.status === 'out_for_delivery');
-    if (dispatchFilter === 'processing') return data.recentDeliveries.filter(d => d.status === 'processing');
+    if (dispatchFilter === 'processing') return data.recentDeliveries.filter(d => d.status === 'processing' || d.status === 'finance_verified');
+    if (dispatchFilter === 'pickups') return data.recentDeliveries.filter(d => d.fulfillmentType === 'Pickup' || d.status === 'ready_for_pickup');
     return data.recentDeliveries;
   }, [data.recentDeliveries, dispatchFilter]);
 
@@ -167,7 +170,6 @@ const LogisticDashboardPage = () => {
 
   return (
     <Box sx={{ p: { xs: 2.5, md: 4 }, animation: 'fadeIn 0.4s ease-in-out' }}>
-      {/* Top Header */}
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 4 }}>
         <Box>
           <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
@@ -210,10 +212,9 @@ const LogisticDashboardPage = () => {
         </Stack>
       </Box>
 
-      {/* KPI Cards */}
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
         {kpis.map((kpi, idx) => (
-          <Grid item xs={12} sm={6} md={3} key={idx}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
             <Paper
               elevation={0}
               sx={{
@@ -222,6 +223,10 @@ const LogisticDashboardPage = () => {
                 border: '1px solid',
                 borderColor: 'divider',
                 bgcolor: 'background.paper',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
                 transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   transform: 'translateY(-3px)',
@@ -271,10 +276,8 @@ const LogisticDashboardPage = () => {
         ))}
       </Grid>
 
-      {/* Charts & Operational Alerts Row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Fulfillment Volume Bar Chart */}
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Paper
             elevation={0}
             sx={{
@@ -342,8 +345,7 @@ const LogisticDashboardPage = () => {
           </Paper>
         </Grid>
 
-        {/* Operational Alerts & Status Ratio */}
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Paper
             elevation={0}
             sx={{
@@ -415,7 +417,6 @@ const LogisticDashboardPage = () => {
               ))}
             </Stack>
 
-            {/* Distribution Donut */}
             <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
               <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1 }}>
                 Fulfillment Type Share
@@ -443,9 +444,8 @@ const LogisticDashboardPage = () => {
         </Grid>
       </Grid>
 
-      {/* Recent Dispatches Table */}
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Paper
             elevation={0}
             sx={{
@@ -494,6 +494,7 @@ const LogisticDashboardPage = () => {
                 <Tab label="All Dispatches" value="all" />
                 <Tab label="In Transit" value="transit" />
                 <Tab label="Processing" value="processing" />
+                <Tab label="Store Pick-ups" value="pickups" />
                 <Tab label="Completed" value="completed" />
               </Tabs>
             </Box>
@@ -510,48 +511,55 @@ const LogisticDashboardPage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredDeliveries.map((row, i) => (
-                    <TableRow key={i} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                      <TableCell sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.85rem' }}>
-                        {row.id}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
-                        {row.customer}
-                      </TableCell>
-                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
-                        <Stack direction="row" spacing={0.75} alignItems="center">
-                          <i className="fi fi-rr-marker" style={{ fontSize: 12, color: '#64748B' }} />
-                          <span>{row.address}</span>
-                        </Stack>
-                      </TableCell>
-                      <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary' }}>
-                        {row.date}
-                      </TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
-                        <Chip
-                          label={row.status.replace(/_/g, ' ').toUpperCase()}
-                          size="small"
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: '0.65rem',
-                            height: 22,
-                            bgcolor:
-                              row.status === 'delivered' || row.status === 'completed'
-                                ? 'rgba(16, 185, 129, 0.12)'
-                                : row.status === 'out_for_delivery' || row.status === 'shipped'
-                                ? 'rgba(37, 99, 235, 0.12)'
-                                : 'rgba(245, 158, 11, 0.12)',
-                            color:
-                              row.status === 'delivered' || row.status === 'completed'
-                                ? '#047857'
-                                : row.status === 'out_for_delivery' || row.status === 'shipped'
-                                ? '#1D4ED8'
-                                : '#B45309'
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredDeliveries.map((row, i) => {
+                    const isPickupReady = row.status === 'ready_for_pickup';
+                    return (
+                      <TableRow key={i} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                        <TableCell sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.85rem' }}>
+                          {row.id}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
+                          {row.customer}
+                        </TableCell>
+                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                          <Stack direction="row" spacing={0.75} alignItems="center">
+                            <i className="fi fi-rr-marker" style={{ fontSize: 12, color: '#64748B' }} />
+                            <span>{row.address}</span>
+                          </Stack>
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary' }}>
+                          {row.date}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>
+                          <Chip
+                            label={isPickupReady ? 'READY FOR PICK-UP' : row.status.replace(/_/g, ' ').toUpperCase()}
+                            size="small"
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: '0.65rem',
+                              height: 22,
+                              bgcolor:
+                                isPickupReady
+                                  ? 'rgba(139, 92, 246, 0.15)'
+                                  : row.status === 'delivered' || row.status === 'completed'
+                                  ? 'rgba(16, 185, 129, 0.12)'
+                                  : row.status === 'out_for_delivery' || row.status === 'shipped'
+                                  ? 'rgba(37, 99, 235, 0.12)'
+                                  : 'rgba(245, 158, 11, 0.12)',
+                              color:
+                                isPickupReady
+                                  ? '#7C3AED'
+                                  : row.status === 'delivered' || row.status === 'completed'
+                                  ? '#047857'
+                                  : row.status === 'out_for_delivery' || row.status === 'shipped'
+                                  ? '#1D4ED8'
+                                  : '#B45309'
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {filteredDeliveries.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary' }}>

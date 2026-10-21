@@ -20,8 +20,12 @@ const getSalesOrders = async (req, res) => {
 
     const formattedOrders = updatedOrders.map(o => {
       const productsSummary = o.items.map(item => {
-        const variantLabel = item.variantName || item.variant?.name;
-        const suffix = variantLabel ? ` — ${variantLabel}` : "";
+        const spec = [
+          item.customLength ? `${item.customLength}m` : null,
+          item.thickness || item.variantName || item.variant?.name,
+          item.color
+        ].filter(Boolean).join(" · ");
+        const suffix = spec ? ` — ${spec}` : "";
         return `${item.product.name}${suffix} (x${item.quantity})`;
       }).join(", ");
 
@@ -40,6 +44,7 @@ const getSalesOrders = async (req, res) => {
         deliveryStatus: o.status === "shipped" || o.status === "completed" || o.status === "delivered" || o.status === "out_for_delivery" ? o.status.replace(/_/g, " ") : "Pending",
         estimatedDeliveryDate: o.estimatedDeliveryDate,
         dateOrdered: new Date(o.createdAt).toISOString(),
+        createdAt: o.createdAt,
         contactNumber: o.shippingContactNumber,
         address: o.shippingAddress,
         cityProvince: o.shippingProvince ? `${o.shippingCity || ''}, ${o.shippingProvince}` : o.shippingCity,
@@ -50,6 +55,9 @@ const getSalesOrders = async (req, res) => {
           productName: item.product.name,
           productType: item.product.type,
           variantName: item.variantName || item.variant?.name || null,
+          customLength: item.customLength,
+          thickness: item.thickness,
+          color: item.color,
           quantity: item.quantity,
           price: item.price,
         }))
@@ -80,7 +88,6 @@ const approveOrder = async (req, res) => {
       data: { status: "sales_approved" }
     });
     
-    // Emit socket event if io is available
     const io = req.app.get("io");
     if (io) {
       io.emit("order_status_updated", { orderId: updatedOrder.id, status: updatedOrder.status });
@@ -93,7 +100,96 @@ const approveOrder = async (req, res) => {
   }
 };
 
+const rejectOrder = async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body || {};
+  try {
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: parseInt(id) },
+      include: { user: { select: { email: true } } }
+    });
+    if (!existingOrder) {
+      return res.status(404).json({ success: false, error: "Order not found" });
+    }
+
+    if (existingOrder.status !== "pending") {
+      return res.status(400).json({ success: false, error: "Only pending orders can be rejected or cancelled" });
+    }
+
+    let refundableAmount = existingOrder.total;
+    const pStatus = (existingOrder.paymentStatus || '').toLowerCase();
+    if (pStatus.includes('50%')) {
+      refundableAmount = Math.round(existingOrder.total * 0.5 * 100) / 100;
+    } else if (pStatus === 'unpaid') {
+      refundableAmount = 0;
+    }
+
+    const { updatedOrder, refund } = await prisma.$transaction(async (tx) => {
+      const ord = await tx.order.update({
+        where: { id: parseInt(id) },
+        data: {
+          status: "rejected",
+          paymentStatus: refundableAmount > 0 ? "refund_pending" : existingOrder.paymentStatus,
+          statusUpdatedAt: new Date(),
+          notes: reason ? `${existingOrder.notes ? existingOrder.notes + ' | ' : ''}Rejection Reason: ${reason}` : existingOrder.notes
+        }
+      });
+
+      const ref = await tx.refund.upsert({
+        where: { orderId: parseInt(id) },
+        create: {
+          orderId: parseInt(id),
+          userId: existingOrder.userId,
+          amount: refundableAmount,
+          paymentMethod: existingOrder.paymentMode || 'Cash on Delivery',
+          reason: reason || 'Order rejected by Sales staff',
+          status: 'pending'
+        },
+        update: {
+          amount: refundableAmount,
+          paymentMethod: existingOrder.paymentMode || 'Cash on Delivery',
+          reason: reason || 'Order rejected by Sales staff',
+          status: 'pending'
+        }
+      });
+
+      return { updatedOrder: ord, refund: ref };
+    });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("order_status_updated", {
+        orderId: updatedOrder.id,
+        status: updatedOrder.status,
+        paymentStatus: updatedOrder.paymentStatus
+      });
+      io.emit("new_refund_request", {
+        refundId: refund.id,
+        orderId: updatedOrder.id,
+        orderNumber: `#ORD-${String(updatedOrder.id).padStart(3, '0')}`,
+        customerName: existingOrder.customerName || existingOrder.shippingName || "Customer",
+        customerEmail: existingOrder.customerEmail || existingOrder.user?.email,
+        amount: refund.amount,
+        paymentMethod: refund.paymentMethod,
+        reason: refund.reason,
+        createdAt: refund.createdAt
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updatedOrder,
+      refund,
+      message: "Order rejected and recorded in Finance refund list for disbursement."
+    });
+  } catch (error) {
+    console.error("Failed to reject order:", error);
+    res.status(500).json({ success: false, error: "Failed to reject order" });
+  }
+};
+
 module.exports = {
   getSalesOrders,
-  approveOrder
+  approveOrder,
+  rejectOrder
 };

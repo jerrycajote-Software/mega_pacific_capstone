@@ -37,10 +37,12 @@ const Page = () => {
     amount: ''
   });
 
+  const API_URL = import.meta.env.VITE_API_URL || '';
+
   const fetchExpenses = async () => {
     try {
       const token = localStorage.getItem('appToken');
-      const res = await axios.get('http://localhost:5000/api/finance/expenses', {
+      const res = await axios.get(`${API_URL}/api/finance/expenses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -65,7 +67,7 @@ const Page = () => {
     }
     try {
       const token = localStorage.getItem('appToken');
-      const res = await axios.post('http://localhost:5000/api/finance/expenses', formData, {
+      const res = await axios.post(`${API_URL}/api/finance/expenses`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -117,7 +119,6 @@ const Page = () => {
         </Button>
       </Box>
 
-      {/* SUMMARY WIDGET */}
       <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'primary.light', bgcolor: 'primary.50', mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
         <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <i className="fi fi-rr-receipt" style={{ fontSize: '24px' }}></i>
@@ -128,7 +129,6 @@ const Page = () => {
         </Box>
       </Paper>
 
-      {/* DATA TABLE */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
         <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
@@ -201,7 +201,6 @@ const Page = () => {
         </TableContainer>
       </Paper>
 
-      {/* Add Expense Modal */}
       <Dialog open={openAddModal} onClose={() => setOpenAddModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold' }}>Log New Expense</DialogTitle>
         <DialogContent dividers>

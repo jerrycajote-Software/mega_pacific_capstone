@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import MailIcon from '@mui/icons-material/Mail';
@@ -100,8 +100,20 @@ const LoginPage = () => {
   const [otp, setOtp]           = useState('');
   const [msg, setMsg]           = useState('');
 
-  const { login, logout }  = useAuth();
-  const navigate   = useNavigate();
+  const { login, logout, token, user } = useAuth();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (token) {
+      if (user?.role === 'admin' || user?.role === 'sales') {
+        navigate('/admin/dashboard', { replace: true });
+      }
+    }
+  }, [token, user, navigate]);
+
+  if (token && (user?.role === 'admin' || user?.role === 'sales')) {
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -482,7 +494,6 @@ const LoginPage = () => {
             </form>
           </div>
 
-          {/* Footer */}
           
 
         </div>

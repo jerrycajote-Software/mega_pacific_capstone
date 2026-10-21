@@ -2,16 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CloseIcon from '@mui/icons-material/Close';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CircularProgress from '@mui/material/CircularProgress';
 import ImageIcon from '@mui/icons-material/Image';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import LayersIcon from '@mui/icons-material/Layers';
 import NotesIcon from '@mui/icons-material/Notes';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -26,12 +20,10 @@ import {
   Typography,
   Button,
   Paper,
-  useTheme,
 } from '@mui/material';
 import AddProductTypeModal from './AddProductTypeModal';
 import InventoryDataGrid from '../../components/InventoryDataGrid';
 import StockManagementTab from '../../components/StockManagementTab';
-import { ProductStockCalculator } from '../../utils/ProductStockCalculator';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Loader2, PlusCircle } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
@@ -128,14 +120,6 @@ function StockBadge({ stock }) {
 }
 
 
-function VariantBadge({ count }) {
-  if (count === 0) return <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No variants</span>;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.2rem 0.55rem', borderRadius: 6, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', fontSize: '0.73rem', fontWeight: 600, color: '#a78bfa' }}>
-      <SwapHorizIcon sx={{ fontSize: 10 }} />{count} variant{count !== 1 ? 's' : ''}
-    </span>
-  );
-}
 
 
 const focusStyle = `
@@ -202,12 +186,10 @@ class QuillBoundary extends React.Component {
 const ProductManagement = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const theme = useTheme();
   const isReadOnly = user?.role === 'admin' || user?.role === 'sales';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'stock'
-  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -272,9 +254,9 @@ const ProductManagement = () => {
       if (res.data.success) {
         const mappedVariants = res.data.data.map(v => ({
           ...v,
-          originalPrice: v.price,
+          originalPrice: v.originalPrice ?? v.price,
           originalStock: v.stock,
-          price: '',
+          price: v.originalPrice ?? v.price,
           stock: ''
         }));
         setVariants(mappedVariants);
@@ -289,9 +271,6 @@ const ProductManagement = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleVariantChange = (id, field, value) => {
-    setVariants(prev => prev.map(v => v.id === id ? { ...v, [field]: value } : v));
-  };
 
 
   const processImageFiles = useCallback(async (files) => {
@@ -334,7 +313,7 @@ const ProductManagement = () => {
       if (editingProduct) {
         
         const payload = { ...formData };
-        if (payload.price === '' || payload.price === null) payload.price = editingProduct.price;
+        if (payload.price === '' || payload.price === null) payload.price = editingProduct.originalPrice || editingProduct.price;
 
         const currentStock = parseInt(editingProduct.stock, 10) || 0;
         if (payload.stock !== '' && payload.stock !== null && payload.stock !== undefined) {
@@ -374,8 +353,12 @@ const ProductManagement = () => {
           prev.map((p) => (p.id === editingProduct.id ? freshlyUpdatedProduct : p))
         );
       } else {
-        
-        const payload = { ...formData, variants: pendingVariants };
+        const payload = { 
+          ...formData, 
+          stock: (formData.stock !== '' && formData.stock !== null && formData.stock !== undefined) ? parseInt(formData.stock, 10) : 9999,
+          isPreOrder: true,
+          variants: pendingVariants 
+        };
         await axios.post(`${API_URL}/api/admin/products`, payload);
       }
       await fetchProducts();
@@ -411,17 +394,6 @@ const ProductManagement = () => {
     setSavingVariant(false);
   };
 
-  const handleStartEditVariant = (v) => {
-    setEditingVariantId(v.id);
-    setEditingVariantData({
-      name: v.name,
-      color: v.color || '',
-      price: v.price !== '' ? v.price : v.originalPrice,
-      stock: v.stock !== '' ? v.stock : v.originalStock,
-      sku: v.sku || '',
-      status: v.status
-    });
-  };
 
   const handleSaveEditVariant = async (variantId) => {
     setSavingVariant(true);
@@ -460,7 +432,7 @@ const ProductManagement = () => {
       setEditingProduct(product);
       let initialImageUrls = product.imageUrls || [];
       if (initialImageUrls.length === 0 && product.imageUrl) initialImageUrls = [product.imageUrl];
-      setFormData({ name: product.name, type: product.type, description: product.description || '', price: '', unit: product.unit, stock: '', imageUrl: product.imageUrl || '', imageUrls: initialImageUrls, color: product.color || '' });
+      setFormData({ name: product.name, type: product.type, description: product.description || '', price: product.originalPrice ?? product.price ?? '', unit: product.unit, stock: '', imageUrl: product.imageUrl || '', imageUrls: initialImageUrls, color: product.color || '' });
       fetchVariants(product.id);
     } else {
       setEditingProduct(null);
@@ -483,10 +455,6 @@ const ProductManagement = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
 
   const VariantEditRow = ({ v }) => (
@@ -547,7 +515,6 @@ const ProductManagement = () => {
             )}
           </Box>
 
-          {/* Top Tab Navigation Header */}
           <Box sx={{ display: 'flex', gap: 1.5, mb: 3, borderBottom: '1px solid var(--border)', pb: 1.5, flexWrap: 'wrap' }}>
             <Button
               variant={activeTab === 'catalog' ? 'contained' : 'outlined'}
@@ -696,6 +663,11 @@ const ProductManagement = () => {
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('ORIGINAL PRICE (₱)')}</label>
                       <input className="pm-input" name="price" type="number" min="0" disabled={isReadOnly} value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
+                      {formData.price !== '' && !isNaN(parseFloat(formData.price)) && (
+                        <div style={{ fontSize: '0.74rem', marginTop: '5px', color: '#16a34a', fontWeight: 600 }}>
+                          🏷️ Less 30% Discount Applied: Selling price ₱{(parseFloat(formData.price) * 0.70).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      )}
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LayersIcon sx={{ fontSize: 11 }} /> {t('Unit')}</label>
@@ -703,49 +675,10 @@ const ProductManagement = () => {
                     </div>
                   </div>
 
-                  <div style={{ ...S.formGroup, marginBottom: 0 }}>
-                    <label style={S.label}>{t('COLOR')}</label>
-                    <input className="pm-input" name="color" type="text" disabled={isReadOnly} value={formData.color} onChange={handleInputChange} placeholder={t('e.g. Red')} style={S.inputBase} />
-                  </div>
-
-                 
-                 
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
-                      <label style={S.label}>
-                        {t('BASE STOCK QTY')}
-                        {editingProduct && (
-                          <span style={{ fontSize: '0.72rem', color: '#9ca3af', fontWeight: 400, marginLeft: '6px' }}>
-                            ({t('Current:')} <strong style={{ color: '#4ade80' }}>{editingProduct.stock ?? 0}</strong>)
-                          </span>
-                        )}
-                      </label>
-                      <input
-                        className="pm-input"
-                        name="stock"
-                        type="number"
-                        min="0"
-                        disabled={isReadOnly}
-                        value={formData.stock}
-                        onChange={handleInputChange}
-                        placeholder={editingProduct ? t("+ Qty to add") : "0"}
-                        style={S.inputBase}
-                      />
-                      {editingProduct && (
-                        <div style={{ fontSize: '0.72rem', marginTop: '4px', color: formData.stock !== '' ? '#4ade80' : '#6b7280' }}>
-                          {formData.stock !== '' ? (
-                            <span>
-                              {t('New total stock:')}{' '}
-                              <strong style={{ color: '#22c55e' }}>
-                                {Math.max(0, (parseInt(editingProduct.stock, 10) || 0) + (parseInt(formData.stock, 10) || 0))}
-                              </strong>{' '}
-                              ({editingProduct.stock || 0} existing + {formData.stock} added)
-                            </span>
-                          ) : (
-                            <span>{t('Enter quantity to add to existing stock (leave blank for no change)')}</span>
-                          )}
-                        </div>
-                      )}
+                      <label style={S.label}>{t('COLOR')}</label>
+                      <input className="pm-input" name="color" type="text" disabled={isReadOnly} value={formData.color} onChange={handleInputChange} placeholder={t('e.g. Red')} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LocalOfferIcon sx={{ fontSize: 11 }} /> {t('Category Type')}</label>
@@ -830,7 +763,16 @@ const ProductManagement = () => {
                               <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
                               <td style={S.variantTd}><span style={{ fontWeight: 500, color: '#e5e7eb' }}>{v.color || '-'}</span></td>
                               <td style={S.variantTd}>
-                                <span style={{ color: '#e5e7eb', fontWeight: 500 }}>₱{Number(v.originalPrice).toLocaleString()}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ color: '#4ade80', fontWeight: 600 }}>
+                                    ₱{Number(v.price || (v.originalPrice * 0.7)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                  {v.originalPrice && (
+                                    <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.72rem' }}>
+                                      ₱{Number(v.originalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td style={S.variantTd}>
                                 <span style={{ color: '#e5e7eb', fontWeight: 500 }}>{v.originalStock} units</span>
@@ -856,7 +798,16 @@ const ProductManagement = () => {
                           <tr key={v._tempId} style={{ background: 'rgba(34,197,94,0.03)' }}>
                             <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
                             <td style={S.variantTd}><span style={{ fontWeight: 500, color: '#e5e7eb' }}>{v.color || '-'}</span></td>
-                            <td style={S.variantTd}><span style={{ color: '#4ade80', fontWeight: 600 }}>₱{Number(v.price).toLocaleString()}</span></td>
+                            <td style={S.variantTd}>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ color: '#4ade80', fontWeight: 600 }}>
+                                  ₱{(Number(v.price) * 0.7).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.72rem' }}>
+                                  ₱{Number(v.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              </div>
+                            </td>
                             <td style={S.variantTd}><StockBadge stock={parseInt(v.stock)} /></td>
                             <td style={S.variantTd}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.15rem 0.5rem', borderRadius: 5, fontSize: '0.7rem', fontWeight: 600, background: 'rgba(34,197,94,0.1)', color: '#4ade80' }}>Available</span>

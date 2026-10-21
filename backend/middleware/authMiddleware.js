@@ -17,7 +17,6 @@ const verifyToken = async (req, res, next) => {
     }
     const decoded = jwt.verify(token, jwtSecret);
     
-    // Check single-session constraint for staff accounts
     if (["admin", "sales", "owner", "finance", "logistic"].includes(decoded.role)) {
       const session = await prisma.userSession.findUnique({
         where: { sessionToken: decoded.sessionToken },
@@ -42,7 +41,6 @@ const verifyToken = async (req, res, next) => {
       }
     }
 
-    // Enforce Maintenance Mode (Superadmin and Owner bypass this)
     if (["admin", "sales", "customer", "finance", "logistic"].includes(decoded.role)) {
       const statuses = getStatuses();
       if (decoded.role === "admin" && statuses.admin_portal_status === "offline") {
@@ -121,7 +119,7 @@ const verifyFinance = (req, res, next) => {
 
 const verifyLogistic = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (req.user && req.user.role === "logistic") {
+    if (req.user && (req.user.role === "logistic" || req.user.role === "admin" || req.user.role === "superadmin")) {
       next();
     } else {
       res.status(403).json({ error: "Access denied. Logistic privileges required." });
@@ -129,4 +127,14 @@ const verifyLogistic = (req, res, next) => {
   });
 };
 
-module.exports = { verifyToken, verifyAdmin, verifyOwner, verifySales, verifySuperAdmin, verifyFinance, verifyLogistic };
+const verifyStaff = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user && ["admin", "superadmin", "owner", "sales", "logistic"].includes(req.user.role)) {
+      next();
+    } else {
+      res.status(403).json({ error: "Access denied. Staff privileges required." });
+    }
+  });
+};
+
+module.exports = { verifyToken, verifyAdmin, verifyOwner, verifySales, verifySuperAdmin, verifyFinance, verifyLogistic, verifyStaff };

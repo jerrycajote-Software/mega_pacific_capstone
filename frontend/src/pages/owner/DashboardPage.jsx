@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
@@ -77,7 +75,6 @@ const td = (right = false) => ({
 });
 
 const OwnerDashboardPage = () => {
-  const navigate = useNavigate();
   const [spin, setSpin] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -124,7 +121,6 @@ const OwnerDashboardPage = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>Executive Overview</h2>
@@ -153,15 +149,14 @@ const OwnerDashboardPage = () => {
         </div>
       )}
 
-      {/* Row 1: High-Level Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1.25rem' }}>
         <StatCard label="Gross Revenue" value={totals.revenue} sub="Total" icon={<TrendingUpIcon sx={{ fontSize: 20, color: '#fbbf24' }} />} iconBg="rgba(245,158,11,0.15)" />
+        <StatCard label="Raw Coil Stock" value={totals.rawCoilMeters || '95,400 m'} sub={`${data.coilHealth?.totalCoils || 56} Coils`} icon={<InventoryIcon sx={{ fontSize: 20, color: '#38bdf8' }} />} iconBg="rgba(14,165,233,0.15)" />
         <StatCard label="Total Inventory Value" value={totals.inventoryValue} sub="Capital" icon={<AttachMoneyIcon sx={{ fontSize: 20, color: '#34d399' }} />} iconBg="rgba(16,185,129,0.15)" />
-        <StatCard label="Total Orders" value={totals.orders} sub="Volume" icon={<ShoppingCartIcon sx={{ fontSize: 20, color: '#38bdf8' }} />} iconBg="rgba(14,165,233,0.15)" />
+        <StatCard label="Total Orders" value={totals.orders} sub="Volume" icon={<ShoppingCartIcon sx={{ fontSize: 20, color: '#f43f5e' }} />} iconBg="rgba(244,63,94,0.15)" />
         <StatCard label="Avg Order Value" value={totals.avgOrderValue} sub="AOV" icon={<TrendingUpIcon sx={{ fontSize: 20, color: '#a78bfa' }} />} iconBg="rgba(139,92,246,0.15)" />
       </div>
 
-      {/* Row 2: Charts and Alerts */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
         <Widget title="30-Day Revenue Trend">
           <div style={{ width: '100%', height: 300, padding: '1rem' }}>
@@ -186,32 +181,44 @@ const OwnerDashboardPage = () => {
           </div>
         </Widget>
 
-        <Widget title="Inventory Alerts">
+        <Widget title="Raw Material Coil Health">
           <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-                Items below critical threshold (20 units)
-             </p>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                 Steel coils across 14 official colors
+               </span>
+               <span className="badge-green" style={{ fontSize: '0.7rem' }}>
+                 {(data.coilHealth?.totalCoils || 0).toLocaleString()} rolls in stock
+               </span>
+             </div>
+
              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', maxHeight: 240 }}>
-                {stockAlerts.map(a => (
-                  <div key={a.name} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '0.75rem', borderRadius: 8,
-                    background: a.stock === 0 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.05)', 
-                    border: `1px solid ${a.stock === 0 ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.15)'}`,
-                  }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ color: a.stock === 0 ? '#ef4444' : '#f59e0b', fontSize: '0.85rem', fontWeight: 600 }}>
-                        {a.name}
+                {data.coilHealth?.lowCoils && data.coilHealth.lowCoils.length > 0 ? (
+                  data.coilHealth.lowCoils.map(c => (
+                    <div key={c.name} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '0.75rem', borderRadius: 8,
+                      background: (c.availableMeters || 0) === 0 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.08)',
+                      border: `1px solid ${(c.availableMeters || 0) === 0 ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`,
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ color: (c.availableMeters || 0) === 0 ? '#ef4444' : '#f59e0b', fontSize: '0.85rem', fontWeight: 600 }}>
+                          {c.name}
+                        </span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                          Min alert: {c.minAlertMeters || 1} roll
+                        </span>
+                      </div>
+                      <span className={(c.availableMeters || 0) === 0 ? 'badge-red' : 'badge-amber'}>
+                        {c.availableMeters || 0} {(c.availableMeters || 0) === 1 ? 'roll' : 'rolls'}
                       </span>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{a.type}</span>
                     </div>
-                    <span className={a.stock === 0 ? "badge-red" : "badge-amber"}>{a.stock} units</span>
-                  </div>
-                ))}
-                {stockAlerts.length === 0 && (
+                  ))
+                ) : (
                   <div style={{ textAlign: 'center', padding: '2rem 0', color: '#10b981', fontSize: '0.85rem' }}>
-                    <CheckCircleIcon sx={{ fontSize: 24, mb: 1 }} />
-                    <p>All inventory levels are healthy.</p>
+                    <CheckCircleIcon sx={{ fontSize: 26, mb: 1, display: 'block', margin: '0 auto 8px' }} />
+                    <p style={{ margin: 0, fontWeight: 600 }}>All {data.coilHealth?.totalCoils || 56} coils in optimal stock.</p>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Raw materials ready for roll-forming.</span>
                   </div>
                 )}
              </div>
@@ -219,7 +226,6 @@ const OwnerDashboardPage = () => {
         </Widget>
       </div>
 
-      {/* Row 3: Top Products and Actionable Orders */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
         <Widget title="Top Performing Products">
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>

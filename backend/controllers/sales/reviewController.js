@@ -1,15 +1,27 @@
 const prisma = require("../../config/db");
 
-// Get all reviews for sales panel
 const getAllReviews = async (req, res) => {
   try {
     const reviews = await prisma.review.findMany({
       include: {
-        product: { select: { id: true, name: true, imageUrl: true } },
-        user: { select: { id: true, email: true } },
+        product: { select: { id: true, name: true, imageUrl: true, imageUrls: true, type: true } },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            customerProfile: { select: { name: true, avatarUrl: true } }
+          }
+        },
         reply: {
           include: {
-            user: { select: { role: true } }
+            user: {
+              select: {
+                id: true,
+                role: true,
+                salesProfile: { select: { name: true } },
+                adminProfile: { select: { name: true } }
+              }
+            }
           }
         }
       },
@@ -22,7 +34,6 @@ const getAllReviews = async (req, res) => {
   }
 };
 
-// Reply to a review
 const replyToReview = async (req, res) => {
   const { id } = req.params;
   const { comment } = req.body;
@@ -41,7 +52,6 @@ const replyToReview = async (req, res) => {
       return res.status(404).json({ success: false, message: "Review not found." });
     }
 
-    // Upsert the sales reply
     const reply = await prisma.reviewReply.upsert({
       where: { reviewId: parseInt(id) },
       update: {
@@ -54,7 +64,14 @@ const replyToReview = async (req, res) => {
         userId: parseInt(userId)
       },
       include: {
-        user: { select: { role: true } }
+        user: {
+          select: {
+            id: true,
+            role: true,
+            salesProfile: { select: { name: true } },
+            adminProfile: { select: { name: true } }
+          }
+        }
       }
     });
 

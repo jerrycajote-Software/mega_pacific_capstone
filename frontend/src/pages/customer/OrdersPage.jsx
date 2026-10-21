@@ -1,65 +1,160 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { generateReceiptPDF } from '../../utils/documentGenerator';
 import {
   Box,
-  Container,
-  Grid,
   Typography,
   TextField,
   Button,
   Paper,
   CircularProgress,
   Chip,
-  MenuItem,
   InputAdornment,
   Avatar,
   Stack,
   Card,
-  CardContent,
   CardActionArea,
-  Divider,
-  Alert
+  Alert,
+  IconButton,
 } from '@mui/material';
+import { io } from 'socket.io-client';
 
+const getOrderStatusMeta = (status, fulfillmentType, paymentStatus) => {
+  const s = (status || '').toLowerCase();
+  const ps = (paymentStatus || '').toLowerCase();
+  const isPickup = (fulfillmentType || '').toLowerCase() === 'pickup';
 
-const STATUS_CONFIG = {
-  pending: {
-    label: 'Pending',
+  if (s === 'cancelled' || s === 'rejected') {
+    if (ps === 'refunded') {
+      return {
+        label: 'Rejected · Refunded',
+        badgeColor: '#16a34a',
+        badgeBg: 'rgba(22, 163, 74, 0.08)',
+        badgeBorder: 'rgba(22, 163, 74, 0.25)',
+        iconClass: 'fi fi-sr-shield-check',
+        category: 'cancelled'
+      };
+    }
+    if (ps === 'refund_pending') {
+      return {
+        label: 'Rejected · Refund Pending',
+        badgeColor: '#ea580c',
+        badgeBg: 'rgba(234, 88, 12, 0.08)',
+        badgeBorder: 'rgba(234, 88, 12, 0.25)',
+        iconClass: 'fi fi-rr-time-fast',
+        category: 'cancelled'
+      };
+    }
+    return {
+      label: s === 'rejected' ? 'Order Rejected' : 'Cancelled',
+      badgeColor: '#dc2626',
+      badgeBg: 'rgba(220, 38, 38, 0.08)',
+      badgeBorder: 'rgba(220, 38, 38, 0.25)',
+      iconClass: 'fi fi-rr-cross-circle',
+      category: 'cancelled'
+    };
+  }
+
+  if (s === 'completed' || (isPickup && s === 'delivered')) {
+    return {
+      label: isPickup ? 'Picked Up' : 'Completed',
+      badgeColor: '#16a34a',
+      badgeBg: 'rgba(22, 163, 74, 0.08)',
+      badgeBorder: 'rgba(22, 163, 74, 0.25)',
+      iconClass: 'fi fi-sr-check-circle',
+      category: 'completed'
+    };
+  }
+
+  if (s === 'delivered') {
+    return {
+      label: 'Delivered',
+      badgeColor: '#16a34a',
+      badgeBg: 'rgba(22, 163, 74, 0.08)',
+      badgeBorder: 'rgba(22, 163, 74, 0.25)',
+      iconClass: 'fi fi-sr-check-circle',
+      category: 'completed'
+    };
+  }
+
+  if (isPickup && s === 'ready_for_pickup') {
+    return {
+      label: 'Ready for Pick-up',
+      badgeColor: '#7c3aed',
+      badgeBg: 'rgba(124, 58, 237, 0.08)',
+      badgeBorder: 'rgba(124, 58, 237, 0.3)',
+      iconClass: 'fi fi-rr-shop',
+      category: 'in_progress'
+    };
+  }
+
+  if (!isPickup && (s === 'out_for_delivery' || s === 'shipped')) {
+    return {
+      label: 'Out for Delivery',
+      badgeColor: '#2563eb',
+      badgeBg: 'rgba(37, 99, 235, 0.08)',
+      badgeBorder: 'rgba(37, 99, 235, 0.25)',
+      iconClass: 'fi fi-rr-truck-side',
+      category: 'in_progress'
+    };
+  }
+
+  if (s === 'processing' || s === 'finance_verified') {
+    return {
+      label: isPickup ? 'Fabricating / Staging' : 'Fabricating / Packing',
+      badgeColor: '#d97706',
+      badgeBg: 'rgba(217, 119, 6, 0.08)',
+      badgeBorder: 'rgba(217, 119, 6, 0.25)',
+      iconClass: 'fi fi-rr-box',
+      category: 'in_progress'
+    };
+  }
+
+  return {
+    label: 'Order Placed',
+    badgeColor: '#0284c7',
+    badgeBg: 'rgba(2, 132, 199, 0.08)',
+    badgeBorder: 'rgba(2, 132, 199, 0.25)',
     iconClass: 'fi fi-rr-time-fast',
-    color: 'warning'
-  },
-  processing: {
-    label: 'Processing',
-    iconClass: 'fi fi-rr-box',
-    color: 'info'
-  },
-  out_for_delivery: {
-    label: 'Out for Delivery',
-    iconClass: 'fi fi-rr-truck-side',
-    color: 'primary'
-  },
-  delivered: {
-    label: 'Delivered',
-    iconClass: 'fi fi-sr-check-circle',
-    color: 'success'
-  },
-  cancelled: {
-    label: 'Cancelled',
-    iconClass: 'fi fi-rr-cross-circle',
-    color: 'error'
-  },
+    category: 'in_progress'
+  };
 };
 
-const FILTER_OPTIONS = [
-  { value: 'all', label: 'All Orders' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'processing', label: 'Processing' },
-  { value: 'out_for_delivery', label: 'Out for Delivery' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
+const formatPaymentMode = (rawMode) => {
+  if (!rawMode) return { primary: 'Standard Checkout', secondary: null };
+  const mode = String(rawMode);
+  const lower = mode.toLowerCase();
+
+  if (lower.includes('50% downpayment')) {
+    let depositChannel = 'GCash';
+    if (lower.includes('card')) depositChannel = 'Card';
+    if (lower.includes('bank')) depositChannel = 'Bank Transfer';
+
+    return {
+      primary: '50/50 Downpayment',
+      secondary: lower.includes('cash on delivery')
+        ? `Deposit via ${depositChannel} • Balance on Delivery`
+        : `Downpayment via ${depositChannel}`
+    };
+  }
+
+  if (lower.includes('gcash')) {
+    return { primary: 'GCash', secondary: 'Digital Wallet Transfer' };
+  }
+  if (lower.includes('card') || lower.includes('credit')) {
+    return { primary: 'Credit / Debit Card', secondary: 'Online Payment' };
+  }
+  if (lower.includes('cash on delivery') || lower.includes('cod')) {
+    return { primary: 'Cash on Delivery', secondary: 'Pay on Handover' };
+  }
+
+  return { 
+    primary: mode.length > 25 ? mode.slice(0, 22) + '…' : mode, 
+    secondary: null 
+  };
+};
 
 const formatDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString('en-US', {
@@ -69,131 +164,295 @@ const formatDate = (dateStr) =>
   });
 
 const formatCurrency = (amount) =>
-  `₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+  `₱${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const StatusBadge = ({ status }) => {
-  const key = status?.toLowerCase() || 'pending';
-  const cfg = STATUS_CONFIG[key] || STATUS_CONFIG.pending;
-  const { iconClass, label, color } = cfg;
-  return (
-    <Chip 
-      icon={<i className={iconClass} style={{ fontSize: '13px', marginLeft: '6px' }}></i>} 
-      label={label} 
-      color={color} 
-      variant="outlined" 
-      size="small" 
-      sx={{ fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5 }} 
-    />
-  );
-};
+const FILTER_TABS = [
+  { id: 'all', label: 'All Orders' },
+  { id: 'in_progress', label: 'In Progress' },
+  { id: 'ready_for_pickup', label: 'Ready for Pick-up' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'cancelled', label: 'Cancelled' },
+];
 
-const OrderCard = ({ order, onClick }) => {
-  const previewImages = order.items
+const OrderCard = ({ order, onClick, onReviewClick }) => {
+  const isPickup = (order.fulfillmentType || '').toLowerCase() === 'pickup';
+  const statusMeta = getOrderStatusMeta(order.status, order.fulfillmentType, order.paymentStatus);
+  const isReadyForPickup = isPickup && order.status?.toLowerCase() === 'ready_for_pickup';
+  const isCompleted = ['delivered', 'completed'].includes(order.status?.toLowerCase());
+  const paymentInfo = formatPaymentMode(order.paymentMode);
+
+  const previewImages = (order.items || [])
     .slice(0, 3)
     .map((item) => item.product?.imageUrls?.[0] || item.product?.imageUrl)
     .filter(Boolean);
 
-  const totalQty = order.items.reduce((acc, i) => acc + i.quantity, 0);
+  const totalQty = (order.items || []).reduce((acc, i) => acc + (i.quantity || 1), 0);
+  const formattedId = `#ORD-${String(order.id).padStart(4, '0')}`;
 
   return (
     <Card 
       elevation={0} 
-      onClick={onClick}
       sx={{ 
         border: '1px solid', 
-        borderColor: 'divider', 
-        borderRadius: 4, 
-        transition: 'all 0.3s',
+        borderColor: isReadyForPickup ? '#8b5cf6' : 'divider', 
+        borderRadius: 3.5, 
+        bgcolor: 'background.paper',
+        transition: 'all 0.25s ease',
+        boxShadow: isReadyForPickup ? '0 8px 24px rgba(139, 92, 246, 0.12)' : '0 2px 8px rgba(0,0,0,0.03)',
+        overflow: 'hidden',
         '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+          borderColor: isReadyForPickup ? '#7c3aed' : '#4f772d',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.07)',
           transform: 'translateY(-2px)'
         }
       }}
     >
-      <CardActionArea sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
-              Order ID
+      <CardActionArea onClick={onClick} sx={{ p: { xs: 2.25, sm: 3 } }}>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexWrap: 'wrap', gap: 1.5, mb: 2.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+            <Typography variant="h6" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.01em', fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+              {formattedId}
             </Typography>
-            <Typography variant="h6" fontWeight="900" color="text.primary">
-              #{String(order.id).padStart(4, '0')}
+
+            <Chip
+              label={isPickup ? 'Store Pick-up' : 'Fleet Delivery'}
+              size="small"
+              icon={<i className={isPickup ? 'fi fi-rr-shop' : 'fi fi-rr-truck-side'} style={{ fontSize: 11, marginLeft: 6 }} />}
+              sx={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                height: 24,
+                bgcolor: isPickup ? 'rgba(124, 58, 237, 0.08)' : 'rgba(37, 99, 235, 0.08)',
+                color: isPickup ? '#7c3aed' : '#2563eb',
+                border: '1px solid',
+                borderColor: isPickup ? 'rgba(124, 58, 237, 0.2)' : 'rgba(37, 99, 235, 0.2)'
+              }}
+            />
+
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 500, ml: 0.5 }}>
+              <i className="fi fi-rr-calendar" style={{ fontSize: 12 }} />
+              {formatDate(order.createdAt)}
             </Typography>
           </Box>
-          <StatusBadge status={order.status} />
+
+          <Chip 
+            icon={<i className={statusMeta.iconClass} style={{ fontSize: 12, marginLeft: 6, color: statusMeta.badgeColor }} />} 
+            label={statusMeta.label} 
+            size="small" 
+            sx={{ 
+              fontWeight: 800, 
+              fontSize: '0.73rem',
+              height: 26,
+              bgcolor: statusMeta.badgeBg,
+              color: statusMeta.badgeColor,
+              border: '1px solid',
+              borderColor: statusMeta.badgeBorder
+            }} 
+          />
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <Stack direction="row" sx={{ ml: 1 }}>
-            {previewImages.length > 0 ? (
-              previewImages.map((url, i) => (
+        <Box 
+          sx={{ 
+            p: 2, 
+            bgcolor: 'background.default', 
+            borderRadius: 2.5, 
+            border: '1px solid', 
+            borderColor: 'divider',
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', md: 'center' },
+            gap: 2.5,
+            mb: 2
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0, flex: 1 }}>
+            <Stack direction="row" sx={{ ml: 0.5, flexShrink: 0 }}>
+              {previewImages.length > 0 ? (
+                previewImages.map((url, i) => (
+                  <Avatar 
+                    key={i} 
+                    src={url} 
+                    variant="rounded" 
+                    sx={{ 
+                      width: 52, 
+                      height: 52, 
+                      borderRadius: 2, 
+                      border: '2px solid white', 
+                      ml: i === 0 ? 0 : -1.5, 
+                      bgcolor: 'background.paper',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                    }} 
+                  />
+                ))
+              ) : (
                 <Avatar 
-                  key={i} 
-                  src={url} 
                   variant="rounded" 
-                  sx={{ width: 48, height: 48, border: '2px solid white', ml: -1, bgcolor: 'background.default' }} 
-                />
-              ))
-            ) : (
-              <Avatar variant="rounded" sx={{ width: 48, height: 48, border: '2px solid white', ml: -1, bgcolor: 'background.default', color: 'text.disabled' }}>
-                <i className="fi fi-rr-box" style={{ fontSize: '20px' }}></i>
-              </Avatar>
-            )}
-            {order.items.length > 3 && (
-              <Avatar variant="rounded" sx={{ width: 48, height: 48, border: '2px solid white', ml: -1, bgcolor: 'grey.200', color: 'text.secondary', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                +{order.items.length - 3}
-              </Avatar>
-            )}
-          </Stack>
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="body2" fontWeight="bold" noWrap>
-              {order.items.map((i) => i.product?.name).filter(Boolean).join(', ')}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {order.items.length} product{order.items.length !== 1 ? 's' : ''} · {totalQty} unit{totalQty !== 1 ? 's' : ''}
-            </Typography>
+                  sx={{ width: 52, height: 52, borderRadius: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', color: '#94a3b8' }}
+                >
+                  <i className="fi fi-rr-box" style={{ fontSize: 24 }} />
+                </Avatar>
+              )}
+              {order.items?.length > 3 && (
+                <Avatar 
+                  variant="rounded" 
+                  sx={{ 
+                    width: 52, 
+                    height: 52, 
+                    borderRadius: 2, 
+                    border: '2px solid white', 
+                    ml: -1.5, 
+                    bgcolor: 'grey.200', 
+                    color: 'text.secondary', 
+                    fontSize: '0.8rem', 
+                    fontWeight: 800 
+                  }}
+                >
+                  +{order.items.length - 3}
+                </Avatar>
+              )}
+            </Stack>
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography variant="body1" fontWeight={800} color="text.primary" noWrap sx={{ lineHeight: 1.3 }}>
+                {order.items?.map((i) => i.product?.name ? `${i.product.name}${i.customLength ? ` (${i.customLength}m)` : ''}` : '').filter(Boolean).join(', ') || 'Custom Roofing Order'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
+                {order.items?.length || 0} {order.items?.length === 1 ? 'profile cut' : 'profile cuts'} · Total {totalQty} {totalQty === 1 ? 'sheet / unit' : 'sheets / units'}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: { xs: 3, sm: 4 }, alignItems: 'center', width: { xs: '100%', md: 'auto' }, justifyContent: { xs: 'space-between', md: 'flex-end' }, pt: { xs: 1.5, md: 0 }, borderTop: { xs: '1px dashed #e2e8f0', md: 'none' } }}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>
+                Payment Method
+              </Typography>
+              <Typography variant="body2" fontWeight={800} color="text.primary">
+                {paymentInfo.primary}
+              </Typography>
+              {paymentInfo.secondary && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.68rem', lineHeight: 1.2 }}>
+                  {paymentInfo.secondary}
+                </Typography>
+              )}
+            </Box>
+
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>
+                Order Total
+              </Typography>
+              <Typography variant="h6" fontWeight={900} sx={{ color: '#16a34a', letterSpacing: '-0.01em' }}>
+                {formatCurrency(order.total)}
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
-        <Divider sx={{ mb: 2 }} />
-
-        <Grid container spacing={2}>
-          <Grid item xs={4}>
-            <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <i className="fi fi-rr-calendar" style={{ fontSize: '12px' }}></i> Date
-            </Typography>
-            <Typography variant="body2" fontWeight="bold">{formatDate(order.createdAt)}</Typography>
-          </Grid>
-          <Grid item xs={4}>
-            <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <i className="fi fi-rr-credit-card" style={{ fontSize: '12px' }}></i> Payment
-            </Typography>
-            <Typography variant="body2" fontWeight="bold" sx={{ textTransform: 'capitalize' }}>
-              {order.paymentMode || '—'}
-            </Typography>
-          </Grid>
-          <Grid item xs={4} sx={{ textAlign: 'right' }}>
-            <Typography variant="caption" color="text.secondary" fontWeight="bold" sx={{ mb: 0.5, display: 'block' }}>
-              Total
-            </Typography>
-            <Typography variant="body1" fontWeight="900" color="primary">
-              {formatCurrency(order.total)}
-            </Typography>
-          </Grid>
-        </Grid>
-
-        {order.estimatedDeliveryDate && !['delivered', 'cancelled', 'completed'].includes(order.status?.toLowerCase()) && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, bgcolor: 'primary.50', p: 1, borderRadius: 2, border: '1px solid', borderColor: 'primary.100' }}>
-            <i className="fi fi-rr-truck-side" style={{ fontSize: '16px', color: '#1e3a8a' }}></i>
-            <Typography variant="caption" color="primary.dark" fontWeight="bold">
-              Estimated Delivery: {new Date(order.estimatedDeliveryDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+        {isReadyForPickup && (
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mt: 1.5, 
+              bgcolor: 'rgba(139, 92, 246, 0.08)', 
+              p: 1.5, 
+              borderRadius: 2.5, 
+              border: '1px solid rgba(139, 92, 246, 0.3)' 
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+              <i className="fi fi-rr-shop" style={{ fontSize: 16, color: '#7c3aed' }} />
+              <Typography variant="caption" sx={{ color: '#6d28d9', fontWeight: 800 }}>
+                READY FOR PICK-UP: Staged at Mega Pacific Plant Loading Dock 1
+              </Typography>
+            </Box>
+            <Typography variant="caption" sx={{ color: '#7c3aed', fontWeight: 700, display: { xs: 'none', sm: 'block' } }}>
+              View Pass →
             </Typography>
           </Box>
         )}
+
+        {isCompleted && (() => {
+          const allItemsReviewed = Boolean(order.items && order.items.length > 0 && order.items.every(i => i.isReviewed));
+
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mt: 1.5,
+                p: 1.5,
+                borderRadius: 2.5,
+                bgcolor: '#f0fdf4',
+                border: '1px solid #bbf7d0'
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                {allItemsReviewed ? (
+                  <i className="fi fi-sr-check-circle" style={{ fontSize: 15, color: '#16a34a' }} />
+                ) : (
+                  <i className="fi fi-sr-star" style={{ fontSize: 15, color: '#f59e0b' }} />
+                )}
+                <Typography variant="caption" sx={{ color: '#166534', fontWeight: 700 }}>
+                  {allItemsReviewed
+                    ? 'Reviews submitted! Thank you for rating your materials.'
+                    : (isPickup ? 'Order retrieved & fulfilled. How were your materials?' : 'Order delivered! Help other builders with your feedback.')}
+                </Typography>
+              </Box>
+
+              <Chip
+                size="small"
+                label={allItemsReviewed ? 'View Reviews' : 'Review Items'}
+                sx={{
+                  bgcolor: allItemsReviewed ? '#16a34a' : '#f59e0b',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '0.7rem',
+                  height: 24,
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: allItemsReviewed ? '#15803d' : '#d97706' }
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onReviewClick) onReviewClick();
+                  else onClick();
+                }}
+              />
+            </Box>
+          );
+        })()}
         
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', mt: 2, fontSize: '0.75rem', fontWeight: 'bold', justifyContent: 'flex-end' }}>
-          View full details <i className="fi fi-rr-angle-right" style={{ fontSize: '12px' }}></i>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider', flexWrap: 'wrap', gap: 1 }}>
+          <Button
+            size="small"
+            variant="text"
+            onClick={(e) => {
+              e.stopPropagation();
+              generateReceiptPDF(order);
+            }}
+            startIcon={<i className="fi fi-rr-receipt" style={{ fontSize: 13, color: '#4f772d' }} />}
+            sx={{ 
+              fontWeight: 700, 
+              textTransform: 'none', 
+              color: '#4f772d', 
+              fontSize: '0.78rem', 
+              px: 1, 
+              py: 0.5, 
+              borderRadius: 2,
+              '&:hover': { bgcolor: 'rgba(79, 119, 45, 0.08)' } 
+            }}
+          >
+            Download Receipt (PDF)
+          </Button>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'text.secondary', fontSize: '0.8rem', fontWeight: 700 }}>
+            <span>View Full Details</span>
+            <i className="fi fi-rr-arrow-right" style={{ fontSize: 12, marginTop: 1 }} />
+          </Box>
         </Box>
       </CardActionArea>
     </Card>
@@ -202,15 +461,15 @@ const OrderCard = ({ order, onClick }) => {
 
 const OrdersPage = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('all');
 
-  const fetchMyOrders = async () => {
+  const fetchMyOrders = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -219,11 +478,7 @@ const OrdersPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
-        const mappedOrders = res.data.data.map(o => ({
-          ...o,
-          status: o.status.toLowerCase() === 'shipped' ? 'processing' : o.status
-        }));
-        setOrders(mappedOrders);
+        setOrders(res.data.data || []);
       } else {
         setError(res.data.error || 'Failed to load orders.');
       }
@@ -243,7 +498,7 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) {
@@ -252,166 +507,463 @@ const OrdersPage = () => {
       setLoading(false);
       setError('You are not logged in. Please log in to view your orders.');
     }
-  }, [token]);
+  }, [token, fetchMyOrders]);
 
-  const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
-      const matchesFilter =
-        activeFilter === 'all' || o.status?.toLowerCase() === activeFilter;
-
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch =
-        !searchTerm ||
-        String(o.id).includes(searchLower) ||
-        o.items.some((item) => item.product?.name?.toLowerCase().includes(searchLower)) ||
-        o.paymentMode?.toLowerCase().includes(searchLower) ||
-        o.status?.toLowerCase().includes(searchLower);
-
-      return matchesFilter && matchesSearch;
+  useEffect(() => {
+    if (!token) return;
+    const API_URL = import.meta.env.VITE_API_URL || '';
+    const socket = io(API_URL, {
+      auth: { user }
     });
-  }, [orders, searchTerm, activeFilter]);
+
+    if (user?.id) {
+      socket.emit('join_room', `user_${user.id}`);
+    }
+
+    socket.on('order_status_updated', () => {
+      fetchMyOrders();
+    });
+
+    socket.on('order_ready_for_pickup', () => {
+      fetchMyOrders();
+    });
+
+    return () => socket.close();
+  }, [user, token, fetchMyOrders]);
 
   const stats = useMemo(() => {
     const total = orders.length;
-    const delivered = orders.filter((o) => o.status?.toLowerCase() === 'delivered').length;
-    const pending = orders.filter((o) =>
-      ['pending', 'processing', 'out_for_delivery'].includes(o.status?.toLowerCase())
-    ).length;
-    const totalSpent = orders.reduce((acc, o) => acc + Number(o.total), 0);
-    return { total, delivered, pending, totalSpent };
+    const completed = orders.filter((o) => {
+      const s = (o.status || '').toLowerCase();
+      return s === 'delivered' || s === 'completed';
+    }).length;
+    const inProgress = orders.filter((o) => {
+      const s = (o.status || '').toLowerCase();
+      return ['pending', 'processing', 'finance_verified', 'ready_for_pickup', 'out_for_delivery', 'shipped'].includes(s);
+    }).length;
+    const totalSpent = orders
+      .filter((o) => (o.status || '').toLowerCase() !== 'cancelled')
+      .reduce((acc, o) => acc + Number(o.total || 0), 0);
+
+    return { total, completed, inProgress, totalSpent };
   }, [orders]);
 
-  return (
-    <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10, maxWidth: 1200, mx: 'auto' }}>
-      <Button onClick={() => navigate('/dashboard')} sx={{ mb: 4, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
-        <i className="fi fi-rr-arrow-left" style={{ fontSize: '14px' }}></i>
-        Back to Dashboard
-      </Button>
+  const tabCounts = useMemo(() => {
+    return {
+      all: orders.length,
+      in_progress: orders.filter((o) => {
+        const s = (o.status || '').toLowerCase();
+        return ['pending', 'processing', 'finance_verified', 'ready_for_pickup', 'out_for_delivery', 'shipped'].includes(s);
+      }).length,
+      ready_for_pickup: orders.filter((o) => {
+        const isPickup = (o.fulfillmentType || '').toLowerCase() === 'pickup';
+        return isPickup && (o.status || '').toLowerCase() === 'ready_for_pickup';
+      }).length,
+      completed: orders.filter((o) => {
+        const s = (o.status || '').toLowerCase();
+        return s === 'delivered' || s === 'completed';
+      }).length,
+      cancelled: orders.filter((o) => ['cancelled', 'rejected'].includes((o.status || '').toLowerCase())).length,
+    };
+  }, [orders]);
 
-      <Box sx={{ mb: 6 }}>
-        <Typography variant="h3" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'text.primary' }}>
-          <i className="fi fi-rr-shopping-bag" style={{ fontSize: '32px', color: '#1e3a8a' }}></i> My Orders
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 1 }}>
-          Track and manage all your previous and current purchases.
-        </Typography>
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o) => {
+      const s = (o.status || '').toLowerCase();
+      const isPickup = (o.fulfillmentType || '').toLowerCase() === 'pickup';
+
+      let matchesTab = true;
+      if (activeTab === 'in_progress') {
+        matchesTab = ['pending', 'processing', 'finance_verified', 'ready_for_pickup', 'out_for_delivery', 'shipped'].includes(s);
+      } else if (activeTab === 'ready_for_pickup') {
+        matchesTab = isPickup && s === 'ready_for_pickup';
+      } else if (activeTab === 'completed') {
+        matchesTab = s === 'delivered' || s === 'completed';
+      } else if (activeTab === 'cancelled') {
+        matchesTab = s === 'cancelled' || s === 'rejected';
+      }
+
+      const searchLower = searchTerm.trim().toLowerCase();
+      const matchesSearch =
+        !searchLower ||
+        String(o.id).includes(searchLower) ||
+        `#ord-${String(o.id).padStart(4, '0')}`.toLowerCase().includes(searchLower) ||
+        (o.items || []).some((item) => item.product?.name?.toLowerCase().includes(searchLower)) ||
+        (o.paymentMode || '').toLowerCase().includes(searchLower) ||
+        (o.status || '').toLowerCase().includes(searchLower) ||
+        (o.fulfillmentType || '').toLowerCase().includes(searchLower);
+
+      return matchesTab && matchesSearch;
+    });
+  }, [orders, searchTerm, activeTab]);
+
+  return (
+    <Box sx={{ animation: 'fadeIn 0.35s ease-in-out', pb: 10, maxWidth: 1200, mx: 'auto', px: { xs: 1.5, sm: 2.5, md: 0 } }}>
+      
+      <Box sx={{ mb: 2.5 }}>
+        <Button 
+          onClick={() => navigate('/dashboard')} 
+          startIcon={<i className="fi fi-rr-arrow-left" style={{ fontSize: 13 }} />}
+          sx={{ 
+            color: 'text.secondary', 
+            textTransform: 'none', 
+            fontWeight: 600, 
+            fontSize: '0.85rem',
+            px: 1.5,
+            py: 0.6,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            '&:hover': { bgcolor: 'action.hover', color: 'text.primary' }
+          }}
+        >
+          Back to Dashboard
+        </Button>
       </Box>
 
-      {!loading && !error && (
-        <Grid container spacing={3} sx={{ mb: 6 }}>
-          <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
-              <Typography variant="overline" color="text.secondary" fontWeight="bold">Total Orders</Typography>
-              <Typography variant="h4" fontWeight="bold" color="text.primary">{stats.total}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
-              <Typography variant="overline" color="text.secondary" fontWeight="bold">Delivered</Typography>
-              <Typography variant="h4" fontWeight="bold" color="success.main">{stats.delivered}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
-              <Typography variant="overline" color="text.secondary" fontWeight="bold">In Progress</Typography>
-              <Typography variant="h4" fontWeight="bold" color="warning.main">{stats.pending}</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
-              <Typography variant="overline" color="text.secondary" fontWeight="bold">Total Spent</Typography>
-              <Typography variant="h5" fontWeight="bold" color="text.primary" sx={{ mt: 1 }}>{formatCurrency(stats.totalSpent)}</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
+      <Box sx={{ mb: 3.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box 
+            sx={{ 
+              width: 44, 
+              height: 44, 
+              borderRadius: 2.5, 
+              bgcolor: 'rgba(79, 119, 45, 0.1)', 
+              color: '#4f772d', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}
+          >
+            <i className="fi fi-rr-shopping-bag" style={{ fontSize: 22 }} />
+          </Box>
+          <Box>
+            <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+              My Orders
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Track real-time fabrication, staging, and dispatch progress for your roofing materials.
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      {orders.some((o) => (o.fulfillmentType || '').toLowerCase() === 'pickup' && o.status?.toLowerCase() === 'ready_for_pickup') && (
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 3.5,
+            p: 2.5,
+            borderRadius: 3.5,
+            bgcolor: 'rgba(124, 58, 237, 0.05)',
+            border: '2px solid #8b5cf6',
+            boxShadow: '0 8px 24px rgba(139, 92, 246, 0.12)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 2
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar sx={{ bgcolor: '#7c3aed', color: '#ffffff', width: 44, height: 44 }}>
+              <i className="fi fi-rr-shop" style={{ fontSize: 20 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle2" fontWeight={800} color="#6d28d9">
+                Signal Transmitted: Roofing Materials Ready for Pick-up!
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                Your custom cuts are banded and staged at <strong>Plant Loading Dock 1</strong>. Click below to view your digital handover pass.
+              </Typography>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setActiveTab('ready_for_pickup')}
+            sx={{
+              bgcolor: '#7c3aed',
+              textTransform: 'none',
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 2,
+              '&:hover': { bgcolor: '#6d28d9' }
+            }}
+          >
+            Filter Ready Orders
+          </Button>
+        </Paper>
       )}
 
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 4 }}>
+      {!loading && !error && (
+        <Box 
+          sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, 
+            gap: 2, 
+            mb: 3.5 
+          }}
+        >
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 2.5, 
+              borderRadius: 3, 
+              border: '1px solid', 
+              borderColor: 'divider', 
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}
+          >
+            <Avatar sx={{ bgcolor: 'action.hover', color: 'text.primary', width: 42, height: 42, borderRadius: 2 }}>
+              <i className="fi fi-rr-shopping-bag" style={{ fontSize: 18 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                Total Orders
+              </Typography>
+              <Typography variant="h5" fontWeight={900} color="text.primary">
+                {stats.total}
+              </Typography>
+            </Box>
+          </Paper>
+
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 2.5, 
+              borderRadius: 3, 
+              border: '1px solid', 
+              borderColor: 'divider', 
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}
+          >
+            <Avatar sx={{ bgcolor: 'rgba(217, 119, 6, 0.1)', color: '#d97706', width: 42, height: 42, borderRadius: 2 }}>
+              <i className="fi fi-rr-time-fast" style={{ fontSize: 18 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                In Progress
+              </Typography>
+              <Typography variant="h5" fontWeight={900} sx={{ color: '#d97706' }}>
+                {stats.inProgress}
+              </Typography>
+            </Box>
+          </Paper>
+
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 2.5, 
+              borderRadius: 3, 
+              border: '1px solid', 
+              borderColor: 'divider', 
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}
+          >
+            <Avatar sx={{ bgcolor: 'rgba(22, 163, 74, 0.1)', color: '#16a34a', width: 42, height: 42, borderRadius: 2 }}>
+              <i className="fi fi-sr-check-circle" style={{ fontSize: 18 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                Completed
+              </Typography>
+              <Typography variant="h5" fontWeight={900} sx={{ color: '#16a34a' }}>
+                {stats.completed}
+              </Typography>
+            </Box>
+          </Paper>
+
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 2.5, 
+              borderRadius: 3, 
+              border: '1px solid', 
+              borderColor: 'divider', 
+              bgcolor: 'background.paper',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}
+          >
+            <Avatar sx={{ bgcolor: 'rgba(79, 119, 45, 0.1)', color: '#4f772d', width: 42, height: 42, borderRadius: 2 }}>
+              <i className="fi fi-rr-wallet" style={{ fontSize: 18 }} />
+            </Avatar>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                Total Spent
+              </Typography>
+              <Typography variant="h6" fontWeight={900} color="text.primary" noWrap sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                {formatCurrency(stats.totalSpent)}
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+      )}
+
+      <Box sx={{ mb: 2.5 }}>
         <TextField
           fullWidth
-          placeholder="Search by order ID, product name, payment method…"
+          placeholder="Search by Order ID (#0022), roofing profile name, or payment method…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <i className="fi fi-rr-search" style={{ fontSize: '16px', color: '#64748b' }}></i>
+                <i className="fi fi-rr-search" style={{ fontSize: 16, color: '#64748b' }} />
               </InputAdornment>
             ),
+            endAdornment: searchTerm ? (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchTerm('')}>
+                  <i className="fi fi-rr-cross-small" style={{ fontSize: 16 }} />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
           }}
-          sx={{ flexGrow: 1, bgcolor: 'background.paper', borderRadius: 2 }}
+          sx={{ 
+            bgcolor: 'background.paper', 
+            borderRadius: 2.5,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2.5,
+              borderColor: 'divider'
+            }
+          }}
         />
-        <TextField
-          select
-          value={activeFilter}
-          onChange={(e) => setActiveFilter(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <i className="fi fi-rr-filter" style={{ fontSize: '16px', color: '#64748b' }}></i>
-              </InputAdornment>
-            ),
-          }}
-          sx={{ minWidth: 200, bgcolor: 'background.paper', borderRadius: 2 }}
-        >
-          {FILTER_OPTIONS.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </MenuItem>
-          ))}
-        </TextField>
       </Box>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 6, flexWrap: 'wrap', gap: 1 }}>
-        {FILTER_OPTIONS.map((opt) => (
-          <Chip
-            key={opt.value}
-            label={`${opt.label} ${opt.value !== 'all' ? `(${orders.filter((o) => o.status?.toLowerCase() === opt.value).length})` : ''}`}
-            onClick={() => setActiveFilter(opt.value)}
-            color={activeFilter === opt.value ? 'primary' : 'default'}
-            variant={activeFilter === opt.value ? 'filled' : 'outlined'}
-            sx={{ fontWeight: 'bold' }}
-          />
-        ))}
-      </Stack>
+      <Box
+        sx={{
+          mb: 3.5,
+          display: 'flex',
+          overflowX: 'auto',
+          pb: 0.5,
+          gap: 1.25,
+          WebkitOverflowScrolling: 'touch',
+          '&::-webkit-scrollbar': { display: 'none' },
+          msOverflowStyle: 'none',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {FILTER_TABS.map((tab) => {
+          const count = tabCounts[tab.id] || 0;
+          const isActive = activeTab === tab.id;
+
+          return (
+            <Chip
+              key={tab.id}
+              label={`${tab.label} (${count})`}
+              onClick={() => setActiveTab(tab.id)}
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                py: 2,
+                px: 1,
+                borderRadius: 2.5,
+                flexShrink: 0,
+                cursor: 'pointer',
+                bgcolor: isActive ? '#4f772d' : 'background.paper',
+                color: isActive ? '#ffffff' : 'text.primary',
+                border: '1px solid',
+                borderColor: isActive ? '#4f772d' : 'divider',
+                boxShadow: isActive ? '0 4px 12px rgba(79, 119, 45, 0.25)' : 'none',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  bgcolor: isActive ? '#3d5c22' : 'action.hover'
+                }
+              }}
+            />
+          );
+        })}
+      </Box>
 
       {loading ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}>
-          <CircularProgress />
-          <Typography color="text.secondary" sx={{ mt: 2 }}>Loading your orders…</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15, gap: 2 }}>
+          <CircularProgress sx={{ color: '#4f772d' }} />
+          <Typography variant="body2" color="text.secondary">Loading your orders…</Typography>
         </Box>
       ) : error ? (
-        <Alert severity="error" action={<Button color="inherit" size="small" onClick={fetchMyOrders}>Try Again</Button>}>
+        <Alert 
+          severity="error" 
+          sx={{ borderRadius: 3 }}
+          action={<Button color="inherit" size="small" onClick={fetchMyOrders}>Try Again</Button>}
+        >
           {error}
         </Alert>
       ) : filteredOrders.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 8, textAlign: 'center', borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-          
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            {orders.length === 0 ? "You haven't placed any orders yet" : 'No orders match your search'}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 8, 
+            textAlign: 'center', 
+            borderRadius: 4, 
+            border: '1px solid', 
+            borderColor: 'divider', 
+            bgcolor: 'background.paper' 
+          }}
+        >
+          <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+            <i className="fi fi-rr-search-alt" style={{ fontSize: 26, color: '#94a3b8' }} />
+          </Box>
+          <Typography variant="h5" fontWeight={900} gutterBottom>
+            {orders.length === 0 ? "You haven't placed any orders yet" : 'No orders found'}
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 4 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, maxWidth: 420, mx: 'auto' }}>
             {orders.length === 0
-              ? 'Browse our catalog and start shopping!'
-              : 'Try adjusting your filters or search terms.'}
+              ? 'Customize your first roofing profile or browse our catalog to get started.'
+              : 'No orders matched your active filter or search keywords. Try selecting another tab or clearing search.'}
           </Typography>
-          {orders.length === 0 && (
-            <Button variant="contained" color="primary" onClick={() => navigate('/dashboard')}>
-              Browse Products
+          {orders.length === 0 ? (
+            <Button 
+              variant="contained" 
+              onClick={() => navigate('/dashboard')}
+              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#4f772d', '&:hover': { bgcolor: '#3d5c22' }, px: 3, py: 1 }}
+            >
+              Browse Roofing Catalog
+            </Button>
+          ) : (
+            <Button 
+              variant="outlined" 
+              onClick={() => {
+                setActiveTab('all');
+                setSearchTerm('');
+              }}
+              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}
+            >
+              Reset Filters
             </Button>
           )}
         </Paper>
       ) : (
         <Box>
-          <Typography variant="body2" color="text.secondary" fontWeight="bold" sx={{ mb: 2 }}>
-            Showing <Typography component="span" fontWeight="900" color="text.primary">{filteredOrders.length}</Typography> order{filteredOrders.length !== 1 ? 's' : ''}
-          </Typography>
-          <Stack spacing={3}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" fontWeight={600}>
+              Showing <strong>{filteredOrders.length}</strong> of <strong>{orders.length}</strong> {orders.length === 1 ? 'order' : 'orders'}
+            </Typography>
+          </Box>
+
+          <Stack spacing={2.5}>
             {filteredOrders.map((order) => (
               <OrderCard
                 key={order.id}
                 order={order}
                 onClick={() => navigate(`/order/${order.id}`)}
+                onReviewClick={() => navigate(`/order/${order.id}`)}
               />
             ))}
           </Stack>

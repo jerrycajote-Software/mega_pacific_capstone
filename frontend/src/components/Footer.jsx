@@ -6,12 +6,11 @@ const Footer = () => {
     <Box component="footer" sx={{ bgcolor: 'background.paper', pt: 6, pb: 3, borderTop: '1px solid', borderColor: 'divider', mt: 'auto' }}>
       <Container maxWidth="lg">
         <Grid container spacing={4}>
-          {/* Company Info */}
           <Grid item xs={12} md={4}>
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 24, letterSpacing: '0.05em', lineHeight: 1 }}>
-                <Typography variant="span" sx={{ color: '#1e3a8a' }}>MEGA</Typography>
-                <Typography variant="span" sx={{ color: '#0f172a' }}>PACIFIC</Typography>
+                <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+                <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
               </Box>
               <Typography sx={{ color: '#64748b', fontSize: '10px', fontWeight: 800, letterSpacing: '0.2em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
                 METAL AND STEEL CORP
@@ -25,7 +24,6 @@ const Footer = () => {
             </Box>
           </Grid>
 
-          {/* Contact Details */}
           <Grid item xs={12} sm={6} md={3}>
             <Typography variant="h6" color="text.primary" gutterBottom>
               Contact Us
@@ -50,7 +48,6 @@ const Footer = () => {
             </Box>
           </Grid>
 
-          {/* Quick Links */}
           <Grid item xs={12} sm={6} md={2}>
             <Typography variant="h6" color="text.primary" gutterBottom>
               Quick Links

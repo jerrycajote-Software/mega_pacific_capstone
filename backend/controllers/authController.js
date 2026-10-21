@@ -6,7 +6,6 @@ const jwt = require("jsonwebtoken");
 const register = async (req, res) => {
   const { name, email, password, contactNumber, address, city, province, zipCode } = req.body;
   try {
-    // Check for duplicate email before attempting DB insert
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       if (existingUser.status === "deleted") {
@@ -82,7 +81,6 @@ const register = async (req, res) => {
       await sendOtpEmail(email, otp);
     } catch (emailError) {
       console.error("WARNING: OTP email failed to send (user was still created):", emailError.message);
-      // Registration is still considered successful
     }
 
     res.status(201).json({ message: "User created successfully. OTP verification code sent.", userId: user.id, email: user.email });
@@ -133,12 +131,10 @@ const login = async (req, res) => {
       return res.status(403).json({ error: statusMsg });
     }
 
-    // Check if email is verified for customer role
     if (user.role === "customer" && !user.isEmailVerified) {
       return res.status(403).json({ error: "Email not verified", email: user.email });
     }
 
-    // Require OTP for customer on every login
     if (user.role === "customer") {
       if (!otp) {
         const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -212,7 +208,6 @@ const login = async (req, res) => {
       }
 
       if (activeSessionsCount > 0 && !otp && user.role !== "superadmin") {
-        // Requires OTP for another device login
         const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
@@ -398,7 +393,6 @@ const updateProfile = async (req, res) => {
       await prisma.financeProfile.update({ where: { userId }, data: { contactNumber } });
     }
 
-    // Return the updated data (simplification for response)
     res.status(200).json({ data: { id: userId, email: user.email, role, ...profileData } });
   } catch (error) {
     res.status(500).json({ error: "Failed to update profile" });
@@ -429,7 +423,6 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ error: "OTP has expired. Please request a new one." });
     }
 
-    // OTP matches and is valid
     const updateData = {
       isEmailVerified: true,
       otpCode: null,
@@ -481,7 +474,6 @@ const resendOtp = async (req, res) => {
       }
     }
 
-    // Generate new OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -494,7 +486,6 @@ const resendOtp = async (req, res) => {
       }
     });
 
-    // Send email
     const { sendOtpEmail } = require("../utils/emailService");
     await sendOtpEmail(email, otp);
 
@@ -559,6 +550,15 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: "Reset code has expired. Please request a new one." });
     }
 
+    if (user.password) {
+      const isSamePassword = await bcrypt.compare(newPassword, user.password);
+      if (isSamePassword) {
+        return res.status(400).json({
+          error: "New password cannot be the same as your previous password. Please choose a different password."
+        });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
@@ -618,7 +618,6 @@ const updateAddress = async (req, res) => {
     const { id } = req.params;
     const { contactNumber, address, city, province, zipCode } = req.body;
 
-    // Verify ownership
     const existing = await prisma.address.findFirst({ where: { id: Number(id), userId } });
     if (!existing) {
       return res.status(404).json({ error: "Address not found" });

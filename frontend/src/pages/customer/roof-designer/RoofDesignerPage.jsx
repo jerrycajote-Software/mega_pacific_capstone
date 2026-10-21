@@ -5,24 +5,23 @@ import SceneCanvas from './components/SceneCanvas';
 import CostEstimatorPanel from './components/CostEstimatorPanel';
 import HouseSelectionSidebar from './components/HouseSelectionSidebar';
 import MaterialBottomBar from './components/MaterialBottomBar';
+import RoofColorPicker from './components/RoofColorPicker';
 import useRoofCalculator from './hooks/useRoofCalculator';
+import useIsMobileBrowser from '../../../hooks/useDeviceDetect';
+import MobileWarningScreen from './components/MobileWarningScreen';
 
-/**
- * RoofDesignerPage — Full-screen 3D roof cost estimator.
- *
- * New 4-Section Layout:
- *   ┌─────────────┬───────────────────────────────┬────────────────┐
- *   │             │                               │                │
- *   │    House    │       3D Scene Canvas         │      Cost      │
- *   │   Model     │         (Center)              │   Estimation   │
- *   │  (Left)     │                               │    (Right)     │
- *   │             ├───────────────────────────────┤                │
- *   │             │   Material Bottom Bar         │                │
- *   └─────────────┴───────────────────────────────┴────────────────┘
- */
 const RoofDesignerPage = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobileBrowser();
   const calculator = useRoofCalculator();
+
+  if (isMobile) {
+    return <MobileWarningScreen />;
+  }
+
+  // Show the color picker once the tile step is unlocked (available or installed)
+  const tileStep = calculator.steps.find((s) => s.id === 'hermosa_tile');
+  const showColorPicker = tileStep && tileStep.status !== 'locked';
 
   return (
     <Box
@@ -35,7 +34,6 @@ const RoofDesignerPage = () => {
         overflow: 'hidden',
       }}
     >
-      {/*  Top Bar  */}
       <Box
         sx={{
           display: 'flex',
@@ -98,7 +96,6 @@ const RoofDesignerPage = () => {
           </Box>
         </Box>
 
-        {/* Scene Controls */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
             icon={<i className="fi fi-rr-cursor-finger" style={{ fontSize: '12px' }}></i>}
@@ -117,33 +114,42 @@ const RoofDesignerPage = () => {
         </Box>
       </Box>
 
-      {/*  Main Content: 4-Section Layout  */}
       <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         
-        {/* Left: House Selection Sidebar */}
         <HouseSelectionSidebar 
           houseLoaded={calculator.houseLoaded} 
           loadHouse={calculator.loadHouse} 
         />
 
-        {/* Center: Scene + Bottom Bar */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           
-          {/* 3D Canvas */}
           <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            <SceneCanvas houseLoaded={calculator.houseLoaded} visibleIds={calculator.visibleIds} />
+            <SceneCanvas
+              houseLoaded={calculator.houseLoaded}
+              visibleIds={calculator.visibleIds}
+              tileQty={calculator.quantities['hermosa_tile'] || 0}
+              tileColor={calculator.tileColor}
+            />
           </Box>
 
-          {/* Bottom Bar: Materials */}
+          {/* Roof Color Picker — shown when tile step is unlocked */}
+          {showColorPicker && (
+            <RoofColorPicker
+              tileColor={calculator.tileColor}
+              setTileColor={calculator.setTileColor}
+            />
+          )}
+
           {calculator.houseLoaded && (
             <MaterialBottomBar 
               steps={calculator.steps} 
-              installPart={calculator.installPart} 
+              installPart={calculator.installPart}
+              addOnePc={calculator.addOnePc}
+              removeOnePc={calculator.removeOnePc}
             />
           )}
         </Box>
 
-        {/* Right: Cost Estimator */}
         <CostEstimatorPanel 
           steps={calculator.steps}
           setQty={calculator.setQty}

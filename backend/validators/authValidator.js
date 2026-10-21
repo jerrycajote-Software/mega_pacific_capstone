@@ -24,7 +24,6 @@ const REQUIRED_REGISTER_FIELDS = [
 const validateRegister = (req, res, next) => {
   const body = req.body;
 
-  // 1. Check required fields
   const missingFields = REQUIRED_REGISTER_FIELDS
     .filter(({ key }) => !body[key] || String(body[key]).trim() === '')
     .map(({ label }) => label);
@@ -36,7 +35,6 @@ const validateRegister = (req, res, next) => {
     });
   }
 
-  // 2. Validate password policy
   const { password } = body;
   if (!PASSWORD_REGEX.test(password)) {
     return res.status(400).json({

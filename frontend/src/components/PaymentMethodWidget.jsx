@@ -11,7 +11,6 @@ import {
   Chip
 } from '@mui/material';
 
-// Card brand logos
 const MastercardLogo = ({ active = true }) => (
   <Box
     sx={{
@@ -66,60 +65,6 @@ const VisaLogo = ({ active = true }) => (
   </Box>
 );
 
-const AmexLogo = ({ active = true }) => (
-  <Box
-    sx={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 32,
-      height: 20,
-      borderRadius: '4px',
-      bgcolor: '#006FCF',
-      opacity: active ? 1 : 0.45,
-      transition: 'opacity 0.2s',
-      flexShrink: 0
-    }}
-  >
-    <Typography
-      sx={{
-        color: '#ffffff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        fontWeight: 800,
-        fontSize: '8px',
-        letterSpacing: '0.2px',
-        lineHeight: 1
-      }}
-    >
-      AMEX
-    </Typography>
-  </Box>
-);
-
-const JcbLogo = ({ active = true }) => (
-  <Box
-    sx={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 28,
-      height: 20,
-      borderRadius: '4px',
-      bgcolor: '#ffffff',
-      border: '1px solid #e2e8f0',
-      opacity: active ? 1 : 0.45,
-      transition: 'opacity 0.2s',
-      flexShrink: 0,
-      p: '2px'
-    }}
-  >
-    <Box sx={{ display: 'flex', height: '100%', width: '100%', borderRadius: '2px', overflow: 'hidden' }}>
-      <Box sx={{ flex: 1, bgcolor: '#005bac' }} />
-      <Box sx={{ flex: 1, bgcolor: '#d92419' }} />
-      <Box sx={{ flex: 1, bgcolor: '#2ca02c' }} />
-    </Box>
-  </Box>
-);
 
 // Card security code icon with 123
 const CvvSecurityIcon = () => (
@@ -135,7 +80,6 @@ const CvvSecurityIcon = () => (
   </Box>
 );
 
-// GCash circular logo
 const GCashLogo = () => (
   <Box
     sx={{
@@ -165,21 +109,21 @@ const PaymentMethodWidget = ({
   cardCvv = '',
   gcashNumber = '',
   subtotal = 0,
-  shippingFee = 100,
+  shippingFee = 0,
+  fulfillmentType = 'Delivery',
   onChange,
   errors = {}
 }) => {
-  const grandTotal = (Number(subtotal) || 0) + (Number(shippingFee) || 100);
+  const actualShippingFee = Math.max(0, Number(shippingFee) || 0);
+  const isPickup = fulfillmentType === 'Pickup' || actualShippingFee === 0;
+  const grandTotal = (Number(subtotal) || 0) + (isPickup ? 0 : actualShippingFee);
   const downpayment = grandTotal * 0.5;
   const remainingCod = grandTotal * 0.5;
 
-  // Determine detected card brand
   const cleanNumber = (cardNumber || '').replace(/\D/g, '');
   const isVisa = /^4/.test(cleanNumber);
   const isMastercard = /^(5[1-5]|2[2-7])/.test(cleanNumber);
-  const isAmex = /^3[47]/.test(cleanNumber);
-  const isJcb = /^(?:2131|1800|35)/.test(cleanNumber);
-  const hasBrandMatch = isVisa || isMastercard || isAmex || isJcb;
+  const hasBrandMatch = isVisa || isMastercard;
 
   const handleCardNumberInput = (e) => {
     const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
@@ -231,7 +175,6 @@ const PaymentMethodWidget = ({
   const isCardChannel = paymentChannel === 'Card';
   const isGcashChannel = paymentChannel === 'GCash';
 
-  // Render the payment details form (Card or GCash)
   const renderPaymentDetails = (amountToPayNow, labelPrefix) => (
     <Box sx={{ mt: 2.5, pt: 2.5, borderTop: '1px solid #e2e8f0' }} onClick={(e) => e.stopPropagation()}>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
@@ -240,9 +183,7 @@ const PaymentMethodWidget = ({
         </Typography>
       </Box>
 
-      {/* Payment Channel Sub-Tabs: Card vs GCash */}
       <Stack spacing={2}>
-        {/* Card Sub-Option */}
         <Paper
           elevation={0}
           onClick={() => selectChannel('Card')}
@@ -273,8 +214,6 @@ const PaymentMethodWidget = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <MastercardLogo active={!hasBrandMatch || isMastercard} />
               <VisaLogo active={!hasBrandMatch || isVisa} />
-              <AmexLogo active={!hasBrandMatch || isAmex} />
-              <JcbLogo active={!hasBrandMatch || isJcb} />
             </Box>
           </Box>
 
@@ -295,8 +234,6 @@ const PaymentMethodWidget = ({
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, pl: 1 }}>
                         <MastercardLogo active={!hasBrandMatch || isMastercard} />
                         <VisaLogo active={!hasBrandMatch || isVisa} />
-                        <AmexLogo active={!hasBrandMatch || isAmex} />
-                        <JcbLogo active={!hasBrandMatch || isJcb} />
                       </Box>
                     ),
                     sx: {
@@ -319,7 +256,7 @@ const PaymentMethodWidget = ({
                 />
 
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <TextField
                       fullWidth
                       name="cardExpiry"
@@ -350,7 +287,7 @@ const PaymentMethodWidget = ({
                     />
                   </Grid>
 
-                  <Grid item xs={6}>
+                  <Grid size={{ xs: 6 }}>
                     <TextField
                       fullWidth
                       name="cardCvv"
@@ -388,7 +325,6 @@ const PaymentMethodWidget = ({
           </Collapse>
         </Paper>
 
-        {/* GCash Sub-Option */}
         <Paper
           elevation={0}
           onClick={() => selectChannel('GCash')}
@@ -459,7 +395,6 @@ const PaymentMethodWidget = ({
 
   return (
     <Box sx={{ mb: 4 }}>
-      {/* Instructions Card Above */}
       <Paper
         elevation={0}
         sx={{
@@ -499,7 +434,6 @@ const PaymentMethodWidget = ({
         </Box>
 
         <Stack spacing={1.5} sx={{ pl: { xs: 0, sm: 5.5 } }}>
-          {/* Instruction 1 */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
             <Box
               sx={{
@@ -529,7 +463,6 @@ const PaymentMethodWidget = ({
             </Box>
           </Box>
 
-          {/* Instruction 2 */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
             <Box
               sx={{
@@ -559,24 +492,23 @@ const PaymentMethodWidget = ({
             </Box>
           </Box>
 
-          {/* Shipping Fee Notice */}
           <Box sx={{ pt: 1, borderTop: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <i className="fi fi-rr-truck-side" style={{ fontSize: '15px', color: '#16a34a' }}></i>
+            <i className={isPickup ? 'fi fi-rr-box-alt' : 'fi fi-rr-truck-side'} style={{ fontSize: '15px', color: '#16a34a' }}></i>
             <Typography variant="caption" fontWeight={700} color="#15803d">
-              Both payment options include the standard shipping fee of ₱{shippingFee.toFixed(2)}.
+              {isPickup
+                ? 'Plant Pick-up selected: No delivery logistics fee applied (FREE).'
+                : `Both payment options include the calculated delivery logistics fee of ₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`}
             </Typography>
           </Box>
         </Stack>
       </Paper>
 
-      {/* Main Options Section Header */}
       <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
         <i className="fi fi-rr-credit-card" style={{ fontSize: '18px', color: '#1e3a8a' }}></i>
         Select Payment Plan
       </Typography>
 
       <Stack spacing={2.5}>
-        {/* Option 1: Cash on Delivery (50% Downpayment) */}
         <Paper
           elevation={0}
           onClick={() => selectPlan('COD_50')}
@@ -594,7 +526,6 @@ const PaymentMethodWidget = ({
             }
           }}
         >
-          {/* Header Row */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <Radio
@@ -635,22 +566,23 @@ const PaymentMethodWidget = ({
             />
           </Box>
 
-          {/* 50/50 Breakdown Badge Box */}
           <Box sx={{ mt: 2, p: 1.5, borderRadius: 2.5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
             <Grid container spacing={1}>
-              <Grid item xs={12} sm={4}>
-                <Typography variant="caption" color="#64748b" display="block">Order Total (incl. ₱100 shipping):</Typography>
-                <Typography variant="body2" fontWeight={700} color="#0f172a">
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography variant="caption" color="#64748b" display="block">
+                  Order Total {isPickup ? '(Free Pick-up):' : `(incl. ₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shipping):`}
+                </Typography>
+                <Typography variant="body2" fontWeight={700} color="#0f172a" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                   ₱{grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="caption" color="#166534" display="block" fontWeight={600}>50% Pay Now (Card/GCash):</Typography>
                 <Typography variant="body2" fontWeight={800} color="#16a34a">
                   ₱{downpayment.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography variant="caption" color="#92400e" display="block" fontWeight={600}>50% Cash on Delivery:</Typography>
                 <Typography variant="body2" fontWeight={800} color="#b45309">
                   ₱{remainingCod.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -659,13 +591,11 @@ const PaymentMethodWidget = ({
             </Grid>
           </Box>
 
-          {/* Payment Details if Selected */}
           <Collapse in={isCodPlan} timeout={250}>
             {renderPaymentDetails(downpayment, '50% Downpayment')}
           </Collapse>
         </Paper>
 
-        {/* Option 2: Bank Transfer - Full Payment */}
         <Paper
           elevation={0}
           onClick={() => selectPlan('FULL_PAYMENT')}
@@ -683,7 +613,6 @@ const PaymentMethodWidget = ({
             }
           }}
         >
-          {/* Header Row */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
               <Radio
@@ -724,16 +653,17 @@ const PaymentMethodWidget = ({
             />
           </Box>
 
-          {/* Breakdown Badge Box */}
           <Box sx={{ mt: 2, p: 1.5, borderRadius: 2.5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
             <Grid container spacing={1}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="caption" color="#64748b" display="block">Order Total (incl. ₱100 shipping):</Typography>
-                <Typography variant="body2" fontWeight={700} color="#0f172a">
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" color="#64748b" display="block">
+                  Order Total {isPickup ? '(Free Pick-up):' : `(incl. ₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shipping):`}
+                </Typography>
+                <Typography variant="body2" fontWeight={700} color="#0f172a" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                   ₱{grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="#1e40af" display="block" fontWeight={600}>100% Pay Now (Card/GCash):</Typography>
                 <Typography variant="body2" fontWeight={800} color="#1e3a8a">
                   ₱{grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -742,7 +672,6 @@ const PaymentMethodWidget = ({
             </Grid>
           </Box>
 
-          {/* Payment Details if Selected */}
           <Collapse in={isFullPlan} timeout={250}>
             {renderPaymentDetails(grandTotal, 'Full Payment')}
           </Collapse>

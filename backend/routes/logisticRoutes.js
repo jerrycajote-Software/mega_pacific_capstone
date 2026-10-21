@@ -1,18 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { verifyLogistic } = require('../middleware/authMiddleware');
+const { verifyLogistic, verifyStaff } = require('../middleware/authMiddleware');
 const { getLogisticOrders, updateLogisticStatus } = require('../controllers/logistic/orderController');
-
 const { getDashboardData } = require('../controllers/logistic/logisticController');
+const {
+  getCoils,
+  getCoilSummary,
+  deductCoil,
+  restockCoil,
+  getCoilLogs
+} = require('../controllers/logistic/coilController');
 
-// Dashboard Overview
 router.get('/dashboard', verifyLogistic, getDashboardData);
 
-// Logistic Order Routes
 router.get('/orders', verifyLogistic, getLogisticOrders);
 router.patch('/orders/:id/status', verifyLogistic, updateLogisticStatus);
 
-// Other placeholder routes for now
+router.get('/coils', verifyStaff, getCoils);
+router.get('/coils/summary', verifyStaff, getCoilSummary);
+router.post('/coils/deduct', verifyLogistic, deductCoil);
+router.post('/coils/restock', verifyLogistic, restockCoil);
+router.get('/coils/logs', verifyStaff, getCoilLogs);
+
 router.get('/deliveries', verifyLogistic, (req, res) => {
   res.json({ success: true, message: 'Deliveries data' });
 });

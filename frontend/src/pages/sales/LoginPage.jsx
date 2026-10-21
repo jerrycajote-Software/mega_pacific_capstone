@@ -97,8 +97,20 @@ const LoginPage = () => {
   const [otp, setOtp]           = useState('');
   const [msg, setMsg]           = useState('');
 
-  const { login, logout }  = useAuth();
-  const navigate   = useNavigate();
+  const { login, logout, token, user } = useAuth();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (token) {
+      if (user?.role === 'sales') {
+        navigate('/sales/dashboard', { replace: true });
+      }
+    }
+  }, [token, user, navigate]);
+
+  if (token && user?.role === 'sales') {
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

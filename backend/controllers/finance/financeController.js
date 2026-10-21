@@ -5,25 +5,24 @@ const getDashboardData = async (req, res) => {
     // 1. Total Revenue (Sum of 'paid' orders or total of completed orders)
     // For now, we sum all orders that are not pending/cancelled
     const orders = await prisma.order.findMany({
-      where: { paymentStatus: 'paid' },
+      where: {
+        paymentStatus: 'paid',
+        status: { notIn: ['cancelled', 'rejected'] }
+      },
     });
     const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
 
-    // 2. Pending Payments (Orders awaiting bank transfer verification)
     const pendingOrders = await prisma.order.count({
       where: { paymentStatus: 'pending', paymentMode: 'Bank Transfer' },
     });
 
-    // 3. Total Expenses
     const expenses = await prisma.expense.findMany({
       where: { status: 'Approved' },
     });
     const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
-    // 4. Net Profit
     const netProfit = totalRevenue - totalExpenses;
 
-    // 5. Recent Activity (Latest orders and expenses)
     const recentOrders = await prisma.order.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
@@ -42,7 +41,6 @@ const getDashboardData = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Merge and sort recent activity
     const activity = [
       ...recentOrders.map(o => ({
         id: `#ORD-${o.id.toString().padStart(3, '0')}`,
@@ -94,7 +92,6 @@ const getDashboardData = async (req, res) => {
       profit: item.revenue - item.expenses
     }));
 
-    // Payment Mode Breakdown
     const paymentMap = {};
     orders.forEach(o => {
       const mode = o.paymentMode || 'Cash on Delivery';
@@ -104,7 +101,6 @@ const getDashboardData = async (req, res) => {
     });
     const paymentBreakdown = Object.values(paymentMap);
 
-    // Expense Category Breakdown
     const categoryMap = {};
     expenses.forEach(e => {
       const cat = e.category || 'Operations';
@@ -114,7 +110,6 @@ const getDashboardData = async (req, res) => {
     });
     const expenseCategoryBreakdown = Object.values(categoryMap);
 
-    // Financial Metrics
     const profitMargin = totalRevenue > 0 ? Number(((netProfit / totalRevenue) * 100).toFixed(1)) : 0;
     const expenseRatio = totalRevenue > 0 ? Number(((totalExpenses / totalRevenue) * 100).toFixed(1)) : 0;
     const avgOrderValue = orders.length > 0 ? Math.round(totalRevenue / orders.length) : 0;
@@ -173,7 +168,8 @@ const getFinancialReports = async (req, res) => {
 
     const orders = await prisma.order.findMany({
       where: {
-        createdAt: { gte: startDate }
+        createdAt: { gte: startDate },
+        status: { notIn: ['cancelled', 'rejected'] }
       }
     });
 
@@ -184,7 +180,7 @@ const getFinancialReports = async (req, res) => {
       }
     });
 
-    const paidOrders = orders.filter(o => o.paymentStatus === 'paid');
+    const paidOrders = orders.filter(o => o.paymentStatus === 'paid' && !['cancelled', 'rejected'].includes(o.status));
     const grossRevenue = paidOrders.reduce((acc, o) => acc + (o.total || 0), 0);
     const totalExpenses = expenses.reduce((acc, e) => acc + (e.amount || 0), 0);
     const netIncome = grossRevenue - totalExpenses;
@@ -286,9 +282,80 @@ const createExpense = async (req, res) => {
   }
 };
 
+const { getDeliveryConfig, PLANT_ORIGIN, VEHICLE_SPECS } = require('../../services/deliveryFeeService');
+
+const getDeliverySettings = async (req, res) => {
+  try {
+    const config = await getDeliveryConfig();
+    res.json({
+      success: true,
+      data: {
+        ...config,
+        plantOriginDetails: PLANT_ORIGIN,
+        vehicleSpecs: VEHICLE_SPECS
+      }
+    });
+  } catch (error) {
+    console.error('Get Delivery Settings Error:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+const updateDeliverySettings = async (req, res) => {
+  try {
+    const { dieselPrice, adminCostPct, includeDepreciation, plantOrigin } = req.body;
+
+    const updates = [];
+    if (dieselPrice !== undefined) {
+      updates.push(prisma.systemSetting.upsert({
+        where: { key: 'delivery_diesel_price' },
+        update: { value: String(dieselPrice), description: 'Current Diesel unit price per liter (PHP)' },
+        create: { key: 'delivery_diesel_price', value: String(dieselPrice), description: 'Current Diesel unit price per liter (PHP)' }
+      }));
+    }
+    if (adminCostPct !== undefined) {
+      updates.push(prisma.systemSetting.upsert({
+        where: { key: 'delivery_admin_cost_pct' },
+        update: { value: String(adminCostPct), description: 'Admin operation cost percentage for PMS and incidentals' },
+        create: { key: 'delivery_admin_cost_pct', value: String(adminCostPct), description: 'Admin operation cost percentage for PMS and incidentals' }
+      }));
+    }
+    if (includeDepreciation !== undefined) {
+      updates.push(prisma.systemSetting.upsert({
+        where: { key: 'delivery_include_depreciation' },
+        update: { value: String(includeDepreciation), description: 'Include vehicle depreciation in delivery charge calculation' },
+        create: { key: 'delivery_include_depreciation', value: String(includeDepreciation), description: 'Include vehicle depreciation in delivery charge calculation' }
+      }));
+    }
+    if (plantOrigin !== undefined) {
+      updates.push(prisma.systemSetting.upsert({
+        where: { key: 'delivery_plant_origin' },
+        update: { value: String(plantOrigin), description: 'Manufacturing Plant Origin for delivery distance calculation' },
+        create: { key: 'delivery_plant_origin', value: String(plantOrigin), description: 'Manufacturing Plant Origin for delivery distance calculation' }
+      }));
+    }
+
+    if (updates.length > 0) {
+      await prisma.$transaction(updates);
+    }
+    const updatedConfig = await getDeliveryConfig();
+
+    res.json({
+      success: true,
+      message: 'Delivery settings updated successfully',
+      data: updatedConfig
+    });
+  } catch (error) {
+    console.error('Update Delivery Settings Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update delivery settings' });
+  }
+};
+
 module.exports = {
   getDashboardData,
   getFinancialReports,
   getExpenses,
-  createExpense
+  createExpense,
+  getDeliverySettings,
+  updateDeliverySettings
 };

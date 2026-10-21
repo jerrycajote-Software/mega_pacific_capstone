@@ -5,12 +5,14 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
+import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
   { name: 'Dashboard',  path: '/owner/dashboard',  icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
 ];
 
 const OwnerLayout = () => {
+  usePreventBackToLogin();
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
@@ -76,7 +78,6 @@ const OwnerLayout = () => {
       </aside>
 
       <div className="admin-main">
-        {/* Floating top bar */}
         <header className="admin-topbar">
           <Link to="/owner/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
@@ -100,7 +101,6 @@ const OwnerLayout = () => {
           </div>
         </header>
 
-        {/* Page content */}
         <div className="admin-content">
           <Outlet />
         </div>
@@ -111,7 +111,7 @@ const OwnerLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/owner/login');
+            navigate('/owner/login', { replace: true });
           }}
         />
       )}

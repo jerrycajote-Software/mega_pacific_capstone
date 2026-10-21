@@ -4,22 +4,25 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PaymentIcon from '@mui/icons-material/Payment';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
-import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import { io } from 'socket.io-client';
-import { Snackbar, Alert } from '@mui/material';
+import { Snackbar, Alert, Button } from '@mui/material';
+import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
   { name: 'Dashboard',  path: '/finance/dashboard',  icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
   { name: 'Expenses',   path: '/finance/expenses',   icon: <ReceiptIcon sx={{ fontSize: 18 }} /> },
   { name: 'Payments',   path: '/finance/payments',   icon: <PaymentIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Refunds',    path: '/finance/refunds',    icon: <CurrencyExchangeIcon sx={{ fontSize: 18 }} /> },
   { name: 'Reports',    path: '/finance/reports',    icon: <AssessmentIcon sx={{ fontSize: 18 }} /> },
 ];
 
 const FinanceLayout = () => {
+  usePreventBackToLogin();
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
@@ -39,6 +42,13 @@ const FinanceLayout = () => {
       setNotification(data.message);
     });
 
+    socket.on('new_refund_request', (data) => {
+      setNotification({
+        message: `Refund Action Required: ${data.orderNumber} for ${data.customerName} (₱${Number(data.amount || 0).toLocaleString()})`,
+        path: '/finance/refunds'
+      });
+    });
+
     return () => socket.close();
   }, [user?.id]);
 
@@ -55,7 +65,6 @@ const FinanceLayout = () => {
 
       <aside className="admin-sidebar">
 
-        {/* User info */}
         <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid var(--border-light)' }}>
           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontWeight: 600 }}>
             Finance
@@ -113,7 +122,6 @@ const FinanceLayout = () => {
 
       <div className="admin-main">
 
-        {/* Floating top bar */}
         <header className="admin-topbar">
           <Link to="/finance/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
@@ -130,7 +138,6 @@ const FinanceLayout = () => {
           </div>
         </header>
 
-        {/* Page content */}
         <div className="admin-content">
           <Outlet />
         </div>
@@ -141,19 +148,39 @@ const FinanceLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/finance/login');
+            navigate('/finance/login', { replace: true });
           }}
         />
       )}
       
       <Snackbar 
         open={!!notification} 
-        autoHideDuration={6000} 
+        autoHideDuration={7000} 
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseNotification} severity="warning" sx={{ width: '100%', borderRadius: 2 }}>
-          {notification}
+        <Alert 
+          onClose={handleCloseNotification} 
+          severity="warning" 
+          sx={{ width: '100%', borderRadius: 2, alignItems: 'center' }}
+          action={
+            notification?.path ? (
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={() => {
+                  const p = notification.path;
+                  handleCloseNotification();
+                  navigate(p);
+                }}
+                sx={{ fontWeight: 700, textTransform: 'none' }}
+              >
+                View
+              </Button>
+            ) : undefined
+          }
+        >
+          {typeof notification === 'string' ? notification : notification?.message}
         </Alert>
       </Snackbar>
     </div>
