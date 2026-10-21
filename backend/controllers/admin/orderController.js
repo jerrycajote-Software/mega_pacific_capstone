@@ -8,7 +8,7 @@ const getOrders = async (req, res) => {
       orderBy: { createdAt: "desc" },
       include: {
         user: {
-          select: { name: true, email: true }
+          select: { email: true }
         },
         items: {
           include: {
@@ -44,6 +44,7 @@ const getOrders = async (req, res) => {
         deliveryStatus: o.status === "shipped" || o.status === "completed" || o.status === "delivered" || o.status === "out_for_delivery" ? o.status.replace(/_/g, " ") : "Pending",
         estimatedDeliveryDate: o.estimatedDeliveryDate,
         dateOrdered: new Date(o.createdAt).toISOString(),
+        createdAt: o.createdAt,
         contactNumber: o.contactNumber,
         address: o.address,
         cityProvince: o.cityProvince,

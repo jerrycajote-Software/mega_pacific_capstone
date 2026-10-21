@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext';
-import { getAvailableProvinces, getLocationsForProvince, getZipCodeForLocation } from '../../utils/locationService';
+import { getAvailableProvinces, getLocationsForProvince, getZipCodeForLocation, getBarangaysForLocation } from '../../utils/locationService';
 import {
   Box,
   Typography,
@@ -22,21 +21,13 @@ import {
   InputLabel,
   Select,
   FormHelperText,
+  Paper,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-
-const BRAND_FEATURES = [
-  'Premium quality roofing & steel materials',
-  'Fast and reliable order processing',
-  'Trusted by thousands of contractors',
-  'Secure and seamless checkout',
-];
-
-// Password requirements checked in real-time
 const getPasswordChecks = (password) => ({
   minLength:   password.length >= 8,
   hasUpper:    /[A-Z]/.test(password),
@@ -68,66 +59,19 @@ const RegisterPage = () => {
   const [address, setAddress]                 = useState('');
   const [province, setProvince]               = useState(getAvailableProvinces()[0] || 'Cavite');
   const [city, setCity]                       = useState('');
+  const [barangay, setBarangay]               = useState('');
   const [zipCode, setZipCode]                 = useState('');
-  const [cityOpen, setCityOpen]               = useState(false);
-  const [provinceOpen, setProvinceOpen]       = useState(false);
 
-  const cityBoxRef = useRef(null);
-  const provinceBoxRef = useRef(null);
 
-  useEffect(() => {
-    if (!cityOpen && !provinceOpen) return;
-    let frameId;
-    let lastEvent = null;
-
-    const checkHover = () => {
-      if (!lastEvent) return;
-      const e = lastEvent;
-      const isOverCityBox = cityBoxRef.current && cityBoxRef.current.contains(e.target);
-      const isOverProvinceBox = provinceBoxRef.current && provinceBoxRef.current.contains(e.target);
-      const isOverMenu = e.target.closest && e.target.closest('.MuiMenu-paper, .MuiPopover-paper');
-
-      if (cityOpen && !isOverCityBox && !isOverMenu) {
-        setCityOpen(false);
-      }
-      if (provinceOpen && !isOverProvinceBox && !isOverMenu) {
-        setProvinceOpen(false);
-      }
-    };
-
-    const handleMouseMove = (e) => {
-      lastEvent = e;
-      if (frameId) cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(checkHover);
-    };
-
-    // Slight delay before attaching listener to avoid instantly closing on open
-    const delayTimer = setTimeout(() => {
-      document.addEventListener('mousemove', handleMouseMove);
-    }, 150);
-
-    return () => {
-      clearTimeout(delayTimer);
-      document.removeEventListener('mousemove', handleMouseMove);
-      if (frameId) cancelAnimationFrame(frameId);
-    };
-  }, [cityOpen, provinceOpen]);
-
-  const handleCityMouseEnter = () => setCityOpen(true);
-  const handleProvinceMouseEnter = () => setProvinceOpen(true);
-
-  // Per-field error state
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError]             = useState('');
   const [loading, setLoading]         = useState(false);
 
-  // Registration success dialog state
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [restorationDialogOpen, setRestorationDialogOpen] = useState(false);
   const [restorationMessage, setRestorationMessage] = useState('');
   const [registeredEmail, setRegisteredEmail]     = useState('');
 
-  //  Computed 
   const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
   const allPasswordChecksPassed = Object.values(passwordChecks).every(Boolean);
 
@@ -141,22 +85,24 @@ const RegisterPage = () => {
       confirmPassword &&
       contactNumber.trim() &&
       address.trim() &&
+      province &&
       city &&
+      barangay &&
       zipCode &&
       allPasswordChecksPassed &&
       password === confirmPassword
     );
-  }, [firstName, lastName, email, password, confirmPassword, contactNumber, address, city, zipCode, allPasswordChecksPassed]);
+  }, [firstName, lastName, email, password, confirmPassword, contactNumber, address, province, city, barangay, zipCode, allPasswordChecksPassed]);
 
   const handleCityChange = (e) => {
     const selectedCity = e.target.value;
     setCity(selectedCity);
+    setBarangay('');
     setZipCode(getZipCodeForLocation(province, selectedCity));
-    setFieldErrors((prev) => ({ ...prev, city: '' }));
+    setFieldErrors((prev) => ({ ...prev, city: '', barangay: '' }));
   };
 
   const { register } = useAuth();
-  const { clearCart } = useCart();
   const navigate = useNavigate();
 
   const validateEmail = (email) =>
@@ -170,8 +116,11 @@ const RegisterPage = () => {
     if (!email.trim())           errors.email     = 'Email address is required.';
     else if (!validateEmail(email)) errors.email  = 'Please enter a valid email address.';
     if (!contactNumber.trim())   errors.contactNumber = 'Contact number is required.';
-    if (!address.trim())         errors.address   = 'Address is required.';
+    else if (!/^09[0-9]{9}$/.test(contactNumber)) errors.contactNumber = 'Must be an 11-digit number starting with 09.';
+    if (!address.trim())         errors.address   = 'Street / House address is required.';
+    if (!province)               errors.province  = 'Please select a province.';
     if (!city)                   errors.city      = 'Please select a city.';
+    if (!barangay)               errors.barangay  = 'Please select a barangay.';
     if (!password)               errors.password  = 'Password is required.';
     else if (!allPasswordChecksPassed) errors.password = 'Password does not meet all requirements.';
     if (!confirmPassword)        errors.confirmPassword = 'Please confirm your password.';
@@ -193,10 +142,10 @@ const RegisterPage = () => {
     setFieldErrors({});
     setLoading(true);
     const fullName = `${firstName} ${lastName}`.trim();
-    const result = await register(fullName, email, password, contactNumber, address, city, province, zipCode);
+    const fullAddress = barangay ? `${address.trim()}, Brgy. ${barangay}` : address.trim();
+    const result = await register(fullName, email, password, contactNumber, fullAddress, city, province, zipCode);
 
     if (result.success) {
-      clearCart();
       setRegisteredEmail(result.email || email);
       if (result.isRestoration) {
         setRestorationMessage(result.message);
@@ -216,107 +165,70 @@ const RegisterPage = () => {
     navigate('/verify-email', { state: { email: registeredEmail } });
   };
 
-  // Clear field error on change
   const clearFieldError = (field) =>
     setFieldErrors((prev) => ({ ...prev, [field]: '' }));
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: 'background.default' }}>
-
-      {/*  Left Decorative Panel (md+)  */}
-      <Box
-        sx={{
-          display: { xs: 'none', md: 'flex' },
-          width: '38%',
-          flexShrink: 0,
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          px: 5,
-          py: 8,
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(145deg, #31572c 0%, #4f772d 40%, #6b9840 75%, #90a955 100%)',
-        }}
-      >
-        {/* Decorative circles */}
-        <Box sx={{ position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.06)' }} />
-        <Box sx={{ position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.05)' }} />
-        <Box sx={{ position: 'absolute', top: '60%', right: 30, width: 100, height: 100, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.07)' }} />
-
-        {/* Logo */}
-        <Box sx={{ mb: 4, position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 32, letterSpacing: '0.05em', lineHeight: 1 }}>
-            <Typography component="span" sx={{ color: '#ecf39e' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: '#ffffff' }}>PACIFIC</Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        px: { xs: 2, sm: 4 },
+        py: { xs: 4, sm: 6 },
+      }}
+    >
+      <Box sx={{ width: '100%', maxWidth: 640 }}>
+        <Box sx={{ textAlign: 'center', mb: 3.5 }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'Arial, sans-serif',
+              fontWeight: 900,
+              fontSize: { xs: 28, sm: 32 },
+              letterSpacing: '0.05em',
+              lineHeight: 1,
+              mb: 0.5,
+            }}
+          >
+            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '9px', fontWeight: 800, letterSpacing: '0.25em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '0.22em',
+              fontFamily: 'Arial, sans-serif',
+            }}
+          >
             METAL AND STEEL CORP
           </Typography>
         </Box>
 
-        <Typography variant="h4" fontWeight={700} sx={{ color: '#ffffff', mb: 1.5, lineHeight: 1.3, position: 'relative', zIndex: 1 }}>
-          Join the Mega<br />Pacific Community
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)', mb: 5, lineHeight: 1.8, position: 'relative', zIndex: 1 }}>
-          Create your account and start ordering premium construction materials today.
-        </Typography>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
-          {BRAND_FEATURES.map((feat, i) => (
-            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <i className="fi fi-sr-check-circle" style={{ color: '#ecf39e', fontSize: '18px', flexShrink: 0 }}></i>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, fontSize: '0.82rem' }}>
-                {feat}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      {/*  Right: Registration Form  */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 3, sm: 5, md: 6 },
-          py: 5,
-          overflowY: 'auto',
-        }}
-      >
-        <Box sx={{ width: '100%', maxWidth: 560 }}>
-
-          {/* Mobile logo */}
-          <Box sx={{ textAlign: 'center', mb: 4, display: { xs: 'block', md: 'none' } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 26, letterSpacing: '0.05em', lineHeight: 1, mb: 0.5 }}>
-              <Typography component="span" sx={{ color: 'primary.main' }}>MEGA</Typography>
-              <Typography component="span" sx={{ color: 'secondary.main' }}>PACIFIC</Typography>
-            </Box>
-          </Box>
-
-          {/* Icon */}
-          <Box
-            sx={{
-              width: 52,
-              height: 52,
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 3,
-              background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
-              boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
-            }}
-          >
-            <i className="fi fi-rr-user-add" style={{ color: '#ffffff', fontSize: '24px' }}></i>
-          </Box>
-
-          <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, sm: 4.5 },
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '0 12px 36px rgba(0,0,0,0.45)'
+                : '0 12px 36px rgba(15,23,42,0.06)',
+          }}
+        >
+          <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Create account
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Fill in your details to get started.
           </Typography>
 
@@ -374,7 +286,7 @@ const RegisterPage = () => {
                   size="small"
                   value={contactNumber}
                   onChange={(e) => { 
-                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, '');
+                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
                     setContactNumber(onlyNumbers); 
                     clearFieldError('contactNumber'); 
                   }}
@@ -384,7 +296,6 @@ const RegisterPage = () => {
                 />
               </Grid>
 
-              {/* Password field with real-time checklist */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -409,7 +320,6 @@ const RegisterPage = () => {
                     }
                   }}
                 />
-                {/* Real-time password requirement checklist */}
                 {password.length > 0 && (
                   <Box sx={{ mt: 1, pl: 0.5, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
                     <PasswordCheckItem passed={passwordChecks.minLength}  label="At least 8 characters" />
@@ -446,74 +356,73 @@ const RegisterPage = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Complete Address"
-                  required
-                  size="small"
-                  value={address}
-                  onChange={(e) => { setAddress(e.target.value); clearFieldError('address'); }}
-                  error={!!fieldErrors.address}
-                  helperText={fieldErrors.address}
-                />
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required error={!!fieldErrors.province}>
+                  <InputLabel id="province-label">Province</InputLabel>
+                  <Select
+                    labelId="province-label"
+                    value={province}
+                    onChange={(e) => {
+                      setProvince(e.target.value);
+                      setCity('');
+                      setBarangay('');
+                      setZipCode('');
+                      setFieldErrors((prev) => ({ ...prev, province: '', city: '', barangay: '' }));
+                    }}
+                    label="Province"
+                    MenuProps={{ disableScrollLock: true }}
+                  >
+                    {getAvailableProvinces().map(prov => (
+                      <MenuItem key={prov} value={prov}>{prov}</MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.province && <FormHelperText>{fieldErrors.province}</FormHelperText>}
+                </FormControl>
               </Grid>
 
-              <Grid item xs={12} sm={4}>
-                <Box ref={cityBoxRef} onMouseEnter={handleCityMouseEnter}>
-                  <FormControl fullWidth size="small" required error={!!fieldErrors.city}>
-                    <InputLabel id="city-label">City / Municipality</InputLabel>
-                    <Select
-                      labelId="city-label"
-                      value={city}
-                      onChange={handleCityChange}
-                      label="City / Municipality"
-                      open={cityOpen}
-                      onOpen={() => setCityOpen(true)}
-                      onClose={() => setCityOpen(false)}
-                      MenuProps={{
-                        disableScrollLock: true,
-                        slotProps: { backdrop: { sx: { pointerEvents: 'none' } } },
-                      }}
-                    >
-                      <MenuItem value="" disabled>Select City</MenuItem>
-                      {getLocationsForProvince(province).map(loc => (
-                        <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.city && <FormHelperText>{fieldErrors.city}</FormHelperText>}
-                  </FormControl>
-                </Box>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required error={!!fieldErrors.city} disabled={!province}>
+                  <InputLabel id="city-label">City / Municipality</InputLabel>
+                  <Select
+                    labelId="city-label"
+                    value={city}
+                    onChange={handleCityChange}
+                    label="City / Municipality"
+                    MenuProps={{ disableScrollLock: true }}
+                  >
+                    <MenuItem value="" disabled>Select City / Municipality</MenuItem>
+                    {getLocationsForProvince(province).map(loc => (
+                      <MenuItem key={loc.name} value={loc.name}>{loc.name}</MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.city && <FormHelperText>{fieldErrors.city}</FormHelperText>}
+                </FormControl>
               </Grid>
-              <Grid item xs={12} sm={4}>
-                <Box ref={provinceBoxRef} onMouseEnter={handleProvinceMouseEnter}>
-                  <FormControl fullWidth size="small" required>
-                    <InputLabel id="province-label">Province</InputLabel>
-                    <Select
-                      labelId="province-label"
-                      value={province}
-                      onChange={(e) => {
-                        setProvince(e.target.value);
-                        setCity('');
-                        setZipCode('');
-                      }}
-                      label="Province"
-                      open={provinceOpen}
-                      onOpen={() => setProvinceOpen(true)}
-                      onClose={() => setProvinceOpen(false)}
-                      MenuProps={{
-                        disableScrollLock: true,
-                        slotProps: { backdrop: { sx: { pointerEvents: 'none' } } },
-                      }}
-                    >
-                      {getAvailableProvinces().map(prov => (
-                        <MenuItem key={prov} value={prov}>{prov}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small" required error={!!fieldErrors.barangay} disabled={!city}>
+                  <InputLabel id="barangay-label">Barangay</InputLabel>
+                  <Select
+                    labelId="barangay-label"
+                    value={barangay}
+                    onChange={(e) => {
+                      setBarangay(e.target.value);
+                      setFieldErrors((prev) => ({ ...prev, barangay: '' }));
+                    }}
+                    label="Barangay"
+                    MenuProps={{ disableScrollLock: true }}
+                  >
+                    <MenuItem value="" disabled>Select Barangay</MenuItem>
+                    {getBarangaysForLocation(province, city).map(brgy => (
+                      <MenuItem key={brgy} value={brgy}>{brgy}</MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.barangay && <FormHelperText>{fieldErrors.barangay}</FormHelperText>}
+                </FormControl>
               </Grid>
-              <Grid item xs={12} sm={4}>
+
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Zip Code"
@@ -526,6 +435,22 @@ const RegisterPage = () => {
                     }
                   }}
                   sx={{ bgcolor: 'action.hover' }}
+                  helperText={zipCode ? "Auto-filled based on City / Municipality" : "Auto-filled"}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Street Name, Building, House No."
+                  placeholder="e.g. Unit 4B, 123 Emerald St., Phase 2"
+                  variant="outlined"
+                  size="small"
+                  required
+                  value={address}
+                  onChange={(e) => { setAddress(e.target.value); clearFieldError('address'); }}
+                  error={!!fieldErrors.address}
+                  helperText={fieldErrors.address}
                 />
               </Grid>
             </Grid>
@@ -543,7 +468,7 @@ const RegisterPage = () => {
             </Button>
           </Box>
 
-          <Box textAlign="center">
+          <Box textAlign="center" sx={{ mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               Already have an account?{' '}
               <Link component={RouterLink} to="/login" color="primary" fontWeight={700} underline="hover">
@@ -551,10 +476,9 @@ const RegisterPage = () => {
               </Link>
             </Typography>
           </Box>
-        </Box>
+        </Paper>
       </Box>
 
-      {/*  Registration Success Dialog  */}
       <Dialog
         open={successDialogOpen}
         maxWidth="xs"
@@ -599,7 +523,6 @@ const RegisterPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/*  Account Restoration Dialog  */}
       <Dialog
         open={restorationDialogOpen}
         maxWidth="xs"

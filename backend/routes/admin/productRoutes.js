@@ -12,22 +12,23 @@ const {
 const {
   getVariants,
   createVariant,
+  updateVariant,
   deleteVariant,
 } = require("../../controllers/admin/variantController");
-const { verifyToken } = require("../../middleware/authMiddleware");
+const { verifyStaff, verifyAdmin } = require("../../middleware/authMiddleware");
 
-router.get("/", getProducts);
-router.post("/", createProduct);
-router.put("/:id", updateProduct);
-router.delete("/:id", deleteProduct);
+router.get("/", verifyStaff, getProducts);
+router.post("/", verifyAdmin, createProduct);
+router.put("/:id", verifyAdmin, updateProduct);
+router.delete("/:id", verifyAdmin, deleteProduct);
 
-// Stock Management & Audit Logging Routes
-router.post("/stock-adjust", verifyToken, adjustStock);
-router.post("/stock-adjust-bulk", verifyToken, bulkAdjustStock);
-router.get("/stock-logs", verifyToken, getStockLogs);
+router.post("/stock-adjust", verifyStaff, adjustStock);
+router.post("/stock-adjust-bulk", verifyStaff, bulkAdjustStock);
+router.get("/stock-logs", verifyStaff, getStockLogs);
 
-router.get("/:productId/variants", getVariants);
-router.post("/:productId/variants", createVariant);
-router.delete("/:productId/variants/:id", deleteVariant);
+router.get("/:productId/variants", verifyStaff, getVariants);
+router.post("/:productId/variants", verifyAdmin, createVariant);
+router.put("/:productId/variants/:id", verifyAdmin, updateVariant);
+router.delete("/:productId/variants/:id", verifyAdmin, deleteVariant);
 
 module.exports = router;

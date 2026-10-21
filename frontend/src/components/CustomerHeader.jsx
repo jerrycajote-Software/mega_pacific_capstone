@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useCustomerUi } from '../context/CustomerUiContext';
 import {
   AppBar,
   Toolbar,
@@ -11,21 +10,29 @@ import {
   IconButton,
   Avatar,
   Tooltip,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Chip,
 } from '@mui/material';
 import LogoutConfirmModal from './LogoutConfirmModal';
 
 const NAV_LINKS = [
-  { to: '/dashboard', label: 'Home' },
-  { to: '/orders', label: 'Orders' },
-  { to: '/profile', label: 'Profile' },
+  { to: '/dashboard', label: 'Home', icon: 'fi fi-rr-home' },
+  { to: '/products', label: 'Products', icon: 'fi fi-rr-box-open' },
+  { to: '/profile', label: 'Profile', icon: 'fi fi-rr-user' },
 ];
 
 const CustomerHeader = () => {
   const { user, logout } = useAuth();
-  const { uiVersion, toggleUiVersion } = useCustomerUi();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const handleLogout = () => setIsLogoutOpen(true);
 
@@ -39,10 +46,25 @@ const CustomerHeader = () => {
           borderBottom: '1px solid',
           borderColor: 'divider',
           color: 'text.primary',
+          zIndex: 1100,
         }}
       >
-        <Toolbar sx={{ gap: 2 }}>
-          {/* Brand */}
+        <Toolbar sx={{ gap: { xs: 1, sm: 2 }, px: { xs: 1.5, sm: 3 } }}>
+          <IconButton
+            onClick={() => setMobileDrawerOpen(true)}
+            size="medium"
+            aria-label="Open mobile navigation menu"
+            sx={{
+              display: { xs: 'inline-flex', md: 'none' },
+              color: 'text.primary',
+              p: 1,
+              borderRadius: 2,
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+          >
+            <i className="fi fi-rr-menu-burger" style={{ fontSize: '18px' }}></i>
+          </IconButton>
+
           <Box
             component={Link}
             to="/dashboard"
@@ -51,36 +73,37 @@ const CustomerHeader = () => {
               flexDirection: 'column',
               alignItems: 'flex-start',
               textDecoration: 'none',
-              mr: 3,
+              mr: { xs: 1, md: 3 },
             }}
           >
             <Box
               sx={{
                 display: 'flex',
+                alignItems: 'center',
                 fontFamily: 'Arial, sans-serif',
                 fontWeight: 900,
-                fontSize: 22,
+                fontSize: { xs: 20, sm: 24 },
                 letterSpacing: '0.05em',
                 lineHeight: 1,
               }}
             >
-              <Typography component="span" sx={{ color: 'primary.main' }}>MEGA</Typography>
-              <Typography component="span" sx={{ color: 'secondary.main' }}>PACIFIC</Typography>
+              <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+              <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
             </Box>
             <Typography
               sx={{
-                color: 'success.main',
-                fontSize: '8px',
+                color: '#64748b',
+                fontSize: { xs: '8px', sm: '10px' },
                 fontWeight: 800,
                 letterSpacing: '0.2em',
                 fontFamily: 'Arial, sans-serif',
+                mt: 0.5,
               }}
             >
               METAL AND STEEL CORP
             </Typography>
           </Box>
 
-          {/* Nav Links */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5, flexGrow: 1 }}>
             {NAV_LINKS.map((link) => {
               const isActive = location.pathname === link.to;
@@ -95,6 +118,7 @@ const CustomerHeader = () => {
                     fontWeight: isActive ? 700 : 500,
                     textTransform: 'none',
                     borderRadius: 2,
+                    px: 1.5,
                     bgcolor: isActive ? 'primary.50' : 'transparent',
                     '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
                   }}
@@ -105,57 +129,11 @@ const CustomerHeader = () => {
             })}
           </Box>
 
-          {/* Right side: Avatar + Logout */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, ml: 'auto' }}>
-            {/* UI Version Switcher Pill */}
-            <Box
-              sx={{
-                bgcolor: '#f1f5f9',
-                p: 0.4,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <Button
-                size="small"
-                onClick={() => toggleUiVersion()}
-                sx={{
-                  px: 1.2,
-                  py: 0.3,
-                  fontSize: '0.725rem',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  bgcolor: uiVersion === 'v1' ? '#2563eb' : 'transparent',
-                  color: uiVersion === 'v1' ? '#ffffff' : '#64748b',
-                  '&:hover': { bgcolor: uiVersion === 'v1' ? '#1d4ed8' : '#e2e8f0' },
-                }}
-              >
-                V1 Classic
-              </Button>
-              <Button
-                size="small"
-                onClick={() => toggleUiVersion()}
-                sx={{
-                  px: 1.2,
-                  py: 0.3,
-                  fontSize: '0.725rem',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  bgcolor: uiVersion === 'v2' ? '#1e3a8a' : 'transparent',
-                  color: uiVersion === 'v2' ? '#ffffff' : '#64748b',
-                  '&:hover': { bgcolor: uiVersion === 'v2' ? '#1e293b' : '#e2e8f0' },
-                }}
-              >
-                V2 Light Store
-              </Button>
-            </Box>
-
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, ml: 'auto' }}>
             <Avatar
               sx={{
-                width: 32,
-                height: 32,
+                width: { xs: 32, sm: 36 },
+                height: { xs: 32, sm: 36 },
                 bgcolor: 'primary.main',
                 color: 'primary.contrastText',
                 fontSize: '0.875rem',
@@ -167,7 +145,7 @@ const CustomerHeader = () => {
             <Typography
               variant="body2"
               fontWeight={600}
-              sx={{ display: { xs: 'none', sm: 'block' } }}
+              sx={{ display: { xs: 'none', sm: 'block' }, maxWidth: 120, noWrap: true }}
             >
               {user?.name}
             </Typography>
@@ -176,11 +154,13 @@ const CustomerHeader = () => {
               <IconButton
                 onClick={handleLogout}
                 size="small"
+                aria-label="Logout"
                 sx={{
                   color: 'error.main',
                   border: '1px solid',
                   borderColor: 'error.light',
                   borderRadius: 2,
+                  p: { xs: 0.75, sm: 1 },
                   '&:hover': { bgcolor: 'error.light', color: 'error.dark' },
                 }}
               >
@@ -191,13 +171,139 @@ const CustomerHeader = () => {
         </Toolbar>
       </AppBar>
 
+      <Drawer
+        anchor="left"
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: 280,
+            bgcolor: 'background.paper',
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: 900,
+                fontSize: 18,
+                letterSpacing: '0.05em',
+                lineHeight: 1,
+              }}
+            >
+              <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+              <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
+            </Box>
+            <Typography sx={{ color: '#64748b', fontSize: '7.5px', fontWeight: 800, letterSpacing: '0.2em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+              METAL AND STEEL CORP
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setMobileDrawerOpen(false)} aria-label="Close menu">
+            <i className="fi fi-rr-cross" style={{ fontSize: '14px' }}></i>
+          </IconButton>
+        </Box>
+
+        <Box sx={{ p: 1.5, mb: 2, borderRadius: 2.5, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontWeight: 800 }}>
+            {user?.name?.charAt(0)?.toUpperCase() || 'C'}
+          </Avatar>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="body2" fontWeight={700} noWrap>
+              {user?.name || 'Customer'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap display="block">
+              {user?.email || 'customer@megapacific.ph'}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider sx={{ mb: 1.5 }} />
+
+        <List sx={{ p: 0, flexGrow: 1 }}>
+          {NAV_LINKS.map((link) => {
+            const isActive = location.pathname === link.to;
+            return (
+              <ListItem key={link.to} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    navigate(link.to);
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: isActive ? 'primary.50' : 'transparent',
+                    color: isActive ? 'primary.main' : 'text.primary',
+                    fontWeight: isActive ? 700 : 500,
+                    '&:hover': { bgcolor: 'action.hover' },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36, color: isActive ? 'primary.main' : 'text.secondary' }}>
+                    <i className={link.icon} style={{ fontSize: '16px' }}></i>
+                  </ListItemIcon>
+                  <ListItemText primary={link.label} primaryTypographyProps={{ fontWeight: isActive ? 700 : 500, fontSize: '0.9rem' }} />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => {
+                setMobileDrawerOpen(false);
+                navigate('/roof-designer');
+              }}
+              sx={{
+                borderRadius: 2,
+                color: 'text.secondary',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>
+                <i className="fi fi-rr-home" style={{ fontSize: '16px' }}></i>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>3D Roof Designer</Typography>
+                    <Chip label="Desktop" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#fef3c7', color: '#92400e', fontWeight: 700 }} />
+                  </Box>
+                }
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+
+        <Divider sx={{ my: 1.5 }} />
+
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          onClick={() => {
+            setMobileDrawerOpen(false);
+            handleLogout();
+          }}
+          startIcon={<i className="fi fi-rr-sign-out-alt" style={{ fontSize: '14px' }}></i>}
+          sx={{ borderRadius: 2, fontWeight: 700, py: 1 }}
+        >
+          Sign Out
+        </Button>
+      </Drawer>
+
       {isLogoutOpen && (
         <LogoutConfirmModal
           onClose={() => setIsLogoutOpen(false)}
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/login');
+            navigate('/login', { replace: true });
           }}
         />
       )}

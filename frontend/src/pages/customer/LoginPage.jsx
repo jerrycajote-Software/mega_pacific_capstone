@@ -20,13 +20,6 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 
-const BRAND_FEATURES = [
-  'Premium quality roofing & steel materials',
-  'Fast and reliable order processing',
-  'Trusted by thousands of contractors',
-  'Secure and seamless checkout',
-];
-
 const CustomerLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,9 +28,20 @@ const CustomerLoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  const { login, logout } = useAuth();
+  const [requiresOtp, setRequiresOtp] = useState(false);
+  const [otp, setOtp] = useState('');
+
+  const { login, logout, token, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (token) {
+      if (user?.role === 'customer') {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [token, user, navigate]);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -45,6 +49,10 @@ const CustomerLoginPage = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location]);
+
+  if (token && user?.role === 'customer') {
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,9 +74,12 @@ const CustomerLoginPage = () => {
 
     setLoading(true);
 
-    const result = await login(email, password);
+    const result = await login(email, password, requiresOtp ? otp : null, ['customer']);
 
-    if (result.success) {
+    if (result.requiresOtp) {
+      setRequiresOtp(true);
+      setSuccessMessage(result.message || 'OTP sent to your email.');
+    } else if (result.success) {
       if (result.user?.role !== 'customer') {
         logout();
         setError('Staff accounts cannot access the customer portal. Please use the staff login.');
@@ -91,91 +102,62 @@ const CustomerLoginPage = () => {
       sx={{
         minHeight: '100vh',
         display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         bgcolor: 'background.default',
+        px: { xs: 2.5, sm: 4 },
+        py: { xs: 4, sm: 6 },
       }}
     >
-      {/*  Left Decorative Panel (md+) */}
-      <Box
-        sx={{
-          display: { xs: 'none', md: 'flex' },
-          width: '45%',
-          flexShrink: 0,
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          px: 6,
-          py: 8,
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(145deg, #31572c 0%, #4f772d 40%, #6b9840 75%, #90a955 100%)',
-        }}
-      >
-        {/* Decorative circles */}
-        <Box sx={{ position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.06)' }} />
-        <Box sx={{ position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.05)' }} />
-        <Box sx={{ position: 'absolute', top: '40%', right: 40, width: 100, height: 100, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.08)' }} />
-
-        {/* Logo */}
-        <Box sx={{ mb: 4, position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 36, letterSpacing: '0.05em', lineHeight: 1 }}>
-            <Typography component="span" sx={{ color: '#ecf39e' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: '#ffffff' }}>PACIFIC</Typography>
+      <Box sx={{ width: '100%', maxWidth: 440 }}>
+        <Box sx={{ textAlign: 'center', mb: 3.5 }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'Arial, sans-serif',
+              fontWeight: 900,
+              fontSize: { xs: 28, sm: 32 },
+              letterSpacing: '0.05em',
+              lineHeight: 1,
+              mb: 0.5,
+            }}
+          >
+            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px', fontWeight: 800, letterSpacing: '0.25em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '0.22em',
+              fontFamily: 'Arial, sans-serif',
+            }}
+          >
             METAL AND STEEL CORP
           </Typography>
         </Box>
 
-        <Typography variant="h4" fontWeight={700} sx={{ color: '#ffffff', mb: 1.5, lineHeight: 1.3, position: 'relative', zIndex: 1 }}>
-          Build the Future<br />with Confidence
-        </Typography>
-        <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.75)', mb: 5, maxWidth: 340, lineHeight: 1.8, position: 'relative', zIndex: 1 }}>
-          Your trusted partner for premium roofing systems, steel trusses, and durable construction materials.
-        </Typography>
-
-        {/* Feature list */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
-          {BRAND_FEATURES.map((feat, i) => (
-            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <i className="fi fi-sr-check-circle" style={{ color: '#ecf39e', fontSize: '18px', flexShrink: 0 }}></i>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
-                {feat}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      {/*  Right: Login Form  */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 3, sm: 6, md: 8 },
-          py: 6,
-        }}
-      >
-        <Box sx={{ width: '100%', maxWidth: 420 }}>
-
-          {/* Mobile logo (shown only on xs/sm) */}
-          <Box sx={{ textAlign: 'center', mb: 4, display: { xs: 'block', md: 'none' } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 28, letterSpacing: '0.05em', lineHeight: 1, mb: 0.5 }}>
-              <Typography component="span" sx={{ color: 'primary.main' }}>MEGA</Typography>
-              <Typography component="span" sx={{ color: 'secondary.main' }}>PACIFIC</Typography>
-            </Box>
-            <Typography sx={{ color: 'text.secondary', fontSize: '9px', fontWeight: 800, letterSpacing: '0.2em', fontFamily: 'Arial, sans-serif' }}>
-              METAL AND STEEL CORP
-            </Typography>
-          </Box>
-
-
-
-          <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, sm: 4.5 },
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '0 12px 36px rgba(0,0,0,0.45)'
+                : '0 12px 36px rgba(15,23,42,0.06)',
+          }}
+        >
+          <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Welcome back
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5 }}>
             Sign in to your account to continue shopping.
           </Typography>
 
@@ -234,7 +216,6 @@ const CustomerLoginPage = () => {
               />
             </FormControl>
 
-            {/* Forgot Password link */}
             <Box sx={{ textAlign: 'right', mt: 0.5, mb: 1 }}>
               <Link
                 component={RouterLink}
@@ -248,6 +229,24 @@ const CustomerLoginPage = () => {
               </Link>
             </Box>
 
+            {requiresOtp && (
+              <TextField
+                fullWidth
+                label="OTP Code"
+                type="text"
+                variant="outlined"
+                margin="normal"
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter 6-digit OTP"
+                sx={{ mb: 1 }}
+                inputProps={{
+                  style: { letterSpacing: '0.2em', textAlign: 'center' },
+                }}
+              />
+            )}
+
             <Button
               type="submit"
               fullWidth
@@ -257,11 +256,17 @@ const CustomerLoginPage = () => {
               disabled={loading}
               sx={{ mt: 3, mb: 2, py: 1.6, borderRadius: 2, fontSize: '1rem', fontWeight: 700 }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : requiresOtp ? (
+                'Verify OTP & Sign In'
+              ) : (
+                'Sign In'
+              )}
             </Button>
           </Box>
 
-          <Box textAlign="center">
+          <Box textAlign="center" sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Don&apos;t have an account?{' '}
               <Link component={RouterLink} to="/register" color="primary" fontWeight={700} underline="hover">
@@ -269,7 +274,7 @@ const CustomerLoginPage = () => {
               </Link>
             </Typography>
           </Box>
-        </Box>
+        </Paper>
       </Box>
     </Box>
   );

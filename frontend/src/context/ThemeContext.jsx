@@ -4,23 +4,27 @@ import { useLocation } from 'react-router-dom';
 
 const ThemeContext = createContext();
 
-// ─── Color Tokens ──────────────────────────────────────────────────────────
-const baseTypography = {
-  fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-  h1: { fontFamily: '"Poppins", sans-serif', fontWeight: 700 },
-  h2: { fontFamily: '"Poppins", sans-serif', fontWeight: 700 },
-  h3: { fontFamily: '"Poppins", sans-serif', fontWeight: 600 },
-  h4: { fontFamily: '"Poppins", sans-serif', fontWeight: 600 },
-  h5: { fontFamily: '"Poppins", sans-serif', fontWeight: 600 },
-  h6: { fontFamily: '"Poppins", sans-serif', fontWeight: 500 },
-  button: { fontFamily: '"Poppins", sans-serif', fontWeight: 600, textTransform: 'none' },
-  subtitle1: { fontFamily: '"Poppins", sans-serif' },
-  subtitle2: { fontFamily: '"Poppins", sans-serif', fontWeight: 600 },
-  body1: { fontFamily: '"Inter", sans-serif', lineHeight: 1.7 },
-  body2: { fontFamily: '"Inter", sans-serif', lineHeight: 1.6 },
+const getTypography = (isCustomerRoute) => {
+  const defaultFont = '"Inter", "Roboto", "Helvetica", "Arial", sans-serif';
+  const headingFont = isCustomerRoute ? '"Inter", sans-serif' : '"Poppins", sans-serif';
+  
+  return {
+    fontFamily: defaultFont,
+    h1: { fontFamily: headingFont, fontWeight: 700 },
+    h2: { fontFamily: headingFont, fontWeight: 700 },
+    h3: { fontFamily: headingFont, fontWeight: 600 },
+    h4: { fontFamily: headingFont, fontWeight: 600 },
+    h5: { fontFamily: headingFont, fontWeight: 600 },
+    h6: { fontFamily: headingFont, fontWeight: 500 },
+    button: { fontFamily: headingFont, fontWeight: 600, textTransform: 'none' },
+    subtitle1: { fontFamily: headingFont },
+    subtitle2: { fontFamily: headingFont, fontWeight: 600 },
+    body1: { fontFamily: '"Inter", sans-serif', lineHeight: 1.7 },
+    body2: { fontFamily: '"Inter", sans-serif', lineHeight: 1.6 },
+  };
 };
 
-const buildTheme = (mode) =>
+const buildTheme = (mode, isCustomerRoute) =>
   createTheme({
     palette: {
       mode,
@@ -48,7 +52,7 @@ const buildTheme = (mode) =>
       },
       divider: mode === 'dark' ? '#334155' : '#e0e7ef',
     },
-    typography: baseTypography,
+    typography: getTypography(isCustomerRoute),
     shape: { borderRadius: 12 },
     components: {
       MuiButton: {
@@ -99,10 +103,9 @@ const buildTheme = (mode) =>
     },
   });
 
-// ─── Provider ──────────────────────────────────────────────────────────────
 export const ThemeProvider = ({ children }) => {
   const location = useLocation();
-  const isCustomerRoute = !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/employee');
+  const isCustomerRoute = !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/sales');
 
   const [storedMode, setStoredMode] = useState(() => {
     return localStorage.getItem('mega_pacific_admin_theme') || 'dark';
@@ -122,7 +125,7 @@ export const ThemeProvider = ({ children }) => {
     });
   };
 
-  const muiTheme = useMemo(() => buildTheme(mode), [mode]);
+  const muiTheme = useMemo(() => buildTheme(mode, isCustomerRoute), [mode, isCustomerRoute]);
 
   return (
     <ThemeContext.Provider value={{ mode, toggleTheme, muiTheme }}>

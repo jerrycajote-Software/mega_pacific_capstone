@@ -4,9 +4,9 @@ const {
   getProductTypes,
   createProductType,
 } = require("../../controllers/admin/productTypeController");
+const { verifyStaff, verifyAdmin } = require("../../middleware/authMiddleware");
 
-
-router.get("/", getProductTypes);
-router.post("/", createProductType);
+router.get("/", verifyStaff, getProductTypes);
+router.post("/", verifyAdmin, createProductType);
 
 module.exports = router;

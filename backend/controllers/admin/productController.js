@@ -22,7 +22,6 @@ const getProducts = async (req, res) => {
     const productsWithStats = products.map(product => {
       let totalSales = 0;
       try {
-        // Calculate total sales from completed orders
         totalSales = product.orderItems
           ? product.orderItems
               .filter(item => item.order && item.order.status === 'completed')
@@ -35,7 +34,6 @@ const getProducts = async (req, res) => {
 
       let averageRating = 0;
       try {
-        // Calculate average rating
         if (product.reviews && product.reviews.length > 0) {
           const totalRating = product.reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
           averageRating = totalRating / product.reviews.length;
@@ -61,7 +59,7 @@ const getProducts = async (req, res) => {
 
 
 const createProduct = async (req, res) => {
-  const { name, type, description, price, unit, stock, imageUrl, imageUrls, variants } = req.body;
+  const { name, type, description, price, unit, stock, imageUrl, imageUrls, variants, color } = req.body;
   try {
     // Check for duplicate product name (case-insensitive and ignoring leading/trailing spaces)
     const normalizedName = name.trim();
@@ -75,30 +73,56 @@ const createProduct = async (req, res) => {
     });
 
     if (existingProduct) {
-      return res.status(400).json({ error: "Product name already exists. Please enter a unique product name." });
+      return res.status(400).json({ error: "The Product is already exists. Please enter a new product." });
     }
+
+    const rawPrice = parseFloat(price) || 0;
+    const origPrice = req.body.originalPrice !== undefined && req.body.originalPrice !== null && req.body.originalPrice !== ''
+      ? parseFloat(req.body.originalPrice)
+      : rawPrice;
+    const discountPct = req.body.discountPercent !== undefined && req.body.discountPercent !== null && req.body.discountPercent !== ''
+      ? parseFloat(req.body.discountPercent)
+      : 30;
+    const sellingPrice = Math.round(origPrice * (1 - discountPct / 100) * 100) / 100;
 
     const product = await prisma.product.create({
       data: {
         name: normalizedName,
         type,
         description,
-        price: parseFloat(price) || 0,
+        price: sellingPrice,
+        originalPrice: origPrice,
+        discountPercent: discountPct,
         unit: unit || "per meter",
         stock: parseInt(stock) || 0,
         imageUrl: imageUrl || null,
         imageUrls: imageUrls || [],
-        
+        color: color || null,
+        isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : true,
         variants:
           variants && variants.length > 0
             ? {
-                create: variants.map((v) => ({
-                  name: v.name,
-                  price: parseFloat(v.price),
-                  stock: parseInt(v.stock),
-                  sku: v.sku || null,
-                  status: v.status || "available",
-                })),
+                create: variants.map((v) => {
+                  const vRawPrice = parseFloat(v.price) || 0;
+                  const vOrigPrice = v.originalPrice !== undefined && v.originalPrice !== null && v.originalPrice !== ''
+                    ? parseFloat(v.originalPrice)
+                    : vRawPrice;
+                  const vDiscountPct = v.discountPercent !== undefined && v.discountPercent !== null && v.discountPercent !== ''
+                    ? parseFloat(v.discountPercent)
+                    : 30;
+                  const vSellingPrice = Math.round(vOrigPrice * (1 - vDiscountPct / 100) * 100) / 100;
+
+                  return {
+                    name: v.name,
+                    color: v.color || null,
+                    price: vSellingPrice,
+                    originalPrice: vOrigPrice,
+                    discountPercent: vDiscountPct,
+                    stock: parseInt(v.stock),
+                    sku: v.sku || null,
+                    status: v.status || "available",
+                  };
+                }),
               }
             : undefined,
       },
@@ -114,12 +138,11 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { name, type, description, price, unit, stock, imageUrl, imageUrls } = req.body;
+  const { name, type, description, price, unit, stock, imageUrl, imageUrls, color } = req.body;
   
   try {
     const normalizedName = name.trim();
     
-    // Check for duplicate product name
     const existingProduct = await prisma.product.findFirst({
       where: {
         name: {
@@ -133,7 +156,35 @@ const updateProduct = async (req, res) => {
     });
 
     if (existingProduct) {
-      return res.status(400).json({ error: "Product name already exists. Please enter a unique product name." });
+      return res.status(400).json({ error: "The Product is already exists. Please enter a new product." });
+    }
+
+    const currentProduct = await prisma.product.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!currentProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const previousStock = currentProduct.stock;
+    const finalStock = (stock !== undefined && stock !== null && stock !== '')
+      ? parseInt(stock)
+      : previousStock;
+
+    let sellingPrice = currentProduct.price;
+    let origPrice = currentProduct.originalPrice;
+    let discountPct = currentProduct.discountPercent ?? 30;
+
+    if (price !== undefined && price !== null && price !== '') {
+      const rawPrice = parseFloat(price) || 0;
+      origPrice = req.body.originalPrice !== undefined && req.body.originalPrice !== null && req.body.originalPrice !== ''
+        ? parseFloat(req.body.originalPrice)
+        : rawPrice;
+      discountPct = req.body.discountPercent !== undefined && req.body.discountPercent !== null && req.body.discountPercent !== ''
+        ? parseFloat(req.body.discountPercent)
+        : 30;
+      sellingPrice = Math.round(origPrice * (1 - discountPct / 100) * 100) / 100;
     }
 
     const updatedProduct = await prisma.product.update({
@@ -142,14 +193,49 @@ const updateProduct = async (req, res) => {
         name: normalizedName,
         type,
         description,
-        price: parseFloat(price) || 0,
+        price: sellingPrice,
+        originalPrice: origPrice,
+        discountPercent: discountPct,
         unit: unit || "per meter",
-        stock: parseInt(stock) || 0,
-        imageUrl: imageUrl || null,
+        stock: isNaN(finalStock) ? 0 : finalStock,
+        imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : null),
         imageUrls: imageUrls || [],
+        color: color || null,
+        isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : currentProduct.isActive,
       },
       include: { variants: true },
     });
+
+    if (finalStock !== previousStock) {
+      try {
+        let userId = req.user?.userId || null;
+        if (!userId && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+          try {
+            const jwt = require("jsonwebtoken");
+            const token = req.headers.authorization.split(" ")[1];
+            const decoded = jwt.decode(token);
+            if (decoded && decoded.userId) {
+              userId = decoded.userId;
+            }
+          } catch (e) {
+            // ignore token parse error
+          }
+        }
+
+        await prisma.inventoryLog.create({
+          data: {
+            productId: parseInt(id),
+            addedBy: userId,
+            previousStock,
+            addedQuantity: finalStock - previousStock,
+            newStock: finalStock,
+            reason: req.body.reason || "Inventory Item Update"
+          }
+        });
+      } catch (logErr) {
+        console.error("Failed to create inventory log for product update:", logErr);
+      }
+    }
     
     res.status(200).json(updatedProduct);
   } catch (error) {
@@ -162,13 +248,56 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.product.delete({
-      where: { id: parseInt(id) },
+    const productId = parseInt(id, 10);
+    if (isNaN(productId)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+
+    const orderItemCount = await prisma.orderItem.count({
+      where: { productId }
     });
+
+    if (orderItemCount > 0) {
+      await prisma.$transaction([
+        prisma.product.update({
+          where: { id: productId },
+          data: { isPreOrder: false, stock: 0 }
+        }),
+        prisma.productVariant.updateMany({
+          where: { productId },
+          data: { status: "out_of_stock" }
+        })
+      ]);
+
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("product_catalog_updated", { action: "delete", productId });
+      }
+
+      return res.status(200).json({
+        message: "Product has associated orders, so it was archived and unlisted instead of being permanently deleted."
+      });
+    }
+
+    await prisma.$transaction([
+      prisma.review.deleteMany({ where: { productId } }),
+      prisma.inventoryLog.deleteMany({ where: { productId } }),
+      prisma.productVariant.deleteMany({ where: { productId } }),
+      prisma.product.delete({ where: { id: productId } })
+    ]);
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("product_catalog_updated", { action: "delete", productId });
+    }
+
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Failed to delete product:", error);
-    res.status(500).json({ error: "Failed to delete product" });
+    if (error.code === "P2003") {
+      return res.status(409).json({ error: "Cannot delete product due to existing order dependencies." });
+    }
+    res.status(500).json({ error: error.message || "Failed to delete product" });
   }
 };
 
@@ -221,7 +350,7 @@ const adjustStock = async (req, res) => {
           include: {
             product: { select: { name: true } },
             variant: { select: { name: true } },
-            user: { select: { name: true, email: true } }
+            user: { select: { email: true } }
           }
         })
       ]);
@@ -254,7 +383,7 @@ const adjustStock = async (req, res) => {
           },
           include: {
             product: { select: { name: true } },
-            user: { select: { name: true, email: true } }
+            user: { select: { email: true } }
           }
         })
       ]);
@@ -359,7 +488,7 @@ const getStockLogs = async (req, res) => {
       include: {
         product: { select: { id: true, name: true, type: true } },
         variant: { select: { id: true, name: true } },
-        user: { select: { id: true, name: true, email: true, role: true } }
+        user: { select: { id: true, email: true, role: true } }
       },
       take: 200
     });

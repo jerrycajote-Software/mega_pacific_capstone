@@ -1,24 +1,26 @@
 import React from 'react';
-import { Box, Typography, Button, Container, Grid } from '@mui/material';
+import { Box, Typography, Button, Container, Chip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import useIsMobileBrowser from '../hooks/useDeviceDetect';
 
 const HeroSection = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobileBrowser();
+
 
   return (
     <Box 
       sx={{ 
         bgcolor: 'background.paper', 
-        borderRadius: 4, 
+        borderRadius: { xs: 3, md: 4 }, 
         overflow: 'hidden', 
         position: 'relative',
-        mb: 6,
+        mb: { xs: 3, md: 6 },
         border: '1px solid',
         borderColor: 'divider',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
       }}
     >
-      {/* Background Graphic or Gradient */}
       <Box 
         sx={{
           position: 'absolute',
@@ -33,27 +35,94 @@ const HeroSection = () => {
         }}
       />
       
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-        <Box sx={{ minHeight: 400, py: { xs: 6, md: 8 }, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: 2 }}>
-            Premium Quality Materials
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, px: { xs: 2.5, sm: 4 } }}>
+        <Box 
+          sx={{ 
+            minHeight: { xs: 'auto', md: 380 }, 
+            py: { xs: 4, sm: 6, md: 7 }, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'center' 
+          }}
+        >
+          <Typography 
+            variant="overline" 
+            sx={{ 
+              color: 'primary.main', 
+              fontWeight: 800, 
+              letterSpacing: { xs: 1.5, sm: 2 },
+              fontSize: { xs: '0.75rem', sm: '0.85rem' }
+            }}
+          >
+            Premium Roofing & Steel Solutions
           </Typography>
-          <Typography variant="h2" component="h1" sx={{ mt: 1, mb: 2, color: 'text.primary', fontSize: { xs: '2.5rem', md: '3.5rem' } }}>
+          <Typography 
+            variant="h2" 
+            component="h1" 
+            sx={{ 
+              mt: 1, 
+              mb: 1.5, 
+              color: 'text.primary', 
+              fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3.25rem' },
+              fontWeight: 900,
+              lineHeight: { xs: 1.2, md: 1.15 }
+            }}
+          >
             Build the Future with <Box component="span" sx={{ color: 'primary.main' }}>Mega Pacific</Box>
           </Typography>
-          <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary', fontSize: '1.1rem', maxWidth: 600 }}>
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              mb: 3.5, 
+              color: 'text.secondary', 
+              fontSize: { xs: '0.95rem', md: '1.05rem' }, 
+              maxWidth: 600,
+              lineHeight: 1.6
+            }}
+          >
             Discover our wide range of durable roofing systems, steel trusses, and construction materials designed to withstand the test of time.
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              size="large" 
-              onClick={() => navigate('/dashboard')}
-              sx={{ px: 4, py: 1.5, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 1 }}
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => navigate('/roof-designer')}
+              sx={{
+                px: { xs: 3, sm: 3.5 },
+                py: { xs: 1.25, sm: 1.5 },
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.2,
+                fontWeight: 700,
+                borderRadius: 2.5,
+                boxShadow: '0 4px 14px rgba(79,119,45,0.3)',
+                width: { xs: '100%', sm: 'auto' },
+                justifyContent: 'center',
+                '&:hover': {
+                  boxShadow: '0 8px 20px rgba(79,119,45,0.45)',
+                  transform: 'translateY(-1px)'
+                }
+              }}
             >
-              Shop Now
-              <i className="fi fi-rr-arrow-right" style={{ fontSize: '14px' }}></i>
+              <i className="fi fi-rr-home" style={{ fontSize: '16px' }}></i>
+              <span>3D Roof Designer</span>
+              {isMobile && (
+                <Chip 
+                  label="Desktop" 
+                  size="small" 
+                  sx={{ 
+                    height: 18, 
+                    fontSize: '0.62rem', 
+                    fontWeight: 800, 
+                    bgcolor: 'rgba(255, 255, 255, 0.25)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    ml: 0.5
+                  }} 
+                />
+              )}
             </Button>
           </Box>
         </Box>

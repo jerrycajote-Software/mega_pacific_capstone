@@ -2,16 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CloseIcon from '@mui/icons-material/Close';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CircularProgress from '@mui/material/CircularProgress';
 import ImageIcon from '@mui/icons-material/Image';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import LayersIcon from '@mui/icons-material/Layers';
 import NotesIcon from '@mui/icons-material/Notes';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -26,12 +20,10 @@ import {
   Typography,
   Button,
   Paper,
-  useTheme,
 } from '@mui/material';
 import AddProductTypeModal from './AddProductTypeModal';
 import InventoryDataGrid from '../../components/InventoryDataGrid';
 import StockManagementTab from '../../components/StockManagementTab';
-import { ProductStockCalculator } from '../../utils/ProductStockCalculator';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Loader2, PlusCircle } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
@@ -128,14 +120,6 @@ function StockBadge({ stock }) {
 }
 
 
-function VariantBadge({ count }) {
-  if (count === 0) return <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No variants</span>;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.2rem 0.55rem', borderRadius: 6, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', fontSize: '0.73rem', fontWeight: 600, color: '#a78bfa' }}>
-      <SwapHorizIcon sx={{ fontSize: 10 }} />{count} variant{count !== 1 ? 's' : ''}
-    </span>
-  );
-}
 
 
 const focusStyle = `
@@ -176,7 +160,7 @@ const focusStyle = `
   }
 `;
 
-const EMPTY_VARIANT = { name: '', price: '', stock: '', status: 'available' };
+const EMPTY_VARIANT = { name: '', color: '', price: '', stock: '', status: 'available' };
 
 const quillModules = {
   toolbar: [
@@ -202,12 +186,10 @@ class QuillBoundary extends React.Component {
 const ProductManagement = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const theme = useTheme();
-  const isAdmin = user?.role === 'admin';
+  const isReadOnly = user?.role === 'admin' || user?.role === 'sales';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' | 'stock'
-  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -217,7 +199,7 @@ const ProductManagement = () => {
 
   const [formData, setFormData] = useState({
     name: '', type: 'Rib Type', description: '',
-    price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: []
+    price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [], color: ''
   });
 
  
@@ -272,9 +254,9 @@ const ProductManagement = () => {
       if (res.data.success) {
         const mappedVariants = res.data.data.map(v => ({
           ...v,
-          originalPrice: v.price,
+          originalPrice: v.originalPrice ?? v.price,
           originalStock: v.stock,
-          price: '',
+          price: v.originalPrice ?? v.price,
           stock: ''
         }));
         setVariants(mappedVariants);
@@ -289,9 +271,6 @@ const ProductManagement = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleVariantChange = (id, field, value) => {
-    setVariants(prev => prev.map(v => v.id === id ? { ...v, [field]: value } : v));
-  };
 
 
   const processImageFiles = useCallback(async (files) => {
@@ -334,9 +313,16 @@ const ProductManagement = () => {
       if (editingProduct) {
         
         const payload = { ...formData };
-        if (payload.price === '' || payload.price === null) payload.price = editingProduct.price;
-        if (payload.stock === '' || payload.stock === null) payload.stock = editingProduct.stock;
-        
+        if (payload.price === '' || payload.price === null) payload.price = editingProduct.originalPrice || editingProduct.price;
+
+        const currentStock = parseInt(editingProduct.stock, 10) || 0;
+        if (payload.stock !== '' && payload.stock !== null && payload.stock !== undefined) {
+          const addedStock = parseInt(payload.stock, 10);
+          payload.stock = isNaN(addedStock) ? currentStock : Math.max(0, currentStock + addedStock);
+        } else {
+          payload.stock = currentStock;
+        }
+
         let variantsPayload = [];
         if (variants && variants.length > 0) {
           variantsPayload = variants
@@ -345,6 +331,7 @@ const ProductManagement = () => {
               return {
                  id: v.id,
                  name: v.name,
+                 color: v.color || '',
                  price: (v.price !== '' && v.price !== null) ? v.price : v.originalPrice,
                  stock: (v.stock !== '' && v.stock !== null) ? v.stock : v.originalStock,
                  sku: v.sku || '',
@@ -366,8 +353,12 @@ const ProductManagement = () => {
           prev.map((p) => (p.id === editingProduct.id ? freshlyUpdatedProduct : p))
         );
       } else {
-        
-        const payload = { ...formData, variants: pendingVariants };
+        const payload = { 
+          ...formData, 
+          stock: (formData.stock !== '' && formData.stock !== null && formData.stock !== undefined) ? parseInt(formData.stock, 10) : 9999,
+          isPreOrder: true,
+          variants: pendingVariants 
+        };
         await axios.post(`${API_URL}/api/admin/products`, payload);
       }
       await fetchProducts();
@@ -403,16 +394,6 @@ const ProductManagement = () => {
     setSavingVariant(false);
   };
 
-  const handleStartEditVariant = (v) => {
-    setEditingVariantId(v.id);
-    setEditingVariantData({
-      name: v.name,
-      price: v.price !== '' ? v.price : v.originalPrice,
-      stock: v.stock !== '' ? v.stock : v.originalStock,
-      sku: v.sku || '',
-      status: v.status
-    });
-  };
 
   const handleSaveEditVariant = async (variantId) => {
     setSavingVariant(true);
@@ -451,12 +432,12 @@ const ProductManagement = () => {
       setEditingProduct(product);
       let initialImageUrls = product.imageUrls || [];
       if (initialImageUrls.length === 0 && product.imageUrl) initialImageUrls = [product.imageUrl];
-      setFormData({ name: product.name, type: product.type, description: product.description || '', price: '', unit: product.unit, stock: '', imageUrl: product.imageUrl || '', imageUrls: initialImageUrls });
+      setFormData({ name: product.name, type: product.type, description: product.description || '', price: product.originalPrice ?? product.price ?? '', unit: product.unit, stock: '', imageUrl: product.imageUrl || '', imageUrls: initialImageUrls, color: product.color || '' });
       fetchVariants(product.id);
     } else {
       setEditingProduct(null);
       setVariants([]);
-      setFormData({ name: '', type: productTypes.length > 0 ? productTypes[0].name : '', description: '', price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [] });
+      setFormData({ name: '', type: productTypes.length > 0 ? productTypes[0].name : '', description: '', price: '', unit: 'per meter', stock: '', imageUrl: '', imageUrls: [], color: '' });
     }
     setIsDragging(false);
     setIsModalOpen(true);
@@ -474,16 +455,15 @@ const ProductManagement = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
 
   const VariantEditRow = ({ v }) => (
     <tr>
       <td style={S.variantTd}>
         <input className="pm-variant-input" style={S.variantInput} value={editingVariantData.name} onChange={e => setEditingVariantData(p => ({ ...p, name: e.target.value }))} placeholder="Name" />
+      </td>
+      <td style={S.variantTd}>
+        <input className="pm-variant-input" style={S.variantInput} value={editingVariantData.color} onChange={e => setEditingVariantData(p => ({ ...p, color: e.target.value }))} placeholder="Color" />
       </td>
       <td style={S.variantTd}>
         <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={editingVariantData.price} onChange={e => setEditingVariantData(p => ({ ...p, price: e.target.value }))} placeholder="0" />
@@ -522,7 +502,7 @@ const ProductManagement = () => {
                 {t('Manage your products, stock levels and pricing.')}
               </Typography>
             </div>
-            {!isAdmin && (
+            {!isReadOnly && (
               <button
                 type="button"
                 className="pm-btn-primary"
@@ -535,7 +515,6 @@ const ProductManagement = () => {
             )}
           </Box>
 
-          {/* Top Tab Navigation Header */}
           <Box sx={{ display: 'flex', gap: 1.5, mb: 3, borderBottom: '1px solid var(--border)', pb: 1.5, flexWrap: 'wrap' }}>
             <Button
               variant={activeTab === 'catalog' ? 'contained' : 'outlined'}
@@ -587,7 +566,7 @@ const ProductManagement = () => {
                 onViewProduct={(product) => openModal(product)}
                 onEditProduct={(product) => openModal(product)}
                 onDeleteProduct={handleDelete}
-                isAdmin={isAdmin}
+                isReadOnly={isReadOnly}
                 loading={loading}
               />
             </Paper>
@@ -630,7 +609,7 @@ const ProductManagement = () => {
                     <div
                       className="pm-upload-zone"
                       style={{ ...S.uploadZone, ...(isDragging ? S.uploadZoneDragging : {}), minHeight: 280, display: 'flex', flexDirection: 'column' }}
-                      onClick={() => { if (!isAdmin && (!formData.imageUrls || formData.imageUrls.length < 12)) fileInputRef.current?.click(); }}
+                      onClick={() => { if (!isReadOnly && (!formData.imageUrls || formData.imageUrls.length < 12)) fileInputRef.current?.click(); }}
                       onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                     >
                       {formData.imageUrls && formData.imageUrls.length > 0 ? (
@@ -639,12 +618,12 @@ const ProductManagement = () => {
                             {formData.imageUrls.map((url, idx) => (
                               <div key={idx} style={S.galleryItem} onClick={(e) => e.stopPropagation()}>
                                 <img src={url} alt={`Preview ${idx + 1}`} style={S.uploadPreviewImg} />
-                                {!isAdmin && (
+                                {!isReadOnly && (
                                   <button type="button" className="pm-upload-remove" style={S.uploadRemoveBtn} onClick={(e) => handleRemoveImage(e, idx)} title={t('Remove image')}><CloseIcon sx={{ fontSize: 12 }} /></button>
                                 )}
                               </div>
                             ))}
-                            {formData.imageUrls.length < 12 && !isAdmin && (
+                            {formData.imageUrls.length < 12 && !isReadOnly && (
                               <div style={{ ...S.galleryItem, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed #3e3e3e', cursor: 'pointer' }} onClick={() => fileInputRef.current?.click()}>
                                 <AddIcon sx={{ fontSize: 20, color: '#6b7280' }} />
                               </div>
@@ -675,7 +654,7 @@ const ProductManagement = () => {
                   
                   <div style={{ ...S.formGroup, marginBottom: 0 }}>
                     <label style={S.label}><Inventory2Icon sx={{ fontSize: 11 }} /> {t('Product Name')}</label>
-                    <input className="pm-input" name="name" type="text" required disabled={isAdmin} value={formData.name} onChange={handleInputChange} placeholder={t('e.g. Rib Type Blue')} style={S.inputBase} />
+                    <input className="pm-input" name="name" type="text" required disabled={isReadOnly} value={formData.name} onChange={handleInputChange} placeholder={t('e.g. Rib Type Blue')} style={S.inputBase} />
                   </div>
 
                  
@@ -683,25 +662,28 @@ const ProductManagement = () => {
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('ORIGINAL PRICE (₱)')}</label>
-                      <input className="pm-input" name="price" type="number" min="0" disabled={isAdmin} value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
+                      <input className="pm-input" name="price" type="number" min="0" disabled={isReadOnly} value={formData.price} onChange={handleInputChange} placeholder={editingProduct ? t("New Price") : "0"} style={S.inputBase} />
+                      {formData.price !== '' && !isNaN(parseFloat(formData.price)) && (
+                        <div style={{ fontSize: '0.74rem', marginTop: '5px', color: '#16a34a', fontWeight: 600 }}>
+                          🏷️ Less 30% Discount Applied: Selling price ₱{(parseFloat(formData.price) * 0.70).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      )}
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LayersIcon sx={{ fontSize: 11 }} /> {t('Unit')}</label>
-                      <input className="pm-input" name="unit" type="text" disabled={isAdmin} value={formData.unit} onChange={handleInputChange} placeholder={t('per meter')} style={S.inputBase} />
+                      <input className="pm-input" name="unit" type="text" disabled={isReadOnly} value={formData.unit} onChange={handleInputChange} placeholder={t('per meter')} style={S.inputBase} />
                     </div>
                   </div>
 
-                 
-                 
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
-                      <label style={S.label}>{t('BASE STOCK QTY')}</label>
-                      <input className="pm-input" name="stock" type="number" min="0" disabled={isAdmin} value={formData.stock} onChange={handleInputChange} placeholder={editingProduct ? t("New Stock") : "0"} style={S.inputBase} />
+                      <label style={S.label}>{t('COLOR')}</label>
+                      <input className="pm-input" name="color" type="text" disabled={isReadOnly} value={formData.color} onChange={handleInputChange} placeholder={t('e.g. Red')} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LocalOfferIcon sx={{ fontSize: 11 }} /> {t('Category Type')}</label>
                       <div style={S.selectWrap}>
-                        <select className="pm-select" name="type" disabled={isAdmin} value={formData.type} onChange={handleInputChange} style={S.selectBase}>
+                        <select className="pm-select" name="type" disabled={isReadOnly} value={formData.type} onChange={handleInputChange} style={S.selectBase}>
                           {productTypes.length === 0 && (
                             <option value="">{t('Loading types…')}</option>
                           )}
@@ -711,7 +693,7 @@ const ProductManagement = () => {
                         </select>
                         <KeyboardArrowDownIcon sx={{ fontSize: 13, ...S.selectChevron }} />
                       </div>
-                      {!isAdmin && (
+                      {!isReadOnly && (
                         <button
                           type="button"
                           onClick={() => setShowAddTypeModal(true)}
@@ -739,7 +721,7 @@ const ProductManagement = () => {
                           theme="snow"
                           value={formData.description || ''}
                           onChange={(value) => setFormData({ ...formData, description: value })}
-                          readOnly={isAdmin || false}
+                          readOnly={isReadOnly || false}
                           style={{ height: '200px', display: 'flex', flexDirection: 'column' }}
                           modules={quillModules}
                         />
@@ -764,6 +746,7 @@ const ProductManagement = () => {
                       <thead>
                         <tr>
                           <th style={S.variantTh}>{t('Variant Name')}</th>
+                          <th style={S.variantTh}>{t('Color')}</th>
                           <th style={S.variantTh}>{t('Price (₱)')}</th>
                           <th style={S.variantTh}>{t('Stock')}</th>
                           <th style={S.variantTh}>{t('Status')}</th>
@@ -778,8 +761,18 @@ const ProductManagement = () => {
                           ) : (
                             <tr key={v.id}>
                               <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
+                              <td style={S.variantTd}><span style={{ fontWeight: 500, color: '#e5e7eb' }}>{v.color || '-'}</span></td>
                               <td style={S.variantTd}>
-                                <span style={{ color: '#e5e7eb', fontWeight: 500 }}>₱{Number(v.originalPrice).toLocaleString()}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ color: '#4ade80', fontWeight: 600 }}>
+                                    ₱{Number(v.price || (v.originalPrice * 0.7)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                  {v.originalPrice && (
+                                    <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.72rem' }}>
+                                      ₱{Number(v.originalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td style={S.variantTd}>
                                 <span style={{ color: '#e5e7eb', fontWeight: 500 }}>{v.originalStock} units</span>
@@ -791,7 +784,7 @@ const ProductManagement = () => {
                               </td>
                               <td style={{ ...S.variantTd, textAlign: 'right' }}>
                                 <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                                  {!isAdmin && (
+                                  {!isReadOnly && (
                                     <button type="button" className="pm-variant-del" style={S.variantDeleteBtn} onClick={() => handleDeleteVariant(v.id)}><Trash2 size={12} /></button>
                                   )}
                                 </div>
@@ -804,7 +797,17 @@ const ProductManagement = () => {
                         {pendingVariants.map((v) => (
                           <tr key={v._tempId} style={{ background: 'rgba(34,197,94,0.03)' }}>
                             <td style={S.variantTd}><span style={{ fontWeight: 600, color: '#e5e7eb' }}>{v.name}</span></td>
-                            <td style={S.variantTd}><span style={{ color: '#4ade80', fontWeight: 600 }}>₱{Number(v.price).toLocaleString()}</span></td>
+                            <td style={S.variantTd}><span style={{ fontWeight: 500, color: '#e5e7eb' }}>{v.color || '-'}</span></td>
+                            <td style={S.variantTd}>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ color: '#4ade80', fontWeight: 600 }}>
+                                  ₱{(Number(v.price) * 0.7).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.72rem' }}>
+                                  ₱{Number(v.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              </div>
+                            </td>
                             <td style={S.variantTd}><StockBadge stock={parseInt(v.stock)} /></td>
                             <td style={S.variantTd}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.15rem 0.5rem', borderRadius: 5, fontSize: '0.7rem', fontWeight: 600, background: 'rgba(34,197,94,0.1)', color: '#4ade80' }}>Available</span>
@@ -816,10 +819,13 @@ const ProductManagement = () => {
                         ))}
 
                        
-                        {!isAdmin && (
+                        {!isReadOnly && (
                           <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
                             <td style={S.variantTd}>
                               <input className="pm-variant-input" style={S.variantInput} value={newVariant.name} onChange={e => setNewVariant(p => ({ ...p, name: e.target.value }))} placeholder={t('e.g. Per Meter')} />
+                            </td>
+                            <td style={S.variantTd}>
+                              <input className="pm-variant-input" style={S.variantInput} value={newVariant.color} onChange={e => setNewVariant(p => ({ ...p, color: e.target.value }))} placeholder={t('e.g. Red')} />
                             </td>
                             <td style={S.variantTd}>
                               <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={newVariant.price} onChange={e => setNewVariant(p => ({ ...p, price: e.target.value }))} placeholder="0" />
@@ -855,8 +861,8 @@ const ProductManagement = () => {
 
               
               <div style={S.modalFooter}>
-                <button type="button" className="pm-btn-cancel" onClick={closeModal} style={S.btnCancel}>{isAdmin ? t('Close') : t('Cancel')}</button>
-                {!isAdmin && (
+                <button type="button" className="pm-btn-cancel" onClick={closeModal} style={S.btnCancel}>{isReadOnly ? t('Close') : t('Cancel')}</button>
+                {!isReadOnly && (
                   <button type="submit" className="pm-btn-save" style={S.btnSave}>
                     {editingProduct ? t('Update Product') : t('Create Product')}
                   </button>

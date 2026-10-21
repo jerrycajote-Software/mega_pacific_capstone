@@ -11,14 +11,6 @@ import {
   Stack,
 } from '@mui/material';
 
-
-const BRAND_FEATURES = [
-  'Premium quality roofing & steel materials',
-  'Fast and reliable order processing',
-  'Trusted by thousands of contractors',
-  'Secure and seamless checkout',
-];
-
 const VerifyEmailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,14 +27,12 @@ const VerifyEmailPage = () => {
   
   const inputRefs = useRef([]);
 
-  // If no email, redirect back to login
   useEffect(() => {
     if (!email) {
       navigate('/login');
     }
   }, [email, navigate]);
 
-  // Countdown timer for resending OTP
   useEffect(() => {
     if (cooldown > 0) {
       const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -58,7 +48,6 @@ const VerifyEmailPage = () => {
     newOtp[index] = val.substring(val.length - 1);
     setOtp(newOtp);
 
-    // Auto-focus next field
     if (val && index < 5) {
       inputRefs.current[index + 1].focus();
     }
@@ -69,12 +58,10 @@ const VerifyEmailPage = () => {
       const newOtp = [...otp];
       
       if (!otp[index] && index > 0) {
-        // Focus previous field and clear it
         newOtp[index - 1] = '';
         setOtp(newOtp);
         inputRefs.current[index - 1].focus();
       } else {
-        // Clear current field
         newOtp[index] = '';
         setOtp(newOtp);
       }
@@ -144,81 +131,62 @@ const VerifyEmailPage = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: 'background.default' }}>
-      
-      {/* ─── Left Decorative Panel (md+) ─────────────────────── */}
-      <Box
-        sx={{
-          display: { xs: 'none', md: 'flex' },
-          width: '38%',
-          flexShrink: 0,
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          px: 5,
-          py: 8,
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(145deg, #31572c 0%, #4f772d 40%, #6b9840 75%, #90a955 100%)',
-        }}
-      >
-        {/* Decorative circles */}
-        <Box sx={{ position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.06)' }} />
-        <Box sx={{ position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.05)' }} />
-        <Box sx={{ position: 'absolute', top: '60%', right: 30, width: 100, height: 100, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.07)' }} />
-
-        {/* Logo */}
-        <Box sx={{ mb: 4, position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 32, letterSpacing: '0.05em', lineHeight: 1 }}>
-            <Typography component="span" sx={{ color: '#ecf39e' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: '#ffffff' }}>PACIFIC</Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        px: { xs: 2.5, sm: 4 },
+        py: { xs: 4, sm: 6 },
+      }}
+    >
+      <Box sx={{ width: '100%', maxWidth: 460 }}>
+        <Box sx={{ textAlign: 'center', mb: 3.5 }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'Arial, sans-serif',
+              fontWeight: 900,
+              fontSize: { xs: 28, sm: 32 },
+              letterSpacing: '0.05em',
+              lineHeight: 1,
+              mb: 0.5,
+            }}
+          >
+            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '9px', fontWeight: 800, letterSpacing: '0.25em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '0.22em',
+              fontFamily: 'Arial, sans-serif',
+            }}
+          >
             METAL AND STEEL CORP
           </Typography>
         </Box>
 
-        <Typography variant="h4" fontWeight={700} sx={{ color: '#ffffff', mb: 1.5, lineHeight: 1.3, position: 'relative', zIndex: 1 }}>
-          Verify Your<br />Email Address
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.75)', mb: 5, lineHeight: 1.8, position: 'relative', zIndex: 1 }}>
-          Enter the security verification code sent to your email to activate your account.
-        </Typography>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, position: 'relative', zIndex: 1 }}>
-          {BRAND_FEATURES.map((feat, i) => (
-            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <i className="fi fi-sr-check-circle" style={{ color: '#ecf39e', fontSize: '18px', flexShrink: 0 }}></i>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500, fontSize: '0.82rem' }}>
-                {feat}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
-      {/* ─── Right: Verification Form ─────────────────────────── */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 3, sm: 5, md: 6 },
-          py: 5,
-        }}
-      >
-        <Box sx={{ width: '100%', maxWidth: 460 }}>
-
-          {/* Mobile logo */}
-          <Box sx={{ textAlign: 'center', mb: 4, display: { xs: 'block', md: 'none' } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: 26, letterSpacing: '0.05em', lineHeight: 1, mb: 0.5 }}>
-              <Typography component="span" sx={{ color: 'primary.main' }}>MEGA</Typography>
-              <Typography component="span" sx={{ color: 'secondary.main' }}>PACIFIC</Typography>
-            </Box>
-          </Box>
-
-          {/* Icon */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, sm: 4.5 },
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '0 12px 36px rgba(0,0,0,0.45)'
+                : '0 12px 36px rgba(15,23,42,0.06)',
+          }}
+        >
           <Box
             sx={{
               width: 52,
@@ -235,10 +203,10 @@ const VerifyEmailPage = () => {
             <i className="fi fi-rr-envelope" style={{ color: '#ffffff', fontSize: '24px' }}></i>
           </Box>
 
-          <Typography variant="h4" component="h1" fontWeight={700} color="text.primary" gutterBottom>
+          <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Verify email
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
             We've sent a 6-digit code to <strong>{email}</strong>. Enter it below to verify your email.
           </Typography>
 
@@ -255,7 +223,7 @@ const VerifyEmailPage = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
-            <Stack direction="row" spacing={1.5} justifyContent="space-between" sx={{ mb: 4 }} onPaste={handlePaste}>
+            <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} justifyContent="space-between" sx={{ mb: 4 }} onPaste={handlePaste}>
               {otp.map((data, index) => (
                 <Box
                   key={index}
@@ -267,8 +235,8 @@ const VerifyEmailPage = () => {
                   onChange={(e) => handleChange(e.target, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
                   sx={{
-                    width: { xs: 42, sm: 54 },
-                    height: { xs: 48, sm: 60 },
+                    width: { xs: 38, sm: 54 },
+                    height: { xs: 46, sm: 60 },
                     borderRadius: 2,
                     border: '1px solid',
                     borderColor: 'divider',
@@ -321,7 +289,7 @@ const VerifyEmailPage = () => {
               )}
             </Button>
           </Box>
-        </Box>
+        </Paper>
       </Box>
     </Box>
   );

@@ -18,16 +18,15 @@ exports.createInquiry = async (req, res) => {
       },
       include: {
         messages: {
-          include: { sender: { select: { id: true, name: true, role: true } } }
+          include: { sender: { select: { id: true, role: true } } }
         },
-        customer: { select: { id: true, name: true, email: true } }
+        customer: { select: { id: true, email: true } }
       },
     });
 
-    // Notify employees via Socket.io
     const io = req.app.get("io");
     if (io) {
-      io.to("employees").emit("new_inquiry", inquiry);
+      io.to("sales").to("saless").emit("new_inquiry", inquiry);
     }
 
     res.status(201).json(inquiry);
@@ -50,15 +49,22 @@ exports.addMessage = async (req, res) => {
         content,
       },
       include: {
-        sender: { select: { id: true, name: true, role: true } },
+        sender: {
+          select: {
+            id: true,
+            role: true,
+            customerProfile: { select: { name: true, avatarUrl: true } },
+            salesProfile: { select: { name: true } },
+            adminProfile: { select: { name: true } }
+          }
+        },
       },
     });
 
-    // Notify room via Socket.io
     const io = req.app.get("io");
     if (io) {
       io.to(`inquiry_${id}`).emit("new_message", message);
-      io.to("employees").emit("inquiry_updated", { inquiryId: id, message });
+      io.to("sales").to("saless").emit("inquiry_updated", { inquiryId: id, message });
     }
 
     res.status(201).json(message);
@@ -75,7 +81,7 @@ exports.getCustomerInquiries = async (req, res) => {
       where: { customerId },
       include: {
         messages: {
-          include: { sender: { select: { id: true, name: true, role: true } } },
+          include: { sender: { select: { id: true, role: true } } },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -92,9 +98,33 @@ exports.getAllInquiries = async (req, res) => {
   try {
     const inquiries = await prisma.inquiry.findMany({
       include: {
-        customer: { select: { id: true, name: true, email: true } },
+        customer: {
+          select: {
+            id: true,
+            email: true,
+            customerProfile: {
+              select: {
+                name: true,
+                avatarUrl: true,
+                contactNumber: true,
+                city: true,
+                province: true,
+              }
+            }
+          }
+        },
         messages: {
-          include: { sender: { select: { id: true, name: true, role: true } } },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                role: true,
+                customerProfile: { select: { name: true, avatarUrl: true } },
+                salesProfile: { select: { name: true } },
+                adminProfile: { select: { name: true } }
+              }
+            }
+          },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -113,9 +143,33 @@ exports.getInquiry = async (req, res) => {
     const inquiry = await prisma.inquiry.findUnique({
       where: { id: parseInt(id) },
       include: {
-        customer: { select: { id: true, name: true, email: true } },
+        customer: {
+          select: {
+            id: true,
+            email: true,
+            customerProfile: {
+              select: {
+                name: true,
+                avatarUrl: true,
+                contactNumber: true,
+                city: true,
+                province: true,
+              }
+            }
+          }
+        },
         messages: {
-          include: { sender: { select: { id: true, name: true, role: true } } },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                role: true,
+                customerProfile: { select: { name: true, avatarUrl: true } },
+                salesProfile: { select: { name: true } },
+                adminProfile: { select: { name: true } }
+              }
+            }
+          },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -138,13 +192,13 @@ exports.updateInquiryStatus = async (req, res) => {
     const updated = await prisma.inquiry.update({
       where: { id: parseInt(id) },
       data: { status },
-      include: { customer: { select: { id: true, name: true, email: true } } }
+      include: { customer: { select: { id: true, email: true } } }
     });
 
     const io = req.app.get("io");
     if (io) {
       io.to(`inquiry_${id}`).emit("status_updated", updated);
-      io.to("employees").emit("inquiry_status_updated", updated);
+      io.to("sales").to("saless").emit("inquiry_status_updated", updated);
     }
 
     res.json(updated);

@@ -31,8 +31,9 @@ const CustomerServiceWidget = () => {
   useEffect(() => {
     if (!user || user.role !== 'customer') return;
 
-    // Connect to Socket.io
-    const newSocket = io(API_URL);
+    const newSocket = io(API_URL, {
+      auth: { user }
+    });
     setSocket(newSocket);
 
     return () => newSocket.close();
@@ -61,7 +62,6 @@ const CustomerServiceWidget = () => {
   }, [socket, inquiryId]);
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -72,7 +72,6 @@ const CustomerServiceWidget = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.length > 0) {
-        // Use the most recent inquiry
         const recentInquiry = res.data[0];
         setInquiryId(recentInquiry.id);
         setMessages(recentInquiry.messages || []);
@@ -89,7 +88,6 @@ const CustomerServiceWidget = () => {
 
     try {
       if (!inquiryId) {
-        // Create new inquiry
         const res = await axios.post(`${API_URL}/api/inquiries`, {
           subject: "Customer Inquiry",
           initialMessage: newMessage
@@ -99,13 +97,11 @@ const CustomerServiceWidget = () => {
         setInquiryId(res.data.id);
         setMessages(res.data.messages);
       } else {
-        // Add message to existing inquiry
         await axios.post(`${API_URL}/api/inquiries/${inquiryId}/messages`, {
           content: newMessage
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        // Message will be added via socket.io
       }
       setNewMessage('');
     } catch (error) {
@@ -124,42 +120,44 @@ const CustomerServiceWidget = () => {
           onClick={() => setIsOpen(true)}
           sx={{
             position: 'fixed',
-            bottom: 28,
-            right: 28,
+            bottom: { xs: 72, md: 28 },
+            right: { xs: 16, sm: 28 },
             zIndex: 1200,
-            width: 60,
-            height: 60,
+            width: { xs: 50, sm: 60 },
+            height: { xs: 50, sm: 60 },
             boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             '&:hover': {
-              transform: 'scale(1.1)',
+              transform: 'scale(1.08)',
               boxShadow: '0 12px 32px rgba(0,0,0,0.3)',
             },
           }}
         >
           <Badge color="error" variant="dot" invisible={isOpen}>
-            <i className="fi fi-rr-comment-alt" style={{ fontSize: '22px', color: '#ffffff' }}></i>
+            <i className="fi fi-rr-comment-alt" style={{ fontSize: '20px', color: '#ffffff' }}></i>
           </Badge>
         </Fab>
       </Tooltip>
 
       {isOpen && (
         <Paper
-          elevation={6}
+          elevation={8}
           sx={{
             position: 'fixed',
-            bottom: 100,
-            right: 28,
-            width: { xs: 300, sm: 350 },
-            height: 450,
+            bottom: { xs: 68, md: 96 },
+            right: { xs: 12, sm: 28 },
+            width: { xs: 'calc(100vw - 24px)', sm: 360 },
+            maxWidth: 380,
+            height: { xs: 'calc(100vh - 140px)', sm: 480 },
+            maxHeight: 520,
             zIndex: 1300,
             display: 'flex',
             flexDirection: 'column',
             borderRadius: 3,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            boxShadow: '0 12px 36px rgba(0,0,0,0.25)',
           }}
         >
-          {/* Header */}
           <Box sx={{
             bgcolor: 'secondary.main',
             color: 'white',
@@ -174,7 +172,6 @@ const CustomerServiceWidget = () => {
             </IconButton>
           </Box>
 
-          {/* Chat Messages */}
           <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto', bgcolor: '#f5f5f5', display: 'flex', flexDirection: 'column', gap: 1 }}>
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
@@ -199,7 +196,7 @@ const CustomerServiceWidget = () => {
                   }}>
                     {!isCustomer && (
                       <Typography variant="caption" sx={{ display: 'block', mb: 0.5, fontWeight: 'bold', color: 'secondary.main' }}>
-                        {msg.sender?.name || 'Employee'}
+                        {msg.sender?.name || 'Sales'}
                       </Typography>
                     )}
                     <Typography variant="body2">{msg.content}</Typography>
@@ -210,7 +207,6 @@ const CustomerServiceWidget = () => {
             <div ref={messagesEndRef} />
           </Box>
 
-          {/* Input Area */}
           <Box component="form" onSubmit={handleSendMessage} sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'white', display: 'flex', gap: 1 }}>
             <TextField
               fullWidth

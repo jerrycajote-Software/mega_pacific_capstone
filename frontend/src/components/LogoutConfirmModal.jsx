@@ -26,7 +26,7 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
     };
   }, []);
 
-  const isStaffPortal = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/employee');
+  const isStaffPortal = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/sales');
 
   // Themes matching: emerald gradient for staff, forest gradient for customer
   const confirmBtnBg = isStaffPortal 
@@ -71,7 +71,6 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
             fontFamily: "'Inter', system-ui, sans-serif"
           }}
         >
-          {/* Header */}
           <h3
             style={{
               margin: '0 0 0.75rem 0',
@@ -85,7 +84,6 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
             Confirm Logout
           </h3>
 
-          {/* Message */}
           <p
             style={{
               margin: '0 0 1.75rem 0',
@@ -97,7 +95,6 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
             Are you sure you want to log out?
           </p>
 
-          {/* Action Buttons */}
           <div
             style={{
               display: 'flex',

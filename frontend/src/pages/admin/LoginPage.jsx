@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import MailIcon from '@mui/icons-material/Mail';
@@ -96,17 +96,35 @@ const LoginPage = () => {
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [requiresOtp, setRequiresOtp] = useState(false);
+  const [otp, setOtp]           = useState('');
+  const [msg, setMsg]           = useState('');
 
-  const { login, logout }  = useAuth();
-  const navigate   = useNavigate();
+  const { login, logout, token, user } = useAuth();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (token) {
+      if (user?.role === 'admin' || user?.role === 'sales') {
+        navigate('/admin/dashboard', { replace: true });
+      }
+    }
+  }, [token, user, navigate]);
+
+  if (token && (user?.role === 'admin' || user?.role === 'sales')) {
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const result = await login(email, password);
-    if (result.success) {
-      if (result.user?.role === 'admin') {
+    const result = await login(email, password, requiresOtp ? otp : null, ['admin', 'owner', 'super_admin', 'superadmin']);
+    if (result.requiresOtp) {
+      setRequiresOtp(true);
+      setMsg(result.message || 'OTP sent to your email.');
+    } else if (result.success) {
+      if (result.user?.role === 'admin' || result.user?.role === 'sales') {
         navigate('/admin/dashboard', { replace: true });
       } else {
         logout();
@@ -264,6 +282,24 @@ const LoginPage = () => {
               </div>
             )}
 
+            {msg && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                background: 'rgba(34,197,94,0.08)',
+                border: '1px solid rgba(34,197,94,0.22)',
+                borderRadius: 12,
+                padding: '0.75rem 1rem',
+                marginBottom: '1.25rem',
+                color: '#4ade80',
+                fontSize: '0.82rem',
+                lineHeight: 1.4,
+              }}>
+                {msg}
+              </div>
+            )}
+
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
 
@@ -383,6 +419,44 @@ const LoginPage = () => {
                 </div>
               </div>
 
+              {requiresOtp && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                  <label style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    color: '#9ca3af',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                  }}>
+                    {t("OTP Code")}
+                  </label>
+                  <div className="lp-input-wrap" style={{ position: 'relative' }}>
+                    <input
+                      className="lp-input"
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="Enter 6-digit OTP"
+                      required
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.09)',
+                        borderRadius: 12,
+                        padding: '0.72rem 0.9rem',
+                        color: '#f0f0f0',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        transition: 'border-color 0.2s, box-shadow 0.2s',
+                        boxSizing: 'border-box',
+                        letterSpacing: '0.1em',
+                        textAlign: 'center'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
              
               <button
                 type="submit"
@@ -411,16 +485,15 @@ const LoginPage = () => {
                 {loading ? (
                   <>
                     <CircularProgress size={17} thickness={5} sx={{ color: '#fff', animation: 'none' }} />
-                    Signing in…
+                    {requiresOtp ? 'Verifying…' : 'Signing in…'}
                   </>
                 ) : (
-                  'Login Admin'
+                  requiresOtp ? 'Verify OTP & Login' : 'Login Admin'
                 )}
               </button>
             </form>
           </div>
 
-          {/* Footer */}
           
 
         </div>

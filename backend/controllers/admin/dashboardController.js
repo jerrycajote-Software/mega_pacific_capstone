@@ -5,25 +5,30 @@ const getDashboardStats = async (req, res) => {
     
     const totalUsers = await prisma.user.count({ where: { role: "customer" } });
     const totalProducts = await prisma.product.count();
-    const totalOrders = await prisma.order.count();
+    const totalOrders = await prisma.order.count({
+      where: { status: { notIn: ["cancelled", "rejected"] } }
+    });
     
     const completedOrders = await prisma.order.findMany({
-      where: { status: { not: "cancelled" } },
+      where: {
+        status: { notIn: ["cancelled", "rejected"] },
+        paymentStatus: { not: "refunded" }
+      },
       select: { total: true, createdAt: true }
     });
     
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
 
     
     const recentOrdersData = await prisma.order.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
-      include: { user: { select: { name: true, email: true } } }
+      include: { user: { select: { email: true } } }
     });
 
     const recentOrders = recentOrdersData.map(o => ({
       id: `#ORD-${o.id.toString().padStart(3, "0")}`,
-      customer: o.user.name,
+      customer: o.customerName || o.shippingName || (o.user ? o.user.email.split('@')[0] : "Anonymous"),
       date: new Date(o.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
       status: o.status.charAt(0).toUpperCase() + o.status.slice(1),
       total: `₱${o.total.toLocaleString()}`
@@ -79,6 +84,12 @@ const getDashboardStats = async (req, res) => {
     
     const topSelling = await prisma.orderItem.groupBy({
       by: ['productId'],
+      where: {
+        order: {
+          status: { notIn: ["cancelled", "rejected"] },
+          paymentStatus: { not: "refunded" }
+        }
+      },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
       take: 4
@@ -89,7 +100,16 @@ const getDashboardStats = async (req, res) => {
       if (!ts.productId) continue;
       const prod = await prisma.product.findUnique({
         where: { id: ts.productId },
-        include: { orderItems: true } 
+        include: {
+          orderItems: {
+            where: {
+              order: {
+                status: { notIn: ["cancelled", "rejected"] },
+                paymentStatus: { not: "refunded" }
+              }
+            }
+          }
+        } 
       });
       if (prod) {
         
