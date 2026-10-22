@@ -3,7 +3,7 @@
  * Validates registration payloads and enforces password security policy on the server side.
  */
 
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*~]).{8,}$/;
 
 const REQUIRED_REGISTER_FIELDS = [
   { key: 'name',          label: 'Full name' },
@@ -39,7 +39,7 @@ const validateRegister = (req, res, next) => {
   if (!PASSWORD_REGEX.test(password)) {
     return res.status(400).json({
       error:
-        'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character (!@#$%^&*).',
+        'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character (!@#$%^&*~).',
     });
   }
 
@@ -61,7 +61,7 @@ const validateResetPassword = (req, res, next) => {
   if (!PASSWORD_REGEX.test(newPassword)) {
     return res.status(400).json({
       error:
-        'New password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character (!@#$%^&*).',
+        'New password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character (!@#$%^&*~).',
     });
   }
 

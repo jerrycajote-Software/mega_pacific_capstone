@@ -252,7 +252,7 @@ const CustomerLoginPage = () => {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.toUpperCase())}
                 placeholder="LOG-123456"
-                helperText="Enter the 6-digit login code from your email (e.g. LOG-123456)"
+                helperText="Enter the 6-digit login code from your email."
                 sx={{ mb: 1 }}
                 inputProps={{
                   style: { letterSpacing: '0.15em', textAlign: 'center', fontWeight: 'bold' },
