@@ -98,7 +98,7 @@ const VerifyEmailPage = () => {
     
     const otpDigits = otp.join('');
     if (otpDigits.length < 6) {
-      setError('Please enter the full 6-digit registration code (REG-######).');
+      setError('Please enter the full 6-digit verification code.');
       return;
     }
 
@@ -220,7 +220,7 @@ const VerifyEmailPage = () => {
             Verify email
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
-            We've sent a registration code to <strong>{email}</strong>. Enter the 6 digits below<strong></strong>).
+            We've sent a 6-digit registration code to <strong>{email}</strong>. Enter the code below to verify your email.
           </Typography>
 
           {error && (
@@ -236,40 +236,22 @@ const VerifyEmailPage = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
-            <Stack direction="row" spacing={{ xs: 0.75, sm: 1.25 }} alignItems="center" justifyContent="center" sx={{ mb: 4 }} onPaste={handlePaste}>
-              <Box
-                sx={{
-                  px: { xs: 1.2, sm: 1.8 },
-                  height: { xs: 46, sm: 60 },
-                  borderRadius: 2,
-                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(79,119,45,0.25)' : 'rgba(79,119,45,0.12)',
-                  border: '1px solid',
-                  borderColor: 'primary.main',
-                  color: 'primary.main',
-                  fontWeight: 800,
-                  fontSize: { xs: '0.85rem', sm: '1.05rem' },
-                  letterSpacing: '0.05em',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  userSelect: 'none',
-                }}
-              >
-              
-              </Box>
+            <Stack direction="row" spacing={{ xs: 1, sm: 1.5 }} alignItems="center" justifyContent="center" sx={{ mb: 4 }} onPaste={handlePaste}>
               {otp.map((data, index) => (
                 <Box
                   key={index}
                   component="input"
                   type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength="1"
                   ref={(el) => (inputRefs.current[index] = el)}
                   value={data}
                   onChange={(e) => handleChange(e.target, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
                   sx={{
-                    width: { xs: 38, sm: 54 },
-                    height: { xs: 46, sm: 60 },
+                    width: { xs: 44, sm: 52 },
+                    height: { xs: 48, sm: 56 },
                     borderRadius: 2,
                     border: '1px solid',
                     borderColor: 'divider',
