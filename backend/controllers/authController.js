@@ -545,7 +545,7 @@ const forgotPassword = async (req, res) => {
 
     if (!user || user.status === "deleted") {
       return res.status(404).json({ 
-        error: "This email address is not registered in our system. Please check your email or sign up." 
+        error: "This email address is not registered in our system." 
       });
     }
 

@@ -29,7 +29,7 @@ const getPasswordChecks = (password) => ({
   hasUpper:   /[A-Z]/.test(password),
   hasLower:   /[a-z]/.test(password),
   hasNumber:  /[0-9]/.test(password),
-  hasSpecial: /[!@#$%^&*]/.test(password),
+  hasSpecial: /[!@#$%^&*~]/.test(password),
 });
 
 const PasswordCheckItem = ({ passed, label }) => (
@@ -297,7 +297,7 @@ const ResetPasswordPage = () => {
                 <PasswordCheckItem passed={passwordChecks.hasUpper}   label="One uppercase letter (A–Z)" />
                 <PasswordCheckItem passed={passwordChecks.hasLower}   label="One lowercase letter (a–z)" />
                 <PasswordCheckItem passed={passwordChecks.hasNumber}  label="One number (0–9)" />
-                <PasswordCheckItem passed={passwordChecks.hasSpecial} label="One special character (!@#$%^&*)" />
+                <PasswordCheckItem passed={passwordChecks.hasSpecial} label="One special character (!@#$%^&*~)" />
               </Box>
             )}
 

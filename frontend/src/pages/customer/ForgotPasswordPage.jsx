@@ -155,7 +155,7 @@ const ForgotPasswordPage = () => {
               value={email}
               onChange={handleEmailChange}
               error={Boolean(emailError)}
-              helperText={emailError || 'Enter your registered email (@gmail.com)'}
+              helperText={emailError || 'Enter your registered email'}
               sx={{ mb: 3 }}
             />
 
