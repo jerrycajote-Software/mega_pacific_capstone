@@ -2,6 +2,7 @@ const prisma = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validateRealisticEmail } = require("../utils/emailValidator");
+const { generateOtp, verifyOtpMatch } = require("../utils/otpHelper");
 
 
 const register = async (req, res) => {
@@ -13,16 +14,20 @@ const register = async (req, res) => {
   }
 
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const existingUser = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
+    });
     if (existingUser) {
       if (existingUser.status === "deleted") {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = generateOtp('REG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         await prisma.user.update({
-          where: { email },
+          where: { id: existingUser.id },
           data: {
+            email: normalizedEmail,
             password: hashedPassword,
             otpCode: otp,
             otpExpiresAt,
@@ -55,13 +60,13 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate secure 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate secure registration OTP (REG-######)
+    const otp = generateOtp('REG');
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         role: "customer",
         isEmailVerified: false,
@@ -133,7 +138,7 @@ const login = async (req, res) => {
     // Validate the role against expected roles for the specific portal FIRST
     if (expectedRoles && expectedRoles.length > 0) {
       if (!expectedRoles.includes(user.role)) {
-        return res.status(403).json({ error: "Access Denied: You are not authorized to access this portal." });
+        return res.status(403).json({ error: "This is not your Portal!" });
       }
     }
 
@@ -152,7 +157,7 @@ const login = async (req, res) => {
 
     if (user.role === "customer") {
       if (!otp) {
-        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const newOtp = generateOtp('LOG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         await prisma.user.update({
@@ -165,15 +170,15 @@ const login = async (req, res) => {
         });
 
         try {
-          const { sendOtpEmail } = require("../utils/emailService");
-          await sendOtpEmail(user.email, newOtp);
+          const { sendLoginOtpEmail } = require("../utils/emailService");
+          await sendLoginOtpEmail(user.email, newOtp);
         } catch (emailError) {
           console.error("WARNING: OTP email failed to send (customer login):", emailError.message);
         }
 
         return res.status(200).json({ requiresOtp: true, message: "OTP sent to your email to verify login." });
       } else {
-        if (!user.otpCode || user.otpCode !== otp) {
+        if (!user.otpCode || !verifyOtpMatch(user.otpCode, otp, 'LOG')) {
           return res.status(400).json({ error: "Invalid OTP code" });
         }
         if (new Date() > new Date(user.otpExpiresAt)) {
@@ -223,7 +228,7 @@ const login = async (req, res) => {
       }
 
       if (activeSessionsCount > 0 && !otp && user.role !== "superadmin") {
-        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const newOtp = generateOtp('LOG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
         await prisma.user.update({
@@ -236,8 +241,8 @@ const login = async (req, res) => {
         });
 
         try {
-          const { sendOtpEmail } = require("../utils/emailService");
-          await sendOtpEmail(user.email, newOtp);
+          const { sendLoginOtpEmail } = require("../utils/emailService");
+          await sendLoginOtpEmail(user.email, newOtp);
         } catch (emailError) {
           console.error("WARNING: OTP email failed to send (new device login):", emailError.message);
         }
@@ -246,7 +251,7 @@ const login = async (req, res) => {
       }
 
       if (otp) {
-        if (!user.otpCode || user.otpCode !== otp) {
+        if (!user.otpCode || !verifyOtpMatch(user.otpCode, otp, 'LOG')) {
           return res.status(400).json({ error: "Invalid OTP code" });
         }
         if (new Date() > new Date(user.otpExpiresAt)) {
@@ -435,7 +440,7 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ error: "Email is already verified" });
     }
 
-    if (!user.otpCode || user.otpCode !== otp) {
+    if (!user.otpCode || !verifyOtpMatch(user.otpCode, otp, 'REG')) {
       return res.status(400).json({ error: "Invalid OTP code" });
     }
 
@@ -499,7 +504,7 @@ const resendOtp = async (req, res) => {
       }
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = generateOtp('REG');
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await prisma.user.update({
@@ -533,29 +538,34 @@ const forgotPassword = async (req, res) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    // Always return 200 to avoid exposing whether the email is registered
-    if (!user) {
-      return res.status(200).json({ message: "If that email is registered, you will receive a reset code shortly." });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
+    });
+
+    if (!user || user.status === "deleted") {
+      return res.status(404).json({ 
+        error: "This email address is not registered in our system. Please check your email or sign up." 
+      });
     }
 
     if (user.role !== "customer") {
       return res.status(403).json({ error: "Password reset is only available for customer accounts." });
     }
 
-    // Generate a fresh 6-digit reset OTP (stored separately from email verification OTP)
+    // Generate a fresh 6-digit reset OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const resetOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     await prisma.user.update({
-      where: { email },
+      where: { id: user.id },
       data: { resetOtpCode: otp, resetOtpExpiresAt },
     });
 
     const { sendForgotPasswordEmail } = require("../utils/emailService");
-    await sendForgotPasswordEmail(email, otp);
+    await sendForgotPasswordEmail(user.email, otp);
 
-    res.status(200).json({ message: "If that email is registered, you will receive a reset code shortly." });
+    res.status(200).json({ message: "Password reset code sent to your email." });
   } catch (error) {
     console.error("Forgot Password Error:", error);
     res.status(500).json({ error: "Failed to process password reset request." });
@@ -572,12 +582,15 @@ const resetPassword = async (req, res) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
+    });
+    if (!user || user.status === "deleted") {
       return res.status(404).json({ error: "User not found." });
     }
 
-    if (!user.resetOtpCode || user.resetOtpCode !== otp) {
+    if (!user.resetOtpCode || !verifyOtpMatch(user.resetOtpCode, otp, 'RST')) {
       return res.status(400).json({ error: "Invalid or expired reset code." });
     }
 
@@ -597,7 +610,7 @@ const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
-      where: { email },
+      where: { id: user.id },
       data: {
         password: hashedPassword,
         resetOtpCode: null,

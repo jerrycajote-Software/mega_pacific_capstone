@@ -26,6 +26,12 @@ export const getDashboardForRole = (role) => {
 
 export const LOGIN_ROUTES = [
   '/login',
+  '/admin-1megapacific/login',
+  '/sales-1megapacific/login',
+  '/finance-1megapacific/login',
+  '/logistic-1megapacific/login',
+  '/owner-1megapacific/login',
+  '/superadmin-0megapacific/login',
   '/admin/login',
   '/sales/login',
   '/finance/login',

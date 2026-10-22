@@ -256,13 +256,13 @@ const App = () => {
         )} />
 
        
-        <Route path="/admin/login" element={
+        <Route path="/admin-1megapacific/login" element={
           systemStatuses.admin_portal_status === 'offline' ? <MaintenancePage /> : <GuestRoute><AdminLoginPage /></GuestRoute>
         } />
         
-        <Route path="/owner/login" element={<GuestRoute><OwnerLoginPage /></GuestRoute>} />
+        <Route path="/owner-1megapacific/login" element={<GuestRoute><OwnerLoginPage /></GuestRoute>} />
         <Route path="/owner" element={
-          <ProtectedRoute redirectTo="/owner/login" requiredRole="owner">
+          <ProtectedRoute redirectTo="/owner-1megapacific/login" requiredRole="owner">
             <OwnerLayout />
           </ProtectedRoute>
         }>
@@ -272,7 +272,7 @@ const App = () => {
 
         <Route path="/admin" element={
           systemStatuses.admin_portal_status === 'offline' ? <MaintenancePage /> : (
-            <ProtectedRoute redirectTo="/admin/login" requiredRole="admin">
+            <ProtectedRoute redirectTo="/admin-1megapacific/login" requiredRole="admin">
               <AdminLayout />
             </ProtectedRoute>
           )
@@ -288,15 +288,15 @@ const App = () => {
         </Route>
 
         {/* Legacy / Alias routes for Employee */}
-        <Route path="/employee/login" element={<Navigate to="/sales/login" replace />} />
+        <Route path="/employee/login" element={<Navigate to="/sales-1megapacific/login" replace />} />
         <Route path="/employee/*" element={<Navigate to="/sales" replace />} />
 
-        <Route path="/sales/login" element={
+        <Route path="/sales-1megapacific/login" element={
           systemStatuses.sales_portal_status === 'offline' ? <MaintenancePage /> : <GuestRoute><SalesLoginPage /></GuestRoute>
         } />
         <Route path="/sales" element={
           systemStatuses.sales_portal_status === 'offline' ? <MaintenancePage /> : (
-            <ProtectedRoute redirectTo="/sales/login" requiredRole="sales">
+            <ProtectedRoute redirectTo="/sales-1megapacific/login" requiredRole="sales">
               <SalesLayout />
             </ProtectedRoute>
           )
@@ -310,9 +310,9 @@ const App = () => {
           <Route path="customer-service" element={<SalesCustomerService />} />
         </Route>
 
-        <Route path="/finance/login" element={<GuestRoute><FinanceLoginPage /></GuestRoute>} />
+        <Route path="/finance-1megapacific/login" element={<GuestRoute><FinanceLoginPage /></GuestRoute>} />
         <Route path="/finance" element={
-          <ProtectedRoute redirectTo="/finance/login" requiredRole="finance">
+          <ProtectedRoute redirectTo="/finance-1megapacific/login" requiredRole="finance">
             <FinanceLayout />
           </ProtectedRoute>
         }>
@@ -324,9 +324,9 @@ const App = () => {
           <Route path="reports" element={<FinanceReportsPage />} />
         </Route>
 
-        <Route path="/logistic/login" element={<GuestRoute><LogisticLoginPage /></GuestRoute>} />
+        <Route path="/logistic-1megapacific/login" element={<GuestRoute><LogisticLoginPage /></GuestRoute>} />
         <Route path="/logistic" element={
-          <ProtectedRoute redirectTo="/logistic/login" requiredRole="logistic">
+          <ProtectedRoute redirectTo="/logistic-1megapacific/login" requiredRole="logistic">
             <LogisticLayout />
           </ProtectedRoute>
         }>
@@ -336,9 +336,9 @@ const App = () => {
           <Route path="products" element={<LogisticProductsPage />} />
         </Route>
 
-        <Route path="/superadmin/login" element={<GuestRoute><SuperAdminLoginPage /></GuestRoute>} />
+        <Route path="/superadmin-0megapacific/login" element={<GuestRoute><SuperAdminLoginPage /></GuestRoute>} />
         <Route path="/superadmin/dashboard" element={
-          <ProtectedRoute redirectTo="/superadmin/login" requiredRole="superadmin">
+          <ProtectedRoute redirectTo="/superadmin-0megapacific/login" requiredRole="superadmin">
             <SuperAdminDashboardPage />
           </ProtectedRoute>
         } />

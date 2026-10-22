@@ -144,7 +144,7 @@ const SalesLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/sales/login', { replace: true });
+            navigate('/sales-1megapacific/login', { replace: true });
           }}
         />
       )}

@@ -244,8 +244,9 @@ async function seed() {
       for (const vTarget of p.variants) {
         const match = existingVars.find(
           (cv) =>
-            (cv.thickness && cv.thickness.toLowerCase().trim() === vTarget.thickness.toLowerCase().trim()) ||
-            (cv.name && cv.name.toLowerCase().includes(vTarget.thickness.toLowerCase()))
+            (vTarget.thickness && cv.thickness && cv.thickness.toLowerCase().trim() === vTarget.thickness.toLowerCase().trim()) ||
+            (vTarget.thickness && cv.name && cv.name.toLowerCase().includes(vTarget.thickness.toLowerCase())) ||
+            (vTarget.name && cv.name && cv.name.toLowerCase().trim() === vTarget.name.toLowerCase().trim())
         );
         if (match) {
           await prisma.productVariant.update({

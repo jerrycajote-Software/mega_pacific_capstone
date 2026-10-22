@@ -199,15 +199,15 @@ const RegisterPage = () => {
               mb: 0.5,
             }}
           >
-            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
+            <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
           <Typography
             sx={{
-              color: 'text.secondary',
+              color: '#64748b',
               fontSize: '10px',
               fontWeight: 800,
-              letterSpacing: '0.22em',
+              letterSpacing: '0.2em',
               fontFamily: 'Arial, sans-serif',
             }}
           >

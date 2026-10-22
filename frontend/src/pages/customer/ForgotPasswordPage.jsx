@@ -49,7 +49,7 @@ const ForgotPasswordPage = () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
       await axios.post(`${API_URL}/api/auth/forgot-password`, { email: trimmed });
-      // Always navigate regardless — backend returns 200 even for unknown emails (security best practice)
+      // Only navigate to reset-password if the email is confirmed registered and OTP sent
       navigate('/reset-password', { state: { email: trimmed } });
     } catch (err) {
       console.error(err);
@@ -86,15 +86,15 @@ const ForgotPasswordPage = () => {
               mb: 0.5,
             }}
           >
-            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
+            <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
           <Typography
             sx={{
-              color: 'text.secondary',
+              color: '#64748b',
               fontSize: '10px',
               fontWeight: 800,
-              letterSpacing: '0.22em',
+              letterSpacing: '0.2em',
               fontFamily: 'Arial, sans-serif',
             }}
           >
@@ -155,7 +155,7 @@ const ForgotPasswordPage = () => {
               value={email}
               onChange={handleEmailChange}
               error={Boolean(emailError)}
-              helperText={emailError || 'Enter your registered email (e.g., name@gmail.com)'}
+              helperText={emailError || 'Enter your registered email (@gmail.com)'}
               sx={{ mb: 3 }}
             />
 

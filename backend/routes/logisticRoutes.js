@@ -8,7 +8,8 @@ const {
   getCoilSummary,
   deductCoil,
   restockCoil,
-  getCoilLogs
+  getCoilLogs,
+  addCoil
 } = require('../controllers/logistic/coilController');
 
 router.get('/dashboard', verifyLogistic, getDashboardData);
@@ -17,6 +18,7 @@ router.get('/orders', verifyLogistic, getLogisticOrders);
 router.patch('/orders/:id/status', verifyLogistic, updateLogisticStatus);
 
 router.get('/coils', verifyStaff, getCoils);
+router.post('/coils', verifyLogistic, addCoil);
 router.get('/coils/summary', verifyStaff, getCoilSummary);
 router.post('/coils/deduct', verifyLogistic, deductCoil);
 router.post('/coils/restock', verifyLogistic, restockCoil);

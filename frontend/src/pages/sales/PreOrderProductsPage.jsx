@@ -76,6 +76,7 @@ const EMPTY_FORM = {
 const PreOrderProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [coilSummary, setCoilSummary] = useState(null);
+  const [coils, setCoils] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
@@ -139,6 +140,20 @@ const PreOrderProductsPage = () => {
       }
     } catch (err) {
       console.error('Failed to load coil summary:', err);
+    }
+  };
+
+  const fetchCoils = async () => {
+    try {
+      const token = localStorage.getItem('appToken');
+      const res = await axios.get(`${API_URL}/api/logistic/coils`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.success) {
+        setCoils(Array.isArray(res.data.data) ? res.data.data : []);
+      }
+    } catch (err) {
+      console.error('Failed to load coils for color availability:', err);
     }
   };
 
@@ -210,14 +225,52 @@ const PreOrderProductsPage = () => {
     return conflicts;
   }, [baseNorm, safeVariants, formData?.thickness]);
 
+  const availableColorsForThickness = useMemo(() => {
+    const rawThick = formData?.thickness || '0.35mm';
+    if (!Array.isArray(coils) || coils.length === 0) {
+      return new Set(ROOFING_COLORS.map(c => c.name));
+    }
+    const normThick = normalizeThickness(rawThick);
+    const matching = coils.filter(c => normalizeThickness(c.thickness) === normThick);
+
+    if (matching.length === 0) {
+      return new Set(ROOFING_COLORS.map(c => c.name));
+    }
+
+    const inStock = matching
+      .filter(c => (c.coilCount ?? 0) > 0 && c.status?.toLowerCase() !== 'out of stock')
+      .map(c => c.color);
+
+    return new Set(inStock);
+  }, [coils, formData?.thickness]);
+
   useEffect(() => {
     fetchProducts();
     fetchCoilSummary();
+    fetchCoils();
   }, []);
 
   const openAddModal = () => {
     setEditingProduct(null);
-    setFormData({ ...EMPTY_FORM, isActive: true, colors: ROOFING_COLORS.map(c => c.name) });
+    const initialThick = '0.35mm';
+    const normThick = normalizeThickness(initialThick);
+    const matchingInitial = coils.filter(c => normalizeThickness(c.thickness) === normThick);
+    let initialColors = ROOFING_COLORS.map(c => c.name);
+    if (matchingInitial.length > 0) {
+      const inStockSet = new Set(
+        matchingInitial
+          .filter(c => (c.coilCount ?? 0) > 0 && c.status?.toLowerCase() !== 'out of stock')
+          .map(c => c.color)
+      );
+      initialColors = initialColors.filter(c => inStockSet.has(c));
+    }
+
+    setFormData({
+      ...EMPTY_FORM,
+      isActive: true,
+      thickness: initialThick,
+      colors: initialColors
+    });
     setVariants([
       { name: '0.40mm Thickness', thickness: '0.40mm', originalPrice: '', status: 'available' },
       { name: '0.50mm Thickness', thickness: '0.50mm', originalPrice: '', status: 'available' },
@@ -291,6 +344,9 @@ const PreOrderProductsPage = () => {
   };
 
   const handleColorToggle = (colorName) => {
+    if (!availableColorsForThickness.has(colorName)) {
+      return;
+    }
     setFormData(prev => {
       const exists = prev.colors.includes(colorName);
       if (exists) {
@@ -302,7 +358,10 @@ const PreOrderProductsPage = () => {
   };
 
   const handleSelectAllColors = () => {
-    setFormData(prev => ({ ...prev, colors: ROOFING_COLORS.map(c => c.name) }));
+    const availableOnly = ROOFING_COLORS
+      .map(c => c.name)
+      .filter(name => availableColorsForThickness.has(name));
+    setFormData(prev => ({ ...prev, colors: availableOnly }));
   };
 
   const handleClearAllColors = () => {
@@ -495,8 +554,9 @@ const PreOrderProductsPage = () => {
       setErrorMsg('Please provide a valid price per meter.');
       return;
     }
-    if (formData.colors.length === 0) {
-      setErrorMsg('Please select at least one available color.');
+    const validColors = formData.colors.filter(c => availableColorsForThickness.has(c));
+    if (validColors.length === 0) {
+      setErrorMsg(`Please select at least one available color with coil stock for ${formData.thickness}.`);
       return;
     }
 
@@ -518,6 +578,7 @@ const PreOrderProductsPage = () => {
       const token = localStorage.getItem('appToken');
       const payload = {
         ...formData,
+        colors: validColors,
         isActive: formData.isActive !== false,
         imageUrl: formData.imageUrls && formData.imageUrls.length > 0 ? formData.imageUrls[0] : null,
         originalPrice: parseFloat(formData.originalPrice),
@@ -1283,7 +1344,22 @@ const PreOrderProductsPage = () => {
                             openNewThicknessModal({ type: 'base' });
                             return;
                           }
-                          setFormData({ ...formData, thickness: e.target.value });
+                          const newThick = e.target.value;
+                          const newNorm = normalizeThickness(newThick);
+                          const matchingNew = coils.filter(c => normalizeThickness(c.thickness) === newNorm);
+
+                          setFormData(prev => {
+                            let updatedColors = prev.colors;
+                            if (matchingNew.length > 0) {
+                              const availableSet = new Set(
+                                matchingNew
+                                  .filter(c => (c.coilCount ?? 0) > 0 && c.status?.toLowerCase() !== 'out of stock')
+                                  .map(c => c.color)
+                              );
+                              updatedColors = prev.colors.filter(c => availableSet.has(c));
+                            }
+                            return { ...prev, thickness: newThick, colors: updatedColors };
+                          });
                         }}
                         style={{
                           width: '100%', padding: '0.65rem 0.85rem', borderRadius: 10,
@@ -1339,17 +1415,25 @@ const PreOrderProductsPage = () => {
               </div>
 
               <div style={{ marginBottom: '1.5rem', background: 'var(--bg-primary)', padding: '1.25rem', borderRadius: 14, border: '1px solid var(--border-light)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 8 }}>
                   <label style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <PaletteIcon sx={{ fontSize: 16 }} /> Available 14 Mega Pacific Coil Colors ({formData.colors.length} selected)
+                    <PaletteIcon sx={{ fontSize: 16 }} /> Available Coil Colors for {formData.thickness || 'Selected Gauge'} ({formData.colors.length} of {availableColorsForThickness.size} available selected)
                   </label>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <button
                       type="button"
                       onClick={handleSelectAllColors}
-                      style={{ fontSize: '0.72rem', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                      disabled={availableColorsForThickness.size === 0}
+                      style={{
+                        fontSize: '0.72rem',
+                        color: availableColorsForThickness.size === 0 ? 'var(--text-muted)' : '#3b82f6',
+                        background: 'none', border: 'none',
+                        cursor: availableColorsForThickness.size === 0 ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        opacity: availableColorsForThickness.size === 0 ? 0.5 : 1
+                      }}
                     >
-                      Select All
+                      Select All Available
                     </button>
                     <span style={{ color: 'var(--border-light)' }}>·</span>
                     <button
@@ -1362,25 +1446,68 @@ const PreOrderProductsPage = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 8 }}>
+                {availableColorsForThickness.size < ROOFING_COLORS.length && (
+                  <div style={{ fontSize: '0.73rem', color: '#f59e0b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span>⚠️ {ROOFING_COLORS.length - availableColorsForThickness.size} color(s) have no physical coil stock for {formData.thickness} and cannot be selected.</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))', gap: 8 }}>
                   {ROOFING_COLORS.map(color => {
+                    const isAvailable = availableColorsForThickness.has(color.name);
                     const isSelected = formData.colors.includes(color.name);
+
                     return (
                       <div
                         key={color.name}
-                        onClick={() => handleColorToggle(color.name)}
+                        onClick={() => {
+                          if (isAvailable) {
+                            handleColorToggle(color.name);
+                          }
+                        }}
+                        title={!isAvailable ? `${color.name} is not available in ${formData.thickness || 'this thickness'} coil inventory` : color.name}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 8,
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
                           padding: '0.45rem 0.65rem', borderRadius: 8,
-                          border: `1px solid ${isSelected ? '#3b82f6' : 'var(--border-light)'}`,
-                          background: isSelected ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary)',
-                          cursor: 'pointer', transition: 'all 0.15s', userSelect: 'none'
+                          border: `1px solid ${isSelected ? '#3b82f6' : (isAvailable ? 'var(--border-light)' : 'rgba(239,68,68,0.25)')}`,
+                          background: isSelected
+                            ? 'rgba(59,130,246,0.1)'
+                            : (!isAvailable ? 'rgba(239,68,68,0.03)' : 'var(--bg-secondary)'),
+                          cursor: isAvailable ? 'pointer' : 'not-allowed',
+                          opacity: isAvailable ? 1 : 0.45,
+                          transition: 'all 0.15s', userSelect: 'none'
                         }}
                       >
-                        <div style={{ width: 16, height: 16, borderRadius: '50%', background: color.hex, border: `1px solid ${color.border}`, flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.76rem', fontWeight: isSelected ? 600 : 400, color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {color.name}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: '50%',
+                            background: color.hex, border: `1px solid ${color.border}`,
+                            flexShrink: 0,
+                            filter: !isAvailable ? 'grayscale(40%)' : 'none'
+                          }} />
+                          <span style={{
+                            fontSize: '0.76rem',
+                            fontWeight: isSelected ? 600 : 400,
+                            color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                          }}>
+                            {color.name}
+                          </span>
+                        </div>
+                        {!isAvailable && (
+                          <span style={{
+                            fontSize: '0.62rem',
+                            fontWeight: 700,
+                            color: '#ef4444',
+                            background: 'rgba(239,68,68,0.12)',
+                            padding: '1px 5px',
+                            borderRadius: 4,
+                            flexShrink: 0,
+                            letterSpacing: '0.02em'
+                          }}>
+                            No Coil Stock
+                          </span>
+                        )}
                       </div>
                     );
                   })}

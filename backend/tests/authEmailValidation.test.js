@@ -28,7 +28,7 @@ async function runAuthEmailValidationTests() {
     assert.strictEqual(res.statusCode, 400);
     assert.strictEqual(
       res.responseData.error,
-      "Please enter a complete email address including domain (name@gmail.com)."
+      "Please enter a complete email address including domain (@gmail.com)."
     );
     console.log("PASS: forgotPassword strictly rejects 'jerrcajote' with 400 status");
   }

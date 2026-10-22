@@ -464,16 +464,42 @@ const SuperAdminDashboardPage = () => {
       setCreateError('Name, email, and password are required.');
       return;
     }
-    const emailCheck = validateRealisticEmail(createForm.email.trim());
+    const cleanEmail = createForm.email.trim().toLowerCase();
+    const emailCheck = validateRealisticEmail(cleanEmail);
     if (!emailCheck.isValid) {
       setCreateError(emailCheck.error);
       return;
     }
+
+    // Strict Singleton Rule: Only one account can exist for Super Admin, Admin, Owner, Sales, Finance, Logistic
+    const existingRoleAccount = allAccounts.find(
+      (a) => a.role === createForm.role && a.status !== 'deleted'
+    );
+    if (existingRoleAccount) {
+      setCreateError(
+        `Account creation rejected: Only one account can exist for ${createForm.role.toUpperCase()}. An active account already exists (${existingRoleAccount.email}). Creating another one is not allowed.`
+      );
+      return;
+    }
+
+    const alreadyExists = allAccounts.find(
+      (a) => a.email && a.email.trim().toLowerCase() === cleanEmail
+    );
+    if (alreadyExists) {
+      setCreateError(
+        `Account creation rejected: An account with email "${alreadyExists.email}" already exists with role '${(alreadyExists.role || '').toUpperCase()}'.`
+      );
+      return;
+    }
+
     setCreatingAccount(true);
     setCreateError('');
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
-      const res = await axios.post(`${API_URL}/api/admin/sales`, createForm, {
+      const res = await axios.post(`${API_URL}/api/admin/sales`, {
+        ...createForm,
+        email: cleanEmail
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
@@ -496,6 +522,15 @@ const SuperAdminDashboardPage = () => {
       setCreatingAccount(false);
     }
   };
+
+  const isRoleTaken = (role) => {
+    return allAccounts.some((a) => a.role === role && a.status !== 'deleted');
+  };
+  const isCurrentRoleTaken = isRoleTaken(createForm.role);
+  const existingAccountForSelectedRole = allAccounts.find(
+    (a) => a.role === createForm.role && a.status !== 'deleted'
+  );
+  const allSingletonRolesTaken = ['admin', 'owner', 'sales', 'logistic', 'finance'].every((r) => isRoleTaken(r));
 
   const filteredActiveUsers = useMemo(() => {
     return activeUsers.filter((u) => {
@@ -685,16 +720,6 @@ const SuperAdminDashboardPage = () => {
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setCreateError('');
-                setShowCreateModal(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-400/30 shadow-[0_0_12px_rgba(99,102,241,0.3)] transition-all focus:outline-none"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Provision</span>
-            </button>
 
             <button
               onClick={() => setShowLogoutConfirm(true)}
@@ -1668,21 +1693,52 @@ const SuperAdminDashboardPage = () => {
                 </div>
               )}
 
+              {allSingletonRolesTaken && (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                  <div>
+                    <div className="font-semibold font-mono uppercase tracking-wide">All Singleton Roles Provisioned (5/5)</div>
+                    <div className="text-[11px] text-amber-300/90 mt-0.5">
+                      Admin, Owner, Sales, Logistics, and Finance each already have 1 active account. System policy restricts each role to strictly 1 account.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-slate-300 mb-1.5">
-                  Target Role Clearance *
+                  Target Role Clearance * (Strict 1 Account per Role)
                 </label>
                 <select
                   value={createForm.role}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, role: e.target.value }))}
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 >
-                  <option value="admin">Admin (User & Staff Administrator) — Customer user accounts, staff creation & settings</option>
-                  <option value="owner">Owner (Business Executive) — Executive reporting, finances, audits</option>
-                  <option value="sales">Sales Representative — POS terminal & pre-order processing</option>
-                  <option value="logistic">Logistics Officer — Dispatch, delivery routes & coil inventory</option>
-                  <option value="finance">Finance Officer — Payment verification, expenses & payouts</option>
+                  <option value="admin" disabled={isRoleTaken('admin')}>
+                    Admin (User & Staff Administrator) {isRoleTaken('admin') ? '— [1 of 1 Exists: Provisioned]' : ''}
+                  </option>
+                  <option value="owner" disabled={isRoleTaken('owner')}>
+                    Owner (Business Executive) {isRoleTaken('owner') ? '— [1 of 1 Exists: Provisioned]' : ''}
+                  </option>
+                  <option value="sales" disabled={isRoleTaken('sales')}>
+                    Sales Representative {isRoleTaken('sales') ? '— [1 of 1 Exists: Provisioned]' : ''}
+                  </option>
+                  <option value="logistic" disabled={isRoleTaken('logistic')}>
+                    Logistics Officer {isRoleTaken('logistic') ? '— [1 of 1 Exists: Provisioned]' : ''}
+                  </option>
+                  <option value="finance" disabled={isRoleTaken('finance')}>
+                    Finance Officer {isRoleTaken('finance') ? '— [1 of 1 Exists: Provisioned]' : ''}
+                  </option>
                 </select>
+                {isCurrentRoleTaken && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-mono flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <span className="font-bold">SINGLETON POLICY: </span>
+                      <span>An account for {createForm.role.toUpperCase()} already exists ({existingAccountForSelectedRole?.email}). Only one account can exist for Super Admin, Admin, Owner, Sales, Finance, and Logistic. Creating another one is not allowed.</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1711,6 +1767,12 @@ const SuperAdminDashboardPage = () => {
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono"
                 />
+                {createForm.email && allAccounts.some((a) => a.email && a.email.trim().toLowerCase() === createForm.email.trim().toLowerCase()) && (
+                  <p className="mt-1.5 text-[11px] text-amber-400 font-mono flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>An account with this email already exists. Submission will be rejected.</span>
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1809,13 +1871,18 @@ const SuperAdminDashboardPage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={creatingAccount}
-                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 disabled:opacity-50"
+                  disabled={creatingAccount || isCurrentRoleTaken}
+                  className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {creatingAccount ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                       <span>Provisioning...</span>
+                    </>
+                  ) : isCurrentRoleTaken ? (
+                    <>
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Role Limit Reached (1 Allowed)</span>
                     </>
                   ) : (
                     <>
@@ -2028,7 +2095,7 @@ const SuperAdminDashboardPage = () => {
                 onClick={async () => {
                   setShowLogoutConfirm(false);
                   await logout();
-                  navigate('/superadmin/login', { replace: true });
+                  navigate('/superadmin-0megapacific/login', { replace: true });
                 }}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/30 transition-all"
               >

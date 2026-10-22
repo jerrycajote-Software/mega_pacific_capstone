@@ -95,10 +95,13 @@ const ResetPasswordPage = () => {
 
   const handleOtpPaste = (e) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData('text').trim();
-    if (pasteData.length === 6 && /^\d+$/.test(pasteData)) {
-      setOtp(pasteData.split(''));
-      inputRefs.current[5].focus();
+    let pasteData = e.clipboardData.getData('text').trim().toUpperCase();
+    if (pasteData.startsWith('RST-')) pasteData = pasteData.slice(4);
+    else if (pasteData.startsWith('RST')) pasteData = pasteData.slice(3);
+    pasteData = pasteData.replace(/\D/g, '');
+    if (pasteData.length >= 6) {
+      setOtp(pasteData.slice(0, 6).split(''));
+      inputRefs.current[5]?.focus();
     }
   };
 
@@ -106,8 +109,8 @@ const ResetPasswordPage = () => {
     e.preventDefault();
     setError('');
 
-    const otpCode = otp.join('');
-    if (otpCode.length < 6) {
+    const otpDigits = otp.join('');
+    if (otpDigits.length < 6) {
       setError('Please enter the full 6-digit reset code.');
       return;
     }
@@ -123,7 +126,11 @@ const ResetPasswordPage = () => {
     setLoading(true);
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
-      await axios.post(`${API_URL}/api/auth/reset-password`, { email, otp: otpCode, newPassword });
+      await axios.post(`${API_URL}/api/auth/reset-password`, { 
+        email, 
+        otp: otpDigits, 
+        newPassword 
+      });
       setSuccessDialogOpen(true);
     } catch (err) {
       console.error(err);
@@ -165,15 +172,15 @@ const ResetPasswordPage = () => {
               mb: 0.5,
             }}
           >
-            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
+            <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
           <Typography
             sx={{
-              color: 'text.secondary',
+              color: '#64748b',
               fontSize: '10px',
               fontWeight: 800,
-              letterSpacing: '0.22em',
+              letterSpacing: '0.2em',
               fontFamily: 'Arial, sans-serif',
             }}
           >
@@ -215,7 +222,7 @@ const ResetPasswordPage = () => {
             Reset password
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
-            Enter the 6-digit code sent to <strong>{email}</strong>, then set your new password. Your new password must be different from your previous password.
+            Enter the 6-digit reset code sent to <strong>{email}</strong>, then set your new password.
           </Typography>
 
           {error && (
@@ -226,9 +233,9 @@ const ResetPasswordPage = () => {
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Typography variant="body2" fontWeight={600} color="text.secondary" sx={{ mb: 1.5 }}>
-              Verification Code
+              Reset Code
             </Typography>
-            <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} justifyContent="space-between" sx={{ mb: 3 }} onPaste={handleOtpPaste}>
+            <Stack direction="row" spacing={{ xs: 1, sm: 1.5 }} alignItems="center" justifyContent="center" sx={{ mb: 3 }} onPaste={handleOtpPaste}>
               {otp.map((data, index) => (
                 <Box
                   key={index}
@@ -240,8 +247,8 @@ const ResetPasswordPage = () => {
                   onChange={(e) => handleOtpChange(e.target, index)}
                   onKeyDown={(e) => handleOtpKeyDown(e, index)}
                   sx={{
-                    width: { xs: 38, sm: 54 },
-                    height: { xs: 46, sm: 60 },
+                    width: { xs: 44, sm: 52 },
+                    height: { xs: 48, sm: 56 },
                     borderRadius: 2,
                     border: '1px solid',
                     borderColor: 'divider',

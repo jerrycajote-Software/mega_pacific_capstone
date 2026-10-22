@@ -8,7 +8,7 @@ const {
   resetAccountPassword,
   updateAccountStatus,
   deleteAccount,
-} = require("../../controllers/admin/salesController");
+} = require("../../controllers/admin/accountController");
 
 router.get("/", verifyAdmin, getAccounts);
 router.post("/", verifyAdmin, createAccount);

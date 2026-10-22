@@ -111,7 +111,7 @@ const OwnerLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/owner/login', { replace: true });
+            navigate('/owner-1megapacific/login', { replace: true });
           }}
         />
       )}

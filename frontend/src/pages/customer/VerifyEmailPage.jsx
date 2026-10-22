@@ -70,11 +70,14 @@ const VerifyEmailPage = () => {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData('text').trim();
-    if (pasteData.length === 6 && /^\d+$/.test(pasteData)) {
-      const newOtp = pasteData.split('');
+    let pasteData = e.clipboardData.getData('text').trim().toUpperCase();
+    if (pasteData.startsWith('REG-')) pasteData = pasteData.slice(4);
+    else if (pasteData.startsWith('REG')) pasteData = pasteData.slice(3);
+    pasteData = pasteData.replace(/\D/g, '');
+    if (pasteData.length >= 6) {
+      const newOtp = pasteData.slice(0, 6).split('');
       setOtp(newOtp);
-      inputRefs.current[5].focus();
+      inputRefs.current[5]?.focus();
     }
   };
 
@@ -83,9 +86,9 @@ const VerifyEmailPage = () => {
     setError('');
     setSuccess('');
     
-    const otpCode = otp.join('');
-    if (otpCode.length < 6) {
-      setError('Please enter the full 6-digit verification code.');
+    const otpDigits = otp.join('');
+    if (otpDigits.length < 6) {
+      setError('Please enter the full 6-digit registration code (REG-######).');
       return;
     }
 
@@ -94,7 +97,7 @@ const VerifyEmailPage = () => {
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.post(`${API_URL}/api/auth/verify-otp`, {
         email,
-        otp: otpCode
+        otp: `REG-${otpDigits}`
       });
       
       setSuccess(res.data.message || 'Verification successful!');
@@ -157,15 +160,15 @@ const VerifyEmailPage = () => {
               mb: 0.5,
             }}
           >
-            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
+            <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
           <Typography
             sx={{
-              color: 'text.secondary',
+              color: '#64748b',
               fontSize: '10px',
               fontWeight: 800,
-              letterSpacing: '0.22em',
+              letterSpacing: '0.2em',
               fontFamily: 'Arial, sans-serif',
             }}
           >
@@ -207,7 +210,7 @@ const VerifyEmailPage = () => {
             Verify email
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
-            We've sent a 6-digit code to <strong>{email}</strong>. Enter it below to verify your email.
+            We've sent a registration code to <strong>{email}</strong>. Enter the 6 digits below (format: <strong>REG-######</strong>).
           </Typography>
 
           {error && (
@@ -223,7 +226,27 @@ const VerifyEmailPage = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
-            <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} justifyContent="space-between" sx={{ mb: 4 }} onPaste={handlePaste}>
+            <Stack direction="row" spacing={{ xs: 0.75, sm: 1.25 }} alignItems="center" justifyContent="center" sx={{ mb: 4 }} onPaste={handlePaste}>
+              <Box
+                sx={{
+                  px: { xs: 1.2, sm: 1.8 },
+                  height: { xs: 46, sm: 60 },
+                  borderRadius: 2,
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(79,119,45,0.25)' : 'rgba(79,119,45,0.12)',
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  fontWeight: 800,
+                  fontSize: { xs: '0.85rem', sm: '1.05rem' },
+                  letterSpacing: '0.05em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  userSelect: 'none',
+                }}
+              >
+                REG-
+              </Box>
               {otp.map((data, index) => (
                 <Box
                   key={index}

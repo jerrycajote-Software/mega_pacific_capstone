@@ -148,7 +148,7 @@ const FinanceLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/finance/login', { replace: true });
+            navigate('/finance-1megapacific/login', { replace: true });
           }}
         />
       )}

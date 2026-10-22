@@ -148,7 +148,7 @@ export function validateRealisticEmail(rawEmail) {
   }
 
   if (!domain.includes('.')) {
-    return { isValid: false, error: 'Please include a valid top-level domain (e.g., .com or .ph).' };
+    return { isValid: false, error: 'Please include a valid top-level domain (.com or .ph).' };
   }
 
   // Reject disposable or known fake domains

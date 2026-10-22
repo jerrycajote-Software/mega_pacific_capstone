@@ -207,12 +207,12 @@ export const AuthProvider = ({ children }) => {
                 setSuspendedModal(false);
                 const role = user?.role;
                 let redirectUrl = '/login';
-                if (role === 'admin') redirectUrl = '/admin/login';
-                else if (role === 'sales') redirectUrl = '/sales/login';
-                else if (role === 'finance') redirectUrl = '/finance/login';
-                else if (role === 'logistic') redirectUrl = '/logistic/login';
-                else if (role === 'owner') redirectUrl = '/owner/login';
-                else if (role === 'superadmin' || role === 'super_admin') redirectUrl = '/superadmin/login';
+                if (role === 'admin') redirectUrl = '/admin-1megapacific/login';
+                else if (role === 'sales') redirectUrl = '/sales-1megapacific/login';
+                else if (role === 'finance') redirectUrl = '/finance-1megapacific/login';
+                else if (role === 'logistic') redirectUrl = '/logistic-1megapacific/login';
+                else if (role === 'owner') redirectUrl = '/owner-1megapacific/login';
+                else if (role === 'superadmin' || role === 'super_admin') redirectUrl = '/superadmin-0megapacific/login';
                 
                 logout();
                 window.location.replace(redirectUrl);
