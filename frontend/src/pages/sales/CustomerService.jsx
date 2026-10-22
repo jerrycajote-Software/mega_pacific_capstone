@@ -33,7 +33,7 @@ const CustomerService = () => {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All'); // 'All' | 'Open' | 'In Progress' | 'Resolved'
+  const [statusFilter, setStatusFilter] = useState('All'); 
   const [socket, setSocket] = useState(null);
   const [isLiveConnected, setIsLiveConnected] = useState(false);
   const [spin, setSpin] = useState(false);
@@ -731,7 +731,7 @@ const CustomerService = () => {
               </div>
             </>
           ) : (
-            /* Empty State when no inquiry selected */
+            
             <div style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               height: '100%', padding: '3rem', color: 'var(--text-muted)', textAlign: 'center', gap: 16

@@ -1,6 +1,6 @@
 class SocketTrackingService {
   constructor() {
-    // Maps userId to { user: {id, name, email, role}, socketIds: Set<string>, connectedAt: Date }
+    
     this.activeUsers = new Map();
   }
 

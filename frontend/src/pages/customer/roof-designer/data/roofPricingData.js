@@ -1,22 +1,6 @@
-/**
- * Roof Pricing Data — Hardcoded constants for the 3D Roof Cost Estimator.
- *
- * Materials are ordered by correct construction sequence for tile roofing:
- *
- *   Step 0: House Model (loaded by user — no price)
- *   Step 1: Top Plate
- *   Step 2: Trusses / Rafters
- *   Step 3: Fascia Board
- *   Step 4: Decking (Sheathing)
- *   Step 5: Eave Flashing (Drip Edge)
- *   Step 6: Underlayment
- *   Step 7: Battens (Purlins)
- *   Step 8: Hermosa Roof Tile — installed after steps 1–7
- *   Step 9: Rake & Valley Flashing — LAST step, applied after the roof tile
- */
 
 export const ROOF_MATERIALS = [
-  // Step 1
+  
   {
     id: 'top_plate',
     step: 1,
@@ -29,10 +13,10 @@ export const ROOF_MATERIALS = [
     unit: 'per piece',
     defaultQty: 8,
     icon: 'fi-rr-rectangle-horizontal',
-    offset: [0, 0, 0], // TODO: Adjust these coordinates to fit the house
+    offset: [0, 0, 0], 
   },
 
-  // Step 2
+
   {
     id: 'roof_truss',
     step: 2,
@@ -48,7 +32,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // Step 3
+  
   {
     id: 'fascia_board',
     step: 3,
@@ -64,7 +48,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // Step 4
+  
   {
     id: 'roof_decking',
     step: 4,
@@ -80,7 +64,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // Step 5
+  
   {
     id: 'eave_flashing',
     step: 5,
@@ -96,7 +80,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // Step 6
+  
   {
     id: 'underlayment',
     step: 6,
@@ -112,7 +96,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // Step 7
+  
   {
     id: 'purlins',
     step: 7,
@@ -128,7 +112,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // Step 8 — installed after steps 1–7
+  
   {
     id: 'hermosa_tile',
     step: 8,
@@ -145,7 +129,7 @@ export const ROOF_MATERIALS = [
     offset: [0, 0, 0],
   },
 
-  // Step 9 (LAST) — applied over the installed roof tile
+  
   {
     id: 'rake_valley_flashing',
     step: 9,
@@ -163,7 +147,7 @@ export const ROOF_MATERIALS = [
   },
 ];
 
-/** Category display labels */
+
 export const CATEGORY_LABELS = {
   structural: 'Structural Components',
   decking: 'Decking & Underlayment',
@@ -171,11 +155,7 @@ export const CATEGORY_LABELS = {
   roofing: 'Roof Covering',
 };
 
-/**
- * Available roof tile color options.
- * Each entry has a display name and a hex color value.
- * The first entry is the default (natural clay).
- */
+
 export const ROOF_COLORS = [
   { id: 'clay_red',      name: 'Clay Red',      hex: '#C0522A' },
   { id: 'terracotta',    name: 'Terracotta',    hex: '#B85C38' },
@@ -189,19 +169,15 @@ export const ROOF_COLORS = [
   { id: 'pearl_white',   name: 'Pearl White',   hex: '#E8E0D4' },
 ];
 
-/**
- * Correct construction sequence for tile roofing.
- * Each part can only be installed after ALL previous parts in this list.
- * The roof tile (step 9) additionally requires every step 1-8.
- */
+
 export const INSTALL_ORDER = [
-  'top_plate',            // Step 1
-  'roof_truss',           // Step 2
-  'fascia_board',         // Step 3
-  'roof_decking',         // Step 4
-  'eave_flashing',        // Step 5
-  'underlayment',         // Step 6
-  'purlins',              // Step 7
-  'hermosa_tile',         // Step 8 (roof tile — after steps 1–7)
-  'rake_valley_flashing', // Step 9 (LAST — applied after the roof tile)
+  'top_plate',            
+  'roof_truss',           
+  'fascia_board',         
+  'roof_decking',         
+  'eave_flashing',        
+  'underlayment',         
+  'purlins',              
+  'hermosa_tile',         
+  'rake_valley_flashing', 
 ];

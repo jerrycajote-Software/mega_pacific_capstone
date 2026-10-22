@@ -1,11 +1,10 @@
 const prisma = require("../../config/db");
 
-
 const getUsers = async (req, res) => {
   try {
     const rolesToExclude = ['superadmin', 'super_admin'];
     if (req.user.role !== 'owner' && req.user.role !== 'superadmin' && req.user.role !== 'super_admin') {
-       rolesToExclude.push('owner');
+      rolesToExclude.push('owner');
     }
 
     const users = await prisma.user.findMany({
@@ -20,13 +19,14 @@ const getUsers = async (req, res) => {
         role: true,
         status: true,
         createdAt: true,
-        customerProfile: { select: { name: true } },
-        adminProfile: { select: { name: true } },
-        superAdminProfile: { select: { name: true } },
-        ownerProfile: { select: { name: true } },
-        salesProfile: { select: { name: true } },
-        logisticProfile: { select: { name: true } },
-        financeProfile: { select: { name: true } }
+        isEmailVerified: true,
+        customerProfile: { select: { name: true, contactNumber: true, city: true, province: true } },
+        adminProfile: { select: { name: true, contactNumber: true } },
+        superAdminProfile: { select: { name: true, contactNumber: true } },
+        ownerProfile: { select: { name: true, contactNumber: true } },
+        salesProfile: { select: { name: true, contactNumber: true } },
+        logisticProfile: { select: { name: true, contactNumber: true } },
+        financeProfile: { select: { name: true, contactNumber: true } }
       }
     });
 
@@ -39,13 +39,27 @@ const getUsers = async (req, res) => {
                    user.logisticProfile?.name || 
                    user.financeProfile?.name || 
                    user.email.split('@')[0];
+      
+      const contactNumber = user.customerProfile?.contactNumber ||
+                            user.adminProfile?.contactNumber ||
+                            user.superAdminProfile?.contactNumber ||
+                            user.ownerProfile?.contactNumber ||
+                            user.salesProfile?.contactNumber ||
+                            user.logisticProfile?.contactNumber ||
+                            user.financeProfile?.contactNumber || null;
+
+      const location = [user.customerProfile?.city, user.customerProfile?.province].filter(Boolean).join(', ') || null;
+
       return {
         id: user.id,
         email: user.email,
         role: user.role,
         status: user.status,
         createdAt: user.createdAt,
-        name
+        isEmailVerified: Boolean(user.isEmailVerified),
+        name,
+        contactNumber,
+        location
       };
     });
 

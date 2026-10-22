@@ -2,10 +2,7 @@ const prisma = require("../../config/db");
 const bcrypt = require("bcryptjs");
 const { validateRealisticEmail } = require("../../utils/emailValidator");
 
-/**
- * GET /api/admin/accounts (and /api/admin/sales)
- * List staff and management accounts
- */
+
 const getAccounts = async (req, res) => {
   try {
     const rolesToInclude = ["sales", "logistic", "finance"];
@@ -37,7 +34,7 @@ const getAccounts = async (req, res) => {
       },
     });
     
-    // Flatten the profile data into the main object for the frontend
+    
     const flattenedAccounts = accounts.map(emp => {
       let profile = null;
       if (emp.role === 'admin') profile = emp.adminProfile;
@@ -65,16 +62,23 @@ const getAccounts = async (req, res) => {
   }
 };
 
-/**
- * POST /api/admin/accounts (and /api/admin/sales)
- * Create a new account (admin sets password)
- */
+
 const createAccount = async (req, res) => {
   try {
     const { email, password, role, name, status, contactNumber } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ success: false, error: "Email and password are required." });
+    }
+
+    if (contactNumber && String(contactNumber).trim()) {
+      const cleanContact = String(contactNumber).trim();
+      if (!/^09[0-9]{9}$/.test(cleanContact)) {
+        return res.status(400).json({
+          success: false,
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).",
+        });
+      }
     }
 
     if (role === "super_admin" || role === "superadmin") {
@@ -94,7 +98,7 @@ const createAccount = async (req, res) => {
       });
     }
 
-    // Strict Singleton Rule: Only one account can exist for Super Admin, Admin, Owner, Sales, Finance, Logistic
+    
     const SINGLETON_ROLES = ["super_admin", "superadmin", "admin", "owner", "sales", "finance", "logistic"];
     if (SINGLETON_ROLES.includes(assignedRole)) {
       const roleFilter = (assignedRole === "super_admin" || assignedRole === "superadmin")
@@ -206,14 +210,21 @@ const createAccount = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/admin/accounts/:id (and /api/admin/sales/:id)
- * Update account info (name, contact, status)
- */
+
 const updateAccount = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, contactNumber, status } = req.body;
+
+    if (contactNumber !== undefined && contactNumber !== null && String(contactNumber).trim() !== '') {
+      const cleanContact = String(contactNumber).trim();
+      if (!/^09[0-9]{9}$/.test(cleanContact)) {
+        return res.status(400).json({
+          success: false,
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).",
+        });
+      }
+    }
 
     const account = await prisma.user.update({
       where: { id: parseInt(id) },
@@ -250,10 +261,7 @@ const updateAccount = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/admin/accounts/:id/reset-password (and /api/admin/sales/:id/reset-password)
- * Admin resets staff password
- */
+
 const resetAccountPassword = async (req, res) => {
   try {
     const { id } = req.params;
@@ -299,10 +307,7 @@ const resetAccountPassword = async (req, res) => {
   }
 };
 
-/**
- * PATCH /api/admin/accounts/:id/status (and /api/admin/sales/:id/status)
- * Activate or deactivate an account
- */
+
 const updateAccountStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -345,10 +350,7 @@ const updateAccountStatus = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/admin/accounts/:id (and /api/admin/sales/:id)
- * Reject/Delete an account
- */
+
 const deleteAccount = async (req, res) => {
   try {
     const { id } = req.params;

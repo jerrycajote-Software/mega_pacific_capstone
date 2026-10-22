@@ -45,10 +45,7 @@ export const LOGIN_ROUTES = [
   '/verify-email'
 ];
 
-/**
- * Hook to prevent browser back navigation from landing on login pages after authentication.
- * It guards root dashboards from exiting to login pages while preserving normal in-app back navigation.
- */
+
 export const usePreventBackToLogin = () => {
   const { token, user } = useAuth();
   const location = useLocation();
@@ -65,7 +62,7 @@ export const usePreventBackToLogin = () => {
     const dashboardPath = getDashboardForRole(role);
     const isRootDashboard = location.pathname === dashboardPath;
 
-    // Buffer state only on root dashboards so pressing back stays on the dashboard
+    
     if (isRootDashboard) {
       window.history.pushState(null, '', window.location.href);
     }
@@ -73,10 +70,10 @@ export const usePreventBackToLogin = () => {
     const handlePopState = () => {
       const currentPath = window.location.pathname;
       if (LOGIN_ROUTES.includes(currentPath)) {
-        // If back navigation attempts to hit a login route, redirect back to dashboard
+        
         navigate(dashboardPath, { replace: true });
       } else if (isRootDashboard && window.location.pathname === dashboardPath) {
-        // If on root dashboard and back arrow is pressed, keep user on dashboard
+        
         window.history.pushState(null, '', window.location.href);
       }
     };

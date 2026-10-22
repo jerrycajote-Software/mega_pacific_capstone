@@ -65,7 +65,7 @@ const getDashboardData = async (req, res) => {
       where: { fulfillmentType: 'Pickup' }
     });
 
-    // 7-day fulfillment trend
+    
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const trendMap = {};
     for (let i = 6; i >= 0; i--) {

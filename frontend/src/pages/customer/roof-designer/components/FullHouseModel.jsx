@@ -2,19 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 
-/**
- * FullHouseModel — Loads the unified 3D model containing the house and all roof layers.
- *
- * Toggles mesh visibility based on installation progress.
- * For installByPcs materials (Hermosa Roof Tile), only shows the first `tileQty`
- * tile meshes so the roof is revealed one piece at a time.
- * Applies `tileColor` to all tile meshes by cloning their material.
- */
 const FullHouseModel = ({ houseLoaded, visibleIds, tileQty = 0, tileColor, ...props }) => {
   const { scene } = useGLTF('/models/model/Hermosa_Tile_build.glb');
   const ref = useRef();
 
-  // Visibility effect — controls which meshes are shown
   useEffect(() => {
     if (!scene) return;
 
@@ -78,7 +69,7 @@ const FullHouseModel = ({ houseLoaded, visibleIds, tileQty = 0, tileColor, ...pr
     });
   }, [scene, houseLoaded, visibleIds, tileQty]);
 
-  // Color effect — applies tileColor to all Hermosa_Tile_ meshes
+  
   useEffect(() => {
     if (!scene || !tileColor) return;
 
@@ -87,7 +78,7 @@ const FullHouseModel = ({ houseLoaded, visibleIds, tileQty = 0, tileColor, ...pr
     scene.traverse((child) => {
       if (!child.isMesh || !child.name.startsWith('Hermosa_Tile_')) return;
 
-      // Clone the original material once so we never mutate the shared GLB material
+      
       if (!child.userData.originalMaterial) {
         child.userData.originalMaterial = child.material;
       }

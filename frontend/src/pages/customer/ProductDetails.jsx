@@ -34,7 +34,7 @@ import { isCoilInStock, getFirstInStockColor } from '../../utils/coilAvailabilit
 
 const extractShortDesc = (htmlStr) => {
   if (!htmlStr) return 'Premium quality material designed for long-lasting durability.';
-  // Replace non-breaking spaces with regular spaces and strip HTML tags
+  
   const cleanText = htmlStr.replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, ' ').trim();
   const words = cleanText.split(/\s+/);
   if (words.length > 12) {
@@ -216,7 +216,7 @@ const ImageGallery = ({ images, productName }) => {
         />
       </Paper>
 
-      {/* Thumbnail strip — always reserve space for layout stability */}
+      {}
       <Stack 
         direction="row" 
         spacing={1} 
@@ -252,7 +252,7 @@ const ImageGallery = ({ images, productName }) => {
           ))}
       </Stack>
 
-      {/* Lightbox Modal — keeps navigation arrows for full-screen browsing */}
+      {}
       <Modal open={lightboxOpen} onClose={() => setLightboxOpen(false)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Box sx={{ position: 'relative', width: '90vw', height: '90vh', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <IconButton onClick={() => setLightboxOpen(false)} sx={{ position: 'absolute', top: 16, right: 16, color: 'white', bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}>
@@ -502,7 +502,7 @@ const ProductDetails = () => {
     }
   };
 
-  // Automatically ensure selectedColor is in stock for the active thickness
+
   useEffect(() => {
     if (coilInventory && coilInventory.length > 0) {
       const activeThick = selectedOption?.thickness || selectedOption?.name || product?.thickness || '0.35mm';

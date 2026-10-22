@@ -260,12 +260,11 @@ const SuperAdminDashboardPage = () => {
     }
   };
 
-  // Safe Portal Toggle
   const requestTogglePortal = (key, name) => {
     const currentStatus = statuses[key];
     const newStatus = currentStatus === 'online' ? 'offline' : 'online';
 
-    // If bringing offline, warn superadmin to prevent accidental service outage
+    
     if (newStatus === 'offline') {
       setPortalConfirmModal({
         show: true,
@@ -280,7 +279,7 @@ const SuperAdminDashboardPage = () => {
 
   const executePortalToggle = async (key, targetStatus) => {
     const currentStatus = statuses[key];
-    // Optimistic UI update
+    
     setStatuses((prev) => ({ ...prev, [key]: targetStatus }));
     setPortalConfirmModal({ show: false, portalKey: null, targetStatus: null, portalName: '' });
 
@@ -299,7 +298,7 @@ const SuperAdminDashboardPage = () => {
       toast.success(`${key.replace(/_/g, ' ').toUpperCase()} is now ${targetStatus.toUpperCase()}`);
     } catch (err) {
       console.error('Failed to update status', err);
-      // Revert on error
+      
       setStatuses((prev) => ({ ...prev, [key]: currentStatus }));
       toast.error('Failed to update portal status');
     }
@@ -471,7 +470,15 @@ const SuperAdminDashboardPage = () => {
       return;
     }
 
-    // Strict Singleton Rule: Only one account can exist for Super Admin, Admin, Owner, Sales, Finance, Logistic
+    if (createForm.contactNumber && createForm.contactNumber.trim()) {
+      const cleanContact = createForm.contactNumber.trim();
+      if (!/^09[0-9]{9}$/.test(cleanContact)) {
+        setCreateError('Contact number must be a valid 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).');
+        return;
+      }
+    }
+
+    
     const existingRoleAccount = allAccounts.find(
       (a) => a.role === createForm.role && a.status !== 'deleted'
     );
@@ -592,7 +599,7 @@ const SuperAdminDashboardPage = () => {
       badge: 'Management Core',
       icon: <Shield className="w-6 h-6" />,
       route: '/admin',
-      description: 'Backoffice management portal for inventory, catalog configuration, and operational oversight.',
+      description: 'Backoffice management portal for customer directory, staff clearance, system settings, and operational oversight.',
     },
     {
       key: 'sales_portal_status',
@@ -982,14 +989,14 @@ const SuperAdminDashboardPage = () => {
                       </p>
                     </div>
 
-                    {/* Footer Guarded Switch & Route */}
+                    {}
                     <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-[11px] font-mono text-slate-500">GATEWAY ROUTE</span>
                         <span className="text-xs font-mono text-slate-300">{portal.route}</span>
                       </div>
 
-                      {/* Interactive Guarded Switch */}
+                      {}
                       <div className="flex items-center gap-3">
                         <span className={`text-xs font-medium ${isOnline ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {isOnline ? 'Accepting Traffic' : 'Blocked'}
@@ -1810,16 +1817,46 @@ const SuperAdminDashboardPage = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-slate-300 mb-1.5">
-                  Contact Number (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="0917-xxx-xxxx"
-                  value={createForm.contactNumber}
-                  onChange={(e) => setCreateForm((prev) => ({ ...prev, contactNumber: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono"
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-slate-300">
+                    Contact Number (Optional)
+                  </label>
+                  <span className={`text-[11px] font-mono ${createForm.contactNumber && createForm.contactNumber.length === 11 ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                    {createForm.contactNumber ? `${createForm.contactNumber.length}/11 digits` : '0/11 digits'}
+                  </span>
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
+                    placeholder="09XXXXXXXXX (e.g. 09171234567)"
+                    value={createForm.contactNumber}
+                    onChange={(e) => {
+                      let digits = e.target.value.replace(/[^0-9]/g, '');
+                      if (digits.startsWith('63')) digits = '0' + digits.slice(2);
+                      else if (digits.length > 0 && !digits.startsWith('0') && digits.startsWith('9')) digits = '0' + digits;
+                      if (digits.length > 0 && !digits.startsWith('0')) return;
+                      if (digits.length > 1 && !digits.startsWith('09')) return;
+                      setCreateForm((prev) => ({ ...prev, contactNumber: digits.slice(0, 11) }));
+                    }}
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono tracking-wider"
+                  />
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[11px] font-mono">
+                  {createForm.contactNumber && !createForm.contactNumber.startsWith('09') ? (
+                    <span className="text-amber-400">Must start with 09 (e.g. 09171234567)</span>
+                  ) : createForm.contactNumber && createForm.contactNumber.length > 0 && createForm.contactNumber.length < 11 ? (
+                    <span className="text-slate-400">11 digits required ({11 - createForm.contactNumber.length} more)</span>
+                  ) : createForm.contactNumber && createForm.contactNumber.length === 11 ? (
+                    <span className="text-emerald-400">✓ Valid Philippine mobile number</span>
+                  ) : (
+                    <span className="text-slate-500">Format: 09XXXXXXXXX (11 digits, starts with 09)</span>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -1897,7 +1934,7 @@ const SuperAdminDashboardPage = () => {
         </div>
       )}
 
-      {/* CONFIRMATION MODAL: Super Admin Password Verification for Account Authorizations */}
+      {}
       {confirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative overflow-hidden">
@@ -2027,7 +2064,7 @@ const SuperAdminDashboardPage = () => {
         </div>
       )}
 
-      {/* CONFIRMATION MODAL: Safe Portal Offline Safeguard */}
+      {}
       {portalConfirmModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative overflow-hidden">

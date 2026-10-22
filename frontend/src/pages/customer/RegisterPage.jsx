@@ -139,6 +139,7 @@ const RegisterPage = () => {
   const [restorationDialogOpen, setRestorationDialogOpen] = useState(false);
   const [restorationMessage, setRestorationMessage] = useState('');
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [emailDeliveryStatus, setEmailDeliveryStatus] = useState({ sent: true, warning: '' });
 
   const passwordChecks = useMemo(() => getPasswordChecks(password), [password]);
   const allPasswordChecksPassed = Object.values(passwordChecks).every(Boolean);
@@ -272,6 +273,7 @@ const RegisterPage = () => {
 
     if (result.success) {
       setRegisteredEmail(result.email || email);
+      setEmailDeliveryStatus({ sent: result.emailSent !== false, warning: result.emailWarning || '' });
       if (result.isRestoration) {
         setRestorationMessage(result.message);
         setRestorationDialogOpen(true);
@@ -287,7 +289,13 @@ const RegisterPage = () => {
   const handleContinueToVerification = () => {
     setSuccessDialogOpen(false);
     setRestorationDialogOpen(false);
-    navigate('/verify-email', { state: { email: registeredEmail } });
+    navigate('/verify-email', {
+      state: {
+        email: registeredEmail,
+        emailSent: emailDeliveryStatus.sent,
+        emailWarning: emailDeliveryStatus.warning
+      }
+    });
   };
 
   const clearFieldError = (field) => setFieldErrors((prev) => ({ ...prev, [field]: '' }));
@@ -470,8 +478,12 @@ const RegisterPage = () => {
                   type="tel"
                   value={contactNumber}
                   onChange={(e) => {
-                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
-                    setContactNumber(onlyNumbers);
+                    let digits = e.target.value.replace(/[^0-9]/g, '');
+                    if (digits.startsWith('63')) digits = '0' + digits.slice(2);
+                    else if (digits.length > 0 && !digits.startsWith('0') && digits.startsWith('9')) digits = '0' + digits;
+                    if (digits.length > 0 && !digits.startsWith('0')) return;
+                    if (digits.length > 1 && !digits.startsWith('09')) return;
+                    setContactNumber(digits.slice(0, 11));
                     clearFieldError('contactNumber');
                   }}
                   placeholder="09123456789"
@@ -937,7 +949,9 @@ const RegisterPage = () => {
             Registration Successful
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-            Your account has been created successfully. Please verify your email address to activate your account.
+            {emailDeliveryStatus.sent
+              ? 'Your account has been created successfully. We sent a 6-digit verification code to your email.'
+              : `Your account has been created successfully. However, our email service could not deliver the OTP automatically (${emailDeliveryStatus.warning || 'service offline'}). You can request a new code on the next screen.`}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ flexDirection: 'column', px: 3, pb: 3, gap: 1 }}>

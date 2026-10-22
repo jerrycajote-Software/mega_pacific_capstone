@@ -49,7 +49,7 @@ const ForgotPasswordPage = () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
       await axios.post(`${API_URL}/api/auth/forgot-password`, { email: trimmed });
-      // Only navigate to reset-password if the email is confirmed registered and OTP sent
+      
       navigate('/reset-password', { state: { email: trimmed } });
     } catch (err) {
       console.error(err);

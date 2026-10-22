@@ -1,7 +1,7 @@
 const prisma = require("../../config/db");
 
 
-// Calculates the combined stock and lowest price among variants, and updates the parent product.
+
 const syncParentProductAggregates = async (tx, productId) => {
   const variants = await tx.productVariant.findMany({
     where: { productId },

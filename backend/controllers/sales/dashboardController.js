@@ -63,7 +63,7 @@ const getSalesDashboardStats = async (req, res) => {
       }
     });
 
-    // Sort low stock products by stock ascending, limit to 5
+    
     lowStockProductsList.sort((a, b) => a.stock - b.stock);
     const lowStockProducts = lowStockProductsList.slice(0, 5);
 
@@ -209,7 +209,7 @@ const getSalesDashboardStats = async (req, res) => {
       });
     }
 
-    // 7. Last 7 Days Velocity & Trend
+    
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();

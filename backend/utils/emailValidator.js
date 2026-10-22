@@ -76,10 +76,7 @@ const DUMMY_LOCAL_PARTS = new Set([
 ]);
 
 /**
- * Validates whether an email string is realistic, properly formatted,
- * complies with provider standards (especially Google/Gmail), and is not disposable.
- *
- * @param {string} rawEmail - Email address to test.
+ * @param {string} rawEmail
  * @returns {{ isValid: boolean, error: string | null, suggestion?: string }}
  */
 function validateRealisticEmail(rawEmail) {
@@ -137,7 +134,6 @@ function validateRealisticEmail(rawEmail) {
     return { isValid: false, error: 'Email address is missing a domain after "@" (gmail.com).' };
   }
 
-  // Check known provider typos
   if (DOMAIN_TYPO_MAP[domain]) {
     const intendedDomain = DOMAIN_TYPO_MAP[domain];
     return {
@@ -151,7 +147,6 @@ function validateRealisticEmail(rawEmail) {
     return { isValid: false, error: 'Please include a valid top-level domain (.com or .ph).' };
   }
 
-  // Reject disposable or known fake domains
   if (DISPOSABLE_OR_FAKE_DOMAINS.has(domain)) {
     return { isValid: false, error: 'Disposable or test email addresses are not allowed. Please enter an active, realistic email.' };
   }
@@ -159,22 +154,18 @@ function validateRealisticEmail(rawEmail) {
   const domainSegments = domain.split('.');
   const tld = domainSegments[domainSegments.length - 1];
 
-  // TLD must be purely alphabetical and between 2 and 24 characters
   if (!/^[a-zA-Z]{2,24}$/.test(tld)) {
     return { isValid: false, error: 'Email top-level domain extension must contain at least 2 letters (e.g., .com, .ph).' };
   }
 
-  // Verify all domain segments are valid RFC host labels
   const invalidSegment = domainSegments.some((seg) => !seg || !/^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(seg));
   if (invalidSegment) {
     return { isValid: false, error: 'Email domain contains invalid characters or formatting.' };
   }
 
-  // Google / Gmail specific verification
   if (domain === 'gmail.com' || domain === 'googlemail.com') {
     const baseUsername = localPart.split('+')[0];
 
-    // Gmail usernames must be between 6 and 30 characters
     if (baseUsername.length < 6) {
       return { isValid: false, error: 'Gmail usernames must be at least 6 characters long.' };
     }
@@ -182,13 +173,11 @@ function validateRealisticEmail(rawEmail) {
       return { isValid: false, error: 'Gmail usernames cannot exceed 30 characters.' };
     }
 
-    // Gmail usernames can only contain letters, numbers, and periods
     if (!/^[a-zA-Z0-9.]+$/.test(baseUsername)) {
       return { isValid: false, error: 'Gmail usernames may only contain letters, numbers, and periods.' };
     }
   }
 
-  // Standard general RFC-compliant pattern
   const generalEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
   if (!generalEmailRegex.test(email)) {
     return { isValid: false, error: 'Please enter a valid, realistic email address.' };

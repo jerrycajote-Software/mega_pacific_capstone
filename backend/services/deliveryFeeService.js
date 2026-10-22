@@ -7,8 +7,7 @@ const PLANT_ORIGIN = {
   province: 'Cavite'
 };
 
-// Distance matrix from Imus, Cavite to CALABARZON cities/municipalities (in km, one-way)
-// Also indicates if standard route passes tollways (SLEX/CALAX/CAVITEX/MCX)
+
 const DISTANCE_MATRIX = {
   'Cavite': {
     'Imus': { km: 5, toll: 0 },
@@ -159,7 +158,6 @@ const DISTANCE_MATRIX = {
   }
 };
 
-// Fallback average distance per province if a city is not in matrix
 const PROVINCE_FALLBACK_DISTANCES = {
   'Cavite': { km: 20, toll: 0 },
   'Laguna': { km: 55, toll: 200 },
@@ -172,11 +170,11 @@ const VEHICLE_SPECS = [
   {
     type: 'Elf 6-Wheeler',
     code: 'ELF',
-    kl: 7, // Kilometers per Liter
-    manpower: 1900, // Truck Manpower (TM)
-    depreciation: 2000, // Vehicle Depreciation (VD)
+    kl: 7, 
+    manpower: 1900, 
+    depreciation: 2000, 
     maxBedLength: 6.0,
-    maxBedWeight: 5.0, // In Metric Tons (mt)
+    maxBedWeight: 5.0, 
     maxTopLength: 12.0,
     maxTopWeight: 4.0,
     tlaTiers: [
@@ -235,7 +233,6 @@ const VEHICLE_SPECS = [
   }
 ];
 
-// Helper to fetch delivery system settings from DB or default
 async function getDeliveryConfig() {
   try {
     const settings = await prisma.systemSetting.findMany({
@@ -273,21 +270,20 @@ async function getDeliveryConfig() {
   }
 }
 
-// Extract longest panel length (LPL in meters) and estimated total weight (in metric tons)
 function extractDimensionsAndWeight(items = []) {
-  let longestPanelLength = 5.0; // default 5m
+  let longestPanelLength = 5.0; 
   let totalWeightKg = 0;
 
   if (Array.isArray(items) && items.length > 0) {
     items.forEach(item => {
       const qty = parseInt(item.quantity) || 1;
-      let itemLength = 5.0; // default length in meters
+      let itemLength = 5.0; 
 
       if (item.length && parseFloat(item.length) > 0) {
         itemLength = parseFloat(item.length);
       } else if (item.variantName || item.name) {
         const text = `${item.variantName || ''} ${item.name || ''}`;
-        // Match expressions like "6m", "6.5 meters", "12 Meters", "16M"
+        
         const lengthMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:m\b|meter|meters)/i);
         if (lengthMatch) {
           itemLength = parseFloat(lengthMatch[1]);
@@ -301,13 +297,13 @@ function extractDimensionsAndWeight(items = []) {
       if (item.weight && parseFloat(item.weight) > 0) {
         totalWeightKg += parseFloat(item.weight) * qty;
       } else {
-        // Standard metal roofing estimation: ~4.0 kg per linear meter
+        
         const weightPerUnitKg = itemLength * 4.0;
         totalWeightKg += weightPerUnitKg * qty;
       }
     });
   } else {
-    totalWeightKg = 500; // default 500kg
+    totalWeightKg = 500; 
   }
 
   const totalWeightMt = Math.max(0.1, totalWeightKg / 1000);
@@ -317,7 +313,7 @@ function extractDimensionsAndWeight(items = []) {
   };
 }
 
-// Select the most cost-effective vehicle and compute its TLA surcharge
+
 function selectVehicleAndTLA(longestPanelLength, totalWeightMt) {
   for (const vehicle of VEHICLE_SPECS) {
     if (longestPanelLength <= vehicle.maxBedLength && totalWeightMt <= vehicle.maxBedWeight) {
@@ -343,7 +339,7 @@ function selectVehicleAndTLA(longestPanelLength, totalWeightMt) {
     }
   }
 
-  // Fallback to Tractor Head
+  
   const tractor = VEHICLE_SPECS[VEHICLE_SPECS.length - 1];
   return {
     vehicle: tractor,

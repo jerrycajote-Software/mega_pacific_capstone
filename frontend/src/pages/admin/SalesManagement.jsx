@@ -36,7 +36,7 @@ const SalesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('edit'); // 'edit' | 'reset'
+  const [modalMode, setModalMode] = useState('edit'); 
   const [selectedSales, setSelectedSales] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
@@ -96,10 +96,18 @@ const SalesManagement = () => {
     e.preventDefault();
     setSaving(true);
     setFormError('');
+    if (form.contactNumber && form.contactNumber.trim()) {
+      if (!/^09[0-9]{9}$/.test(form.contactNumber.trim())) {
+        setFormError('Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).');
+        setSaving(false);
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem('appToken');
       await axios.put(`${API_URL}/api/admin/sales/${selectedSales.id}`, {
-        name: form.name, contactNumber: form.contactNumber
+        name: form.name, contactNumber: form.contactNumber ? form.contactNumber.trim() : null
       }, { headers: { Authorization: `Bearer ${token}` } });
       await fetchSalesList();
       setShowModal(false);
@@ -334,10 +342,34 @@ const SalesManagement = () => {
                         style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '0.65rem 0.85rem', color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }} />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Contact Number</label>
-                      <input value={form.contactNumber} onChange={e => setForm(p => ({ ...p, contactNumber: e.target.value }))}
+                      <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Contact Number (Optional)</label>
+                      <input
+                        value={form.contactNumber}
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={11}
+                        onChange={e => {
+                          let digits = e.target.value.replace(/[^0-9]/g, '');
+                          if (digits.startsWith('63')) digits = '0' + digits.slice(2);
+                          else if (digits.length > 0 && !digits.startsWith('0') && digits.startsWith('9')) digits = '0' + digits;
+                          if (digits.length > 0 && !digits.startsWith('0')) return;
+                          if (digits.length > 1 && !digits.startsWith('09')) return;
+                          setForm(p => ({ ...p, contactNumber: digits.slice(0, 11) }));
+                        }}
                         placeholder="09123456789"
-                        style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '0.65rem 0.85rem', color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }} />
+                        style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '0.65rem 0.85rem', color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                        {form.contactNumber && !form.contactNumber.startsWith('09') ? (
+                          <span style={{ color: '#f59e0b' }}>Must start with 09</span>
+                        ) : form.contactNumber && form.contactNumber.length < 11 ? (
+                          <span>11 digits required ({11 - form.contactNumber.length} more)</span>
+                        ) : form.contactNumber && form.contactNumber.length === 11 ? (
+                          <span style={{ color: '#22c55e' }}>✓ Valid Philippine mobile number</span>
+                        ) : (
+                          <span>Format: 09XXXXXXXXX (11 digits)</span>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}

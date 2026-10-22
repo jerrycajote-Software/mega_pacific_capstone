@@ -187,7 +187,7 @@ const S = {
 };
 
 export default function StockManagementTab({ products, onRefreshProducts }) {
-  const [subTab, setSubTab] = useState('restock'); // 'restock' | 'logs'
+  const [subTab, setSubTab] = useState('restock'); 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   
@@ -334,7 +334,7 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
     }
   };
 
-  // Build flattened table list of products & variants for restocking
+  
   const stockItemsList = [];
   const productTypes = ['All'];
 

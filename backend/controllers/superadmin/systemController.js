@@ -7,7 +7,7 @@ const defaultStatuses = {
   customer_portal_status: "online",
 };
 
-// GET /api/system/status (Public Endpoint)
+
 exports.getSystemStatus = async (req, res) => {
   try {
     const settings = await prisma.systemSetting.findMany({
@@ -33,7 +33,7 @@ exports.getSystemStatus = async (req, res) => {
   }
 };
 
-// GET /api/superadmin/status (Protected Endpoint)
+
 exports.getSuperadminStatus = async (req, res) => {
   try {
     const settings = await prisma.systemSetting.findMany({
@@ -59,7 +59,7 @@ exports.getSuperadminStatus = async (req, res) => {
   }
 };
 
-// PUT /api/superadmin/status (Protected Endpoint)
+
 exports.updateSuperadminStatus = async (req, res) => {
   try {
     const { key, value } = req.body;
@@ -96,7 +96,7 @@ exports.updateSuperadminStatus = async (req, res) => {
   }
 };
 
-// GET /api/superadmin/active-users
+
 exports.getActiveUsers = (req, res) => {
   try {
     const socketTrackingService = require("../../services/socketTrackingService");
@@ -108,12 +108,12 @@ exports.getActiveUsers = (req, res) => {
   }
 };
 
-// GET /api/superadmin/session-logs
+
 exports.getSessionLogs = async (req, res) => {
   try {
     const logs = await prisma.userSession.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 100, // Limit to recent 100 for performance
+      take: 100, 
       include: {
         user: {
           select: {
@@ -131,7 +131,7 @@ exports.getSessionLogs = async (req, res) => {
   }
 };
 
-// GET /api/superadmin/system-info
+
 exports.getSystemInfo = async (req, res) => {
   try {
     const memory = process.memoryUsage();
@@ -152,6 +152,34 @@ exports.getSystemInfo = async (req, res) => {
   } catch (error) {
     console.error("Error fetching system info:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.getEmailStatus = (req, res) => {
+  try {
+    const { getEmailDiagnostics } = require("../../utils/emailService");
+    const diagnostics = getEmailDiagnostics();
+    res.json({ success: true, data: diagnostics });
+  } catch (error) {
+    console.error("Error fetching email status:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.testEmailDelivery = async (req, res) => {
+  try {
+    const { targetEmail } = req.body;
+    const recipient = targetEmail || process.env.SMTP_FROM || process.env.SMTP_USER;
+    if (!recipient) {
+      return res.status(400).json({ success: false, message: "Target email address is required" });
+    }
+
+    const { testEmailDispatch } = require("../../utils/emailService");
+    const result = await testEmailDispatch(recipient);
+    res.json({ success: true, message: `Test email dispatched to ${recipient}`, data: result });
+  } catch (error) {
+    console.error("Error testing email delivery:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

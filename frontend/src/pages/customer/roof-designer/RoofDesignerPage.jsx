@@ -19,14 +19,14 @@ const RoofDesignerPage = () => {
     return <MobileWarningScreen />;
   }
 
-  // Show the color picker once the tile step is unlocked (available or installed)
+  
   const tileStep = calculator.steps.find((s) => s.id === 'hermosa_tile');
   const showColorPicker = tileStep && tileStep.status !== 'locked';
 
   return (
     <Box
       sx={{
-        /* Fill the entire viewport — standalone page, no header/footer */
+        
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -132,7 +132,7 @@ const RoofDesignerPage = () => {
             />
           </Box>
 
-          {/* Roof Color Picker — shown when tile step is unlocked */}
+          {}
           {showColorPicker && (
             <RoofColorPicker
               tileColor={calculator.tileColor}

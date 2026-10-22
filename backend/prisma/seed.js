@@ -5,7 +5,7 @@ const { seedCoilsAndProducts } = require("./seed_coils_and_products");
 async function main() {
   console.log("Starting database initialization...");
 
-  // 1. Seed Super Admin account if none exists
+  
   const existingSuperAdmin = await prisma.user.findFirst({
     where: {
       OR: [
@@ -43,7 +43,7 @@ async function main() {
     console.log(`Super Admin account created successfully with email: ${superAdmin.email}`);
   }
 
-  // 2. Seed Admin account if none exists
+  
   const existingAdmin = await prisma.user.findFirst({
     where: { role: "admin" },
   });
@@ -75,7 +75,7 @@ async function main() {
     console.log(`Default admin account created successfully with email: ${admin.email}`);
   }
 
-  // 3. Seed master steel coils and official pre-order roofing profiles
+  
   await seedCoilsAndProducts();
 }
 

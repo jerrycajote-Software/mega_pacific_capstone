@@ -9,74 +9,211 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER || "",
     pass: process.env.SMTP_PASS || ""
   },
-  connectionTimeout: 10000
+  connectionTimeout: 8000
 });
+
+const extractCleanEmail = (input) => {
+  if (!input) return "";
+  const match = input.match(/<([^>]+)>/);
+  return (match ? match[1] : input).trim();
+};
+
+const extractSenderName = (input, defaultName = "Mega Pacific Metal and Steel Corp") => {
+  if (!input) return defaultName;
+  const match = input.match(/^"?([^"<]+)"?\s*</);
+  if (match && match[1].trim()) return match[1].trim();
+  return defaultName;
+};
+
+const getBrevoApiKey = () => {
+  const directKey = (process.env.BREVO_API_KEY || "").trim();
+  if (directKey) return directKey;
+
+  const passKey = (process.env.SMTP_PASS || "").trim();
+  if (passKey.startsWith("xkeysib-")) return passKey;
+
+  return null;
+};
+
+const checkBrevoKeyWarning = () => {
+  const key = (process.env.BREVO_API_KEY || process.env.SMTP_PASS || "").trim();
+  if (key.startsWith("xsmtpsib-")) {
+    return "Detected Brevo SMTP key (starts with 'xsmtpsib-'). Brevo REST API requires a v3 API Key (starts with 'xkeysib-'). Please generate an API Key in Brevo under 'SMTP & API' > 'API Keys' tab.";
+  }
+  return null;
+};
 
 const isEmailConfigured = () => {
   return Boolean(
-    process.env.BREVO_API_KEY ||
-    (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith("xkeysib-")) ||
+    getBrevoApiKey() ||
     process.env.RESEND_API_KEY ||
     (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
   );
 };
 
 const deliverMail = async (mailOptions) => {
-  const brevoApiKey = process.env.BREVO_API_KEY ||
-    (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith("xkeysib-") ? process.env.SMTP_PASS : null);
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const brevoApiKey = getBrevoApiKey();
+  const resendApiKey = (process.env.RESEND_API_KEY || "").trim();
+  const isRender = process.env.RENDER === "true" || Boolean(process.env.RENDER_SERVICE_ID);
 
+  const brevoWarning = checkBrevoKeyWarning();
+  if (brevoWarning) {
+    console.warn(`[EMAIL CONFIG WARNING] ${brevoWarning}`);
+  }
+
+  // Option 1: Brevo REST API (HTTPS - Works on Render and any cloud host)
   if (brevoApiKey) {
-    const senderEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@megapacific.com";
-    const senderName = "Mega Pacific Metal and Steel Corp";
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "accept": "application/json",
-        "api-key": brevoApiKey,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({
-        sender: { name: senderName, email: senderEmail },
-        to: [{ email: mailOptions.to }],
-        subject: mailOptions.subject,
-        htmlContent: mailOptions.html,
-        textContent: mailOptions.text
-      })
-    });
+    const rawSender = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@megapacific.com";
+    const senderEmail = extractCleanEmail(rawSender) || "noreply@megapacific.com";
+    const senderName = extractSenderName(rawSender) || "Mega Pacific Metal and Steel Corp";
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(`Brevo API Error (${res.status}): ${data.message || JSON.stringify(data)}`);
+    console.log(`[EMAIL DISPATCH] Sending via Brevo REST API from: ${senderEmail} to: ${mailOptions.to}`);
+
+    let res;
+    try {
+      res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "api-key": brevoApiKey,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: mailOptions.to }],
+          subject: mailOptions.subject,
+          htmlContent: mailOptions.html,
+          textContent: mailOptions.text
+        })
+      });
+    } catch (networkError) {
+      console.error(`[EMAIL BREVO NETWORK ERROR]`, networkError.message);
+      throw new Error(`Failed to reach Brevo API: ${networkError.message}`);
     }
-    return { success: true, messageId: data.messageId };
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const errorMsg = data.message || JSON.stringify(data);
+      console.error(`[EMAIL BREVO ERROR ${res.status}]`, errorMsg);
+      if (res.status === 400 && errorMsg.toLowerCase().includes("sender")) {
+        throw new Error(`Brevo rejected sender email '${senderEmail}'. Make sure '${senderEmail}' is added and verified in your Brevo account (Senders & IP > Senders).`);
+      }
+      if (res.status === 401) {
+        throw new Error(`Brevo API key unauthorized or invalid: ${errorMsg}`);
+      }
+      throw new Error(`Brevo API Error (${res.status}): ${errorMsg}`);
+    }
+
+    console.log(`[EMAIL BREVO SUCCESS] Message ID: ${data.messageId}`);
+    return { success: true, messageId: data.messageId, provider: "brevo" };
   }
 
+  // Option 2: Resend REST API (HTTPS)
   if (resendApiKey) {
-    const sender = process.env.SMTP_FROM || "Mega Pacific <onboarding@resend.dev>";
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from: sender,
-        to: [mailOptions.to],
-        subject: mailOptions.subject,
-        html: mailOptions.html,
-        text: mailOptions.text
-      })
-    });
+    const rawSender = process.env.SMTP_FROM || "Mega Pacific <onboarding@resend.dev>";
+    console.log(`[EMAIL DISPATCH] Sending via Resend API from: ${rawSender} to: ${mailOptions.to}`);
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(`Resend API Error (${res.status}): ${data.message || JSON.stringify(data)}`);
+    let res;
+    try {
+      res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: rawSender,
+          to: [mailOptions.to],
+          subject: mailOptions.subject,
+          html: mailOptions.html,
+          text: mailOptions.text
+        })
+      });
+    } catch (networkError) {
+      console.error(`[EMAIL RESEND NETWORK ERROR]`, networkError.message);
+      throw new Error(`Failed to reach Resend API: ${networkError.message}`);
     }
-    return { success: true, messageId: data.id };
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const errorMsg = data.message || JSON.stringify(data);
+      console.error(`[EMAIL RESEND ERROR ${res.status}]`, errorMsg);
+      throw new Error(`Resend API Error (${res.status}): ${errorMsg}`);
+    }
+
+    console.log(`[EMAIL RESEND SUCCESS] Message ID: ${data.id}`);
+    return { success: true, messageId: data.id, provider: "resend" };
   }
 
-  return await transporter.sendMail(mailOptions);
+  // Option 3: Standard Nodemailer Direct SMTP
+  if (isRender) {
+    console.warn(`[EMAIL WARNING] Attempting direct SMTP on Render.com. Render blocks outbound ports 25, 465, and 587. If this times out, configure BREVO_API_KEY in Render environment variables.`);
+  }
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[EMAIL SMTP SUCCESS] Message ID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId, provider: "smtp" };
+  } catch (smtpError) {
+    console.error(`[EMAIL SMTP ERROR]`, smtpError.message);
+    if (isRender || smtpError.code === "ETIMEDOUT" || smtpError.message.includes("timeout")) {
+      throw new Error(`SMTP connection timed out. On cloud hosting (like Render.com), outbound SMTP ports 25, 465, and 587 are blocked. Please set BREVO_API_KEY in your Render environment variables to send emails via HTTP API.`);
+    }
+    throw smtpError;
+  }
+};
+
+const getEmailDiagnostics = () => {
+  const brevoApiKey = getBrevoApiKey();
+  const resendApiKey = (process.env.RESEND_API_KEY || "").trim();
+  const hasSmtp = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  const isRender = process.env.RENDER === "true" || Boolean(process.env.RENDER_SERVICE_ID);
+  const rawSender = process.env.SMTP_FROM || process.env.SMTP_USER || "";
+  const senderEmail = extractCleanEmail(rawSender);
+  const brevoWarning = checkBrevoKeyWarning();
+
+  let provider = "none";
+  if (brevoApiKey) provider = "brevo_api";
+  else if (resendApiKey) provider = "resend_api";
+  else if (hasSmtp) provider = "nodemailer_smtp";
+
+  const warnings = [];
+  if (brevoWarning) warnings.push(brevoWarning);
+  if (provider === "nodemailer_smtp" && isRender) {
+    warnings.push("Running on Render with direct SMTP. Render blocks ports 25/465/587! Set BREVO_API_KEY to send emails via HTTPS REST API.");
+  }
+  if (provider === "brevo_api" && (!senderEmail || senderEmail.includes("noreply@megapacific.com"))) {
+    warnings.push(`Brevo sender email is '${senderEmail || 'empty'}'. Make sure this email is verified in Brevo > Senders & IP > Senders.`);
+  }
+  if (provider === "resend_api" && rawSender.includes("onboarding@resend.dev")) {
+    warnings.push("Resend default sender onboarding@resend.dev can ONLY send to your own account email. Register a custom domain in Resend to send to customers.");
+  }
+  if (provider === "none") {
+    warnings.push("No email service configured. OTPs and receipts will only be logged to server console.");
+  }
+
+  return {
+    isConfigured: isEmailConfigured(),
+    provider,
+    isRender,
+    senderEmail: senderEmail || "not_set",
+    smtpHost: process.env.SMTP_HOST || "not_set",
+    smtpUser: process.env.SMTP_USER || "not_set",
+    hasBrevoKey: Boolean(brevoApiKey),
+    hasResendKey: Boolean(resendApiKey),
+    warnings
+  };
+};
+
+const testEmailDispatch = async (targetEmail) => {
+  const mailOptions = {
+    from: `"Mega Pacific Test" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@megapacific.com'}>`,
+    to: targetEmail,
+    subject: "Mega Pacific Email Service Health Check",
+    text: "This is a test email from Mega Pacific to confirm that the email delivery service is operational.",
+    html: "<p>This is a test email from Mega Pacific to confirm that the email delivery service is operational.</p>"
+  };
+  return await deliverMail(mailOptions);
 };
 
 
@@ -727,6 +864,10 @@ const sendRefundNotificationEmail = async (email, { order, refund, transactionRe
 };
 
 module.exports = {
+  isEmailConfigured,
+  deliverMail,
+  getEmailDiagnostics,
+  testEmailDispatch,
   sendOtpEmail,
   sendLoginOtpEmail,
   sendForgotPasswordEmail,

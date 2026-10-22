@@ -104,10 +104,17 @@ const ShippingInfoWidget = ({
                   label="Contact Number"
                   name="contactNumber"
                   required
+                  placeholder="09123456789"
                   value={formData.contactNumber}
                   onChange={onInputChange}
                   error={!!errors.contactNumber}
-                  helperText={errors.contactNumber}
+                  helperText={errors.contactNumber || 'Format: 09XXXXXXXXX (11 digits)'}
+                  slotProps={{
+                    htmlInput: {
+                      maxLength: 11,
+                      inputMode: 'tel',
+                    },
+                  }}
                   InputProps={{
                     startAdornment: (
                       <i className="fi fi-rr-phone-call" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
@@ -197,7 +204,7 @@ const ShippingInfoWidget = ({
               </Grid>
             </Grid>
           ) : (
-            /* Read-Only Summary Card */
+            
             <Box>
               {addresses.length > 1 && (
                 <Box sx={{ mb: 3 }}>

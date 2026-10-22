@@ -125,7 +125,7 @@ const COIL_COLORS = [
 async function sync() {
   console.log("Starting catalog and inventory synchronization...");
 
-  // 1. Separate / Archive legacy inventory products so they do not show in pre-order customer catalog
+  
   const legacyIds = [8, 16, 18, 19];
   for (const legId of legacyIds) {
     const existing = await prisma.product.findUnique({ where: { id: legId } });
@@ -140,7 +140,7 @@ async function sync() {
     }
   }
 
-  // 2. Synchronize all 6 official Pre-Order products
+  
   for (const prof of OFFICIAL_PROFILES) {
     const prod = await prisma.product.findUnique({
       where: { id: prof.id },
@@ -168,7 +168,7 @@ async function sync() {
       }
     });
 
-    // Check existing variants
+    
     const currentVariants = prod.variants;
     for (const vTarget of prof.variants) {
       const match = currentVariants.find(

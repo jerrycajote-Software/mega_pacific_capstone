@@ -21,7 +21,7 @@ const submitReview = async (req, res) => {
     let targetOrderId = orderId ? parseInt(orderId) : null;
 
     if (targetOrderId) {
-      // 2a. Verify the user has purchased the product in this specific order, and the order is delivered or completed (received)
+      
       const order = await prisma.order.findFirst({
         where: {
           id: targetOrderId,
@@ -42,7 +42,7 @@ const submitReview = async (req, res) => {
         return res.status(403).json({ success: false, message: "You can only review products from orders that have been delivered or received." });
       }
 
-      // 3a. Check if user already reviewed this product for this specific order
+      
       const existingReview = await prisma.review.findFirst({
         where: {
           userId: userId,
@@ -55,7 +55,7 @@ const submitReview = async (req, res) => {
         return res.status(400).json({ success: false, message: "You have already reviewed this product for this order." });
       }
     } else {
-      // 2b. If orderId not explicitly provided, find delivered/completed orders containing this product
+      
       const deliveredOrders = await prisma.order.findMany({
         where: {
           userId: userId,
@@ -77,7 +77,7 @@ const submitReview = async (req, res) => {
         return res.status(403).json({ success: false, message: "You can only review products from delivered or received orders." });
       }
 
-      // Find an eligible order that has not yet been reviewed by this customer for this product
+      
       const existingReviews = await prisma.review.findMany({
         where: {
           userId: userId,
@@ -136,13 +136,13 @@ const submitReview = async (req, res) => {
   }
 };
 
-// Check if customer is eligible to review a product
+
 const checkReviewEligibility = async (req, res) => {
   const userId = req.user?.userId || req.user?.id;
   const { productId } = req.params;
 
   try {
-    // Find all delivered or completed orders by this user that contain this product
+    
     const eligibleOrders = await prisma.order.findMany({
       where: {
         userId: parseInt(userId),
@@ -161,7 +161,7 @@ const checkReviewEligibility = async (req, res) => {
     });
 
     if (eligibleOrders.length === 0) {
-      // Check if user has an active pending/processing/shipped order for this product
+      
       const activeOrder = await prisma.order.findFirst({
         where: {
           userId: parseInt(userId),
@@ -195,7 +195,7 @@ const checkReviewEligibility = async (req, res) => {
       });
     }
 
-    // Check which of these orders already has a review for this product
+    
     const existingReviews = await prisma.review.findMany({
       where: {
         userId: parseInt(userId),

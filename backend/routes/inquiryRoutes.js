@@ -9,7 +9,7 @@ router.get("/customer", verifyToken, inquiryController.getCustomerInquiries);
 router.get("/:id", verifyToken, inquiryController.getInquiry);
 router.post("/:id/messages", verifyToken, inquiryController.addMessage);
 
-// Sales/Admin routes
+
 router.get("/", verifyToken, inquiryController.getAllInquiries);
 router.put("/:id/status", verifyToken, inquiryController.updateInquiryStatus);
 

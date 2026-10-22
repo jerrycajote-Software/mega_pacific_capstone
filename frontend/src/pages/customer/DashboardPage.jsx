@@ -75,10 +75,10 @@ const DashboardPage = ({ showHero = true }) => {
 
   return (
     <Box sx={{ animation: 'fadeIn 0.5s ease-in-out' }}>
-      {/* Hero Section — no container wrapping so it bleeds full-width */}
+      {}
       {showHero && <HeroSection />}
 
-      {/* Product Catalog — wrapped in Container for consistent page margins */}
+      {}
       <Container id="customer-product-catalog" maxWidth="xl" disableGutters sx={{ px: { xs: 1.5, sm: 3, md: 4 } }}>
         {!showHero && (
           <>
@@ -334,7 +334,7 @@ const DashboardPage = ({ showHero = true }) => {
                       '&:last-child': { pb: { xs: 1.25, sm: 1.5 } },
                     }}
                   >
-                    {/* Product name — 2-line clamp */}
+                    {}
                     <Typography
                       variant="subtitle2"
                       component="h3"
@@ -357,7 +357,7 @@ const DashboardPage = ({ showHero = true }) => {
                       {product.name}
                     </Typography>
 
-                    {/* Short description — hidden on small mobile to keep cards balanced */}
+                    {}
                     <Typography
                       variant="caption"
                       sx={{

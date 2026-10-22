@@ -15,8 +15,10 @@ const VerifyEmailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Retrieve email from state, default to empty string if not redirected properly
+  
   const email = location.state?.email || '';
+  const initialEmailSent = location.state?.emailSent;
+  const initialWarning = location.state?.emailWarning;
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -30,8 +32,16 @@ const VerifyEmailPage = () => {
   useEffect(() => {
     if (!email) {
       navigate('/login');
+      return;
     }
-  }, [email, navigate]);
+    if (initialEmailSent === false) {
+      setError(
+        initialWarning
+          ? `Notice: Initial verification email could not be sent (${initialWarning}). Click 'Resend Code' below once your email configuration is ready.`
+          : "Notice: We could not deliver the verification email automatically. Click 'Resend Code' below to try again."
+      );
+    }
+  }, [email, initialEmailSent, initialWarning, navigate]);
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -121,10 +131,10 @@ const VerifyEmailPage = () => {
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.post(`${API_URL}/api/auth/resend-otp`, { email });
       setSuccess(res.data.message || 'A new verification code has been sent.');
-      setCooldown(60); // 60 seconds cooldown
+      setCooldown(res.data.cooldownRemaining || 60); 
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Failed to resend verification code.');
+      setError(err.response?.data?.error || 'Failed to resend verification code. Please check your internet connection.');
       if (err.response?.data?.cooldownRemaining) {
         setCooldown(err.response.data.cooldownRemaining);
       }

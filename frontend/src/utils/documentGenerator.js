@@ -16,9 +16,9 @@ const formatDate = (dateStr) => {
 };
 
 /**
- * Generate and download an Official Order Receipt (PDF)
- * @param {Object} order - Full order object with customer details, items, fulfillment & payment info
+ *  @param {Object} order
  */
+
 export const generateReceiptPDF = (order) => {
   if (!order) return;
 

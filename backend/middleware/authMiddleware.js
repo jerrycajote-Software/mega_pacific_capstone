@@ -58,7 +58,7 @@ const verifyToken = async (req, res, next) => {
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      // Log cleanly without a stack trace for expected expirations
+      
       console.warn(`JWT Verification Warning: Token expired at ${error.expiredAt}`);
     } else {
       console.error("JWT Verification Error:", error);

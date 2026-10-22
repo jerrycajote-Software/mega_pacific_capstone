@@ -95,7 +95,7 @@ const createPreOrderProduct = async (req, res) => {
 
     const normBaseThickness = normalizeThickness(thickness || "0.35mm");
 
-    // Validate that colors have available coil inventory for this thickness
+    
     const coilsInInventory = await prisma.coilInventory.findMany({
       where: {
         thickness: { equals: normBaseThickness, mode: "insensitive" }
@@ -150,7 +150,7 @@ const createPreOrderProduct = async (req, res) => {
         originalPrice: rawOrigPrice,
         discountPercent: discountPct,
         unit: unit || "per meter",
-        stock: 9999, // Unconstrained for pre-orders
+        stock: 9999, 
         isPreOrder: true,
         isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : true,
         thickness: thickness || "0.35mm",
@@ -247,7 +247,7 @@ const updatePreOrderProduct = async (req, res) => {
 
     const normBaseThickness = normalizeThickness(thickness || existing.thickness || "0.35mm");
 
-    // Validate that updated colors have available coil inventory for this thickness
+    
     if (colors !== undefined) {
       const coilsInInventory = await prisma.coilInventory.findMany({
         where: {
@@ -322,7 +322,7 @@ const updatePreOrderProduct = async (req, res) => {
       }
     });
 
-    // If variants array is passed, upsert/replace variants and remove unlisted variants
+    
     if (Array.isArray(variants)) {
       const incomingIds = variants.filter(v => v.id).map(v => parseInt(v.id, 10));
       const existingVariants = await prisma.productVariant.findMany({ where: { productId } });
@@ -408,8 +408,8 @@ const deletePreOrderProduct = async (req, res) => {
     const orderCount = product._count?.orderItems || 0;
 
     if (orderCount > 0) {
-      // Product is referenced in historical customer orders and cannot be hard-deleted.
-      // Soft-delete / Archive it from the active pre-order catalog:
+      
+      
       await prisma.$transaction([
         prisma.product.update({
           where: { id: productId },
@@ -436,7 +436,7 @@ const deletePreOrderProduct = async (req, res) => {
       });
     }
 
-    // No existing orders, safe to hard-delete
+    
     await prisma.$transaction([
       prisma.review.deleteMany({ where: { productId } }),
       prisma.inventoryLog.deleteMany({ where: { productId } }),

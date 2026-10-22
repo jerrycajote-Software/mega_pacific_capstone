@@ -18,7 +18,7 @@ const getOwnerDashboardStats = async (req, res) => {
     
     const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
 
-    // Revenue Trend Chart Data (Last 30 Days)
+    
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
     
@@ -60,7 +60,7 @@ const getOwnerDashboardStats = async (req, res) => {
       total: `₱${o.total.toLocaleString()}`
     }));
 
-    // Stock Alerts (Low Stock < 20)
+    
     const stockAlertsData = await prisma.product.findMany({
       where: { stock: { lt: 20 } },
       take: 10,
@@ -123,7 +123,7 @@ const getOwnerDashboardStats = async (req, res) => {
       }
     }
     
-    // Fallback if no sales
+    
     if (topProducts.length === 0) {
       const fallbackProducts = await prisma.product.findMany({ take: 5, orderBy: { stock: "desc" } });
       fallbackProducts.forEach(p => {

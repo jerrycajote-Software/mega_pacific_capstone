@@ -4,7 +4,7 @@ const { sendReadyForPickupEmail } = require("../../utils/emailService");
 
 const getLogisticOrders = async (req, res) => {
   try {
-    // Logistics mainly sees orders that have been finance_verified or are in transit
+    
     const orders = await prisma.order.findMany({
       where: {
         status: {

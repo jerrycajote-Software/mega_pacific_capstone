@@ -12,7 +12,6 @@ const runRefundSystemVerification = async () => {
   let testOrder = null;
 
   try {
-    // Step 1: Create or find test users
     testUser = await prisma.user.upsert({
       where: { email: "refund_test_customer@megapacific.test" },
       update: {},
@@ -47,13 +46,11 @@ const runRefundSystemVerification = async () => {
 
     console.log("PASS: Test users setup successfully.");
 
-    // Capture baseline sales dashboard stats
     let baselineStats = null;
     await getSalesDashboardStats({}, {
       status: () => ({ json: (d) => { baselineStats = d.data; } })
     });
 
-    // Step 2: Create a pending order with 50% downpayment via GCash
     testOrder = await prisma.order.create({
       data: {
         userId: testUser.id,
@@ -74,7 +71,6 @@ const runRefundSystemVerification = async () => {
     assert.strictEqual(testOrder.total, 12000.0);
     console.log(`PASS: Test order created (#ORD-${testOrder.id}) with total ₱12,000 and 50% downpayment.`);
 
-    // Step 3: Mock Sales rejection request
     let salesMockResponse = null;
     let salesStatusCode = null;
 
@@ -113,7 +109,7 @@ const runRefundSystemVerification = async () => {
     assert.strictEqual(salesMockResponse.data.status, "rejected", "Order status must transition to 'rejected'");
     assert.strictEqual(salesMockResponse.data.paymentStatus, "refund_pending", "Payment status must be 'refund_pending'");
 
-    // Check refund database record
+    
     const createdRefund = await prisma.refund.findUnique({
       where: { orderId: testOrder.id }
     });
@@ -125,7 +121,6 @@ const runRefundSystemVerification = async () => {
     assert.strictEqual(createdRefund.reason, "Out of raw marshall coils for specific profile");
     console.log("PASS: Sales rejection successfully recorded refund of ₱6,000 in DB with status 'pending'.");
 
-    // Step 3b: Verify Sales Gross Revenue excludes rejected order
     let postRejectionStats = null;
     await getSalesDashboardStats({}, {
       status: () => ({ json: (d) => { postRejectionStats = d.data; } })
@@ -143,7 +138,6 @@ const runRefundSystemVerification = async () => {
     );
     console.log("PASS: Gross revenue and active order count correctly exclude rejected order.");
 
-    // Step 4: Verify Finance getRefunds and getRefundStats
     let financeListRes = null;
     const mockFinanceReq = {
       query: { status: "pending" }
@@ -169,7 +163,6 @@ const runRefundSystemVerification = async () => {
     assert.ok(financeStatsRes.data.pendingCount >= 1, "Stats should show at least 1 pending refund");
     console.log(`PASS: Finance stats calculated (Pending count: ${financeStatsRes.data.pendingCount}).`);
 
-    // Step 5: Finance processes the refund
     let processResData = null;
     let processStatusCode = null;
 
@@ -217,7 +210,6 @@ const runRefundSystemVerification = async () => {
     assert.strictEqual(processStatusCode, 200, "Processing refund should return HTTP 200");
     assert.strictEqual(processResData.success, true);
 
-    // Verify DB state after processing
     const updatedRefundInDb = await prisma.refund.findUnique({
       where: { id: createdRefund.id }
     });
@@ -230,7 +222,6 @@ const runRefundSystemVerification = async () => {
     });
     assert.strictEqual(updatedOrderInDb.paymentStatus, "refunded", "Order paymentStatus must be 'refunded'");
 
-    // Verify Expense ledger audit entry
     const expenseEntry = await prisma.expense.findFirst({
       where: { description: { contains: `#ORD-${String(testOrder.id).padStart(3, "0")}` } }
     });
@@ -239,7 +230,6 @@ const runRefundSystemVerification = async () => {
     assert.strictEqual(expenseEntry.category, "Refund");
     console.log("PASS: Refund processed, Order paymentStatus updated to 'refunded', and Expense audit entry logged.");
 
-    // Step 6: Negative verification: Attempting to re-process an already completed refund
     let secondProcessStatusCode = null;
     let secondProcessRes = null;
     await processRefund(mockProcessReq, {
@@ -256,7 +246,7 @@ const runRefundSystemVerification = async () => {
     console.error("TEST FAILED:", error);
     process.exitCode = 1;
   } finally {
-    // Cleanup test artifacts
+
     if (testOrder?.id) {
       await prisma.expense.deleteMany({
         where: { description: { contains: `#ORD-${String(testOrder.id).padStart(3, "0")}` } }

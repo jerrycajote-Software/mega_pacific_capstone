@@ -4,7 +4,7 @@ const { forgotPassword, register, login } = require("../controllers/authControll
 async function runAuthEmailValidationTests() {
   console.log("Running Auth Controller Email Validation tests...");
 
-  // Helper to mock Express req and res
+  
   function createMockRes() {
     return {
       statusCode: null,
@@ -20,7 +20,7 @@ async function runAuthEmailValidationTests() {
     };
   }
 
-  // Test 1: forgotPassword with "jerrcajote"
+  
   {
     const req = { body: { email: "jerrcajote" } };
     const res = createMockRes();
@@ -33,7 +33,7 @@ async function runAuthEmailValidationTests() {
     console.log("PASS: forgotPassword strictly rejects 'jerrcajote' with 400 status");
   }
 
-  // Test 2: forgotPassword with "jerrcajote@gmail"
+  
   {
     const req = { body: { email: "jerrcajote@gmail" } };
     const res = createMockRes();
@@ -46,7 +46,7 @@ async function runAuthEmailValidationTests() {
     console.log("PASS: forgotPassword rejects 'jerrcajote@gmail' missing TLD");
   }
 
-  // Test 3: forgotPassword with "jerr@gmail.com" (< 6 chars for Gmail)
+  
   {
     const req = { body: { email: "jerr@gmail.com" } };
     const res = createMockRes();
@@ -59,7 +59,7 @@ async function runAuthEmailValidationTests() {
     console.log("PASS: forgotPassword rejects short fake Gmail usernames");
   }
 
-  // Test 4: forgotPassword with disposable domain "test@test.com"
+  
   {
     const req = { body: { email: "test@test.com" } };
     const res = createMockRes();
@@ -72,7 +72,7 @@ async function runAuthEmailValidationTests() {
     console.log("PASS: forgotPassword rejects disposable/test domains");
   }
 
-  // Test 5: register with "jerrcajote"
+  
   {
     const req = {
       body: {
@@ -91,7 +91,7 @@ async function runAuthEmailValidationTests() {
     console.log("PASS: register strictly rejects fake/invalid emails with 400 status");
   }
 
-  // Test 6: login with "jerrcajote"
+  
   {
     const req = {
       body: {

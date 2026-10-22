@@ -15,7 +15,7 @@ const runResetPasswordPolicyVerification = async () => {
   let testUser = null;
 
   try {
-    // Step 1: Create or reset test user with known password
+    
     const hashedPassword = await bcrypt.hash(oldPassword, 10);
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -46,7 +46,6 @@ const runResetPasswordPolicyVerification = async () => {
 
     console.log("PASS: Test customer initialized with previous password.");
 
-    // Step 2: Attempt reset with the SAME password
     let samePasswordStatus = null;
     let samePasswordResponse = null;
 
@@ -79,14 +78,12 @@ const runResetPasswordPolicyVerification = async () => {
     );
     console.log("PASS: Rejection verified when new password matches forgotten/previous password.");
 
-    // Step 3: Verify user password in database has NOT been changed
     const userAfterRejectedReset = await prisma.user.findUnique({ where: { email: testEmail } });
     const isOldPasswordStillValid = await bcrypt.compare(oldPassword, userAfterRejectedReset.password);
     assert.strictEqual(isOldPasswordStillValid, true, "Previous password must remain intact after rejected reset");
     assert.strictEqual(userAfterRejectedReset.resetOtpCode, validOtp, "Reset OTP should remain available after password rejection");
     console.log("PASS: Database state preserved after rejected reset attempt.");
 
-    // Step 4: Attempt reset with a DIFFERENT password
     let differentPasswordStatus = null;
     let differentPasswordResponse = null;
 
@@ -118,7 +115,6 @@ const runResetPasswordPolicyVerification = async () => {
     );
     console.log("PASS: Reset succeeds when new password is different from previous password.");
 
-    // Step 5: Verify DB state after successful reset
     const userAfterSuccess = await prisma.user.findUnique({ where: { email: testEmail } });
     assert.strictEqual(userAfterSuccess.resetOtpCode, null, "Reset OTP must be cleared");
     assert.strictEqual(userAfterSuccess.resetOtpExpiresAt, null, "Reset OTP expiry must be cleared");
@@ -130,7 +126,6 @@ const runResetPasswordPolicyVerification = async () => {
     assert.strictEqual(isOldPasswordObsolete, false, "Old password must no longer match stored hash");
     console.log("PASS: Database updated with new hash and reset OTP cleared.");
 
-    // Step 6: Verify login works with new password and fails with old password
     let loginOldStatus = null;
     let loginOldResponse = null;
     await login(
@@ -139,7 +134,6 @@ const runResetPasswordPolicyVerification = async () => {
     );
     assert.strictEqual(loginOldStatus, 401, "Login with old password must fail with HTTP 401");
 
-    // First attempt with new password triggers customer login OTP
     let loginNewStatus = null;
     let loginNewResponse = null;
     await login(
@@ -149,7 +143,6 @@ const runResetPasswordPolicyVerification = async () => {
     assert.strictEqual(loginNewStatus, 200, "Login credentials must be verified");
     assert.strictEqual(loginNewResponse.requiresOtp, true, "Customer login requires OTP verification");
 
-    // Retrieve generated login OTP from DB to complete 2FA
     const userForLogin = await prisma.user.findUnique({ where: { email: testEmail } });
     let login2FAStatus = null;
     let login2FAResponse = null;
