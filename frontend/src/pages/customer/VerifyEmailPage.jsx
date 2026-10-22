@@ -220,7 +220,7 @@ const VerifyEmailPage = () => {
             Verify email
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, lineHeight: 1.7 }}>
-            We've sent a registration code to <strong>{email}</strong>. Enter the 6 digits below (format: <strong>REG-######</strong>).
+            We've sent a registration code to <strong>{email}</strong>. Enter the 6 digits below<strong></strong>).
           </Typography>
 
           {error && (
@@ -255,7 +255,7 @@ const VerifyEmailPage = () => {
                   userSelect: 'none',
                 }}
               >
-                REG-
+              
               </Box>
               {otp.map((data, index) => (
                 <Box
