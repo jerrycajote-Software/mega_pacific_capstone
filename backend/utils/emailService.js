@@ -219,13 +219,10 @@ const testEmailDispatch = async (targetEmail) => {
 
 
 const sendOtpEmail = async (email, otp) => {
+  console.log(`[OTP DISPATCH] [REGISTRATION] Recipient: ${email} | OTP Code: ${otp}`);
+
   if (!isEmailConfigured()) {
-    console.log(`\n======================================================`);
-    console.log(`[EMAIL FALLBACK - Registration Verification]`);
-    console.log(`To: ${email}`);
-    console.log(`Registration OTP: ${otp}`);
-    console.log(`Expires in: 10 minutes`);
-    console.log(`======================================================\n`);
+    console.log(`[EMAIL FALLBACK] Registration OTP for ${email}: ${otp} (valid 10m)`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
   }
 
@@ -259,13 +256,10 @@ const sendOtpEmail = async (email, otp) => {
 };
 
 const sendLoginOtpEmail = async (email, otp) => {
+  console.log(`[OTP DISPATCH] [LOGIN] Recipient: ${email} | OTP Code: ${otp}`);
+
   if (!isEmailConfigured()) {
-    console.log(`\n======================================================`);
-    console.log(`[EMAIL FALLBACK - Login Verification]`);
-    console.log(`To: ${email}`);
-    console.log(`Login OTP: ${otp}`);
-    console.log(`Expires in: 10 minutes`);
-    console.log(`======================================================\n`);
+    console.log(`[EMAIL FALLBACK] Login OTP for ${email}: ${otp} (valid 10m)`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
   }
 
@@ -299,13 +293,10 @@ const sendLoginOtpEmail = async (email, otp) => {
 };
 
 const sendForgotPasswordEmail = async (email, otp) => {
+  console.log(`[OTP DISPATCH] [PASSWORD_RESET] Recipient: ${email} | OTP Code: ${otp}`);
+
   if (!isEmailConfigured()) {
-    console.log(`\n======================================================`);
-    console.log(`[EMAIL FALLBACK - Password Reset]`);
-    console.log(`To: ${email}`);
-    console.log(`Reset OTP: ${otp}`);
-    console.log(`Expires in: 10 minutes`);
-    console.log(`======================================================\n`);
+    console.log(`[EMAIL FALLBACK] Password Reset OTP for ${email}: ${otp} (valid 10m)`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
   }
 
