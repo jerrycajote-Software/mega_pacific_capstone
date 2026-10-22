@@ -81,6 +81,7 @@ const deliverMail = async (mailOptions) => {
         body: JSON.stringify({
           sender: { name: senderName, email: senderEmail },
           to: [{ email: mailOptions.to }],
+          replyTo: { name: senderName, email: senderEmail },
           subject: mailOptions.subject,
           htmlContent: mailOptions.html,
           textContent: mailOptions.text
