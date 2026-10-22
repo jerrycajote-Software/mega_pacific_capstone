@@ -80,7 +80,13 @@ const CustomerLoginPage = () => {
 
     setLoading(true);
 
-    const result = await login(email, password, requiresOtp ? otp : null, ['customer']);
+    let cleanOtp = null;
+    if (requiresOtp && otp) {
+      const trimmed = otp.trim().toUpperCase();
+      cleanOtp = trimmed.startsWith('LOG-') ? trimmed : (/^\d{6}$/.test(trimmed) ? `LOG-${trimmed}` : trimmed);
+    }
+
+    const result = await login(email, password, cleanOtp, ['customer']);
 
     if (result.requiresOtp) {
       setRequiresOtp(true);
@@ -130,15 +136,15 @@ const CustomerLoginPage = () => {
               mb: 0.5,
             }}
           >
-            <Typography component="span" sx={{ color: 'primary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
-            <Typography component="span" sx={{ color: 'secondary.main', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
+            <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
+            <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
           </Box>
           <Typography
             sx={{
-              color: 'text.secondary',
+              color: '#64748b',
               fontSize: '10px',
               fontWeight: 800,
-              letterSpacing: '0.22em',
+              letterSpacing: '0.2em',
               fontFamily: 'Arial, sans-serif',
             }}
           >
@@ -238,17 +244,18 @@ const CustomerLoginPage = () => {
             {requiresOtp && (
               <TextField
                 fullWidth
-                label="OTP Code"
+                label="Login OTP Code (LOG-######)"
                 type="text"
                 variant="outlined"
                 margin="normal"
                 required
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter 6-digit OTP"
+                onChange={(e) => setOtp(e.target.value.toUpperCase())}
+                placeholder="LOG-123456"
+                helperText="Enter the 6-digit login code from your email (e.g. LOG-123456)"
                 sx={{ mb: 1 }}
                 inputProps={{
-                  style: { letterSpacing: '0.2em', textAlign: 'center' },
+                  style: { letterSpacing: '0.15em', textAlign: 'center', fontWeight: 'bold' },
                 }}
               />
             )}

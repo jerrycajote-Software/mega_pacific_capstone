@@ -83,9 +83,9 @@ const deliverMail = async (mailOptions) => {
 const sendOtpEmail = async (email, otp) => {
   if (!isEmailConfigured()) {
     console.log(`\n======================================================`);
-    console.log(`[EMAIL FALLBACK - Email Verification]`);
+    console.log(`[EMAIL FALLBACK - Registration Verification]`);
     console.log(`To: ${email}`);
-    console.log(`OTP Code: ${otp}`);
+    console.log(`Registration OTP: ${otp}`);
     console.log(`Expires in: 10 minutes`);
     console.log(`======================================================\n`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
@@ -94,17 +94,17 @@ const sendOtpEmail = async (email, otp) => {
   const mailOptions = {
     from: `"Mega Pacific Metal and Steel Corp" <${process.env.SMTP_FROM || 'noreply@megapacific.com'}>`,
     to: email,
-    subject: "Email Verification OTP - Mega Pacific",
-    text: `Your One-Time Password (OTP) for email verification is: ${otp}. This code expires in 10 minutes.`,
+    subject: "Registration Verification OTP - Mega Pacific",
+    text: `Your Registration One-Time Password (OTP) is: ${otp}. This code expires in 10 minutes.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
         <h2 style="color: #4f772d; text-align: center; margin-top: 0;">Mega Pacific Metal and Steel Corp</h2>
         <p style="color: #333333; font-size: 16px;">Dear Customer,</p>
-        <p style="color: #555555; font-size: 14px; line-height: 1.5;">Thank you for registering on our platform. To complete your registration and activate your account, please enter the One-Time Password (OTP) below:</p>
-        <div style="font-size: 26px; font-weight: bold; color: #3d5c22; text-align: center; margin: 30px 0; letter-spacing: 5px; padding: 15px; background-color: #f7f9f6; border-radius: 8px; border: 1px solid #e2ebd5;">
+        <p style="color: #555555; font-size: 14px; line-height: 1.5;">Thank you for registering on our platform. To complete your registration and activate your account, please enter the Registration One-Time Password (OTP) below:</p>
+        <div style="font-size: 26px; font-weight: bold; color: #3d5c22; text-align: center; margin: 30px 0; letter-spacing: 4px; padding: 15px; background-color: #f7f9f6; border-radius: 8px; border: 1px solid #e2ebd5; font-family: monospace;">
           ${otp}
         </div>
-        <p style="color: #666666; font-size: 13px; line-height: 1.5;">This OTP is valid for <strong>10 minutes</strong>. Please do not share this code with anyone for security purposes.</p>
+        <p style="color: #666666; font-size: 13px; line-height: 1.5;">This Registration OTP is valid for <strong>10 minutes</strong>. Please do not share this code with anyone for security purposes.</p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="color: #999999; font-size: 11px; text-align: center; margin-bottom: 0;">Mega Pacific Metal and Steel Corp &copy; 2026. All rights reserved.</p>
       </div>
@@ -115,18 +115,57 @@ const sendOtpEmail = async (email, otp) => {
     const info = await deliverMail(mailOptions);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error("Failed to send verification email:", error.message);
+    console.error("Failed to send registration verification email:", error.message);
     throw error;
   }
 };
 
+const sendLoginOtpEmail = async (email, otp) => {
+  if (!isEmailConfigured()) {
+    console.log(`\n======================================================`);
+    console.log(`[EMAIL FALLBACK - Login Verification]`);
+    console.log(`To: ${email}`);
+    console.log(`Login OTP: ${otp}`);
+    console.log(`Expires in: 10 minutes`);
+    console.log(`======================================================\n`);
+    return { success: true, message: "Logged to console (SMTP not configured)" };
+  }
+
+  const mailOptions = {
+    from: `"Mega Pacific Metal and Steel Corp" <${process.env.SMTP_FROM || 'noreply@megapacific.com'}>`,
+    to: email,
+    subject: "Login Verification OTP - Mega Pacific",
+    text: `Your Login Verification One-Time Password (OTP) is: ${otp}. This code expires in 10 minutes.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+        <h2 style="color: #4f772d; text-align: center; margin-top: 0;">Mega Pacific Metal and Steel Corp</h2>
+        <p style="color: #333333; font-size: 16px;">Dear User,</p>
+        <p style="color: #555555; font-size: 14px; line-height: 1.5;">We received a sign-in attempt for your Mega Pacific account. To verify your identity and complete your login, please enter the Login One-Time Password (OTP) below:</p>
+        <div style="font-size: 26px; font-weight: bold; color: #1e3a8a; text-align: center; margin: 30px 0; letter-spacing: 4px; padding: 15px; background-color: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; font-family: monospace;">
+          ${otp}
+        </div>
+        <p style="color: #666666; font-size: 13px; line-height: 1.5;">This Login OTP is valid for <strong>10 minutes</strong>. If you did not attempt to log in, please secure your password immediately.</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="color: #999999; font-size: 11px; text-align: center; margin-bottom: 0;">Mega Pacific Metal and Steel Corp &copy; 2026. All rights reserved.</p>
+      </div>
+    `
+  };
+
+  try {
+    const info = await deliverMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("Failed to send login verification email:", error.message);
+    throw error;
+  }
+};
 
 const sendForgotPasswordEmail = async (email, otp) => {
   if (!isEmailConfigured()) {
     console.log(`\n======================================================`);
     console.log(`[EMAIL FALLBACK - Password Reset]`);
     console.log(`To: ${email}`);
-    console.log(`Reset OTP Code: ${otp}`);
+    console.log(`Reset OTP: ${otp}`);
     console.log(`Expires in: 10 minutes`);
     console.log(`======================================================\n`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
@@ -136,16 +175,16 @@ const sendForgotPasswordEmail = async (email, otp) => {
     from: `"Mega Pacific Metal and Steel Corp" <${process.env.SMTP_FROM || 'noreply@megapacific.com'}>`,
     to: email,
     subject: "Password Reset OTP - Mega Pacific",
-    text: `Your One-Time Password (OTP) for password reset is: ${otp}. This code expires in 10 minutes.`,
+    text: `Your Password Reset One-Time Password (OTP) is: ${otp}. This code expires in 10 minutes.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
         <h2 style="color: #4f772d; text-align: center; margin-top: 0;">Mega Pacific Metal and Steel Corp</h2>
         <p style="color: #333333; font-size: 16px;">Dear Customer,</p>
-        <p style="color: #555555; font-size: 14px; line-height: 1.5;">We received a request to reset your password. Use the One-Time Password (OTP) below to proceed:</p>
-        <div style="font-size: 26px; font-weight: bold; color: #3d5c22; text-align: center; margin: 30px 0; letter-spacing: 5px; padding: 15px; background-color: #f7f9f6; border-radius: 8px; border: 1px solid #e2ebd5;">
+        <p style="color: #555555; font-size: 14px; line-height: 1.5;">We received a request to reset your password. Use the Password Reset One-Time Password (OTP) below to proceed:</p>
+        <div style="font-size: 26px; font-weight: bold; color: #b45309; text-align: center; margin: 30px 0; letter-spacing: 4px; padding: 15px; background-color: #fffbeb; border-radius: 8px; border: 1px solid #fde68a; font-family: monospace;">
           ${otp}
         </div>
-        <p style="color: #666666; font-size: 13px; line-height: 1.5;">This OTP is valid for <strong>10 minutes</strong>. If you did not request a password reset, please ignore this email — your account remains secure.</p>
+        <p style="color: #666666; font-size: 13px; line-height: 1.5;">This Reset OTP is valid for <strong>10 minutes</strong>. If you did not request a password reset, please ignore this email — your account remains secure.</p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
         <p style="color: #999999; font-size: 11px; text-align: center; margin-bottom: 0;">Mega Pacific Metal and Steel Corp &copy; 2026. All rights reserved.</p>
       </div>
@@ -689,6 +728,7 @@ const sendRefundNotificationEmail = async (email, { order, refund, transactionRe
 
 module.exports = {
   sendOtpEmail,
+  sendLoginOtpEmail,
   sendForgotPasswordEmail,
   sendOrderReceiptEmail,
   sendReadyForPickupEmail,

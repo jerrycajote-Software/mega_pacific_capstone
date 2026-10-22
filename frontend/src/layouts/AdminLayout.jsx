@@ -137,7 +137,7 @@ const AdminLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/admin/login', { replace: true });
+            navigate('/admin-1megapacific/login', { replace: true });
           }}
         />
       )}

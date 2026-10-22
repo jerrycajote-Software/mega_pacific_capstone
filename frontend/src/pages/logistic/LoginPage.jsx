@@ -116,7 +116,12 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const result = await login(email, password, requiresOtp ? otp : null, ['logistic']);
+    let cleanOtp = null;
+    if (requiresOtp && otp) {
+      const trimmed = otp.trim().toUpperCase();
+      cleanOtp = trimmed.startsWith('LOG-') ? trimmed : (/^\d{6}$/.test(trimmed) ? `LOG-${trimmed}` : trimmed);
+    }
+    const result = await login(email, password, cleanOtp, ['logistic']);
     if (result.requiresOtp) {
       setRequiresOtp(true);
       setMsg(result.message || 'OTP sent to your email.');
@@ -403,15 +408,15 @@ const LoginPage = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.07em',
                   }}>
-                    {t("OTP Code")}
+                    {t("Login OTP (LOG-######)")}
                   </label>
                   <div className="lp-input-wrap" style={{ position: 'relative' }}>
                     <input
                       className="lp-input"
                       type="text"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Enter 6-digit OTP"
+                      onChange={(e) => setOtp(e.target.value.toUpperCase())}
+                      placeholder="LOG-123456"
                       required
                       style={{
                         width: '100%',

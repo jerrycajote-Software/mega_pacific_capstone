@@ -7,7 +7,13 @@ async function main() {
 
   // 1. Seed Super Admin account if none exists
   const existingSuperAdmin = await prisma.user.findFirst({
-    where: { role: "super_admin" },
+    where: {
+      OR: [
+        { role: "super_admin" },
+        { role: "superadmin" },
+        { email: process.env.SEED_SUPERADMIN_EMAIL || "superadmin@megapacific.com" }
+      ]
+    },
   });
 
   if (existingSuperAdmin) {

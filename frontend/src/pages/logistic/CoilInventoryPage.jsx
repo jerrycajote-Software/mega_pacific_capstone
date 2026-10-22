@@ -15,8 +15,15 @@ import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PaletteIcon from '@mui/icons-material/Palette';
 
-import { STANDARD_THICKNESSES, getColorHex } from '../../constants/roofingSpecs';
+import {
+  STANDARD_THICKNESSES,
+  DECKING_THICKNESSES,
+  ROOFING_COLORS,
+  getColorHex
+} from '../../constants/roofingSpecs';
 
 const CoilInventoryPage = () => {
   const [coils, setCoils] = useState([]);
@@ -40,6 +47,16 @@ const CoilInventoryPage = () => {
   const [restockModalOpen, setRestockModalOpen] = useState(false);
   const [rollsToRestock, setRollsToRestock] = useState('1');
   const [restockReason, setRestockReason] = useState('');
+
+  // Add Coil / New Thickness State
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addThickness, setAddThickness] = useState('');
+  const [selectedColorsToAdd, setSelectedColorsToAdd] = useState([]);
+  const [initialRolls, setInitialRolls] = useState('1');
+  const [minAlertRolls, setMinAlertRolls] = useState('1');
+  const [submittingAdd, setSubmittingAdd] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [addSuccessMsg, setAddSuccessMsg] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -154,6 +171,99 @@ const CoilInventoryPage = () => {
     }
   };
 
+  const allThicknesses = React.useMemo(() => {
+    const fromCoils = coils.map(c => c.thickness);
+    const combined = Array.from(new Set([...STANDARD_THICKNESSES, ...fromCoils])).filter(Boolean);
+    return combined.sort((a, b) => {
+      const numA = parseFloat(a) || 0;
+      const numB = parseFloat(b) || 0;
+      return numA - numB;
+    });
+  }, [coils]);
+
+  const normalizedAddThickness = React.useMemo(() => {
+    if (!addThickness || !addThickness.trim()) return '';
+    const trimmed = addThickness.trim();
+    return trimmed.toLowerCase().endsWith('mm') ? trimmed : `${trimmed}mm`;
+  }, [addThickness]);
+
+  const existingColorsForAddThickness = React.useMemo(() => {
+    if (!normalizedAddThickness) return [];
+    return coils
+      .filter(c => c.thickness.toLowerCase() === normalizedAddThickness.toLowerCase())
+      .map(c => c.color);
+  }, [coils, normalizedAddThickness]);
+
+  const openAddModal = (presetThickness = '') => {
+    setAddThickness(presetThickness);
+    setSelectedColorsToAdd([]);
+    setInitialRolls('1');
+    setMinAlertRolls('1');
+    setAddError('');
+    setAddSuccessMsg('');
+    setAddModalOpen(true);
+  };
+
+  const toggleColorSelection = (colorName) => {
+    if (existingColorsForAddThickness.includes(colorName)) return;
+    setSelectedColorsToAdd(prev =>
+      prev.includes(colorName) ? prev.filter(c => c !== colorName) : [...prev, colorName]
+    );
+  };
+
+  const handleSelectAllAvailableColors = () => {
+    const available = ROOFING_COLORS
+      .map(c => c.name)
+      .filter(name => !existingColorsForAddThickness.includes(name));
+    setSelectedColorsToAdd(available);
+  };
+
+  const handleClearColorSelection = () => {
+    setSelectedColorsToAdd([]);
+  };
+
+  const handleConfirmAddCoil = async (e) => {
+    e.preventDefault();
+    if (!normalizedAddThickness) {
+      setAddError('Please specify a valid thickness gauge (e.g. 0.70mm).');
+      return;
+    }
+    if (selectedColorsToAdd.length === 0) {
+      setAddError('Please select at least one color from the 14 available official colors.');
+      return;
+    }
+
+    setSubmittingAdd(true);
+    setAddError('');
+    setAddSuccessMsg('');
+    try {
+      const token = localStorage.getItem('appToken');
+      const payload = {
+        thickness: normalizedAddThickness,
+        colors: selectedColorsToAdd,
+        coilCount: parseInt(initialRolls, 10) || 1,
+        minAlertCount: parseInt(minAlertRolls, 10) || 1
+      };
+
+      const res = await axios.post(`${API_URL}/api/logistic/coils`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data?.success) {
+        setAddSuccessMsg(res.data.message || 'Coil specification successfully added!');
+        setTimeout(() => {
+          setAddModalOpen(false);
+          fetchCoilData();
+        }, 600);
+      }
+    } catch (err) {
+      console.error('Failed to add coil specification:', err);
+      setAddError(err.response?.data?.error || 'Failed to add coil specification.');
+    } finally {
+      setSubmittingAdd(false);
+    }
+  };
+
   const filteredCoils = coils.filter(c => {
     const matchesThickness = selectedThickness === 'ALL' || c.thickness === selectedThickness;
     const matchesStatus = selectedStatus === 'ALL' || c.status.toLowerCase() === selectedStatus.toLowerCase();
@@ -232,7 +342,21 @@ const CoilInventoryPage = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => openAddModal()}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '0.6rem 1.15rem', borderRadius: 10,
+              background: '#3b82f6', border: '1px solid #60a5fa',
+              color: '#ffffff', fontSize: '0.82rem', fontWeight: 700,
+              cursor: 'pointer', boxShadow: '0 4px 14px rgba(59,130,246,0.35)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <AddCircleIcon sx={{ fontSize: 18 }} />
+            <span>+ Add Coil / Thickness</span>
+          </button>
           <button
             onClick={fetchCoilData}
             style={{
@@ -362,7 +486,7 @@ const CoilInventoryPage = () => {
               >
                 ALL ({summary?.totalRolls ?? 0} Rolls)
               </button>
-              {STANDARD_THICKNESSES.map(th => {
+              {allThicknesses.map(th => {
                 const count = summary?.thicknessCounts?.[th] ?? 0;
                 const isSelected = selectedThickness === th;
                 return (
@@ -444,7 +568,7 @@ const CoilInventoryPage = () => {
           ) : viewMode === 'grouped' ? (
             /* GROUPED BY THICKNESS VIEW */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              {(selectedThickness === 'ALL' ? STANDARD_THICKNESSES : [selectedThickness]).map(th => {
+              {(selectedThickness === 'ALL' ? allThicknesses : [selectedThickness]).map(th => {
                 const groupCoils = filteredCoils.filter(c => c.thickness === th);
                 if (groupCoils.length === 0) return null;
                 const totalGaugeRolls = groupCoils.reduce((sum, c) => sum + (c.coilCount ?? 0), 0);
@@ -466,10 +590,8 @@ const CoilInventoryPage = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                          Total in Stock: <strong style={{ color: 'var(--text-primary)', fontSize: '1.05rem' }}>{totalGaugeRolls} Rolls</strong>
-                        </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        Total in Stock: <strong style={{ color: 'var(--text-primary)', fontSize: '1.05rem' }}>{totalGaugeRolls} Rolls</strong>
                       </div>
                     </div>
 
@@ -923,6 +1045,313 @@ const CoilInventoryPage = () => {
               <Button type="submit" variant="contained" color="success" disabled={submittingAction}>
                 {submittingAction ? <CircularProgress size={16} /> : 'Restock Rolls'}
               </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+      )}
+
+      {/* Add Coil Specification / New Thickness Modal */}
+      {addModalOpen && (
+        <Dialog
+          open={true}
+          onClose={() => !submittingAdd && setAddModalOpen(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PaletteIcon sx={{ color: '#2563eb' }} />
+            Add Coil Inventory / Thickness Specification
+          </DialogTitle>
+          <form onSubmit={handleConfirmAddCoil}>
+            <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, maxHeight: '72vh' }}>
+              {addError && (
+                <div style={{ padding: '0.65rem 0.9rem', borderRadius: 8, background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontSize: '0.82rem', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  {addError}
+                </div>
+              )}
+              {addSuccessMsg && (
+                <div style={{ padding: '0.65rem 0.9rem', borderRadius: 8, background: 'rgba(16,185,129,0.1)', color: '#10b981', fontSize: '0.82rem', border: '1px solid rgba(16,185,129,0.2)' }}>
+                  {addSuccessMsg}
+                </div>
+              )}
+
+              {/* 1. Coil Thickness / Gauge Selection */}
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>
+                  Coil Thickness / Gauge *
+                </label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 0.70mm or 0.75"
+                    value={addThickness}
+                    onChange={(e) => setAddThickness(e.target.value)}
+                    style={{
+                      flex: 1, minWidth: 180, padding: '0.65rem 0.85rem', borderRadius: 8,
+                      background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                      color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 600, outline: 'none', boxSizing: 'border-box'
+                    }}
+                  />
+                  {normalizedAddThickness && (
+                    <div style={{
+                      padding: '0.45rem 0.85rem',
+                      borderRadius: 6,
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      background: existingColorsForAddThickness.length > 0 ? 'rgba(59,130,246,0.12)' : 'rgba(16,185,129,0.12)',
+                      color: existingColorsForAddThickness.length > 0 ? '#3b82f6' : '#10b981',
+                      border: `1px solid ${existingColorsForAddThickness.length > 0 ? 'rgba(59,130,246,0.25)' : 'rgba(16,185,129,0.25)'}`
+                    }}>
+                      {existingColorsForAddThickness.length > 0
+                        ? `Existing Gauge (${existingColorsForAddThickness.length}/14 colors registered)`
+                        : 'New Gauge (Will be provisioned)'}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Gauge suggestions / quick-pick chips */}
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4, fontWeight: 600 }}>
+                    Standard & Heavy Decking Presets:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {[...STANDARD_THICKNESSES, ...DECKING_THICKNESSES].map(gauge => {
+                      const isSelected = normalizedAddThickness.toLowerCase() === gauge.toLowerCase();
+                      const existingInStock = coils.some(c => c.thickness.toLowerCase() === gauge.toLowerCase());
+                      return (
+                        <button
+                          key={gauge}
+                          type="button"
+                          onClick={() => setAddThickness(gauge)}
+                          style={{
+                            padding: '3px 9px',
+                            borderRadius: 14,
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            border: isSelected
+                              ? '1.5px solid #2563eb'
+                              : '1px solid var(--border-light)',
+                            background: isSelected
+                              ? 'rgba(37,99,235,0.15)'
+                              : 'var(--bg-tertiary)',
+                            color: isSelected
+                              ? '#2563eb'
+                              : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}
+                        >
+                          {gauge}
+                          {existingInStock && (
+                            <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>• in stock</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Color Selection (14 Official Colors) */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>
+                      Choose Roofing Color(s) to Add * ({selectedColorsToAdd.length} of 14 selected)
+                    </label>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Select the colors to initialize for {normalizedAddThickness || 'this thickness'}. Colors already in inventory for this gauge cannot be duplicated.
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      onClick={handleSelectAllAvailableColors}
+                      disabled={!normalizedAddThickness}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                        background: 'var(--bg-tertiary)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)',
+                        cursor: normalizedAddThickness ? 'pointer' : 'not-allowed',
+                        opacity: normalizedAddThickness ? 1 : 0.5
+                      }}
+                    >
+                      Select All Available
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearColorSelection}
+                      disabled={selectedColorsToAdd.length === 0}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                        background: 'var(--bg-tertiary)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-muted)',
+                        cursor: selectedColorsToAdd.length > 0 ? 'pointer' : 'not-allowed',
+                        opacity: selectedColorsToAdd.length > 0 ? 1 : 0.5
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                {/* 14 Colors Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                  gap: 8,
+                  padding: 8,
+                  background: 'var(--bg-tertiary)',
+                  borderRadius: 10,
+                  border: '1px solid var(--border-light)',
+                  maxHeight: 280,
+                  overflowY: 'auto'
+                }}>
+                  {ROOFING_COLORS.map(colorItem => {
+                    const alreadyExists = existingColorsForAddThickness.some(
+                      c => c.toLowerCase() === colorItem.name.toLowerCase()
+                    );
+                    const isSelected = selectedColorsToAdd.includes(colorItem.name);
+
+                    return (
+                      <div
+                        key={colorItem.name}
+                        onClick={() => toggleColorSelection(colorItem.name)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '8px 10px',
+                          borderRadius: 8,
+                          background: isSelected
+                            ? 'rgba(37,99,235,0.1)'
+                            : (alreadyExists ? 'rgba(0,0,0,0.03)' : 'var(--bg-primary)'),
+                          border: isSelected
+                            ? '1.5px solid #2563eb'
+                            : (alreadyExists ? '1px dashed var(--border-light)' : '1px solid var(--border-light)'),
+                          cursor: alreadyExists ? 'not-allowed' : 'pointer',
+                          opacity: alreadyExists ? 0.5 : 1,
+                          transition: 'all 0.15s ease',
+                          position: 'relative'
+                        }}
+                        title={alreadyExists ? `${colorItem.name} is already registered for ${normalizedAddThickness}` : colorItem.name}
+                      >
+                        <div
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            background: colorItem.hex,
+                            border: `1.5px solid ${colorItem.border || 'rgba(0,0,0,0.2)'}`,
+                            flexShrink: 0
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            fontSize: '0.8rem',
+                            fontWeight: isSelected ? 700 : 500,
+                            color: 'var(--text-primary)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {colorItem.name}
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: alreadyExists ? '#f59e0b' : 'var(--text-muted)' }}>
+                            {alreadyExists ? 'Already in stock' : (isSelected ? 'Selected' : 'Click to select')}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <CheckCircleIcon sx={{ fontSize: 18, color: '#2563eb', flexShrink: 0 }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Initial Inventory Config */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                    Initial Rolls per Color *
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    required
+                    value={initialRolls}
+                    onChange={(e) => setInitialRolls(e.target.value)}
+                    style={{
+                      width: '100%', padding: '0.65rem 0.85rem', borderRadius: 8,
+                      background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                      color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    Total new rolls: {(parseInt(initialRolls, 10) || 0) * selectedColorsToAdd.length}
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                    Low-Stock Alert Threshold *
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    required
+                    value={minAlertRolls}
+                    onChange={(e) => setMinAlertRolls(e.target.value)}
+                    style={{
+                      width: '100%', padding: '0.65rem 0.85rem', borderRadius: 8,
+                      background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                      color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                    Triggers warning when rolls &le; threshold
+                  </span>
+                </div>
+              </div>
+            </DialogContent>
+            <DialogActions sx={{ p: 2, display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                {selectedColorsToAdd.length > 0 && normalizedAddThickness
+                  ? `Provisioning ${selectedColorsToAdd.length} coil specification(s) at ${normalizedAddThickness}`
+                  : 'Select thickness and colors to proceed'}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button onClick={() => setAddModalOpen(false)} color="inherit" disabled={submittingAdd}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={submittingAdd || !normalizedAddThickness || selectedColorsToAdd.length === 0}
+                  sx={{ fontWeight: 700 }}
+                >
+                  {submittingAdd ? (
+                    <CircularProgress size={16} sx={{ color: '#fff' }} />
+                  ) : (
+                    `Add ${selectedColorsToAdd.length > 0 ? selectedColorsToAdd.length : ''} Coil(s)`
+                  )}
+                </Button>
+              </div>
             </DialogActions>
           </form>
         </Dialog>

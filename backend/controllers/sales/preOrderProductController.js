@@ -94,6 +94,29 @@ const createPreOrderProduct = async (req, res) => {
     const parsedColors = Array.isArray(colors) ? colors : typeof colors === "string" ? colors.split(",").map(c => c.trim()) : [];
 
     const normBaseThickness = normalizeThickness(thickness || "0.35mm");
+
+    // Validate that colors have available coil inventory for this thickness
+    const coilsInInventory = await prisma.coilInventory.findMany({
+      where: {
+        thickness: { equals: normBaseThickness, mode: "insensitive" }
+      }
+    });
+
+    if (coilsInInventory.length > 0) {
+      const availableColorSet = new Set(
+        coilsInInventory
+          .filter(c => (c.coilCount ?? 0) > 0)
+          .map(c => c.color.toLowerCase().trim())
+      );
+      const unavailableChosen = parsedColors.filter(c => !availableColorSet.has(c.toLowerCase().trim()));
+      if (unavailableChosen.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: `The color(s) ${unavailableChosen.join(", ")} are not available in coil inventory for ${normBaseThickness}.`
+        });
+      }
+    }
+
     if (Array.isArray(variants) && variants.length > 0) {
       const seenVariantThicknesses = new Set();
       for (let i = 0; i < variants.length; i++) {
@@ -223,6 +246,31 @@ const updatePreOrderProduct = async (req, res) => {
     const parsedColors = Array.isArray(colors) ? colors : existing.colors;
 
     const normBaseThickness = normalizeThickness(thickness || existing.thickness || "0.35mm");
+
+    // Validate that updated colors have available coil inventory for this thickness
+    if (colors !== undefined) {
+      const coilsInInventory = await prisma.coilInventory.findMany({
+        where: {
+          thickness: { equals: normBaseThickness, mode: "insensitive" }
+        }
+      });
+
+      if (coilsInInventory.length > 0) {
+        const availableColorSet = new Set(
+          coilsInInventory
+            .filter(c => (c.coilCount ?? 0) > 0)
+            .map(c => c.color.toLowerCase().trim())
+        );
+        const unavailableChosen = parsedColors.filter(c => !availableColorSet.has(c.toLowerCase().trim()));
+        if (unavailableChosen.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: `The color(s) ${unavailableChosen.join(", ")} are not available in coil inventory for ${normBaseThickness}.`
+          });
+        }
+      }
+    }
+
     if (Array.isArray(variants) && variants.length > 0) {
       const seenVariantThicknesses = new Set();
       for (let i = 0; i < variants.length; i++) {

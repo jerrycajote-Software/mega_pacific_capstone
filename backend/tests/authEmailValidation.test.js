@@ -28,7 +28,7 @@ async function runAuthEmailValidationTests() {
     assert.strictEqual(res.statusCode, 400);
     assert.strictEqual(
       res.responseData.error,
-      "Please enter a complete email address including domain (e.g., name@gmail.com)."
+      "Please enter a complete email address including domain (@gmail.com)."
     );
     console.log("PASS: forgotPassword strictly rejects 'jerrcajote' with 400 status");
   }
@@ -86,7 +86,7 @@ async function runAuthEmailValidationTests() {
     assert.strictEqual(res.statusCode, 400);
     assert.strictEqual(
       res.responseData.error,
-      "Please enter a complete email address including domain (e.g., name@gmail.com)."
+      "Please enter a complete email address including domain (@gmail.com)."
     );
     console.log("PASS: register strictly rejects fake/invalid emails with 400 status");
   }
@@ -104,7 +104,7 @@ async function runAuthEmailValidationTests() {
     assert.strictEqual(res.statusCode, 400);
     assert.strictEqual(
       res.responseData.error,
-      "Please enter a complete email address including domain (e.g., name@gmail.com)."
+      "Please enter a complete email address including domain (@gmail.com)."
     );
     console.log("PASS: login rejects fake/invalid email with 400 status");
   }

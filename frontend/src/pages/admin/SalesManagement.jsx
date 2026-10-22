@@ -392,7 +392,7 @@ const SalesManagement = () => {
               onClick={() => {
                 setLogoutWarning(false);
                 logout();
-                navigate('/admin/login', { replace: true });
+                navigate('/admin-1megapacific/login', { replace: true });
               }}
               style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '0.75rem 2rem', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', width: '100%' }}
             >

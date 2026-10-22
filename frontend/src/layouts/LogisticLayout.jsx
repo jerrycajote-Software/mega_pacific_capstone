@@ -137,7 +137,7 @@ const LogisticLayout = () => {
           onConfirm={() => {
             setIsLogoutOpen(false);
             logout();
-            navigate('/logistic/login', { replace: true });
+            navigate('/logistic-1megapacific/login', { replace: true });
           }}
         />
       )}
