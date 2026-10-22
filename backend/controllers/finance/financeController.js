@@ -2,8 +2,8 @@ const prisma = require('../../config/db');
 
 const getDashboardData = async (req, res) => {
   try {
-    // 1. Total Revenue (Sum of 'paid' orders or total of completed orders)
-    // For now, we sum all orders that are not pending/cancelled
+    
+    
     const orders = await prisma.order.findMany({
       where: {
         paymentStatus: 'paid',
@@ -64,7 +64,7 @@ const getDashboardData = async (req, res) => {
       }))
     ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 8);
 
-    // 6-month revenue vs expenses trend
+    
     const now = new Date();
     const trendMap = {};
     for (let i = 5; i >= 0; i--) {

@@ -19,7 +19,7 @@ async function runDuplicateAccountTests() {
     };
   }
 
-  // Test 1: Attempting to create a second Admin account is rejected under Singleton Policy
+  
   {
     const req = {
       user: { role: "super_admin", userId: 48 },
@@ -39,7 +39,7 @@ async function runDuplicateAccountTests() {
     console.log("PASS: Creating a second Admin account is rejected (Only 1 allowed)");
   }
 
-  // Test 2: Attempting to create a second Owner account is rejected under Singleton Policy
+  
   {
     const req = {
       user: { role: "super_admin", userId: 48 },
@@ -59,8 +59,7 @@ async function runDuplicateAccountTests() {
     console.log("PASS: Creating a second Owner account is rejected (Only 1 allowed)");
   }
 
-  // Test 3: Attempting to create a second Sales account is rejected under Singleton Policy
-  {
+    {
     const req = {
       user: { role: "super_admin", userId: 48 },
       body: {
@@ -79,7 +78,7 @@ async function runDuplicateAccountTests() {
     console.log("PASS: Creating a second Sales account is rejected (Only 1 allowed)");
   }
 
-  // Test 4: Attempting to create a second Logistics account is rejected under Singleton Policy
+  
   {
     const req = {
       user: { role: "super_admin", userId: 48 },
@@ -99,7 +98,7 @@ async function runDuplicateAccountTests() {
     console.log("PASS: Creating a second Logistics account is rejected (Only 1 allowed)");
   }
 
-  // Test 5: Attempting to create a second Finance account is rejected under Singleton Policy
+  
   {
     const req = {
       user: { role: "super_admin", userId: 48 },
@@ -119,7 +118,7 @@ async function runDuplicateAccountTests() {
     console.log("PASS: Creating a second Finance account is rejected (Only 1 allowed)");
   }
 
-  // Test 6: Attempting to provision a Super Admin account is strictly forbidden with 403
+  
   {
     const req = {
       user: { role: "super_admin", userId: 48 },
@@ -138,7 +137,7 @@ async function runDuplicateAccountTests() {
     console.log("PASS: Super Admin creation is forbidden with 403 status");
   }
 
-  // Test 7: Duplicate email check (case-insensitive & whitespace trimmed)
+  
   {
     const req = {
       user: { role: "super_admin", userId: 48 },

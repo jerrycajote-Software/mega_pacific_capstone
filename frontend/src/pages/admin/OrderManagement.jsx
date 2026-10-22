@@ -108,7 +108,7 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
-    // Auto-refresh every 30s so sales see automated status changes in near-real-time
+    
     const autoRefresh = setInterval(() => fetchOrders(), 30 * 1000);
     return () => clearInterval(autoRefresh);
   }, []);
@@ -583,7 +583,7 @@ const OrderManagement = () => {
                     <CalendarTodayIcon sx={{ fontSize: 16 }} /> Estimated Delivery
                   </h4>
                   {isSales ? (
-                    // Sales: delivery date is fully automated — display only
+                    
                     <div className="flex flex-col gap-2">
                       {selectedOrder.estimatedDeliveryDate ? (
                         <p className="text-sm text-text-primary font-medium">

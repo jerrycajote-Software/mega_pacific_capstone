@@ -29,7 +29,7 @@ import {
 import { buildProductOptions, getDefaultOption } from '../pages/customer/buildProductOptions';
 import { isCoilInStock, getFirstInStockColor } from '../utils/coilAvailability';
 
-// Clean raw HTML tags and escaped entities from product descriptions
+
 const cleanHtmlDescription = (raw) => {
   if (!raw) return '';
   return raw

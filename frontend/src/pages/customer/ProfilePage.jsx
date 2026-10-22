@@ -663,19 +663,22 @@ const ProfilePage = () => {
                 name="contactNumber" 
                 value={formData.contactNumber} 
                 onChange={(e) => {
-                  const onlyNumbers = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
-                  setFormData(prev => ({ ...prev, contactNumber: onlyNumbers }));
+                  let digits = e.target.value.replace(/[^0-9]/g, '');
+                  if (digits.startsWith('63')) digits = '0' + digits.slice(2);
+                  else if (digits.length > 0 && !digits.startsWith('0') && digits.startsWith('9')) digits = '0' + digits;
+                  if (digits.length > 0 && !digits.startsWith('0')) return;
+                  if (digits.length > 1 && !digits.startsWith('09')) return;
+                  setFormData(prev => ({ ...prev, contactNumber: digits.slice(0, 11) }));
                   setFormError('');
                 }}
                 placeholder="09123456789" 
                 required 
-                helperText="11-digit Philippine mobile number starting with 09"
-                InputProps={{
-                  startAdornment: (
-                    <Box component="span" sx={{ color: 'text.secondary', mr: 1, fontSize: '0.85rem', fontWeight: 600 }}>
-                      +63
-                    </Box>
-                  )
+                helperText="Format: 09XXXXXXXXX (11 digits, Philippine mobile format)"
+                slotProps={{
+                  htmlInput: {
+                    maxLength: 11,
+                    inputMode: 'tel',
+                  },
                 }}
               />
 

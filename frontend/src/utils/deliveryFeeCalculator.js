@@ -7,7 +7,6 @@ export const PLANT_ORIGIN = {
   province: 'Cavite'
 };
 
-// Distance matrix from Imus, Cavite to CALABARZON cities (one-way km)
 export const CALABARZON_DISTANCES = {
   'Cavite': {
     'Imus': { km: 5, toll: 0 },
@@ -338,7 +337,6 @@ export const computeClientDeliveryFee = ({
   };
 };
 
-// API Fetcher for real-time computed delivery fee from backend
 export const fetchDeliveryFee = async ({ province, city, items = [] }) => {
   try {
     const API_URL = import.meta.env.VITE_API_URL || '';
@@ -363,6 +361,5 @@ export const fetchDeliveryFee = async ({ province, city, items = [] }) => {
     console.warn('[DELIVERY CALCULATOR] Remote API fallback to client calculator:', error.message);
   }
 
-  // Fallback to client-side formula if backend is unreachable
   return computeClientDeliveryFee({ province, city, items });
 };

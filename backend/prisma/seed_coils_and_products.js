@@ -190,7 +190,7 @@ async function seed() {
   console.log("Seeding raw material Coil Inventory...");
   for (const thickness of THICKNESSES) {
     for (const color of COIL_COLORS) {
-      const initialCount = Math.floor(Math.random() * 3) + 1; // 1 to 3 master rolls
+      const initialCount = Math.floor(Math.random() * 3) + 1; 
       await prisma.coilInventory.upsert({
         where: {
           thickness_color: {
@@ -239,7 +239,7 @@ async function seed() {
         }
       });
 
-      // Synchronize thickness variants
+      
       const existingVars = await prisma.productVariant.findMany({ where: { productId: existing.id } });
       for (const vTarget of p.variants) {
         const match = existingVars.find(

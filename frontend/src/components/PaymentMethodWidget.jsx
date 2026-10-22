@@ -102,8 +102,8 @@ const GCashLogo = () => (
 );
 
 const PaymentMethodWidget = ({
-  paymentPlan = 'COD_50', // 'COD_50' | 'FULL_PAYMENT'
-  paymentChannel = 'Card', // 'Card' | 'GCash'
+  paymentPlan = 'COD_50', 
+  paymentChannel = 'Card', 
   cardNumber = '',
   cardExpiry = '',
   cardCvv = '',

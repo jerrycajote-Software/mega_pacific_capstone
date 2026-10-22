@@ -2,14 +2,7 @@ import React from 'react';
 import { Box, Typography, Tooltip } from '@mui/material';
 import { ROOF_COLORS } from '../data/roofPricingData';
 
-/**
- * RoofColorPicker — Floating palette shown above the materials bar
- * whenever the Hermosa Roof Tile step is available or installed.
- *
- * Props:
- *   tileColor    {string} — currently selected hex color
- *   setTileColor {fn}    — updates the active color in the scene
- */
+
 const RoofColorPicker = ({ tileColor, setTileColor }) => {
   return (
     <Box

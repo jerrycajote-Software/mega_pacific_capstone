@@ -11,7 +11,7 @@ async function run() {
   try {
     console.log("Connected to database. Applying schema updates...");
 
-    // 1. Add columns to Product
+    
     await client.query(`
       ALTER TABLE "Product" 
       ADD COLUMN IF NOT EXISTS "originalPrice" DOUBLE PRECISION,
@@ -19,7 +19,7 @@ async function run() {
     `);
     console.log("Added originalPrice and discountPercent columns to Product table.");
 
-    // 2. Add columns to ProductVariant
+    
     await client.query(`
       ALTER TABLE "ProductVariant" 
       ADD COLUMN IF NOT EXISTS "originalPrice" DOUBLE PRECISION,
@@ -27,7 +27,7 @@ async function run() {
     `);
     console.log("Added originalPrice and discountPercent columns to ProductVariant table.");
 
-    // 3. Update existing Product records
+    
     const resProducts = await client.query(`
       UPDATE "Product"
       SET 

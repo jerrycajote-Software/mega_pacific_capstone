@@ -22,7 +22,7 @@ const register = async (req, res) => {
       if (existingUser.status === "deleted") {
         const hashedPassword = await bcrypt.hash(password, 10);
         const otp = generateOtp('REG');
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
         await prisma.user.update({
           where: { id: existingUser.id },
@@ -41,17 +41,25 @@ const register = async (req, res) => {
           }
         });
 
+        let emailSent = true;
+        let emailWarning = null;
         try {
           const { sendOtpEmail } = require("../utils/emailService");
           await sendOtpEmail(email, otp);
         } catch (emailError) {
+          emailSent = false;
+          emailWarning = emailError.message;
           console.error("WARNING: OTP email failed to send (user restoration):", emailError.message);
         }
 
         return res.status(200).json({ 
-          message: "An account associated with this email address already exists but has been deactivated. Verify your email to restore your account.", 
+          message: emailSent
+            ? "An account associated with this email address already exists but has been deactivated. Verify your email to restore your account."
+            : `Account restored. Verification email could not be sent (${emailWarning}).`, 
           isRestoration: true, 
-          email: existingUser.email 
+          email: existingUser.email,
+          emailSent,
+          emailWarning
         });
       }
 
@@ -60,9 +68,8 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate secure registration OTP (REG-######)
     const otp = generateOtp('REG');
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
     const user = await prisma.user.create({
       data: {
@@ -86,16 +93,26 @@ const register = async (req, res) => {
       },
     });
 
-    // Send OTP email — wrapped in its own try/catch so an email failure
-    // does NOT fail the registration. The user is already created.
+    let emailSent = true;
+    let emailWarning = null;
     try {
       const { sendOtpEmail } = require("../utils/emailService");
       await sendOtpEmail(email, otp);
     } catch (emailError) {
+      emailSent = false;
+      emailWarning = emailError.message;
       console.error("WARNING: OTP email failed to send (user was still created):", emailError.message);
     }
 
-    res.status(201).json({ message: "User created successfully. OTP verification code sent.", userId: user.id, email: user.email });
+    res.status(201).json({ 
+      message: emailSent
+        ? "User created successfully. OTP verification code sent."
+        : `User created successfully, but verification email failed to send (${emailWarning}).`, 
+      userId: user.id, 
+      email: user.email,
+      emailSent,
+      emailWarning
+    });
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({ error: "Registration failed. Please try again." });
@@ -135,14 +152,14 @@ const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Validate the role against expected roles for the specific portal FIRST
+    
     if (expectedRoles && expectedRoles.length > 0) {
       if (!expectedRoles.includes(user.role)) {
         return res.status(403).json({ error: "This is not your Portal!" });
       }
     }
 
-    // Ensure the account is fully active AFTER verifying they are in the right portal
+    
     if (user.status !== "active") {
       let statusMsg = "Your account is currently disabled.";
       if (user.status === "pending") statusMsg = "Your account is pending approval by a Super Admin.";
@@ -158,7 +175,7 @@ const login = async (req, res) => {
     if (user.role === "customer") {
       if (!otp) {
         const newOtp = generateOtp('LOG');
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
         await prisma.user.update({
           where: { id: user.id },
@@ -194,7 +211,7 @@ const login = async (req, res) => {
 
     let sessionToken = null;
     if (user.role === "admin" || user.role === "sales" || user.role === "owner" || user.role === "superadmin" || user.role === "finance" || user.role === "logistic") {
-      // 1. Clean up stale sessions (inactive for > 12 hours)
+      
       const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
       await prisma.userSession.updateMany({
         where: { userId: user.id, isActive: true, lastActive: { lt: twelveHoursAgo } },
@@ -209,8 +226,8 @@ const login = async (req, res) => {
       const maxDevices = setting ? parseInt(setting.value, 10) : 3;
 
       if (activeSessionsCount >= maxDevices && user.role !== "superadmin") {
-        // 2. Instead of blocking, invalidate the oldest session(s) to make room
-        const excessCount = activeSessionsCount - maxDevices + 1; // +1 to allow the current new login
+        
+        const excessCount = activeSessionsCount - maxDevices + 1; 
         const oldestSessions = await prisma.userSession.findMany({
           where: { userId: user.id, isActive: true },
           orderBy: { lastActive: 'asc' },
@@ -229,7 +246,7 @@ const login = async (req, res) => {
 
       if (activeSessionsCount > 0 && !otp && user.role !== "superadmin") {
         const newOtp = generateOtp('LOG');
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
         await prisma.user.update({
           where: { id: user.id },
@@ -391,6 +408,15 @@ const updateProfile = async (req, res) => {
     const userId = req.user.userId;
     const { contactNumber, address, city, province, zipCode } = req.body;
     
+    if (contactNumber && String(contactNumber).trim()) {
+      const cleanContact = String(contactNumber).trim();
+      if (!/^09[0-9]{9}$/.test(cleanContact)) {
+        return res.status(400).json({
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+        });
+      }
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -507,22 +533,30 @@ const resendOtp = async (req, res) => {
     const otp = generateOtp('REG');
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+    // Save the new OTP first so the user has the newest code
     await prisma.user.update({
       where: { email },
       data: {
         otpCode: otp,
-        otpExpiresAt,
-        lastOtpSentAt: new Date()
+        otpExpiresAt
       }
     });
 
     const { sendOtpEmail } = require("../utils/emailService");
     await sendOtpEmail(email, otp);
 
+    // Only set cooldown when email is delivered successfully
+    await prisma.user.update({
+      where: { email },
+      data: {
+        lastOtpSentAt: new Date()
+      }
+    });
+
     res.status(200).json({ message: "OTP verification code resent successfully.", cooldownRemaining: 60 });
   } catch (error) {
     console.error("Resend OTP error:", error);
-    res.status(500).json({ error: "Failed to resend OTP" });
+    res.status(500).json({ error: error.message ? `Failed to resend OTP: ${error.message}` : "Failed to resend OTP" });
   }
 };
 
@@ -553,9 +587,8 @@ const forgotPassword = async (req, res) => {
       return res.status(403).json({ error: "Password reset is only available for customer accounts." });
     }
 
-    // Generate a fresh 6-digit reset OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const resetOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const resetOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
     await prisma.user.update({
       where: { id: user.id },
@@ -568,7 +601,7 @@ const forgotPassword = async (req, res) => {
     res.status(200).json({ message: "Password reset code sent to your email." });
   } catch (error) {
     console.error("Forgot Password Error:", error);
-    res.status(500).json({ error: "Failed to process password reset request." });
+    res.status(500).json({ error: error.message ? `Failed to process password reset: ${error.message}` : "Failed to process password reset request." });
   }
 };
 
@@ -630,6 +663,15 @@ const addAddress = async (req, res) => {
     const userId = req.user.userId;
     const { contactNumber, address, city, province, zipCode, isDefault } = req.body;
 
+    if (contactNumber && String(contactNumber).trim()) {
+      const cleanContact = String(contactNumber).trim();
+      if (!/^09[0-9]{9}$/.test(cleanContact)) {
+        return res.status(400).json({
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+        });
+      }
+    }
+
     if (isDefault) {
       await prisma.address.updateMany({
         where: { userId },
@@ -637,7 +679,7 @@ const addAddress = async (req, res) => {
       });
     }
 
-    // If it's the first address, make it default automatically
+    
     const existingCount = await prisma.address.count({ where: { userId } });
     const makeDefault = existingCount === 0 ? true : (isDefault || false);
 
@@ -665,6 +707,15 @@ const updateAddress = async (req, res) => {
     const userId = req.user.userId;
     const { id } = req.params;
     const { contactNumber, address, city, province, zipCode } = req.body;
+
+    if (contactNumber && String(contactNumber).trim()) {
+      const cleanContact = String(contactNumber).trim();
+      if (!/^09[0-9]{9}$/.test(cleanContact)) {
+        return res.status(400).json({
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+        });
+      }
+    }
 
     const existing = await prisma.address.findFirst({ where: { id: Number(id), userId } });
     if (!existing) {
@@ -701,7 +752,7 @@ const deleteAddress = async (req, res) => {
 
     await prisma.address.delete({ where: { id: Number(id) } });
 
-    // If it was default and there are others left, make the newest one default
+    
     if (existing.isDefault) {
       const fallback = await prisma.address.findFirst({
         where: { userId },

@@ -1,10 +1,6 @@
 import React from 'react';
 import { Box, Typography, IconButton, TextField, Button } from '@mui/material';
 
-/**
- * Simplified Cost Estimator Panel.
- * Shows only the installed items, their quantities, and the grand total.
- */
 const CostEstimatorPanel = ({ steps, setQty, removePart, grandTotal, installedCount, resetAll }) => {
   const installedSteps = steps.filter(s => s.status === 'installed');
 

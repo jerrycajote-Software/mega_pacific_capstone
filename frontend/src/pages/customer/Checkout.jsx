@@ -73,7 +73,7 @@ const Checkout = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const isLeavingRef = useRef(false);
 
-  // Compute item unit price (taking into account per-meter length multiplier)
+  
   const computeItemUnitPrice = (item) => {
     const isPerMeter = item.product?.unit === 'per meter' || item.product?.unit === 'meter' || item.product?.isPreOrder;
     const len = isPerMeter && item.customLength ? Number(item.customLength) : 1;
@@ -159,8 +159,8 @@ const Checkout = () => {
     province: 'Cavite',
     zipCode: '',
     notes: '',
-    paymentPlan: 'COD_50', // 'COD_50' | 'FULL_PAYMENT'
-    paymentChannel: 'Card', // 'Card' | 'GCash'
+    paymentPlan: 'COD_50', 
+    paymentChannel: 'Card', 
     fulfillmentType: 'Delivery',
     cardNumber: '',
     cardExpiry: '',
@@ -220,12 +220,12 @@ const Checkout = () => {
   useEffect(() => {
     if (success) return;
 
-    // Push state trap so back button does not leave checkout and forward history is cleared
+    
     window.history.pushState({ isCheckoutLock: true }, '', window.location.href);
 
     const handlePopState = () => {
       if (isLeavingRef.current) return;
-      // Re-push state to trap and retain the user on /checkout
+      
       window.history.pushState({ isCheckoutLock: true }, '', window.location.href);
       setShowExitConfirm(true);
     };
@@ -375,6 +375,17 @@ const Checkout = () => {
       return;
     }
 
+    if (name === 'contactNumber') {
+      let digits = value.replace(/[^0-9]/g, '');
+      if (digits.startsWith('63')) digits = '0' + digits.slice(2);
+      else if (digits.length > 0 && !digits.startsWith('0') && digits.startsWith('9')) digits = '0' + digits;
+      if (digits.length > 0 && !digits.startsWith('0')) return;
+      if (digits.length > 1 && !digits.startsWith('09')) return;
+      setFormData(prev => ({ ...prev, contactNumber: digits.slice(0, 11) }));
+      if (errors.contactNumber) setErrors(prev => ({ ...prev, contactNumber: '' }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -392,7 +403,11 @@ const Checkout = () => {
     }
 
     if (formData.fulfillmentType === 'Delivery') {
-      if (!formData.contactNumber?.trim()) newErrors.contactNumber = 'Contact Number is required';
+      if (!formData.contactNumber?.trim()) {
+        newErrors.contactNumber = 'Contact Number is required';
+      } else if (!/^09[0-9]{9}$/.test(formData.contactNumber.trim())) {
+        newErrors.contactNumber = 'Must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)';
+      }
       if (!formData.address?.trim()) newErrors.address = 'Complete Address is required';
       if (!formData.city?.trim()) newErrors.city = 'City is required';
       if (!formData.province?.trim()) newErrors.province = 'Province is required';
@@ -711,7 +726,7 @@ const Checkout = () => {
         </Typography>
       </Box>
 
-      {/* Page Title & Security Badge */}
+      {}
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3.5 }}>
         <Box>
           <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1.5, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' } }}>

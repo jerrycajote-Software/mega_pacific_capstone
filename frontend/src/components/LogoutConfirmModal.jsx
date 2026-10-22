@@ -18,7 +18,7 @@ const css = `
 `;
 
 const LogoutConfirmModal = ({ onClose, onConfirm }) => {
-  // Prevent background scrolling when modal is open
+ 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -28,7 +28,7 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
 
   const isStaffPortal = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/sales');
 
-  // Themes matching: emerald gradient for staff, forest gradient for customer
+  
   const confirmBtnBg = isStaffPortal 
     ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' 
     : 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)';

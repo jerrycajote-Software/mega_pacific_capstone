@@ -18,7 +18,7 @@ const getProducts = async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
-    // Calculate sales count and average rating for each product
+    
     const productsWithStats = products.map(product => {
       let totalSales = 0;
       try {
@@ -61,7 +61,7 @@ const getProducts = async (req, res) => {
 const createProduct = async (req, res) => {
   const { name, type, description, price, unit, stock, imageUrl, imageUrls, variants, color } = req.body;
   try {
-    // Check for duplicate product name (case-insensitive and ignoring leading/trailing spaces)
+    
     const normalizedName = name.trim();
     const existingProduct = await prisma.product.findFirst({
       where: {
@@ -218,7 +218,7 @@ const updateProduct = async (req, res) => {
               userId = decoded.userId;
             }
           } catch (e) {
-            // ignore token parse error
+            
           }
         }
 
@@ -398,10 +398,7 @@ const adjustStock = async (req, res) => {
   }
 };
 
-/**
- * POST /api/admin/products/stock-adjust-bulk
- * Bulk stock addition across multiple items
- */
+
 const bulkAdjustStock = async (req, res) => {
   try {
     const { adjustments } = req.body;
@@ -477,10 +474,7 @@ const bulkAdjustStock = async (req, res) => {
   }
 };
 
-/**
- * GET /api/admin/products/stock-logs
- * Fetch restock audit logs
- */
+
 const getStockLogs = async (req, res) => {
   try {
     const logs = await prisma.inventoryLog.findMany({

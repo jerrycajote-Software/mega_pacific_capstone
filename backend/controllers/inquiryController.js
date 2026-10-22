@@ -39,7 +39,7 @@ exports.createInquiry = async (req, res) => {
 exports.addMessage = async (req, res) => {
   try {
     const senderId = req.user.userId;
-    const { id } = req.params; // inquiry id
+    const { id } = req.params; 
     const { content } = req.body;
 
     const message = await prisma.message.create({

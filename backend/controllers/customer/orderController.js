@@ -45,7 +45,7 @@ const createOrder = async (req, res) => {
   const {
     userId,
     productId,
-    variantId,      // Optional variant selection
+    variantId,      
     quantity,
     paymentMode,
     paymentPlan,
@@ -68,6 +68,16 @@ const createOrder = async (req, res) => {
     const emailCheck = validateRealisticEmail(customerEmail);
     if (!emailCheck.isValid) {
       return res.status(400).json({ success: false, error: emailCheck.error });
+    }
+  }
+
+  if (shippingContactNumber && String(shippingContactNumber).trim()) {
+    const cleanPhone = String(shippingContactNumber).trim();
+    if (!/^09[0-9]{9}$/.test(cleanPhone)) {
+      return res.status(400).json({
+        success: false,
+        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+      });
     }
   }
 
@@ -101,7 +111,7 @@ const createOrder = async (req, res) => {
       }
 
       unitPrice = variant.price;
-      variantName = variant.name; // Snapshot the variant name
+      variantName = variant.name; 
     } else {
       if (!isPreOrder && product.stock < parseInt(quantity)) {
         return res.status(400).json({ success: false, error: "Insufficient stock" });
@@ -109,7 +119,7 @@ const createOrder = async (req, res) => {
       unitPrice = product.price;
     }
 
-    // Validate raw material coil inventory for custom color and thickness
+    
     if (color) {
       const effThickness = thickness || (parsedVariantId ? variantName : null) || product.thickness || "0.35mm";
       const thickMatch = String(effThickness).match(/0\.\d+/);
@@ -159,7 +169,7 @@ const createOrder = async (req, res) => {
       paymentChannel
     );
 
-    // Create order + item + deduct stock in a transaction
+    
     const newOrder = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
@@ -183,7 +193,7 @@ const createOrder = async (req, res) => {
             create: {
               productId: parseInt(productId),
               variantId: parsedVariantId,
-              variantName,       // Snapshot stored for order history
+              variantName,       
               quantity: parseInt(quantity),
               price: unitPrice,
               color: color || null,
@@ -194,7 +204,7 @@ const createOrder = async (req, res) => {
         }
       });
 
-      // For legacy non-pre-order products only: decrement physical finished stock
+      
       if (!isPreOrder) {
         if (parsedVariantId) {
           const updated = await tx.productVariant.updateMany({
@@ -220,7 +230,7 @@ const createOrder = async (req, res) => {
       return order;
     });
 
-    // Fetch full order for receipt email and response (isolated so post-processing doesn't fail order creation)
+    
     let fullOrder = null;
     try {
       fullOrder = await prisma.order.findUnique({
@@ -262,7 +272,7 @@ const createOrder = async (req, res) => {
   }
 };
 
-// Fetch a single order by ID for the customer details page
+
 const getOrderById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -286,7 +296,7 @@ const getOrderById = async (req, res) => {
       return res.status(404).json({ success: false, error: "Order not found" });
     }
 
-    // Enforce ownership — customers can only see their own orders
+    
     if (req.user && req.user.role !== 'admin') {
       const requestingUserId = req.user.userId ?? req.user.id;
       if (order.userId !== parseInt(requestingUserId)) {
@@ -294,8 +304,8 @@ const getOrderById = async (req, res) => {
       }
     }
 
-    // Fetch reviews submitted by this customer for the products in this order
-    // Matches reviews linked to this specific orderId OR authored by this customer for this productId
+    
+  
     const customerReviews = await prisma.review.findMany({
       where: {
         userId: order.userId,
@@ -318,11 +328,11 @@ const getOrderById = async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Map items to include isReviewed status and review details for this specific order
+    
     const itemsWithReviewStatus = order.items.map(item => {
       let matchingReview = customerReviews.find(r => r.productId === item.productId && r.orderId === order.id);
 
-      // Legacy fallback: only match legacy reviews without an orderId if the order was placed on or before the review date
+      
       if (!matchingReview) {
         matchingReview = customerReviews.find(r => 
           r.productId === item.productId && 
@@ -430,7 +440,7 @@ const getMyOrders = async (req, res) => {
 const createBulkOrder = async (req, res) => {
   const {
     userId,
-    items, // Array of { productId, variantId, quantity }
+    items, 
     paymentMode,
     paymentPlan,
     paymentChannel,
@@ -455,6 +465,16 @@ const createBulkOrder = async (req, res) => {
     const emailCheck = validateRealisticEmail(customerEmail);
     if (!emailCheck.isValid) {
       return res.status(400).json({ success: false, error: emailCheck.error });
+    }
+  }
+
+  if (shippingContactNumber && String(shippingContactNumber).trim()) {
+    const cleanPhone = String(shippingContactNumber).trim();
+    if (!/^09[0-9]{9}$/.test(cleanPhone)) {
+      return res.status(400).json({
+        success: false,
+        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+      });
     }
   }
 
@@ -529,7 +549,7 @@ const createBulkOrder = async (req, res) => {
         const lengthMultiplier = (customLength && isPerMeterItem) ? customLength : 1;
         totalAmount += Math.round(unitPrice * lengthMultiplier * parseInt(quantity) * 100) / 100;
 
-        // Validate raw material coil inventory for custom color and thickness
+        
         if (item.color) {
           const effThickness = thickness || variantName || product.thickness || "0.35mm";
           const thickMatch = String(effThickness).match(/0\.\d+/);
@@ -608,7 +628,7 @@ const createBulkOrder = async (req, res) => {
       return order;
     });
 
-    // Fetch full order for receipt email and response (isolated so post-processing doesn't fail order creation)
+    
     let fullOrder = null;
     try {
       fullOrder = await prisma.order.findUnique({

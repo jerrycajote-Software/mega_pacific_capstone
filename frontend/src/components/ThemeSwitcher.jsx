@@ -5,10 +5,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useAdminTheme } from '../context/ThemeContext';
 
-/**
- * ThemeSwitcher — Admin panel dark/light toggle button.
- * Drop this into any admin header or sidebar.
- */
+
 const ThemeSwitcher = ({ size = 'medium', sx = {} }) => {
   const { mode, toggleTheme } = useAdminTheme();
   const isDark = mode === 'dark';

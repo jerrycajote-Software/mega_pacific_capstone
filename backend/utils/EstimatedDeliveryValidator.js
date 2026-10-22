@@ -1,10 +1,11 @@
 class EstimatedDeliveryValidator {
+  
   /**
-   * Validates if a delivery date can be updated based on the order's current status and the new date.
-   * @param {string} currentStatus - The current status of the order.
-   * @param {string} newDateString - The new estimated delivery date (ISO string or YYYY-MM-DD).
-   * @returns {Object} { isValid: boolean, message: string }
+   * @param {string} currentStatus 
+   @param {string} newDateString 
+   @returns {Object} 
    */
+
   static validateUpdate(currentStatus, newDateString) {
     if (!currentStatus) return { isValid: true };
 

@@ -1736,7 +1736,7 @@ const PreOrderProductsPage = () => {
                     value={newThicknessInput}
                     onChange={(e) => {
                       const val = e.target.value;
-                      // Strictly allow only digits and at most one decimal point
+                      
                       if (val === '' || /^\d*\.?\d*$/.test(val)) {
                         setNewThicknessInput(val);
                         if (newThicknessError) setNewThicknessError('');
@@ -1746,16 +1746,16 @@ const PreOrderProductsPage = () => {
                       if (['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
                         return;
                       }
-                      // Allow Ctrl/Cmd key combinations (select all, copy, paste)
+                      
                       if (e.ctrlKey || e.metaKey) {
                         return;
                       }
-                      // Block any key that is not a digit or decimal point
+                      
                       if (!/[0-9.]/.test(e.key)) {
                         e.preventDefault();
                         return;
                       }
-                      // Prevent multiple decimal points
+                      
                       if (e.key === '.' && newThicknessInput.includes('.')) {
                         e.preventDefault();
                       }

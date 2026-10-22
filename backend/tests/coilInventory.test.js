@@ -22,12 +22,12 @@ async function runCoilTests() {
 
   const testThickness = "0.75mm";
 
-  // Clean up any test records first
+  
   await prisma.coilInventory.deleteMany({
     where: { thickness: testThickness }
   });
 
-  // Test 1: Validation - missing thickness
+  
   {
     const req = {
       user: { role: "logistic", userId: 37 },
@@ -42,7 +42,7 @@ async function runCoilTests() {
     console.log("PASS: Missing thickness gauge rejected with 400");
   }
 
-  // Test 2: Validation - invalid color
+  
   {
     const req = {
       user: { role: "logistic", userId: 37 },
@@ -58,12 +58,12 @@ async function runCoilTests() {
     console.log("PASS: Invalid color rejected with 400");
   }
 
-  // Test 3: Successfully add new coil thickness with a specific official color
+  
   {
     const req = {
       user: { role: "logistic", userId: 37 },
       body: {
-        thickness: "0.75", // test normalization: automatically appends 'mm'
+        thickness: "0.75", 
         color: "Marshall Dark Gray",
         coilCount: 3,
         minAlertCount: 1
@@ -80,7 +80,7 @@ async function runCoilTests() {
     console.log("PASS: New coil thickness (0.75mm) created with color Marshall Dark Gray");
   }
 
-  // Test 4: Duplicate check - attempting to re-add existing thickness + color is rejected
+  
   {
     const req = {
       user: { role: "logistic", userId: 37 },
@@ -98,7 +98,7 @@ async function runCoilTests() {
     console.log("PASS: Duplicate thickness + color addition rejected with 409 Conflict");
   }
 
-  // Test 5: Batch addition - adding multiple available colors for this thickness
+  
   {
     const req = {
       user: { role: "logistic", userId: 37 },
@@ -115,7 +115,7 @@ async function runCoilTests() {
     console.log("PASS: Batch addition of 2 colors for thickness 0.75mm succeeded");
   }
 
-  // Clean up test records
+  
   await prisma.coilInventory.deleteMany({
     where: { thickness: testThickness }
   });

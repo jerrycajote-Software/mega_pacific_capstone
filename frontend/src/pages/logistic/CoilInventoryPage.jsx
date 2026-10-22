@@ -30,8 +30,8 @@ const CoilInventoryPage = () => {
   const [summary, setSummary] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'logs'
-  const [viewMode, setViewMode] = useState('grouped'); // 'grouped' | 'table'
+  const [activeTab, setActiveTab] = useState('inventory'); 
+  const [viewMode, setViewMode] = useState('grouped'); 
   const [selectedThickness, setSelectedThickness] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [searchColor, setSearchColor] = useState('');
@@ -48,7 +48,6 @@ const CoilInventoryPage = () => {
   const [rollsToRestock, setRollsToRestock] = useState('1');
   const [restockReason, setRestockReason] = useState('');
 
-  // Add Coil / New Thickness State
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addThickness, setAddThickness] = useState('');
   const [selectedColorsToAdd, setSelectedColorsToAdd] = useState([]);
@@ -566,7 +565,7 @@ const CoilInventoryPage = () => {
               No coils matched the selected filter criteria.
             </div>
           ) : viewMode === 'grouped' ? (
-            /* GROUPED BY THICKNESS VIEW */
+            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               {(selectedThickness === 'ALL' ? allThicknesses : [selectedThickness]).map(th => {
                 const groupCoils = filteredCoils.filter(c => c.thickness === th);
@@ -1050,7 +1049,7 @@ const CoilInventoryPage = () => {
         </Dialog>
       )}
 
-      {/* Add Coil Specification / New Thickness Modal */}
+      {}
       {addModalOpen && (
         <Dialog
           open={true}
@@ -1075,7 +1074,7 @@ const CoilInventoryPage = () => {
                 </div>
               )}
 
-              {/* 1. Coil Thickness / Gauge Selection */}
+              {}
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>
                   Coil Thickness / Gauge *
@@ -1110,7 +1109,7 @@ const CoilInventoryPage = () => {
                   )}
                 </div>
                 
-                {/* Gauge suggestions / quick-pick chips */}
+                {}
                 <div style={{ marginTop: 8 }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4, fontWeight: 600 }}>
                     Standard & Heavy Decking Presets:
@@ -1155,7 +1154,7 @@ const CoilInventoryPage = () => {
                 </div>
               </div>
 
-              {/* 2. Color Selection (14 Official Colors) */}
+              {}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
                   <div>
@@ -1206,7 +1205,7 @@ const CoilInventoryPage = () => {
                   </div>
                 </div>
 
-                {/* 14 Colors Grid */}
+                {}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
@@ -1281,7 +1280,7 @@ const CoilInventoryPage = () => {
                 </div>
               </div>
 
-              {/* 3. Initial Inventory Config */}
+              {}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>

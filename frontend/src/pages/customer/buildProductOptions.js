@@ -1,21 +1,16 @@
-
-
 /**
- * Builds a unified array of selectable product options.
- *
- * @param {Object} product 
- * @param {number} product.price 
- * @param {number} product.stock 
- * @param {string} product.unit 
- * @param {Array}  product.variants 
- * @returns {Array} 
+ * @param {Object} product
+ * @param {number} [product.price]
+ * @param {number} [product.stock]
+ * @param {string} [product.unit]
+ * @param {Array}  [product.variants]
+ * @returns {Array}
  */
 export function buildProductOptions(product) {
   if (!product) return [];
 
   const options = [];
 
-  
   const isPreOrder = product.isPreOrder ?? true;
   const hasVariants = product.variants && product.variants.length > 0;
   const baseThickness = product.thickness || '0.35mm';
@@ -28,7 +23,7 @@ export function buildProductOptions(product) {
 
   if (!baseCoveredByVariant && (product.price > 0 || product.stock > 0 || isPreOrder)) {
     options.push({
-      id: null,                         
+      id: null,
       name: baseName,
       thickness: baseThickness,
       price: product.price ?? 0,
@@ -63,10 +58,7 @@ export function buildProductOptions(product) {
 }
 
 /**
- * Returns the first available option from the list,
- * preferring the base product option.
- *
- * @param {Array} options - From buildProductOptions()
+ * @param {Array} options
  * @returns {Object|null}
  */
 export function getDefaultOption(options) {

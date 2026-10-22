@@ -4,9 +4,7 @@ import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/d
 import { CircularProgress } from '@mui/material';
 import FullHouseModel from './FullHouseModel';
 
-/**
- * Inline loading spinner displayed while 3D models are loading.
- */
+
 const Loader = () => (
   <Html center>
     <div style={{
@@ -27,8 +25,8 @@ const Loader = () => (
  *
  * Loads the unified FullHouseModel and passes the visibility state.
  *
- * @param {boolean} houseLoaded - Whether the house base model should be shown
- * @param {Set} visibleIds - Set of installed material IDs to show in the scene
+ * @param {boolean} houseLoaded 
+ * @param {Set} visibleIds 
  */
 const SceneCanvas = ({ houseLoaded = false, visibleIds = new Set(), tileQty = 0, tileColor }) => {
   return (
@@ -60,7 +58,7 @@ const SceneCanvas = ({ houseLoaded = false, visibleIds = new Set(), tileQty = 0,
 
       <gridHelper args={[20, 20, '#c8d6e5', '#e2e8f0']} position={[0, 0, 0]} />
 
-      {/* 3D Models — single unified file controls its own visibility */}
+      {}
       <Suspense fallback={<Loader />}>
         <FullHouseModel 
           position={[0, 0, 0]} 

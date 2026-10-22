@@ -1,7 +1,7 @@
 const prisma = require("../../config/db");
 const { sendRefundNotificationEmail } = require("../../utils/emailService");
 
-// Fetch refund records with status filtering and customer/order details
+
 const getRefunds = async (req, res) => {
   try {
     const { status, search } = req.query || {};

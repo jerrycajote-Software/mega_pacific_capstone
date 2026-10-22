@@ -1,6 +1,6 @@
 const prisma = require("../../config/db");
 
-// Get a single product by ID including its variants and reviews
+
 const getProductById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -41,7 +41,7 @@ const getProductById = async (req, res) => {
   }
 };
 
-// Get all active products for customer catalog and order add-ons
+
 const getProducts = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
@@ -65,7 +65,7 @@ const getProducts = async (req, res) => {
   }
 };
 
-// Get coil raw material stock availability for color and thickness selection
+
 const getCoilAvailability = async (req, res) => {
   try {
     const coils = await prisma.coilInventory.findMany({

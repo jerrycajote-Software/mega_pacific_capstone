@@ -1,10 +1,3 @@
-/**
- * OTP Helper
- * Handles generating, formatting, and verifying domain-specific OTPs for:
- * - Registration (REG-######)
- * - Login (LOG-######)
- * - Forgot Password / Reset (RST-######)
- */
 
 const OTP_PREFIXES = {
   REGISTRATION: 'REG',
@@ -38,9 +31,7 @@ const verifyOtpMatch = (storedOtp, inputOtp, expectedPrefix) => {
   if (s === i) return true;
 
   const prefix = String(expectedPrefix).toUpperCase();
-  // If stored has prefix and input is just 6 digits
   if (s === `${prefix}-${i}`) return true;
-  // If input has prefix and stored is just 6 digits
   if (`${prefix}-${s}` === i) return true;
 
   return false;

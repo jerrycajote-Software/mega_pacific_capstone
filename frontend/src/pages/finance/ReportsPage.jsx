@@ -142,7 +142,7 @@ const ReportsPage = () => {
     try {
       const summary = reportData.summary;
 
-      // Sheet 1: Summary & P&L Statement
+      
       const pnlData = [
         ['MEGA PACIFIC ROOFING SYSTEM - FINANCIAL REPORT'],
         ['Period:', reportData.periodLabel],
@@ -168,7 +168,7 @@ const ReportsPage = () => {
       wsPnl['!cols'] = [{ wch: 25 }, { wch: 35 }, { wch: 20 }];
       XLSX.utils.book_append_sheet(wb, wsPnl, 'Income Statement');
 
-      // Sheet 2: Expenses
+      
       if (reportData.recentExpenses && reportData.recentExpenses.length > 0) {
         const expData = [
           ['REFERENCE', 'DATE', 'CATEGORY', 'DESCRIPTION', 'AMOUNT (PHP)', 'STATUS']
@@ -181,7 +181,7 @@ const ReportsPage = () => {
         XLSX.utils.book_append_sheet(wb, wsExp, 'Expenses');
       }
 
-      // Sheet 3: Orders
+      
       if (reportData.recentPaidOrders && reportData.recentPaidOrders.length > 0) {
         const ordData = [
           ['ORDER ID', 'DATE', 'CUSTOMER', 'PAYMENT MODE', 'TOTAL (PHP)']

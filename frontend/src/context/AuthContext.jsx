@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
       }
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // 1. Intercept 401 Unauthorized globally and 503 Maintenance Mode
+      
       const interceptor = axios.interceptors.response.use(
         (response) => response,
         (error) => {
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
         if (expiresIn <= 0) {
           logout();
         } else {
-          // Set a timeout to log out when the token expires
+          
           tokenExpiryTimeout = setTimeout(() => {
             logout();
           }, expiresIn);
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
       const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
       events.forEach(event => window.addEventListener(event, handleActivity));
 
-      // Check every minute if the user has been inactive for 24 hours
+      
       activityInterval = setInterval(() => {
         const lastActivity = parseInt(localStorage.getItem('lastActivity') || '0', 10);
         if (Date.now() - lastActivity > INACTIVITY_LIMIT) {
@@ -179,7 +179,9 @@ export const AuthProvider = ({ children }) => {
         userId: response.data.userId, 
         email: response.data.email,
         isRestoration: response.data.isRestoration,
-        message: response.data.message 
+        message: response.data.message,
+        emailSent: response.data.emailSent,
+        emailWarning: response.data.emailWarning
       };
     } catch (error) {
       console.error('Registration error:', error.response?.data?.error || error.message);
