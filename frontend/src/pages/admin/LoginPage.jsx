@@ -441,7 +441,7 @@ const LoginPage = () => {
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.toUpperCase())}
-                      placeholder="LOG-123456"
+                      placeholder="123456"
                       required
                       style={{
                         width: '100%',

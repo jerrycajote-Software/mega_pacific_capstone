@@ -17,7 +17,7 @@ const verifyToken = async (req, res, next) => {
     }
     const decoded = jwt.verify(token, jwtSecret);
     
-    if (["admin", "sales", "owner", "finance", "logistic"].includes(decoded.role)) {
+    if (["admin", "sales", "owner", "finance", "logistic", "superadmin", "super_admin"].includes(decoded.role) && decoded.sessionToken) {
       const session = await prisma.userSession.findUnique({
         where: { sessionToken: decoded.sessionToken },
         include: { user: true }
@@ -58,7 +58,6 @@ const verifyToken = async (req, res, next) => {
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      
       console.warn(`JWT Verification Warning: Token expired at ${error.expiredAt}`);
     } else {
       console.error("JWT Verification Error:", error);
@@ -99,7 +98,7 @@ const verifySales = (req, res, next) => {
 
 const verifySuperAdmin = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (req.user && req.user.role === "superadmin") {
+    if (req.user && (req.user.role === "superadmin" || req.user.role === "super_admin")) {
       next();
     } else {
       res.status(403).json({ error: "Access denied. Super Admin privileges required." });
@@ -119,7 +118,7 @@ const verifyFinance = (req, res, next) => {
 
 const verifyLogistic = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (req.user && (req.user.role === "logistic" || req.user.role === "admin" || req.user.role === "superadmin")) {
+    if (req.user && (req.user.role === "logistic" || req.user.role === "admin" || req.user.role === "superadmin" || req.user.role === "super_admin")) {
       next();
     } else {
       res.status(403).json({ error: "Access denied. Logistic privileges required." });
@@ -129,7 +128,7 @@ const verifyLogistic = (req, res, next) => {
 
 const verifyStaff = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (req.user && ["admin", "superadmin", "owner", "sales", "logistic"].includes(req.user.role)) {
+    if (req.user && ["admin", "superadmin", "super_admin", "owner", "sales", "logistic"].includes(req.user.role)) {
       next();
     } else {
       res.status(403).json({ error: "Access denied. Staff privileges required." });

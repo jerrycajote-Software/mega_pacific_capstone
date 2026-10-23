@@ -600,27 +600,6 @@ const OrdersPage = () => {
   return (
     <Box sx={{ animation: 'fadeIn 0.35s ease-in-out', pb: 10, maxWidth: 1200, mx: 'auto', px: { xs: 1.5, sm: 2.5, md: 0 } }}>
       
-      <Box sx={{ mb: 2.5 }}>
-        <Button 
-          onClick={() => navigate('/dashboard')} 
-          startIcon={<i className="fi fi-rr-arrow-left" style={{ fontSize: 13 }} />}
-          sx={{ 
-            color: 'text.secondary', 
-            textTransform: 'none', 
-            fontWeight: 600, 
-            fontSize: '0.85rem',
-            px: 1.5,
-            py: 0.6,
-            borderRadius: 2,
-            bgcolor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            '&:hover': { bgcolor: 'action.hover', color: 'text.primary' }
-          }}
-        >
-          Back to Dashboard
-        </Button>
-      </Box>
 
       <Box sx={{ mb: 3.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

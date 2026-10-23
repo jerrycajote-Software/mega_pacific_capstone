@@ -1,7 +1,4 @@
-/**
- * Auth Validator Middleware
- * Validates registration payloads and enforces password security policy on the server side.
- */
+
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*~]).{8,}$/;
 
@@ -16,11 +13,7 @@ const REQUIRED_REGISTER_FIELDS = [
   { key: 'zipCode',       label: 'Zip code' },
 ];
 
-/**
- * Middleware: validateRegister
- * - Checks all required fields are present and non-empty.
- * - Enforces the password security policy.
- */
+
 const validateRegister = (req, res, next) => {
   const body = req.body;
 
@@ -53,11 +46,7 @@ const validateRegister = (req, res, next) => {
   next();
 };
 
-/**
- * Middleware: validateResetPassword
- * - Checks email, otp, and newPassword are present.
- * - Enforces the password security policy on the new password.
- */
+
 const validateResetPassword = (req, res, next) => {
   const { email, otp, newPassword } = req.body;
 

@@ -210,7 +210,7 @@ const login = async (req, res) => {
     }
 
     let sessionToken = null;
-    if (user.role === "admin" || user.role === "sales" || user.role === "owner" || user.role === "superadmin" || user.role === "finance" || user.role === "logistic") {
+    if (user.role === "admin" || user.role === "sales" || user.role === "owner" || user.role === "superadmin" || user.role === "super_admin" || user.role === "finance" || user.role === "logistic") {
       
       const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
       await prisma.userSession.updateMany({
@@ -225,7 +225,7 @@ const login = async (req, res) => {
       const setting = await prisma.systemSetting.findUnique({ where: { key: "max_sales_devices" } });
       const maxDevices = setting ? parseInt(setting.value, 10) : 3;
 
-      if (activeSessionsCount >= maxDevices && user.role !== "superadmin") {
+      if (activeSessionsCount >= maxDevices && user.role !== "superadmin" && user.role !== "super_admin") {
         
         const excessCount = activeSessionsCount - maxDevices + 1; 
         const oldestSessions = await prisma.userSession.findMany({
@@ -244,7 +244,7 @@ const login = async (req, res) => {
         }
       }
 
-      if (activeSessionsCount > 0 && !otp && user.role !== "superadmin") {
+      if (activeSessionsCount > 0 && !otp && user.role !== "superadmin" && user.role !== "super_admin") {
         const newOtp = generateOtp('LOG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
@@ -328,7 +328,7 @@ const login = async (req, res) => {
     let profile = null;
     if (user.role === 'customer') profile = user.customerProfile;
     else if (user.role === 'admin') profile = user.adminProfile;
-    else if (user.role === 'super_admin') profile = user.superAdminProfile;
+    else if (user.role === 'super_admin' || user.role === 'superadmin') profile = user.superAdminProfile;
     else if (user.role === 'owner') profile = user.ownerProfile;
     else if (user.role === 'sales') profile = user.salesProfile;
     else if (user.role === 'logistic') profile = user.logisticProfile;
@@ -375,7 +375,7 @@ const getProfile = async (req, res) => {
     let profile = null;
     if (user.role === 'customer') profile = user.customerProfile;
     else if (user.role === 'admin') profile = user.adminProfile;
-    else if (user.role === 'super_admin') profile = user.superAdminProfile;
+    else if (user.role === 'super_admin' || user.role === 'superadmin') profile = user.superAdminProfile;
     else if (user.role === 'owner') profile = user.ownerProfile;
     else if (user.role === 'sales') profile = user.salesProfile;
     else if (user.role === 'logistic') profile = user.logisticProfile;
@@ -427,7 +427,7 @@ const updateProfile = async (req, res) => {
       await prisma.customerProfile.update({ where: { userId }, data: profileData });
     } else if (role === 'admin') {
       await prisma.adminProfile.update({ where: { userId }, data: { contactNumber } });
-    } else if (role === 'super_admin') {
+    } else if (role === 'super_admin' || role === 'superadmin') {
       await prisma.superAdminProfile.update({ where: { userId }, data: { contactNumber } });
     } else if (role === 'owner') {
       await prisma.ownerProfile.update({ where: { userId }, data: { contactNumber } });
