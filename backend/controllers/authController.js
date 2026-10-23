@@ -41,6 +41,25 @@ const register = async (req, res) => {
           }
         });
 
+        if (address && String(address).trim()) {
+          const existingAddress = await prisma.address.findFirst({
+            where: { userId: existingUser.id }
+          });
+          if (!existingAddress) {
+            await prisma.address.create({
+              data: {
+                userId: existingUser.id,
+                contactNumber: contactNumber || "09000000000",
+                address: String(address).trim(),
+                city: city ? String(city).trim() : "",
+                province: province ? String(province).trim() : "Cavite",
+                zipCode: zipCode ? String(zipCode).trim() : "4100",
+                isDefault: true
+              }
+            });
+          }
+        }
+
         let emailSent = true;
         let emailWarning = null;
         try {
@@ -71,26 +90,41 @@ const register = async (req, res) => {
     const otp = generateOtp('REG');
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
-    const user = await prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        password: hashedPassword,
-        role: "customer",
-        isEmailVerified: false,
-        otpCode: otp,
-        otpExpiresAt,
-        lastOtpSentAt: new Date(),
-        customerProfile: {
-          create: {
-            name,
-            contactNumber,
-            address,
-            city,
-            province,
-            zipCode
-          }
+    const userCreateData = {
+      email: normalizedEmail,
+      password: hashedPassword,
+      role: "customer",
+      isEmailVerified: false,
+      otpCode: otp,
+      otpExpiresAt,
+      lastOtpSentAt: new Date(),
+      customerProfile: {
+        create: {
+          name,
+          contactNumber,
+          address,
+          city,
+          province,
+          zipCode
         }
-      },
+      }
+    };
+
+    if (address && String(address).trim()) {
+      userCreateData.addresses = {
+        create: {
+          contactNumber: contactNumber || "09000000000",
+          address: String(address).trim(),
+          city: city ? String(city).trim() : "",
+          province: province ? String(province).trim() : "Cavite",
+          zipCode: zipCode ? String(zipCode).trim() : "4100",
+          isDefault: true
+        }
+      };
+    }
+
+    const user = await prisma.user.create({
+      data: userCreateData,
     });
 
     let emailSent = true;
@@ -381,6 +415,27 @@ const getProfile = async (req, res) => {
     else if (user.role === 'logistic') profile = user.logisticProfile;
     else if (user.role === 'finance') profile = user.financeProfile;
 
+    let userAddresses = user.addresses || [];
+
+    if (user.role === 'customer' && userAddresses.length === 0 && user.customerProfile?.address) {
+      try {
+        const createdAddr = await prisma.address.create({
+          data: {
+            userId: user.id,
+            contactNumber: user.customerProfile.contactNumber || '09000000000',
+            address: user.customerProfile.address,
+            city: user.customerProfile.city || '',
+            province: user.customerProfile.province || 'Cavite',
+            zipCode: user.customerProfile.zipCode || '4100',
+            isDefault: true
+          }
+        });
+        userAddresses = [createdAddr];
+      } catch (backfillErr) {
+        console.error("Auto-heal address error:", backfillErr);
+      }
+    }
+
     const flattenedUser = {
       id: user.id,
       email: user.email,
@@ -393,7 +448,7 @@ const getProfile = async (req, res) => {
       province: profile?.province || null,
       zipCode: profile?.zipCode || null,
       avatarUrl: profile?.avatarUrl || null,
-      addresses: user.addresses || []
+      addresses: userAddresses
     };
 
     res.status(200).json({ data: flattenedUser });
@@ -425,6 +480,39 @@ const updateProfile = async (req, res) => {
     
     if (role === 'customer') {
       await prisma.customerProfile.update({ where: { userId }, data: profileData });
+
+      if (address && String(address).trim()) {
+        const defaultAddress = await prisma.address.findFirst({
+          where: { userId, isDefault: true }
+        });
+        if (defaultAddress) {
+          await prisma.address.update({
+            where: { id: defaultAddress.id },
+            data: {
+              contactNumber: contactNumber || defaultAddress.contactNumber,
+              address: String(address).trim(),
+              city: city || defaultAddress.city,
+              province: province || defaultAddress.province,
+              zipCode: zipCode || defaultAddress.zipCode
+            }
+          });
+        } else {
+          const anyAddress = await prisma.address.findFirst({ where: { userId } });
+          if (!anyAddress) {
+            await prisma.address.create({
+              data: {
+                userId,
+                contactNumber: contactNumber || "09000000000",
+                address: String(address).trim(),
+                city: city || "",
+                province: province || "Cavite",
+                zipCode: zipCode || "4100",
+                isDefault: true
+              }
+            });
+          }
+        }
+      }
     } else if (role === 'admin') {
       await prisma.adminProfile.update({ where: { userId }, data: { contactNumber } });
     } else if (role === 'super_admin' || role === 'superadmin') {
