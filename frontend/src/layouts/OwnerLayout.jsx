@@ -81,18 +81,18 @@ const OwnerLayout = () => {
         <header className="admin-topbar">
           <Link to="/owner/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '0.05em', lineHeight: 1 }}>
-              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #f59e0b' }}>MEGA</span>
-              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #d97706' }}>PACIFIC</span>
+              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
+              <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
             </div>
             <div style={{
-              color: '#d97706',
+              color: '#7a90e8',
               fontSize: '10px',
               fontWeight: 800,
               letterSpacing: '0.2em',
               marginTop: '4px',
               fontFamily: 'Arial, sans-serif'
             }}>
-              OWNER PORTAL
+              METAL AND STEEL CORP
             </div>
           </Link>
 

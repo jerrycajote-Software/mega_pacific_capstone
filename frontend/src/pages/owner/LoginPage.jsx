@@ -180,19 +180,19 @@ const OwnerLoginPage = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '32px', letterSpacing: '0.05em', lineHeight: 1 }}>
-              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #f59e0b' }}>MEGA</span>
-              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #d97706' }}>PACIFIC</span>
+              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
+              <span style={{ color: '#111b2e', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
             </div>
             
             <div style={{ 
-              color: '#d97706', 
+              color: '#7a90e8', 
               fontSize: '11px', 
               fontWeight: 800, 
               letterSpacing: '0.2em', 
               marginTop: '6px',
               fontFamily: 'Arial, sans-serif'
             }}>
-              OWNER PORTAL
+              METAL AND STEEL CORP
             </div>
           </div>
 
