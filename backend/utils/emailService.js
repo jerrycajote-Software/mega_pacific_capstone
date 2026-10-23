@@ -109,7 +109,7 @@ const deliverMail = async (mailOptions) => {
     return { success: true, messageId: data.messageId, provider: "brevo" };
   }
 
-  // Option 2: Resend REST API (HTTPS)
+
   if (resendApiKey) {
     const rawSender = process.env.SMTP_FROM || "Mega Pacific <onboarding@resend.dev>";
     console.log(`[EMAIL DISPATCH] Sending via Resend API from: ${rawSender} to: ${mailOptions.to}`);
@@ -146,7 +146,7 @@ const deliverMail = async (mailOptions) => {
     return { success: true, messageId: data.id, provider: "resend" };
   }
 
-  // Option 3: Standard Nodemailer Direct SMTP
+
   if (isRender) {
     console.warn(`[EMAIL WARNING] Attempting direct SMTP on Render.com. Render blocks outbound ports 25, 465, and 587. If this times out, configure BREVO_API_KEY in Render environment variables.`);
   }

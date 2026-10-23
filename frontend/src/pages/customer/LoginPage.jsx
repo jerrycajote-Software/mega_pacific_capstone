@@ -244,14 +244,14 @@ const CustomerLoginPage = () => {
             {requiresOtp && (
               <TextField
                 fullWidth
-                label="Login OTP Code (LOG-######)"
+                label="Login OTP Code"
                 type="text"
                 variant="outlined"
                 margin="normal"
                 required
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.toUpperCase())}
-                placeholder="LOG-123456"
+                placeholder="123456"
                 helperText="Enter the 6-digit login code from your email."
                 sx={{ mb: 1 }}
                 inputProps={{

@@ -300,7 +300,8 @@ const SuperAdminDashboardPage = () => {
       console.error('Failed to update status', err);
       
       setStatuses((prev) => ({ ...prev, [key]: currentStatus }));
-      toast.error('Failed to update portal status');
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to update portal status';
+      toast.error(errorMsg);
     }
   };
 
