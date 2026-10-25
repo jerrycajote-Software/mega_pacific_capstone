@@ -103,7 +103,7 @@ const CustomerLayoutContent = () => {
           <div>
             <strong>Signal Received: Order Ready for Pick-up!</strong>
             <div style={{ fontSize: '0.8rem', opacity: 0.95 }}>
-              {pickupNotification?.message || 'Your roofing order is staged at Plant Loading Dock 1.'}
+              {pickupNotification?.message || 'Your roofing order is Ready to Pick-Up.'}
             </div>
           </div>
         </Alert>

@@ -5,7 +5,6 @@ import PeopleIcon from '@mui/icons-material/People';
 import BadgeIcon from '@mui/icons-material/Badge';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ShieldIcon from '@mui/icons-material/Shield';
 import LockResetIcon from '@mui/icons-material/LockReset';
@@ -46,7 +45,6 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || '';
@@ -70,14 +68,14 @@ const DashboardPage = () => {
 
   useEffect(() => {
     fetchStats();
+    const syncInterval = setInterval(fetchStats, 10000);
+    const handleFocus = () => fetchStats();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchStats().then(() => {
-      setTimeout(() => setRefreshing(false), 600);
-    });
-  };
 
   if (loading) {
     return (
@@ -135,27 +133,6 @@ const DashboardPage = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '0.55rem 1.1rem',
-            borderRadius: 10,
-            border: '1px solid var(--border-light)',
-            background: 'var(--bg-secondary)',
-            color: 'var(--text-primary)',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            cursor: refreshing ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s',
-          }}
-        >
-          <RefreshIcon sx={{ fontSize: 16, transform: refreshing ? 'rotate(360deg)' : 'none', transition: 'transform 0.6s' }} />
-          <span>{refreshing ? 'Updating...' : 'Refresh Metrics'}</span>
-        </button>
       </div>
 
       {error && (

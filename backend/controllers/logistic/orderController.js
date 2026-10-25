@@ -150,9 +150,9 @@ const updateLogisticStatus = async (req, res) => {
         status: updatedOrder.status,
         fulfillmentType: updatedOrder.fulfillmentType,
         customerName: updatedOrder.customerName || updatedOrder.shippingName || updatedOrder.user?.customerProfile?.name || updatedOrder.user?.name,
-        pickupLocation: "Mega Pacific Roofing — Plant Loading Dock 1, Imus / Cavite Branch",
+        pickupLocation: "379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite",
         message: status === "ready_for_pickup"
-          ? `Order ${orderNumber} is ready for pick-up at the Mega Pacific plant!`
+          ? `Order ${orderNumber} is ready for pick-up!`
           : `Order ${orderNumber} status updated to ${status.replace(/_/g, " ")}.`
       };
 

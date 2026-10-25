@@ -73,19 +73,39 @@ const getSalesOrders = async (req, res) => {
 
 const approveOrder = async (req, res) => {
   const { id } = req.params;
+  const orderId = parseInt(id, 10);
+  if (isNaN(orderId)) {
+    return res.status(400).json({ success: false, error: "Invalid order ID specified." });
+  }
+
   try {
-    const existingOrder = await prisma.order.findUnique({ where: { id: parseInt(id) } });
+    const existingOrder = await prisma.order.findUnique({ where: { id: orderId } });
     if (!existingOrder) {
       return res.status(404).json({ success: false, error: "Order not found" });
     }
 
-    if (existingOrder.status !== "pending") {
-      return res.status(400).json({ success: false, error: "Only pending orders can be approved by sales" });
+    const currentStatus = (existingOrder.status || '').trim().toLowerCase();
+    if (currentStatus === "sales_approved") {
+      return res.status(200).json({
+        success: true,
+        data: existingOrder,
+        message: "Order is already approved by sales and forwarded to Finance."
+      });
+    }
+
+    if (currentStatus !== "pending") {
+      return res.status(400).json({
+        success: false,
+        error: `Only pending orders can be approved by sales (current status: ${existingOrder.status})`
+      });
     }
 
     const updatedOrder = await prisma.order.update({
-      where: { id: parseInt(id) },
-      data: { status: "sales_approved" }
+      where: { id: orderId },
+      data: {
+        status: "sales_approved",
+        statusUpdatedAt: new Date()
+      }
     });
     
     const io = req.app.get("io");
@@ -96,24 +116,41 @@ const approveOrder = async (req, res) => {
     res.status(200).json({ success: true, data: updatedOrder, message: "Order approved and forwarded to Finance." });
   } catch (error) {
     console.error("Failed to approve order:", error);
-    res.status(500).json({ success: false, error: "Failed to approve order" });
+    res.status(500).json({ success: false, error: "Failed to approve order due to an internal server error." });
   }
 };
 
 const rejectOrder = async (req, res) => {
   const { id } = req.params;
+  const orderId = parseInt(id, 10);
+  if (isNaN(orderId)) {
+    return res.status(400).json({ success: false, error: "Invalid order ID specified." });
+  }
   const { reason } = req.body || {};
+
   try {
     const existingOrder = await prisma.order.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: orderId },
       include: { user: { select: { email: true } } }
     });
     if (!existingOrder) {
       return res.status(404).json({ success: false, error: "Order not found" });
     }
 
-    if (existingOrder.status !== "pending") {
-      return res.status(400).json({ success: false, error: "Only pending orders can be rejected or cancelled" });
+    const currentStatus = (existingOrder.status || '').trim().toLowerCase();
+    if (currentStatus === "rejected") {
+      return res.status(200).json({
+        success: true,
+        data: existingOrder,
+        message: "Order is already rejected and recorded in Finance."
+      });
+    }
+
+    if (currentStatus !== "pending") {
+      return res.status(400).json({
+        success: false,
+        error: `Only pending orders can be rejected or cancelled (current status: ${existingOrder.status})`
+      });
     }
 
     let refundableAmount = existingOrder.total;
@@ -126,7 +163,7 @@ const rejectOrder = async (req, res) => {
 
     const { updatedOrder, refund } = await prisma.$transaction(async (tx) => {
       const ord = await tx.order.update({
-        where: { id: parseInt(id) },
+        where: { id: orderId },
         data: {
           status: "rejected",
           paymentStatus: refundableAmount > 0 ? "refund_pending" : existingOrder.paymentStatus,
@@ -136,9 +173,9 @@ const rejectOrder = async (req, res) => {
       });
 
       const ref = await tx.refund.upsert({
-        where: { orderId: parseInt(id) },
+        where: { orderId: orderId },
         create: {
-          orderId: parseInt(id),
+          orderId: orderId,
           userId: existingOrder.userId,
           amount: refundableAmount,
           paymentMethod: existingOrder.paymentMode || 'Cash on Delivery',

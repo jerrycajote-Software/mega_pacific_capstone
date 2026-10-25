@@ -1,5 +1,5 @@
 const express = require("express");
-const { register, login, logout, getProfile, updateProfile, verifyOtp, resendOtp, forgotPassword, resetPassword } = require("../controllers/authController");
+const { register, login, logout, getProfile, updateProfile, updateProfilePhoto, verifyOtp, resendOtp, forgotPassword, resetPassword } = require("../controllers/authController");
 const { verifyToken } = require("../middleware/authMiddleware");
 const { validateRegister, validateResetPassword } = require("../validators/authValidator");
 const router = express.Router();
@@ -14,6 +14,7 @@ router.post("/reset-password", validateResetPassword, resetPassword);
 
 router.get("/profile", verifyToken, getProfile);
 router.put("/profile", verifyToken, updateProfile);
+router.put("/profile/photo", verifyToken, updateProfilePhoto);
 
 router.post("/addresses", verifyToken, require("../controllers/authController").addAddress);
 router.put("/addresses/:id", verifyToken, require("../controllers/authController").updateAddress);

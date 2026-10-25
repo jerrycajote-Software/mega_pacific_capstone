@@ -1,7 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import {
+  ProfilePhotoPreviewModal,
+  RemovePhotoConfirmDialog,
+  compressProfilePhoto
+} from '../../components/profile/ProfilePhotoModal';
 import {
   Box,
   Typography,
@@ -28,7 +33,8 @@ import {
   DialogActions,
   Snackbar,
   Stack,
-  IconButton
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   getAvailableProvinces,
@@ -37,12 +43,21 @@ import {
 } from '../../utils/locationService';
 
 const ProfilePage = () => {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [addresses, setAddresses] = useState([]);
+  
+  const DEFAULT_PROFILE_PHOTO = '/default-profile.png';
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || DEFAULT_PROFILE_PHOTO);
+  const [pendingPhoto, setPendingPhoto] = useState(null);
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
+  const [savingPhoto, setSavingPhoto] = useState(false);
+  const [removePhotoOpen, setRemovePhotoOpen] = useState(false);
+  const [removingPhoto, setRemovingPhoto] = useState(false);
+  const fileInputRef = useRef(null);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState(null);
@@ -70,6 +85,13 @@ const ProfilePage = () => {
       });
       if (res.data.data) {
         setAddresses(res.data.data.addresses || []);
+        if (res.data.data.avatarUrl !== undefined) {
+          const fetchedAvatar = res.data.data.avatarUrl || DEFAULT_PROFILE_PHOTO;
+          setAvatarUrl(fetchedAvatar);
+          if (updateUser) {
+            updateUser({ avatarUrl: fetchedAvatar });
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to fetch profile', err);
@@ -77,11 +99,90 @@ const ProfilePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, updateUser]);
 
   useEffect(() => {
     if (token) fetchProfile();
   }, [token, fetchProfile]);
+
+  useEffect(() => {
+    if (user?.avatarUrl !== undefined) {
+      setAvatarUrl(user.avatarUrl || DEFAULT_PROFILE_PHOTO);
+    }
+  }, [user?.avatarUrl]);
+
+  const handleSelectPhotoFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const compressedDataUrl = await compressProfilePhoto(file);
+      setPendingPhoto(compressedDataUrl);
+      setPhotoPreviewOpen(true);
+    } catch (err) {
+      setToast({ open: true, message: err.message || 'Failed to process selected photo.', severity: 'error' });
+    } finally {
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleSaveProfilePhoto = async () => {
+    if (!pendingPhoto) return;
+    setSavingPhoto(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.put(`${API_URL}/api/auth/profile/photo`, {
+        avatarUrl: pendingPhoto
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        setAvatarUrl(pendingPhoto);
+        if (updateUser) {
+          updateUser({ avatarUrl: pendingPhoto });
+        }
+        setPhotoPreviewOpen(false);
+        setPendingPhoto(null);
+        setToast({ open: true, message: 'Profile photo updated successfully!', severity: 'success' });
+      } else {
+        setToast({ open: true, message: res.data.message || 'Failed to update profile photo.', severity: 'error' });
+      }
+    } catch (err) {
+      console.error('Error saving profile photo:', err);
+      setToast({ open: true, message: err.response?.data?.message || 'Failed to save profile photo.', severity: 'error' });
+    } finally {
+      setSavingPhoto(false);
+    }
+  };
+
+  const handleConfirmRemovePhoto = async () => {
+    setRemovingPhoto(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.put(`${API_URL}/api/auth/profile/photo`, {
+        avatarUrl: null
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        setAvatarUrl(DEFAULT_PROFILE_PHOTO);
+        if (updateUser) {
+          updateUser({ avatarUrl: DEFAULT_PROFILE_PHOTO });
+        }
+        setRemovePhotoOpen(false);
+        setToast({ open: true, message: 'Profile photo reset to default successfully.', severity: 'success' });
+      } else {
+        setToast({ open: true, message: res.data.message || 'Failed to remove profile photo.', severity: 'error' });
+      }
+    } catch (err) {
+      console.error('Error removing profile photo:', err);
+      setToast({ open: true, message: err.response?.data?.message || 'Failed to remove profile photo.', severity: 'error' });
+    } finally {
+      setRemovingPhoto(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -231,7 +332,7 @@ const ProfilePage = () => {
   }
 
   const defaultAddress = addresses.find(a => a.isDefault) || addresses[0];
-  const userInitial = (user?.name || user?.email || 'C').charAt(0).toUpperCase();
+  const hasCustomPhoto = Boolean(avatarUrl && avatarUrl !== DEFAULT_PROFILE_PHOTO);
 
   return (
     <Box sx={{ animation: 'fadeIn 0.35s ease-in-out', pb: 10, maxWidth: 1200, mx: 'auto', px: { xs: 1.5, sm: 2.5, md: 0 } }}>
@@ -257,7 +358,7 @@ const ProfilePage = () => {
               My Profile
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Manage your customer account information and jobsite delivery addresses.
+              Manage your account information and jobsite delivery addresses.
             </Typography>
           </Box>
         </Box>
@@ -285,21 +386,92 @@ const ProfilePage = () => {
               boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
             }}
           >
-            <Box sx={{ position: 'relative', width: 92, height: 92, mx: 'auto', mb: 2 }}>
+            <Box sx={{ position: 'relative', width: 96, height: 96, mx: 'auto', mb: 1.5 }}>
               <Avatar 
+                src={avatarUrl || DEFAULT_PROFILE_PHOTO}
+                alt={user?.name || 'Customer'}
                 sx={{ 
-                  width: 92, 
-                  height: 92, 
-                  bgcolor: '#4f772d', 
-                  color: '#ffffff', 
-                  fontSize: '2.5rem', 
-                  fontWeight: 900,
-                  boxShadow: '0 6px 20px rgba(79, 119, 45, 0.25)',
-                  border: '3px solid #ffffff'
+                  width: 96, 
+                  height: 96, 
+                  bgcolor: 'background.default', 
+                  border: '3px solid',
+                  borderColor: 'divider',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+                  transition: 'opacity 0.2s, transform 0.2s',
+                  '&:hover': { opacity: 0.92, transform: 'scale(1.02)' }
+                }}
+                onClick={() => fileInputRef.current?.click()}
+              />
+
+              <Tooltip title={hasCustomPhoto ? "Change Profile Photo" : "Upload Profile Photo"}>
+                <IconButton
+                  component="label"
+                  size="small"
+                  aria-label="Upload profile photo"
+                  sx={{
+                    position: 'absolute',
+                    bottom: -2,
+                    right: -2,
+                    bgcolor: 'primary.main',
+                    color: '#ffffff',
+                    border: '2px solid #ffffff',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    width: 32,
+                    height: 32,
+                    '&:hover': { bgcolor: 'primary.dark' }
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
+                    onChange={handleSelectPhotoFile}
+                  />
+                  <i className="fi fi-rr-camera" style={{ fontSize: '15px' }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1.5 }}>
+              <Button
+                size="small"
+                onClick={() => fileInputRef.current?.click()}
+                startIcon={<i className="fi fi-rr-camera" style={{ fontSize: '13px' }} />}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  color: 'primary.main',
+                  py: 0.25,
+                  px: 1,
+                  borderRadius: 1.5,
+                  '&:hover': { bgcolor: 'rgba(79, 119, 45, 0.08)' }
                 }}
               >
-                {userInitial}
-              </Avatar>
+                {hasCustomPhoto ? 'Change Photo' : 'Upload Photo'}
+              </Button>
+
+              {hasCustomPhoto && (
+                <Button
+                  size="small"
+                  onClick={() => setRemovePhotoOpen(true)}
+                  startIcon={<i className="fi fi-rr-trash" style={{ fontSize: '12px' }} />}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    color: 'error.main',
+                    py: 0.25,
+                    px: 1,
+                    borderRadius: 1.5,
+                    '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.08)' }
+                  }}
+                >
+                  Reset Default
+                </Button>
+              )}
             </Box>
 
             <Typography variant="h5" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.01em', mb: 0.5 }}>
@@ -403,7 +575,7 @@ const ProfilePage = () => {
                   Our dispatch logistics team can assist with access clearances for narrow roads and boom-truck unloading.
                 </Typography>
                 <Typography variant="body2" fontWeight={800} sx={{ color: '#4f772d', mt: 1 }}>
-                  Hotline: (046) 471-2345
+                  Tel. NO.: (046) 416 9217
                 </Typography>
               </Box>
             </Box>
@@ -791,6 +963,24 @@ const ProfilePage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ProfilePhotoPreviewModal
+        open={photoPreviewOpen}
+        previewUrl={pendingPhoto}
+        onClose={() => {
+          setPhotoPreviewOpen(false);
+          setPendingPhoto(null);
+        }}
+        onConfirmSave={handleSaveProfilePhoto}
+        saving={savingPhoto}
+      />
+
+      <RemovePhotoConfirmDialog
+        open={removePhotoOpen}
+        onClose={() => setRemovePhotoOpen(false)}
+        onConfirmRemove={handleConfirmRemovePhoto}
+        removing={removingPhoto}
+      />
 
       <Snackbar
         open={toast.open}

@@ -15,7 +15,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('appUser');
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (!savedUser) return null;
+      const parsed = JSON.parse(savedUser);
+      if (parsed && parsed.role === 'customer' && !parsed.avatarUrl) {
+        parsed.avatarUrl = '/default-profile.png';
+      }
+      return parsed;
     } catch (e) {
       return null;
     }
@@ -53,7 +58,11 @@ export const AuthProvider = ({ children }) => {
       
       const savedUser = localStorage.getItem('appUser');
       if (savedUser) {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        if (parsed && parsed.role === 'customer' && !parsed.avatarUrl) {
+          parsed.avatarUrl = '/default-profile.png';
+        }
+        setUser(parsed);
       }
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
@@ -141,15 +150,18 @@ export const AuthProvider = ({ children }) => {
         return { requiresOtp: true, message: response.data.message };
       }
 
-      const { token, user } = response.data;
+      const { token, user: loggedInUser } = response.data;
+      if (loggedInUser && loggedInUser.role === 'customer' && !loggedInUser.avatarUrl) {
+        loggedInUser.avatarUrl = '/default-profile.png';
+      }
       
       localStorage.setItem('appToken', token);
-      localStorage.setItem('appUser', JSON.stringify(user));
+      localStorage.setItem('appUser', JSON.stringify(loggedInUser));
       localStorage.setItem('lastActivity', Date.now().toString());
       
       setToken(token);
-      setUser(user);
-      return { success: true, user };
+      setUser(loggedInUser);
+      return { success: true, user: loggedInUser };
     } catch (error) {
       console.error('Login error:', error.response?.data?.error || error.message);
       return { 
@@ -189,8 +201,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = useCallback((updatedFields) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updatedFields };
+      if (updated.role === 'customer' && !updated.avatarUrl) {
+        updated.avatarUrl = '/default-profile.png';
+      }
+      localStorage.setItem('appUser', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, loading, updateUser }}>
       {children}
       {suspendedModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>

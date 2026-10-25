@@ -24,7 +24,6 @@ import StraightenIcon from '@mui/icons-material/Straighten';
 import PaletteIcon from '@mui/icons-material/Palette';
 import WarehouseIcon from '@mui/icons-material/Warehouse';
 import SaveIcon from '@mui/icons-material/Save';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
@@ -33,6 +32,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
 
 import { ROOFING_COLORS, STANDARD_THICKNESSES, DECKING_THICKNESSES } from '../../constants/roofingSpecs';
 import { isCoilInStock, getAvailableColorsForThickness, hasCoilStockForThickness } from '../../utils/coilAvailability';
+import { isCustomLengthProfile } from '../customer/buildProductOptions';
 import { io } from 'socket.io-client';
 
 const normalizeThickness = (val) => {
@@ -114,20 +114,24 @@ const PreOrderProductsPage = () => {
   const fileInputRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL || '';
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (showLoadingSpinner = false) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       const token = localStorage.getItem('appToken');
       const res = await axios.get(`${API_URL}/api/sales/pre-order-products`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data?.success) {
-        setProducts(Array.isArray(res.data.data) ? res.data.data : []);
+        setProducts(prev => {
+          const next = Array.isArray(res.data.data) ? res.data.data : [];
+          if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+          return next;
+        });
       }
     } catch (err) {
       console.error('Failed to load pre-order products:', err);
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
     }
   };
 
@@ -232,7 +236,7 @@ const PreOrderProductsPage = () => {
   }, [coils, formData?.thickness]);
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(true);
     fetchCoilSummary();
     fetchCoils();
 
@@ -242,10 +246,25 @@ const PreOrderProductsPage = () => {
       fetchCoilSummary();
     });
     socket.on('product_catalog_updated', () => {
-      fetchProducts();
+      fetchProducts(false);
     });
 
+    const syncInterval = setInterval(() => {
+      fetchProducts(false);
+      fetchCoilSummary();
+      fetchCoils();
+    }, 10000);
+
+    const handleFocus = () => {
+      fetchProducts(false);
+      fetchCoilSummary();
+      fetchCoils();
+    };
+    window.addEventListener('focus', handleFocus);
+
     return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
       socket.disconnect();
     };
   }, []);
@@ -671,17 +690,7 @@ const PreOrderProductsPage = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            onClick={() => { fetchProducts(); fetchCoilSummary(); }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '0.6rem 0.95rem', borderRadius: 10,
-              background: 'var(--bg-secondary)', border: '1px solid var(--border-light)',
-              color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer'
-            }}
-          >
-            <RefreshIcon sx={{ fontSize: 16 }} /> Refresh
-          </button>
+
 
           <button
             onClick={openAddModal}
@@ -918,9 +927,15 @@ const PreOrderProductsPage = () => {
                               <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 4, background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-light)' }}>
                                 {p.type || 'Rib Type'}
                               </span>
-                              <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>
-                                Custom up to {p.maxMeters || 21}m
-                              </span>
+                              {isCustomLengthProfile(p.type) ? (
+                                <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>
+                                  Custom up to {p.maxMeters || 21}m
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                  Fixed standard unit
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1322,8 +1337,10 @@ const PreOrderProductsPage = () => {
                           color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box'
                         }}
                       />
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                        Customizable by customer (up to 21m)
+                      <div style={{ fontSize: '0.7rem', color: isCustomLengthProfile(formData.type) ? '#16a34a' : 'var(--text-muted)', marginTop: 4, fontWeight: 600 }}>
+                        {isCustomLengthProfile(formData.type)
+                          ? 'Customizable cut length by customer (up to 21m)'
+                          : 'Fixed standard unit (No custom cut length for this profile)'}
                       </div>
                     </div>
                   </div>
@@ -1454,12 +1471,35 @@ const PreOrderProductsPage = () => {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>
-                        Category Profile Type
-                      </label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
+                          Category Profile Type
+                        </label>
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background: isCustomLengthProfile(formData.type) ? 'rgba(34, 197, 94, 0.12)' : 'rgba(100, 116, 139, 0.12)',
+                          color: isCustomLengthProfile(formData.type) ? '#16a34a' : '#64748b'
+                        }}>
+                          {isCustomLengthProfile(formData.type) ? 'Custom Cut Length (0.5m – 21m)' : 'Standard Piece / Fixed Unit'}
+                        </span>
+                      </div>
                       <select
                         value={formData.type}
-                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                        onChange={(e) => {
+                          const nextType = e.target.value;
+                          const willSupportLength = isCustomLengthProfile(nextType);
+                          const wasSupportingLength = isCustomLengthProfile(formData.type);
+                          let updatedUnit = formData.unit;
+                          if (!willSupportLength && wasSupportingLength && (formData.unit === 'per meter' || !formData.unit)) {
+                            updatedUnit = 'per piece';
+                          } else if (willSupportLength && !wasSupportingLength && (formData.unit === 'per piece' || formData.unit === 'pc')) {
+                            updatedUnit = 'per meter';
+                          }
+                          setFormData({ ...formData, type: nextType, unit: updatedUnit });
+                        }}
                         style={{
                           width: '100%', padding: '0.65rem 0.85rem', borderRadius: 10,
                           background: 'var(--bg-primary)', border: '1px solid var(--border-light)',

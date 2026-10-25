@@ -4,23 +4,25 @@ import { useLocation } from 'react-router-dom';
 
 const ThemeContext = createContext();
 
-const getTypography = (isCustomerRoute) => {
-  const defaultFont = '"Inter", "Roboto", "Helvetica", "Arial", sans-serif';
-  const headingFont = isCustomerRoute ? '"Inter", sans-serif' : '"Poppins", sans-serif';
+const getTypography = () => {
+  const bodyFont = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  const headingFont = '"Montserrat", "Poppins", sans-serif';
   
   return {
-    fontFamily: defaultFont,
-    h1: { fontFamily: headingFont, fontWeight: 700 },
-    h2: { fontFamily: headingFont, fontWeight: 700 },
-    h3: { fontFamily: headingFont, fontWeight: 600 },
-    h4: { fontFamily: headingFont, fontWeight: 600 },
+    fontFamily: bodyFont,
+    h1: { fontFamily: headingFont, fontWeight: 800, letterSpacing: '-0.025em' },
+    h2: { fontFamily: headingFont, fontWeight: 700, letterSpacing: '-0.02em' },
+    h3: { fontFamily: headingFont, fontWeight: 700, letterSpacing: '-0.015em' },
+    h4: { fontFamily: headingFont, fontWeight: 600, letterSpacing: '-0.01em' },
     h5: { fontFamily: headingFont, fontWeight: 600 },
-    h6: { fontFamily: headingFont, fontWeight: 500 },
+    h6: { fontFamily: headingFont, fontWeight: 600 },
     button: { fontFamily: headingFont, fontWeight: 600, textTransform: 'none' },
-    subtitle1: { fontFamily: headingFont },
+    subtitle1: { fontFamily: headingFont, fontWeight: 600 },
     subtitle2: { fontFamily: headingFont, fontWeight: 600 },
-    body1: { fontFamily: '"Inter", sans-serif', lineHeight: 1.7 },
-    body2: { fontFamily: '"Inter", sans-serif', lineHeight: 1.6 },
+    body1: { fontFamily: bodyFont, lineHeight: 1.65 },
+    body2: { fontFamily: bodyFont, lineHeight: 1.6 },
+    caption: { fontFamily: bodyFont },
+    overline: { fontFamily: headingFont, fontWeight: 700, letterSpacing: '0.1em' },
   };
 };
 
@@ -105,7 +107,12 @@ const buildTheme = (mode, isCustomerRoute) =>
 
 export const ThemeProvider = ({ children }) => {
   const location = useLocation();
-  const isCustomerRoute = !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/sales');
+  const staffPortals = [
+    '/admin', '/sales', '/finance', '/logistic', '/owner', '/superadmin',
+    '/admin-1megapacific', '/sales-1megapacific', '/finance-1megapacific',
+    '/logistic-1megapacific', '/owner-1megapacific', '/superadmin-0megapacific'
+  ];
+  const isCustomerRoute = !staffPortals.some((portal) => location.pathname.startsWith(portal));
 
   const [storedMode, setStoredMode] = useState(() => {
     return localStorage.getItem('mega_pacific_admin_theme') || 'dark';

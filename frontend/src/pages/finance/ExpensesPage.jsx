@@ -58,6 +58,13 @@ const Page = () => {
 
   useEffect(() => {
     fetchExpenses();
+    const interval = setInterval(fetchExpenses, 10000);
+    const handleFocus = () => fetchExpenses();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const handleAddExpense = async () => {

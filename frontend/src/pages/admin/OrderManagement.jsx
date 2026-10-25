@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import CircularProgress from '@mui/material/CircularProgress';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -75,7 +75,6 @@ const OrderManagement = () => {
   const isSales = user?.role === 'sales';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [spin, setSpin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [dateFilter, setDateFilter] = useState('All');
@@ -108,15 +107,14 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
-    
-    const autoRefresh = setInterval(() => fetchOrders(), 30 * 1000);
-    return () => clearInterval(autoRefresh);
+    const autoRefresh = setInterval(() => fetchOrders(), 10000);
+    const handleFocus = () => fetchOrders();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(autoRefresh);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
-
-  const refresh = () => {
-    setSpin(true);
-    fetchOrders().then(() => setTimeout(() => setSpin(false), 800));
-  };
 
   const handleUpdateStatus = async (id, newStatus, newPaymentStatus = null) => {
     try {
@@ -194,7 +192,7 @@ const OrderManagement = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#9ca3af' }}>
-        <RefreshIcon sx={{ fontSize: 24, animation: 'spin 1s linear infinite', marginRight: '10px' }} />
+        <CircularProgress size={22} sx={{ color: 'var(--green)', marginRight: '10px' }} />
         Loading Orders...
       </div>
     );
@@ -234,19 +232,6 @@ const OrderManagement = () => {
           >
             <PictureAsPdfIcon sx={{ fontSize: 16 }} />
             PDF
-          </button>
-          <button
-            onClick={refresh}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
-              background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', borderRadius: 10,
-              color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-          >
-            <RefreshIcon sx={{ fontSize: 15, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? '#22c55e' : 'inherit' }} />
-            Refresh Data
           </button>
         </div>
       </div>

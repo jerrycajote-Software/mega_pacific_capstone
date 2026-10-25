@@ -24,7 +24,6 @@ import {
   Alert,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -104,8 +103,13 @@ const RefundsPage = () => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 25000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchData, 10000);
+    const handleFocus = () => fetchData();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const handleOpenProcessModal = (refund) => {
@@ -203,22 +207,7 @@ const RefundsPage = () => {
           </Typography>
         </div>
 
-        <Button
-          onClick={fetchData}
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          sx={{
-            borderRadius: 2.5,
-            borderColor: 'var(--border)',
-            color: 'var(--text-primary)',
-            textTransform: 'none',
-            fontWeight: 700,
-            bgcolor: 'var(--bg-secondary)',
-            '&:hover': { bgcolor: 'var(--bg-tertiary)', borderColor: 'var(--border-light)' }
-          }}
-        >
-          Refresh
-        </Button>
+
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2.5, mb: 4 }}>

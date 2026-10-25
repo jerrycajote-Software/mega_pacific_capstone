@@ -446,16 +446,18 @@ const DashboardPage = ({ showHero = true }) => {
                               ₱{Number(displayOrigPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </Typography>
                             <Chip
-                              label={`-${discountPct}%`}
+                              label={`-${discountPct}% OFF`}
                               size="small"
                               sx={{
-                                height: 14,
-                                fontSize: '0.55rem',
-                                fontWeight: 800,
+                                height: 16,
+                                fontSize: '0.65rem',
+                                fontFamily: 'var(--font-display)',
+                                letterSpacing: '0.04em',
+                                fontWeight: 400,
                                 bgcolor: 'rgba(239,68,68,0.1)',
                                 color: '#dc2626',
-                                borderRadius: '3px',
-                                px: 0.2,
+                                borderRadius: '4px',
+                                px: 0.3,
                               }}
                             />
                           </Box>

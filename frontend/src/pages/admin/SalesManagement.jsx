@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import BadgeIcon from '@mui/icons-material/Badge';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import CircularProgress from '@mui/material/CircularProgress';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import LockResetIcon from '@mui/icons-material/LockReset';
@@ -13,7 +13,6 @@ import MailIcon from '@mui/icons-material/Mail';
 import PhoneIcon from '@mui/icons-material/Phone';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
-import CircularProgress from '@mui/material/CircularProgress';
 
 const th = {
   padding: '1rem 1.25rem',
@@ -32,7 +31,6 @@ const SalesManagement = () => {
   const navigate = useNavigate();
   const [salesList, setSalesList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [spin, setSpin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [showModal, setShowModal] = useState(false);
@@ -68,12 +66,16 @@ const SalesManagement = () => {
     }
   };
 
-  useEffect(() => { fetchSalesList(); }, []);
-
-  const refresh = () => {
-    setSpin(true);
-    fetchSalesList().then(() => setTimeout(() => setSpin(false), 800));
-  };
+  useEffect(() => {
+    fetchSalesList();
+    const syncInterval = setInterval(fetchSalesList, 10000);
+    const handleFocus = () => fetchSalesList();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const openEdit = (emp) => {
     setModalMode('edit');
@@ -171,7 +173,7 @@ const SalesManagement = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#9ca3af' }}>
-        <RefreshIcon sx={{ fontSize: 24, animation: 'spin 1s linear infinite', marginRight: '10px' }} />
+        <CircularProgress size={22} sx={{ color: '#60a5fa', marginRight: '10px' }} />
         Loading Staff...
       </div>
     );
@@ -187,13 +189,6 @@ const SalesManagement = () => {
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             Manage operational staff accounts for sales, logistics, and finance.
           </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={refresh}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)', borderRadius: 10, color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer' }}>
-            <RefreshIcon sx={{ fontSize: 15, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? '#22c55e' : 'inherit' }} />
-            Refresh
-          </button>
         </div>
       </div>
 

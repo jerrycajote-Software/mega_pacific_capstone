@@ -7,7 +7,6 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import BadgeIcon from '@mui/icons-material/Badge';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -24,7 +23,6 @@ const SalesDashboard = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [spin, setSpin] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [orderFilter, setOrderFilter] = useState('ALL');
   const [searchOrder, setSearchOrder] = useState('');
@@ -62,12 +60,20 @@ const SalesDashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    const syncInterval = setInterval(() => {
+      fetchData();
+    }, 10000);
 
-  const refresh = () => {
-    setSpin(true);
-    fetchData().then(() => setTimeout(() => setSpin(false), 700));
-  };
+    const handleFocus = () => {
+      fetchData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -262,28 +268,7 @@ const SalesDashboard = () => {
             )}
           </button>
 
-          <button
-            onClick={refresh}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 14px',
-              borderRadius: 10,
-              background: spin ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-primary)',
-              border: `1px solid ${spin ? 'var(--green)' : 'var(--border-light)'}`,
-              color: 'var(--text-primary)',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.18s ease'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
-            onMouseLeave={e => { if (!spin) e.currentTarget.style.borderColor = 'var(--border-light)'; }}
-          >
-            <RefreshIcon sx={{ fontSize: 16, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: 'var(--green)' }} />
-            Refresh
-          </button>
+
         </div>
       </div>
 
@@ -1002,21 +987,18 @@ const SalesDashboard = () => {
                         >
                           <td style={{ padding: '10px 12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: '50%',
-                                background: 'rgba(34, 197, 94, 0.12)',
-                                color: 'var(--green)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 700,
-                                fontSize: '0.8rem',
-                                flexShrink: 0
-                              }}>
-                                {order.customer ? order.customer.charAt(0).toUpperCase() : 'C'}
-                              </div>
+                              <img
+                                src={order.avatarUrl || '/default-profile.png'}
+                                alt={order.customer}
+                                style={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: '50%',
+                                  objectFit: 'cover',
+                                  flexShrink: 0,
+                                  border: '1px solid var(--border-light)'
+                                }}
+                              />
                               <div>
                                 <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                                   {order.customer}

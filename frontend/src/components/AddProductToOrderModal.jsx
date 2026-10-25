@@ -26,7 +26,7 @@ import {
   MAX_PREORDER_LENGTH_METERS,
   MIN_PREORDER_LENGTH_METERS
 } from '../constants/roofingSpecs';
-import { buildProductOptions, getDefaultOption } from '../pages/customer/buildProductOptions';
+import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from '../pages/customer/buildProductOptions';
 import { isCoilInStock, getFirstInStockColor } from '../utils/coilAvailability';
 
 
@@ -194,7 +194,8 @@ const AddProductToOrderModal = ({
     return buildProductOptions(selectedProduct);
   }, [selectedProduct]);
 
-  const isPerMeter = selectedProduct?.unit === 'per meter' || selectedProduct?.isPreOrder;
+  const isCustomLengthEligible = isCustomLengthProfile(selectedProduct?.type);
+  const isPerMeter = isCustomLengthEligible && (selectedProduct?.unit === 'per meter' || selectedProduct?.unit?.toLowerCase().includes('meter') || !selectedProduct?.unit);
   const numLength = isPerMeter
     ? Math.max(MIN_PREORDER_LENGTH_METERS, Math.min(MAX_PREORDER_LENGTH_METERS, parseFloat(customLength) || 1.0))
     : 1.0;

@@ -52,6 +52,15 @@ const ReportsPage = () => {
 
   useEffect(() => {
     fetchReports(period);
+    const interval = setInterval(() => {
+      fetchReports(period);
+    }, 15000);
+    const handleFocus = () => fetchReports(period);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [period]);
 
   const handlePeriodChange = (e) => {

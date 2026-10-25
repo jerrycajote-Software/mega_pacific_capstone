@@ -7,6 +7,7 @@ import { getZipCodeForLocation } from '../../utils/locationService';
 import ShippingInfoWidget from '../../components/ShippingInfoWidget';
 import PaymentMethodWidget from '../../components/PaymentMethodWidget';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
+import { isCustomLengthProfile } from './buildProductOptions';
 import { getColorHex } from '../../constants/roofingSpecs';
 import {
   Box,
@@ -75,14 +76,16 @@ const Checkout = () => {
 
   
   const computeItemUnitPrice = (item) => {
-    const isPerMeter = item.product?.unit === 'per meter' || item.product?.unit === 'meter' || item.product?.isPreOrder;
+    const isCustomEligible = isCustomLengthProfile(item.product?.type || item.type);
+    const isPerMeter = isCustomEligible && (item.product?.unit === 'per meter' || item.product?.unit === 'meter' || item.product?.isPreOrder);
     const len = isPerMeter && item.customLength ? Number(item.customLength) : 1;
     const unitP = item.variant?.price ?? item.product?.price ?? (item.price || 0);
     return unitP * len;
   };
 
   const computeItemOriginalPrice = (item) => {
-    const isPerMeter = item.product?.unit === 'per meter' || item.product?.unit === 'meter' || item.product?.isPreOrder;
+    const isCustomEligible = isCustomLengthProfile(item.product?.type || item.type);
+    const isPerMeter = isCustomEligible && (item.product?.unit === 'per meter' || item.product?.unit === 'meter' || item.product?.isPreOrder);
     const len = isPerMeter && item.customLength ? Number(item.customLength) : 1;
     const unitP = item.variant?.price ?? item.product?.price ?? (item.price || 0);
     const origP = item.variant?.originalPrice ?? item.product?.originalPrice ?? item.originalPrice ?? (unitP ? Math.round((unitP / 0.70) * 100) / 100 : 0);
@@ -1264,7 +1267,7 @@ const Checkout = () => {
                       </Box>
 
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
-                        {item.customLength && (
+                        {item.customLength && isCustomLengthProfile(item.product?.type || item.type) && (
                           <Chip label={`${item.customLength}m Cut`} size="small" variant="outlined" sx={{ height: 18, fontSize: '0.62rem', fontWeight: 700, color: 'primary.main', borderColor: 'primary.main' }} />
                         )}
                         {(item.thickness || (item.variant && !item.variant.isBaseProduct)) && (
@@ -1402,8 +1405,7 @@ const Checkout = () => {
 
               {(() => {
                 const originalOrderTotal = orderItems.reduce((acc, item) => {
-                  const p = (item.variant?.price ?? item.product?.price ?? (item.price || 0)) * (item.customLength ? Number(item.customLength) : 1);
-                  const orig = (item.variant?.originalPrice ?? item.product?.originalPrice ?? item.originalPrice ?? (p ? Math.round((p / 0.70) * 100) / 100 : 0)) * (item.customLength ? Number(item.customLength) : 1);
+                  const orig = computeItemOriginalPrice(item);
                   return acc + (orig * item.quantity);
                 }, 0);
                 const totalOrderSavings = Math.max(0, originalOrderTotal - orderTotal);
@@ -1566,7 +1568,7 @@ const Checkout = () => {
                   customerEmail: formData.customerEmail || user?.email || '',
                   customerPhone: formData.contactNumber || '',
                   deliveryLocation: formData.fulfillmentType === 'Pickup'
-                    ? 'Store / Plant Pick-up (Plant Loading Dock 1)'
+                    ? 'Store / Plant Pick-up'
                     : `${formData.address || ''}, ${formData.city || ''}, ${formData.province || ''}`.replace(/^, |, $/g, '').trim() || 'CALABARZON / Metro Manila Area',
                   items: orderItems.map(itm => ({
                     name: itm.product?.name || itm.name || 'Roofing Item',

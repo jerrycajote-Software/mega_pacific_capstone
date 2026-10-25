@@ -1,33 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Fab,
-  Tooltip,
-  Badge,
-  Paper,
-  Box,
-  Typography,
-  IconButton,
-  TextField,
-  Button,
-  CircularProgress
-} from '@mui/material';
-
-import { useAuth } from '../context/AuthContext';
+import { Drawer } from '@mui/material';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+
+import { useAuth } from '../context/AuthContext';
+import SupportHeader from './support/SupportHeader';
+import SupportMessageList from './support/SupportMessageList';
+import SupportComposer from './support/SupportComposer';
+import SupportDockTab from './support/SupportDockTab';
+
+export { openCustomerSupport } from '../utils/supportEvents';
 
 const CustomerServiceWidget = () => {
   const { user, token } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inquiryId, setInquiryId] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [socket, setSocket] = useState(null);
   const messagesEndRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL || '';
 
+  // Listen for custom trigger events from Header, Footer, or navigation actions
+  useEffect(() => {
+    const handleOpenFromEvent = (e) => {
+      setIsOpen(true);
+      if (e?.detail?.initialPrompt) {
+        setNewMessage(e.detail.initialPrompt);
+      }
+    };
+
+    window.addEventListener('mega_open_support', handleOpenFromEvent);
+    return () => window.removeEventListener('mega_open_support', handleOpenFromEvent);
+  }, []);
+
+  // Initialize Socket.io connection for customer
   useEffect(() => {
     if (!user || user.role !== 'customer') return;
 
@@ -39,189 +50,173 @@ const CustomerServiceWidget = () => {
     return () => newSocket.close();
   }, [user, API_URL]);
 
+  // Fetch recent inquiry when drawer is opened
   useEffect(() => {
-    if (isOpen && !inquiryId && token) {
-      fetchInquiries();
+    if (isOpen && token) {
+      fetchCustomerInquiries();
     }
-  }, [isOpen]);
+  }, [isOpen, token]);
 
+  // Subscribe to real-time messages in the active inquiry room
   useEffect(() => {
     if (socket && inquiryId) {
       socket.emit('join_room', `inquiry_${inquiryId}`);
-      
-      const messageHandler = (msg) => {
-        setMessages(prev => [...prev, msg]);
+
+      const handleIncomingMessage = (incomingMsg) => {
+        setMessages((prev) => {
+          if (incomingMsg?.id && prev.some((m) => m.id === incomingMsg.id)) {
+            return prev;
+          }
+          return [...prev, incomingMsg];
+        });
       };
-      
-      socket.on('new_message', messageHandler);
+
+      socket.on('new_message', handleIncomingMessage);
 
       return () => {
-        socket.off('new_message', messageHandler);
+        socket.off('new_message', handleIncomingMessage);
       };
     }
   }, [socket, inquiryId]);
 
+  // Smooth auto-scroll to the latest message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isOpen]);
 
-  const fetchInquiries = async () => {
+  const fetchCustomerInquiries = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/inquiries/customer`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.data.length > 0) {
+      if (Array.isArray(res.data) && res.data.length > 0) {
         const recentInquiry = res.data[0];
         setInquiryId(recentInquiry.id);
         setMessages(recentInquiry.messages || []);
       }
     } catch (error) {
-      console.error("Error fetching inquiries", error);
+      console.error('Error fetching customer inquiries:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (e) e.preventDefault();
+    const trimmed = newMessage.trim();
+    if (!trimmed || sending) return;
 
+    setSending(true);
     try {
       if (!inquiryId) {
-        const res = await axios.post(`${API_URL}/api/inquiries`, {
-          subject: "Customer Inquiry",
-          initialMessage: newMessage
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await axios.post(
+          `${API_URL}/api/inquiries`,
+          {
+            subject: 'Customer Roofing Inquiry',
+            initialMessage: trimmed
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
         setInquiryId(res.data.id);
-        setMessages(res.data.messages);
+        setMessages(res.data.messages || []);
       } else {
-        await axios.post(`${API_URL}/api/inquiries/${inquiryId}/messages`, {
-          content: newMessage
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(
+          `${API_URL}/api/inquiries/${inquiryId}/messages`,
+          {
+            content: trimmed
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
       }
       setNewMessage('');
     } catch (error) {
-      console.error("Error sending message", error);
+      console.error('Error sending message:', error);
+    } finally {
+      setSending(false);
     }
+  };
+
+  const handleSelectQuickPrompt = (promptText) => {
+    setNewMessage(promptText);
+  };
+
+  const handleClearDraft = () => {
+    setNewMessage('');
+  };
+
+  const handleToggleMaximize = () => {
+    setIsMaximized((prev) => !prev);
+  };
+
+  const handleCloseSupportWorkspace = () => {
+    setIsOpen(false);
+  };
+
+  const handleOpenSupportWorkspace = () => {
+    setIsOpen(true);
   };
 
   if (!user || user.role !== 'customer') return null;
 
   return (
     <>
-      <Tooltip title="Customer Support" placement="left" arrow>
-        <Fab
-          color="secondary"
-          aria-label="Customer Support"
-          onClick={() => setIsOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: { xs: 72, md: 28 },
-            right: { xs: 16, sm: 28 },
-            zIndex: 1200,
-            width: { xs: 50, sm: 60 },
-            height: { xs: 50, sm: 60 },
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            '&:hover': {
-              transform: 'scale(1.08)',
-              boxShadow: '0 12px 32px rgba(0,0,0,0.3)',
-            },
-          }}
-        >
-          <Badge color="error" variant="dot" invisible={isOpen}>
-            <i className="fi fi-rr-comment-alt" style={{ fontSize: '20px', color: '#ffffff' }}></i>
-          </Badge>
-        </Fab>
-      </Tooltip>
+      <SupportDockTab
+        isOpen={isOpen}
+        onOpenSupport={handleOpenSupportWorkspace}
+      />
 
-      {isOpen && (
-        <Paper
-          elevation={8}
-          sx={{
-            position: 'fixed',
-            bottom: { xs: 68, md: 96 },
-            right: { xs: 12, sm: 28 },
-            width: { xs: 'calc(100vw - 24px)', sm: 360 },
-            maxWidth: 380,
-            height: { xs: 'calc(100vh - 140px)', sm: 480 },
-            maxHeight: 520,
-            zIndex: 1300,
+      <Drawer
+        anchor="right"
+        open={isOpen}
+        onClose={handleCloseSupportWorkspace}
+        PaperProps={{
+          sx: {
+            width: isMaximized
+              ? { xs: '100vw', sm: '92vw', md: 880, lg: 1040 }
+              : { xs: '100vw', sm: 540, md: 620 },
+            maxWidth: '100vw',
+            height: '100vh',
+            bgcolor: 'background.paper',
+            boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.18)',
+            transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             display: 'flex',
             flexDirection: 'column',
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow: '0 12px 36px rgba(0,0,0,0.25)',
-          }}
-        >
-          <Box sx={{
-            bgcolor: 'secondary.main',
-            color: 'white',
-            p: 2,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <Typography variant="subtitle1" fontWeight="bold">Customer Support</Typography>
-            <IconButton size="small" onClick={() => setIsOpen(false)} sx={{ color: 'white' }}>
-              <i className="fi fi-rr-cross" style={{ fontSize: '14px', color: '#ffffff' }}></i>
-            </IconButton>
-          </Box>
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <SupportHeader
+          isMaximized={isMaximized}
+          onToggleMaximize={handleToggleMaximize}
+          onClose={handleCloseSupportWorkspace}
+          onRefresh={fetchCustomerInquiries}
+          loading={loading}
+          inquiryId={inquiryId}
+        />
 
-          <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto', bgcolor: '#f5f5f5', display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-                <CircularProgress size={24} />
-              </Box>
-            ) : messages.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
-                Hi there! How can we help you today?
-              </Typography>
-            ) : (
-              messages.map((msg, index) => {
-                const isCustomer = msg.senderId === user.id;
-                return (
-                  <Box key={index} sx={{
-                    alignSelf: isCustomer ? 'flex-end' : 'flex-start',
-                    maxWidth: '80%',
-                    bgcolor: isCustomer ? 'primary.main' : 'white',
-                    color: isCustomer ? 'white' : 'text.primary',
-                    p: 1.5,
-                    borderRadius: 2,
-                    boxShadow: 1
-                  }}>
-                    {!isCustomer && (
-                      <Typography variant="caption" sx={{ display: 'block', mb: 0.5, fontWeight: 'bold', color: 'secondary.main' }}>
-                        {msg.sender?.name || 'Sales'}
-                      </Typography>
-                    )}
-                    <Typography variant="body2">{msg.content}</Typography>
-                  </Box>
-                )
-              })
-            )}
-            <div ref={messagesEndRef} />
-          </Box>
+        <SupportMessageList
+          messages={messages}
+          loading={loading}
+          currentUser={user}
+          onSelectPrompt={handleSelectQuickPrompt}
+          messagesEndRef={messagesEndRef}
+        />
 
-          <Box component="form" onSubmit={handleSendMessage} sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'white', display: 'flex', gap: 1 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Type your message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              autoComplete="off"
-            />
-            <Button type="submit" variant="contained" color="secondary" sx={{ minWidth: 'auto', px: 2 }} disabled={!newMessage.trim()}>
-              <i className="fi fi-rr-paper-plane" style={{ fontSize: '14px', color: '#ffffff' }}></i>
-            </Button>
-          </Box>
-        </Paper>
-      )}
+        <SupportComposer
+          newMessage={newMessage}
+          onChangeMessage={setNewMessage}
+          onSendMessage={handleSendMessage}
+          onClearMessage={handleClearDraft}
+          sending={sending}
+        />
+      </Drawer>
     </>
   );
 };

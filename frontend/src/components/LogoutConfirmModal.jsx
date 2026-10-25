@@ -68,7 +68,7 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
             padding: '1.75rem',
             boxSizing: 'border-box',
-            fontFamily: "'Inter', system-ui, sans-serif"
+            fontFamily: "var(--font-body, 'Inter', system-ui, sans-serif)"
           }}
         >
           <h3
@@ -77,7 +77,7 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
               fontSize: '1.125rem',
               fontWeight: 700,
               color: 'var(--text-primary, #1a2027)',
-              fontFamily: "'Poppins', sans-serif",
+              fontFamily: "var(--font-heading, 'Montserrat', sans-serif)",
               letterSpacing: '-0.01em'
             }}
           >
@@ -115,7 +115,7 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
                 fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
-                fontFamily: "'Poppins', sans-serif",
+                fontFamily: "var(--font-heading, 'Montserrat', sans-serif)",
                 outline: 'none'
               }}
               onMouseEnter={(e) => {
@@ -142,7 +142,7 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
                 cursor: 'pointer',
                 transition: 'all 0.18s ease',
                 boxShadow: `0 4px 12px ${confirmBtnGlow}`,
-                fontFamily: "'Poppins', sans-serif",
+                fontFamily: "var(--font-heading, 'Montserrat', sans-serif)",
                 outline: 'none'
               }}
               onMouseEnter={(e) => {

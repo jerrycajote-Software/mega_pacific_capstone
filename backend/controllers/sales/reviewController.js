@@ -27,7 +27,18 @@ const getAllReviews = async (req, res) => {
       },
       orderBy: { createdAt: "desc" }
     });
-    res.json({ success: true, data: reviews });
+    const formatted = reviews.map(r => ({
+      ...r,
+      user: {
+        ...r.user,
+        avatarUrl: r.user?.customerProfile?.avatarUrl || "/default-profile.png",
+        customerProfile: {
+          name: r.user?.customerProfile?.name || r.user?.email?.split('@')[0] || "Customer",
+          avatarUrl: r.user?.customerProfile?.avatarUrl || "/default-profile.png"
+        }
+      }
+    }));
+    res.json({ success: true, data: formatted });
   } catch (error) {
     console.error("Error fetching all reviews:", error);
     res.status(500).json({ success: false, error: "Failed to fetch reviews" });

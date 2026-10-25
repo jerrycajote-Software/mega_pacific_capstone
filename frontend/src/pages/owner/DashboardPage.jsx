@@ -3,7 +3,7 @@ import axios from 'axios';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import CircularProgress from '@mui/material/CircularProgress';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
@@ -75,7 +75,6 @@ const td = (right = false) => ({
 });
 
 const OwnerDashboardPage = () => {
-  const [spin, setSpin] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,17 +100,19 @@ const OwnerDashboardPage = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    const syncInterval = setInterval(fetchDashboardData, 10000);
+    const handleFocus = () => fetchDashboardData();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
-
-  const refresh = () => {
-    setSpin(true);
-    fetchDashboardData().then(() => setTimeout(() => setSpin(false), 800));
-  };
 
   if (loading || !data) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: 'var(--text-muted)' }}>
-        <RefreshIcon sx={{ fontSize: 24, animation: 'spin 1s linear infinite', marginRight: '10px' }} />
+        <CircularProgress size={22} sx={{ color: '#10b981', marginRight: '10px' }} />
         Gathering Executive Insights...
       </div>
     );
@@ -128,19 +129,6 @@ const OwnerDashboardPage = () => {
             {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        <button
-          onClick={refresh}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px',
-            background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10,
-            color: '#10b981', fontSize: '0.82rem', cursor: 'pointer', transition: 'background 0.2s'
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(16,185,129,0.2)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(16,185,129,0.1)'}
-        >
-          <RefreshIcon sx={{ fontSize: 15, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: 'inherit' }} />
-          Refresh
-        </button>
       </div>
 
       {error && (

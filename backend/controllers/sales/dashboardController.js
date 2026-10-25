@@ -106,7 +106,7 @@ const getSalesDashboardStats = async (req, res) => {
         id: `#ORD-${o.id.toString().padStart(3, "0")}`,
         rawId: o.id,
         customer: customerName,
-        avatarUrl: o.user?.customerProfile?.avatarUrl || null,
+        avatarUrl: o.user?.customerProfile?.avatarUrl || "/default-profile.png",
         date: new Date(o.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
         status: o.status,
         paymentMode: o.paymentMode || "Cash on Delivery",

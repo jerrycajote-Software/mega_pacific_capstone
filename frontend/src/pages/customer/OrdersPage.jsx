@@ -366,7 +366,7 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
               <i className="fi fi-rr-shop" style={{ fontSize: 16, color: '#7c3aed' }} />
               <Typography variant="caption" sx={{ color: '#6d28d9', fontWeight: 800 }}>
-                READY FOR PICK-UP: Staged at Mega Pacific Plant Loading Dock 1
+                READY FOR PICK-UP
               </Typography>
             </Box>
             <Typography variant="caption" sx={{ color: '#7c3aed', fontWeight: 700, display: { xs: 'none', sm: 'block' } }}>
@@ -651,10 +651,10 @@ const OrdersPage = () => {
             </Avatar>
             <Box>
               <Typography variant="subtitle2" fontWeight={800} color="#6d28d9">
-                Signal Transmitted: Roofing Materials Ready for Pick-up!
+                Signal Transmitted: Your Order is Ready for Pick-up!
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                Your custom cuts are banded and staged at <strong>Plant Loading Dock 1</strong>. Click below to view your digital handover pass.
+                Pick-UP Your Order in our plant <strong>379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite</strong>. Click below to view your digital handover pass.
               </Typography>
             </Box>
           </Box>

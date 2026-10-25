@@ -77,19 +77,8 @@ const FinanceLayout = () => {
 
       <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
 
-        <div
-          className="sidebar-header-box"
-          style={{
-            padding: isSidebarCollapsed ? '1.25rem 0.5rem 1rem' : '1.25rem 1.25rem 1rem',
-            borderBottom: '1px solid var(--border-light)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: isSidebarCollapsed ? 'center' : 'space-between',
-            gap: '0.75rem',
-            transition: 'all 0.28s ease',
-          }}
-        >
-          <div className="sidebar-full-content" style={{ minWidth: 0, flex: 1 }}>
+        <div className="sidebar-header-box">
+          <div className="sidebar-header-content">
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontWeight: 600 }}>
               Finance
             </div>
@@ -104,87 +93,45 @@ const FinanceLayout = () => {
           <Tooltip title={isSidebarCollapsed ? "Expand Navigation" : "Hide Navigation"} arrow placement={isSidebarCollapsed ? "right" : "left"}>
             <button
               type="button"
+              className="sidebar-toggle-btn"
               onClick={handleToggleSidebarNavigation}
               aria-label={isSidebarCollapsed ? "Expand Navigation" : "Hide Navigation"}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: 'transparent',
-                border: '1px solid var(--border-light)',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                flexShrink: 0,
-                transition: 'all 0.18s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-                e.currentTarget.style.borderColor = 'var(--border)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.borderColor = 'var(--border-light)';
-              }}
             >
-              <MenuOpenIcon sx={{ fontSize: 19, transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.28s ease' }} />
+              <MenuOpenIcon sx={{ fontSize: 19, transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none' }} />
             </button>
           </Tooltip>
         </div>
 
-        <div className="sidebar-full-content" style={{ padding: '1rem 1.25rem 0.5rem', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+        <div className="sidebar-section-title">
           Operations
         </div>
 
-        <nav style={{ padding: isSidebarCollapsed ? '0 0.5rem' : '0 0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <nav className="sidebar-nav">
           {navItems.map((item) => (
             <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
               <NavLink
                 to={item.path}
                 className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-                style={{
-                  justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
-                  padding: isSidebarCollapsed ? '0.75rem 0' : '0.75rem 1rem',
-                }}
               >
-                <span className="nav-icon" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>
-                <span className="sidebar-full-content">{item.name}</span>
+                <span className="nav-icon">{item.icon}</span>
+                <span className="sidebar-nav-label">{item.name}</span>
               </NavLink>
             </Tooltip>
           ))}
         </nav>
 
-        <div style={{ padding: isSidebarCollapsed ? '1rem 0.5rem' : '1rem', borderTop: '1px solid var(--border-light)', marginTop: 'auto' }}>
+        <div className="sidebar-footer">
           <Tooltip title="Sign Out" placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
             <button
+              type="button"
               onClick={handleLogout}
               className="sidebar-signout-btn"
-              style={{
-                display: 'flex', alignItems: 'center',
-                justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
-                gap: 12,
-                padding: isSidebarCollapsed ? '0.75rem 0' : '0.75rem 1rem',
-                width: '100%', borderRadius: 12,
-                background: 'none', border: '1px solid transparent', cursor: 'pointer',
-                color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500, transition: 'all 0.18s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
-                e.currentTarget.style.color = '#f87171';
-                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'none';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.borderColor = 'transparent';
-              }}
+              aria-label="Sign Out"
             >
-              <LogoutIcon sx={{ fontSize: 18, flexShrink: 0 }} />
-              <span className="sidebar-full-content">Sign Out</span>
+              <span className="nav-icon">
+                <LogoutIcon sx={{ fontSize: 18 }} />
+              </span>
+              <span className="sidebar-nav-label">Sign Out</span>
             </button>
           </Tooltip>
         </div>

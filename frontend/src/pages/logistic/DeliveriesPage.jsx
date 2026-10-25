@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -73,7 +72,11 @@ const DeliveriesPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
-        setOrders(res.data.data);
+        setOrders(prev => {
+          const next = res.data.data || [];
+          if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+          return next;
+        });
       }
     } catch (err) {
       console.error('Failed to fetch logistic orders', err);
@@ -84,8 +87,13 @@ const DeliveriesPage = () => {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 20000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchOrders, 10000);
+    const handleFocus = () => fetchOrders();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const handleUpdateStatus = async (id, newStatus, isSignal = false) => {
@@ -163,25 +171,6 @@ const DeliveriesPage = () => {
             Coordinate jobsite fleet transport and transmit customer ready-for-pickup signals.
           </p>
         </div>
-        <button
-          onClick={fetchOrders}
-          disabled={loading}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 16px',
-            background: 'var(--bg-tertiary)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            color: 'var(--text-primary)',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '0.85rem'
-          }}
-        >
-          <RefreshIcon sx={{ fontSize: 18 }} /> Refresh
-        </button>
       </div>
 
       {actionFeedback && (

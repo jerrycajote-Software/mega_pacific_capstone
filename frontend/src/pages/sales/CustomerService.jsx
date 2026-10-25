@@ -6,7 +6,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatBubbleOutlinedIcon from '@mui/icons-material/ChatBubbleOutlined';
 import MailOutlinedIcon from '@mui/icons-material/MailOutlined';
@@ -36,7 +35,6 @@ const CustomerService = () => {
   const [statusFilter, setStatusFilter] = useState('All'); 
   const [socket, setSocket] = useState(null);
   const [isLiveConnected, setIsLiveConnected] = useState(false);
-  const [spin, setSpin] = useState(false);
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -103,7 +101,20 @@ const CustomerService = () => {
       setInquiries(prev => prev.map(inq => inq.id === updated.id ? { ...inq, status: updated.status } : inq));
     });
 
-    return () => newSocket.close();
+    const syncInterval = setInterval(() => {
+      fetchInquiries();
+    }, 10000);
+
+    const handleFocus = () => {
+      fetchInquiries();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+      newSocket.close();
+    };
   }, [API_URL, token]);
 
   const selectedInquiry = useMemo(() => {
@@ -145,10 +156,7 @@ const CustomerService = () => {
     }
   }, [selectedInquiry?.messages?.length]);
 
-  const refreshData = () => {
-    setSpin(true);
-    fetchInquiries().then(() => setTimeout(() => setSpin(false), 800));
-  };
+
 
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
@@ -306,19 +314,7 @@ const CustomerService = () => {
             </span>
           </div>
 
-          <button
-            onClick={refreshData}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-              background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10,
-              color: 'var(--text-primary)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-          >
-            <RefreshIcon sx={{ fontSize: 15, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? 'var(--green)' : 'var(--text-muted)' }} />
-            Sync
-          </button>
+
         </div>
       </div>
 
@@ -429,13 +425,15 @@ const CustomerService = () => {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                        <Avatar sx={{
-                          width: 28, height: 28, fontSize: '0.75rem', fontWeight: 700,
-                          bgcolor: isSelected ? 'var(--green)' : '#4f772d',
-                          color: isSelected ? '#000000' : '#ffffff'
-                        }}>
-                          {customerName.charAt(0).toUpperCase()}
-                        </Avatar>
+                        <Avatar 
+                          src={inquiry.user?.customerProfile?.avatarUrl || '/default-profile.png'}
+                          alt={customerName}
+                          sx={{
+                            width: 28, height: 28, fontSize: '0.75rem', fontWeight: 700,
+                            bgcolor: isSelected ? 'var(--green)' : '#4f772d',
+                            color: isSelected ? '#000000' : '#ffffff'
+                          }}
+                        />
                         <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {customerName}
                         </span>
@@ -500,12 +498,14 @@ const CustomerService = () => {
                 alignItems: 'center', flexWrap: 'wrap', gap: '1rem', flexShrink: 0
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <Avatar sx={{
-                    width: 44, height: 44, bgcolor: '#4f772d', color: '#ffffff',
-                    fontWeight: 800, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(79,119,45,0.3)'
-                  }}>
-                    {getCustomerName(selectedInquiry).charAt(0).toUpperCase()}
-                  </Avatar>
+                  <Avatar 
+                    src={selectedInquiry.user?.customerProfile?.avatarUrl || '/default-profile.png'}
+                    alt={getCustomerName(selectedInquiry)}
+                    sx={{
+                      width: 44, height: 44, bgcolor: '#4f772d', color: '#ffffff',
+                      fontWeight: 800, fontSize: '1.1rem', boxShadow: '0 2px 8px rgba(79,119,45,0.3)'
+                    }}
+                  />
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>

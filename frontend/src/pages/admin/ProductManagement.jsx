@@ -218,7 +218,23 @@ const ProductManagement = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || '';
 
-  useEffect(() => { fetchProducts(); fetchProductTypes(); }, []);
+  useEffect(() => {
+    fetchProducts();
+    fetchProductTypes();
+    const syncInterval = setInterval(() => {
+      fetchProducts();
+    }, 10000);
+
+    const handleFocus = () => {
+      fetchProducts();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
 
   const fetchProductTypes = async () => {

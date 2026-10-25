@@ -131,17 +131,16 @@ const CustomerHeader = () => {
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, ml: 'auto' }}>
             <Avatar
+              src={user?.avatarUrl || '/default-profile.png'}
+              alt={user?.name || 'Customer'}
               sx={{
                 width: { xs: 32, sm: 36 },
                 height: { xs: 32, sm: 36 },
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                fontSize: '0.875rem',
-                fontWeight: 700,
+                bgcolor: 'background.default',
+                border: '1.5px solid',
+                borderColor: 'divider',
               }}
-            >
-              {user?.name?.charAt(0)?.toUpperCase() || 'C'}
-            </Avatar>
+            />
             <Typography
               variant="body2"
               fontWeight={600}
@@ -211,9 +210,17 @@ const CustomerHeader = () => {
         </Box>
 
         <Box sx={{ p: 1.5, mb: 2, borderRadius: 2.5, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main', fontWeight: 800 }}>
-            {user?.name?.charAt(0)?.toUpperCase() || 'C'}
-          </Avatar>
+          <Avatar
+            src={user?.avatarUrl || '/default-profile.png'}
+            alt={user?.name || 'Customer'}
+            sx={{
+              width: 40,
+              height: 40,
+              bgcolor: 'background.default',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          />
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="body2" fontWeight={700} noWrap>
               {user?.name || 'Customer'}
