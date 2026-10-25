@@ -54,7 +54,7 @@ const HeroSection = () => {
               fontSize: { xs: '0.75rem', sm: '0.85rem' }
             }}
           >
-            Premium Roofing & Steel Solutions
+            Roofing & Steel Solutions
           </Typography>
           <Typography 
             variant="h2" 

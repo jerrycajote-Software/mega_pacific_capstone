@@ -72,7 +72,7 @@ const OrderManagement = () => {
   };
 
   const handleReject = async (id) => {
-    const reason = window.prompt("Reason for cancellation / rejection (e.g. 'Duplicate order', 'Customer request'):", "Duplicate order submission");
+    const reason = window.prompt("Reason for cancellation / rejection ('Duplicate order', 'Customer request'):", "Duplicate order submission");
     if (reason === null) return;
 
     try {

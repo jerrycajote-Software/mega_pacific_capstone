@@ -579,7 +579,7 @@ const RefundsPage = () => {
                 value={processForm.amount}
                 onChange={(e) => setProcessForm({ ...processForm, amount: e.target.value })}
                 fullWidth
-                helperText="Pre-calculated from order payment status (e.g. 50% downpayment or full paid total)"
+                helperText="Pre-calculated from order payment status (ex. 50% downpayment or full paid total)"
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₱</InputAdornment>
                 }}
@@ -599,7 +599,7 @@ const RefundsPage = () => {
                   value={processForm.transactionReference}
                   onChange={(e) => setProcessForm({ ...processForm, transactionReference: e.target.value })}
                   fullWidth
-                  placeholder="e.g. GCASH-REF-19283748 or BANK-TRX-9821"
+                  placeholder="ex. GCASH-REF-19283748 or BANK-TRX-9821"
                   helperText="Required audit identifier shown to customer and on company records"
                   InputProps={{
                     endAdornment: (
@@ -625,7 +625,7 @@ const RefundsPage = () => {
                 value={processForm.notes}
                 onChange={(e) => setProcessForm({ ...processForm, notes: e.target.value })}
                 fullWidth
-                placeholder="e.g. Refund sent via GCash Merchant portal ref #..."
+                placeholder="ex. Refund sent via GCash Merchant portal ref #..."
               />
 
               <Alert severity="info" sx={{ borderRadius: 2.5, fontSize: '0.82rem', '& .MuiAlert-icon': { color: '#0284c7' } }}>

@@ -1481,7 +1481,7 @@ const OrderDetails = () => {
                     fullWidth 
                     size="small"
                     label="Review Headline (Optional)" 
-                    placeholder="e.g. Excellent gauge quality and clean cuts"
+                    placeholder="ex. Excellent gauge quality and clean cuts"
                     value={reviewForm.title} 
                     onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))} 
                     sx={{ mb: 2.5 }}

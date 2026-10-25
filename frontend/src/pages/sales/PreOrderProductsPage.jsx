@@ -32,6 +32,8 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
 
 import { ROOFING_COLORS, STANDARD_THICKNESSES, DECKING_THICKNESSES } from '../../constants/roofingSpecs';
+import { isCoilInStock, getAvailableColorsForThickness, hasCoilStockForThickness } from '../../utils/coilAvailability';
+import { io } from 'socket.io-client';
 
 const normalizeThickness = (val) => {
   if (!val) return '';
@@ -226,44 +228,33 @@ const PreOrderProductsPage = () => {
   }, [baseNorm, safeVariants, formData?.thickness]);
 
   const availableColorsForThickness = useMemo(() => {
-    const rawThick = formData?.thickness || '0.35mm';
-    if (!Array.isArray(coils) || coils.length === 0) {
-      return new Set(ROOFING_COLORS.map(c => c.name));
-    }
-    const normThick = normalizeThickness(rawThick);
-    const matching = coils.filter(c => normalizeThickness(c.thickness) === normThick);
-
-    if (matching.length === 0) {
-      return new Set(ROOFING_COLORS.map(c => c.name));
-    }
-
-    const inStock = matching
-      .filter(c => (c.coilCount ?? 0) > 0 && c.status?.toLowerCase() !== 'out of stock')
-      .map(c => c.color);
-
-    return new Set(inStock);
+    return getAvailableColorsForThickness(coils, formData?.thickness);
   }, [coils, formData?.thickness]);
 
   useEffect(() => {
     fetchProducts();
     fetchCoilSummary();
     fetchCoils();
+
+    const socket = io(API_URL);
+    socket.on('coil_inventory_updated', () => {
+      fetchCoils();
+      fetchCoilSummary();
+    });
+    socket.on('product_catalog_updated', () => {
+      fetchProducts();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const openAddModal = () => {
     setEditingProduct(null);
     const initialThick = '0.35mm';
-    const normThick = normalizeThickness(initialThick);
-    const matchingInitial = coils.filter(c => normalizeThickness(c.thickness) === normThick);
-    let initialColors = ROOFING_COLORS.map(c => c.name);
-    if (matchingInitial.length > 0) {
-      const inStockSet = new Set(
-        matchingInitial
-          .filter(c => (c.coilCount ?? 0) > 0 && c.status?.toLowerCase() !== 'out of stock')
-          .map(c => c.color)
-      );
-      initialColors = initialColors.filter(c => inStockSet.has(c));
-    }
+    const inStockSet = getAvailableColorsForThickness(coils, initialThick);
+    const initialColors = ROOFING_COLORS.map(c => c.name).filter(c => inStockSet.has(c));
 
     setFormData({
       ...EMPTY_FORM,
@@ -282,17 +273,22 @@ const PreOrderProductsPage = () => {
 
   const openEditModal = (p) => {
     setEditingProduct(p);
+    const rawThick = p.thickness || '0.35mm';
+    const inStockSet = getAvailableColorsForThickness(coils, rawThick);
+    const existingColors = Array.isArray(p.colors) && p.colors.length > 0 ? p.colors : [];
+    const validColors = existingColors.filter(c => inStockSet.has(c));
+
     setFormData({
       name: p.name || '',
       type: p.type || 'Rib Type',
       originalPrice: p.originalPrice ?? p.price ?? '',
       unit: p.unit || 'per meter',
-      thickness: p.thickness || '0.35mm',
+      thickness: rawThick,
       effectiveWidth: p.effectiveWidth ?? '',
       nominalWidth: p.nominalWidth ?? '',
       ribHeight: p.ribHeight ?? '',
       description: p.description || '',
-      colors: p.colors && p.colors.length > 0 ? p.colors : ROOFING_COLORS.map(c => c.name),
+      colors: validColors,
       maxMeters: p.maxMeters ?? 21.0,
       imageUrls: p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls : (p.imageUrl ? [p.imageUrl] : []),
       isActive: p.isActive !== false
@@ -403,12 +399,12 @@ const PreOrderProductsPage = () => {
     if (e) e.preventDefault();
     const raw = (newThicknessInput || '').trim();
     if (!raw) {
-      setNewThicknessError('Please enter a thickness number (e.g. 0.45 or 0.75).');
+      setNewThicknessError('Please enter a thickness number (0.45 or 0.75).');
       return;
     }
 
     if (!/^\d+(\.\d+)?$/.test(raw)) {
-      setNewThicknessError('Only numbers can be entered (e.g. 0.45 or 0.75).');
+      setNewThicknessError('Only numbers can be entered (0.45 or 0.75).');
       return;
     }
 
@@ -554,9 +550,17 @@ const PreOrderProductsPage = () => {
       setErrorMsg('Please provide a valid price per meter.');
       return;
     }
+    if (!hasCoilStockForThickness(coils, formData.thickness)) {
+      setErrorMsg(`Cannot save pre-order product: Base thickness "${formData.thickness}" has no raw coils in Coil Inventory. Steel coils must be stocked in inventory before products can be created.`);
+      return;
+    }
     const validColors = formData.colors.filter(c => availableColorsForThickness.has(c));
     if (validColors.length === 0) {
-      setErrorMsg(`Please select at least one available color with coil stock for ${formData.thickness}.`);
+      setErrorMsg(`Please select at least one available color with physical coil stock in inventory for ${formData.thickness}.`);
+      return;
+    }
+    if (formData.colors.some(c => !availableColorsForThickness.has(c))) {
+      setErrorMsg(`One or more selected colors are not available in Coil Inventory for ${formData.thickness}.`);
       return;
     }
 
@@ -962,6 +966,18 @@ const PreOrderProductsPage = () => {
                         <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 4 }}>
                           {p.isActive !== false ? 'Visible to customer' : 'Hidden from customer'}
                         </div>
+                        {(() => {
+                          const hasCoilStock = hasCoilStockForThickness(coils, p.thickness);
+                          const inStockCount = (p.colors || []).filter(c => isCoilInStock(coils, p.thickness, c)).length;
+                          if (!hasCoilStock || inStockCount === 0) {
+                            return (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, padding: '0.15rem 0.5rem', borderRadius: 4, background: 'rgba(239,68,68,0.12)', color: '#ef4444', fontSize: '0.68rem', fontWeight: 700, border: '1px solid rgba(239,68,68,0.25)' }}>
+                                ⛔ Unavailable in Sales (0 Coils)
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </td>
 
                       <td style={{ padding: '1rem', verticalAlign: 'middle' }}>
@@ -990,21 +1006,69 @@ const PreOrderProductsPage = () => {
                       </td>
 
                       <td style={{ padding: '1rem', verticalAlign: 'middle' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', maxWidth: 220 }}>
-                          {(p.colors && p.colors.length > 0 ? p.colors : ROOFING_COLORS.map(c => c.name)).slice(0, 6).map(colorName => {
-                            const spec = ROOFING_COLORS.find(c => c.name.toLowerCase() === colorName.toLowerCase());
-                            return (
-                              <Tooltip key={colorName} title={colorName}>
-                                <div style={{ width: 14, height: 14, borderRadius: '50%', background: spec?.hex || '#64748b', border: '1px solid rgba(0,0,0,0.2)' }} />
-                              </Tooltip>
-                            );
-                          })}
-                          {(p.colors?.length || 14) > 6 && (
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                              +{(p.colors?.length || 14) - 6} more
-                            </span>
-                          )}
-                        </div>
+                        {(() => {
+                          const productColors = (p.colors && p.colors.length > 0 ? p.colors : ROOFING_COLORS.map(c => c.name));
+                          const inStockCount = productColors.filter(c => isCoilInStock(coils, p.thickness, c)).length;
+                          const totalColors = productColors.length;
+
+                          return (
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', maxWidth: 220 }}>
+                                {productColors.slice(0, 6).map(colorName => {
+                                  const spec = ROOFING_COLORS.find(c => c.name.toLowerCase() === colorName.toLowerCase());
+                                  const inStock = isCoilInStock(coils, p.thickness, colorName);
+
+                                  return (
+                                    <Tooltip key={colorName} title={inStock ? colorName : `${colorName} (Unavailable in Coil Inventory)`}>
+                                      <div style={{
+                                        width: 14,
+                                        height: 14,
+                                        borderRadius: '50%',
+                                        background: spec?.hex || '#64748b',
+                                        border: inStock ? '1px solid rgba(0,0,0,0.2)' : '1.5px dashed #ef4444',
+                                        opacity: inStock ? 1 : 0.35,
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                      }}>
+                                        {!inStock && (
+                                          <div style={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: -2,
+                                            right: -2,
+                                            height: 1.5,
+                                            background: '#ef4444',
+                                            transform: 'rotate(-45deg)'
+                                          }} />
+                                        )}
+                                      </div>
+                                    </Tooltip>
+                                  );
+                                })}
+                                {totalColors > 6 && (
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                    +{totalColors - 6} more
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ marginTop: 4 }}>
+                                {inStockCount === 0 ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#ef4444', fontSize: '0.68rem', fontWeight: 700 }}>
+                                    ⛔ 0 of {totalColors} finishes in coil stock
+                                  </span>
+                                ) : inStockCount < totalColors ? (
+                                  <span style={{ color: '#f59e0b', fontSize: '0.68rem', fontWeight: 600 }}>
+                                    ⚠️ {inStockCount}/{totalColors} finishes in stock
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#10b981', fontSize: '0.68rem', fontWeight: 600 }}>
+                                    ✓ All {totalColors} finishes in coil stock
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       <td style={{ padding: '1rem', verticalAlign: 'middle' }}>
@@ -1067,7 +1131,7 @@ const PreOrderProductsPage = () => {
             }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  {editingProduct ? 'Edit Pre-Order Product' : 'Add New Pre-Order Product'}
+                  {editingProduct ? 'Update Pre-Order Product' : 'Add New Pre-Order Product'}
                 </h2>
                 <div style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                   Fill in the details to create or update a customizable pre-order roofing profile.
@@ -1206,7 +1270,7 @@ const PreOrderProductsPage = () => {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Pico Rib"
+                      placeholder="Pico Rib"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       style={{
@@ -1345,21 +1409,13 @@ const PreOrderProductsPage = () => {
                             return;
                           }
                           const newThick = e.target.value;
-                          const newNorm = normalizeThickness(newThick);
-                          const matchingNew = coils.filter(c => normalizeThickness(c.thickness) === newNorm);
+                          const newAvailableSet = getAvailableColorsForThickness(coils, newThick);
 
-                          setFormData(prev => {
-                            let updatedColors = prev.colors;
-                            if (matchingNew.length > 0) {
-                              const availableSet = new Set(
-                                matchingNew
-                                  .filter(c => (c.coilCount ?? 0) > 0 && c.status?.toLowerCase() !== 'out of stock')
-                                  .map(c => c.color)
-                              );
-                              updatedColors = prev.colors.filter(c => availableSet.has(c));
-                            }
-                            return { ...prev, thickness: newThick, colors: updatedColors };
-                          });
+                          setFormData(prev => ({
+                            ...prev,
+                            thickness: newThick,
+                            colors: prev.colors.filter(c => newAvailableSet.has(c))
+                          }));
                         }}
                         style={{
                           width: '100%', padding: '0.65rem 0.85rem', borderRadius: 10,
@@ -1371,9 +1427,11 @@ const PreOrderProductsPage = () => {
                       >
                         {availableThicknesses.map(t => {
                           const isUsedInVar = variants.findIndex(v => normalizeThickness(v.thickness) === normalizeThickness(t));
+                          const hasStock = hasCoilStockForThickness(coils, t);
+                          const finishesSet = getAvailableColorsForThickness(coils, t);
                           return (
                             <option key={t} value={t}>
-                              {t} {isUsedInVar >= 0 ? `(⚠️ Used in Variant #${isUsedInVar + 1})` : ''}
+                              {t} {!hasStock ? '(No Coil Stock in Inventory)' : `(${finishesSet.size} finishes in stock)`} {isUsedInVar >= 0 ? `(⚠️ Used in Variant #${isUsedInVar + 1})` : ''}
                             </option>
                           );
                         })}
@@ -1381,6 +1439,12 @@ const PreOrderProductsPage = () => {
                           + Add New Thickness...
                         </option>
                       </select>
+                      {!hasCoilStockForThickness(coils, formData.thickness) && (
+                        <div style={{ marginTop: 6, fontSize: '0.72rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <ErrorOutlineIcon sx={{ fontSize: 14, flexShrink: 0 }} />
+                          <span>No coils available in Coil Inventory for thickness "{formData.thickness}". Raw steel coils must be stocked in Logistics before creating or updating pre-order products with this gauge.</span>
+                        </div>
+                      )}
                       {baseConflictVariantIndex >= 0 && (
                         <div style={{ marginTop: 6, fontSize: '0.72rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                           <ErrorOutlineIcon sx={{ fontSize: 14, flexShrink: 0 }} />
@@ -1446,10 +1510,29 @@ const PreOrderProductsPage = () => {
                   </div>
                 </div>
 
-                {availableColorsForThickness.size < ROOFING_COLORS.length && (
-                  <div style={{ fontSize: '0.73rem', color: '#f59e0b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <span>⚠️ {ROOFING_COLORS.length - availableColorsForThickness.size} color(s) have no physical coil stock for {formData.thickness} and cannot be selected.</span>
+                {availableColorsForThickness.size === 0 ? (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: 10,
+                    background: 'rgba(239,68,68,0.1)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    color: '#ef4444',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    marginBottom: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}>
+                    <ErrorOutlineIcon sx={{ fontSize: 18 }} />
+                    <span>No coil stock is available in Coil Inventory for thickness "{formData.thickness}". You cannot create or save a Pre-Order Product with this material until steel coils are restocked.</span>
                   </div>
+                ) : (
+                  availableColorsForThickness.size < ROOFING_COLORS.length && (
+                    <div style={{ fontSize: '0.73rem', color: '#f59e0b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span>⚠️ {ROOFING_COLORS.length - availableColorsForThickness.size} color finish(es) have no physical coil stock for {formData.thickness} and cannot be selected.</span>
+                    </div>
+                  )
                 )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))', gap: 8 }}>
@@ -1483,8 +1566,22 @@ const PreOrderProductsPage = () => {
                             width: 16, height: 16, borderRadius: '50%',
                             background: color.hex, border: `1px solid ${color.border}`,
                             flexShrink: 0,
-                            filter: !isAvailable ? 'grayscale(40%)' : 'none'
-                          }} />
+                            filter: !isAvailable ? 'grayscale(40%)' : 'none',
+                            position: 'relative',
+                            overflow: 'hidden'
+                          }}>
+                            {!isAvailable && (
+                              <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: -2,
+                                right: -2,
+                                height: 1.5,
+                                background: '#ef4444',
+                                transform: 'rotate(-45deg)'
+                              }} />
+                            )}
+                          </div>
                           <span style={{
                             fontSize: '0.76rem',
                             fontWeight: isSelected ? 600 : 400,
@@ -1575,11 +1672,13 @@ const PreOrderProductsPage = () => {
                               {availableThicknesses.map(th => {
                                 const isBase = normalizeThickness(th) === baseNorm;
                                 const otherVarIdx = variants.findIndex((o, oIdx) => oIdx !== idx && normalizeThickness(o.thickness) === normalizeThickness(th));
+                                const hasStock = hasCoilStockForThickness(coils, th);
                                 const isDisabled = isBase || otherVarIdx >= 0;
 
                                 let note = '';
                                 if (isBase) note = ' — (Base Thickness: Duplicate Not Allowed)';
                                 else if (otherVarIdx >= 0) note = ` — (Used in Variant #${otherVarIdx + 1}: Duplicate Not Allowed)`;
+                                else if (!hasStock) note = ' — (No Coil Stock in Inventory)';
 
                                 return (
                                   <option key={th} value={th} disabled={isDisabled}>
@@ -1591,6 +1690,11 @@ const PreOrderProductsPage = () => {
                                 + Add New Thickness...
                               </option>
                             </select>
+                            {!hasCoilStockForThickness(coils, v.thickness) && (
+                              <div style={{ color: '#f59e0b', fontSize: '0.68rem', fontWeight: 600, marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                <span>⚠️ No coil stock in inventory</span>
+                              </div>
+                            )}
                             {rowConflict && (
                               <div style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: 600, marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
                                 <ErrorOutlineIcon sx={{ fontSize: 13, flexShrink: 0 }} />
@@ -1613,7 +1717,7 @@ const PreOrderProductsPage = () => {
                               step="0.01"
                               value={v.originalPrice}
                               onChange={(e) => handleVariantChange(idx, 'originalPrice', e.target.value)}
-                              placeholder="e.g. 368.00"
+                              placeholder="368.00"
                               style={{ width: 110, padding: '0.4rem 0.6rem', borderRadius: 6, background: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                             />
                           </td>
@@ -1683,7 +1787,7 @@ const PreOrderProductsPage = () => {
                     boxShadow: '0 4px 14px rgba(37,99,235,0.35)'
                   }}
                 >
-                  {submitting ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : <SaveIcon sx={{ fontSize: 18 }} />}
+                  
                   {editingProduct ? 'Update Pre-Order Product' : 'Create Pre-Order Product'}
                 </button>
               </div>
@@ -1719,7 +1823,7 @@ const PreOrderProductsPage = () => {
             </div>
 
             <p style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Enter a numerical thickness gauge (e.g. <code>0.45</code>, <code>0.75</code>). Only numbers are allowed; the <code>mm</code> unit will be added automatically.
+              Enter a numerical thickness gauge (ex. <code>0.45</code>, <code>0.75</code>). Only numbers are allowed; the <code>mm</code> unit will be added automatically.
             </p>
 
             <form onSubmit={handleCreateNewThickness}>

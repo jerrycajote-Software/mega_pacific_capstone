@@ -323,16 +323,7 @@ const ProfilePage = () => {
                   border: '1px solid rgba(22, 163, 74, 0.25)'
                 }} 
               />
-              <Chip 
-                label="CALABARZON Hub" 
-                size="small" 
-                sx={{ 
-                  fontWeight: 600, 
-                  fontSize: '0.72rem',
-                  bgcolor: 'action.hover',
-                  color: 'text.secondary'
-                }} 
-              />
+
             </Box>
 
             <Divider sx={{ mb: 2.5 }} />
@@ -343,7 +334,7 @@ const ProfilePage = () => {
                   Account Type
                 </Typography>
                 <Typography variant="body2" fontWeight={800} color="text.primary">
-                  Pre-Order Direct Buyer
+                  Customer
                 </Typography>
               </Box>
 
@@ -371,7 +362,7 @@ const ProfilePage = () => {
             <Button
               variant="contained"
               fullWidth
-              startIcon={<i className="fi fi-rr-shopping-bag" style={{ fontSize: 14 }} />}
+              
               onClick={() => navigate('/orders')}
               sx={{
                 borderRadius: 2.5,
@@ -734,7 +725,7 @@ const ProfilePage = () => {
                 name="address" 
                 value={formData.address} 
                 onChange={handleInputChange} 
-                placeholder="e.g. Lot 12 Blk 4 Emerald Hills Subd., Brgy. San Agustin (Near Water Tower)" 
+                placeholder="ex. Lot 12 Blk 4 Emerald Hills Subd., Brgy. San Agustin (Near Water Tower)" 
                 required 
               />
             </Stack>

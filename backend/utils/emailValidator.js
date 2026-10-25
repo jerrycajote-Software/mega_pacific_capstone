@@ -155,7 +155,7 @@ function validateRealisticEmail(rawEmail) {
   const tld = domainSegments[domainSegments.length - 1];
 
   if (!/^[a-zA-Z]{2,24}$/.test(tld)) {
-    return { isValid: false, error: 'Email top-level domain extension must contain at least 2 letters (e.g., .com, .ph).' };
+    return { isValid: false, error: 'Email top-level domain extension must contain at least 2 letters (ex., .com, .ph).' };
   }
 
   const invalidSegment = domainSegments.some((seg) => !seg || !/^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(seg));

@@ -224,7 +224,7 @@ const CoilInventoryPage = () => {
   const handleConfirmAddCoil = async (e) => {
     e.preventDefault();
     if (!normalizedAddThickness) {
-      setAddError('Please specify a valid thickness gauge (e.g. 0.70mm).');
+      setAddError('Please specify a valid thickness gauge (ex. 0.70mm).');
       return;
     }
     if (selectedColorsToAdd.length === 0) {
@@ -902,7 +902,7 @@ const CoilInventoryPage = () => {
                   min="1"
                   max={selectedCoil.coilCount ?? 1}
                   required
-                  placeholder="e.g. 1"
+                  placeholder="1"
                   value={rollsToDeduct}
                   onChange={(e) => setRollsToDeduct(e.target.value)}
                   style={{
@@ -927,7 +927,7 @@ const CoilInventoryPage = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. ORD-084"
+                  placeholder="ORD-084"
                   value={orderRef}
                   onChange={(e) => setOrderRef(e.target.value)}
                   style={{
@@ -944,7 +944,7 @@ const CoilInventoryPage = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Mounted on roll-forming line for custom sheets"
+                  placeholder="Mounted on roll-forming line for custom sheets"
                   value={deductReason}
                   onChange={(e) => setDeductReason(e.target.value)}
                   style={{
@@ -1003,7 +1003,7 @@ const CoilInventoryPage = () => {
                   step="1"
                   min="1"
                   required
-                  placeholder="e.g. 2"
+                  placeholder="2"
                   value={rollsToRestock}
                   onChange={(e) => setRollsToRestock(e.target.value)}
                   style={{
@@ -1028,7 +1028,7 @@ const CoilInventoryPage = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Shipment batch #CS-2026-10"
+                  placeholder="ex. Shipment batch #CS-2026-10"
                   value={restockReason}
                   onChange={(e) => setRestockReason(e.target.value)}
                   style={{
@@ -1083,7 +1083,7 @@ const CoilInventoryPage = () => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 0.70mm or 0.75"
+                    placeholder="0.70mm or 0.75"
                     value={addThickness}
                     onChange={(e) => setAddThickness(e.target.value)}
                     style={{

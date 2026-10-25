@@ -98,7 +98,7 @@ const SalesManagement = () => {
     setFormError('');
     if (form.contactNumber && form.contactNumber.trim()) {
       if (!/^09[0-9]{9}$/.test(form.contactNumber.trim())) {
-        setFormError('Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).');
+        setFormError('Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567).');
         setSaving(false);
         return;
       }

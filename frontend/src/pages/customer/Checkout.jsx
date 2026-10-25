@@ -406,7 +406,7 @@ const Checkout = () => {
       if (!formData.contactNumber?.trim()) {
         newErrors.contactNumber = 'Contact Number is required';
       } else if (!/^09[0-9]{9}$/.test(formData.contactNumber.trim())) {
-        newErrors.contactNumber = 'Must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)';
+        newErrors.contactNumber = 'Must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)';
       }
       if (!formData.address?.trim()) newErrors.address = 'Complete Address is required';
       if (!formData.city?.trim()) newErrors.city = 'City is required';
@@ -1001,7 +1001,7 @@ const Checkout = () => {
                         Origin: <strong>Imus, Cavite, Region IV-A</strong> • Operational Hours: Mon–Sat, 8:00 AM – 5:00 PM
                       </Typography>
                       <Typography variant="caption" color="#15803d" sx={{ display: 'block', lineHeight: 1.5 }}>
-                        Our logistics coordinator will send SMS notifications when roll-forming is done and your materials are loaded on the pick-up bay.
+                        Our logistics coordinator will send SMS notifications when roll-forming is done and your materials ready to pickup.
                       </Typography>
                     </Box>
                   </Box>

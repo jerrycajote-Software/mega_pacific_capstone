@@ -223,7 +223,7 @@ const Page = () => {
               fullWidth 
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
-              placeholder="e.g. Fuel for delivery truck 1"
+              placeholder="ex. Fuel for delivery truck 1"
             />
             <TextField 
               label="Amount (₱)" 

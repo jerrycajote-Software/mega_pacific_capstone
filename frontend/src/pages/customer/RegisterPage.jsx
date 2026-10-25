@@ -864,7 +864,7 @@ const RegisterPage = () => {
                 <TextField
                   fullWidth
                   label="Street Name, Building, House No."
-                  placeholder="e.g. Unit 4B, 123 Emerald St., Phase 2"
+                  placeholder="ex. Unit 4B, 123 Emerald St., Phase 2"
                   variant="outlined"
                   size="small"
                   required

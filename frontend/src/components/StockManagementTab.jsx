@@ -568,7 +568,7 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
                         <td style={S.td}>
                           <input
                             type="text"
-                            placeholder="e.g. Supplier delivery"
+                            placeholder="ex. Supplier delivery"
                             value={input.reason || ''}
                             onChange={(e) => handleInputChange(item.key, 'reason', e.target.value)}
                             style={S.reasonInput}

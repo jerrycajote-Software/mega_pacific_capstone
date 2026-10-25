@@ -171,8 +171,8 @@ const SalesDashboard = () => {
               letterSpacing: '0.06em',
               textTransform: 'uppercase'
             }}>
-              <BadgeIcon sx={{ fontSize: 14 }} />
-              Sales Operations Hub
+            
+              Sales Operations
             </span>
             <span style={{
               display: 'inline-flex',
@@ -223,7 +223,7 @@ const SalesDashboard = () => {
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
           >
-            <ShoppingCartIcon sx={{ fontSize: 16, color: 'var(--green)' }} />
+            
             Manage Orders
           </button>
 
@@ -246,7 +246,7 @@ const SalesDashboard = () => {
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#8b5cf6'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
           >
-            <SupportAgentIcon sx={{ fontSize: 16, color: '#8b5cf6' }} />
+            
             Inquiries
             {customerService?.openInquiries > 0 && (
               <span style={{
@@ -1221,7 +1221,7 @@ const SalesDashboard = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CategoryIcon sx={{ fontSize: 18, color: 'var(--green)' }} />
+              
                 <h3 style={{ margin: 0, fontSize: '0.975rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                   Warehouse Stock Health
                 </h3>
@@ -1395,7 +1395,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <ShoppingCartIcon sx={{ fontSize: 18, color: 'var(--green)' }} />
+                  
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Process Pending Orders
@@ -1438,7 +1438,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <SupportAgentIcon sx={{ fontSize: 18, color: '#8b5cf6' }} />
+                  
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Customer Support Desk
@@ -1481,7 +1481,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <RateReviewIcon sx={{ fontSize: 18, color: '#eab308' }} />
+                  
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Customer Reviews & Feedback
@@ -1524,7 +1524,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <StorefrontIcon sx={{ fontSize: 18, color: 'var(--green)' }} />
+                  {/* <StorefrontIcon sx={{ fontSize: 18, color: 'var(--green)' }} /> */}
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Pre-Order Products

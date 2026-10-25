@@ -89,7 +89,7 @@ const SuperAdminLoginPage = () => {
               Super Admin Console
             </h1>
             <p className="text-slate-400 text-xs sm:text-sm mt-1.5">
-              Restricted infrastructure & system control portal
+              Restricted Infrastructure & System Control Portal
             </p>
           </div>
 
@@ -120,7 +120,7 @@ const SuperAdminLoginPage = () => {
                   required
                   autoFocus
                   autoComplete="username"
-                  placeholder="superadmin@mega-pacific.com"
+                  placeholder=""
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-950/70 border border-slate-700/60 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
                 />
               </div>
@@ -144,7 +144,7 @@ const SuperAdminLoginPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  placeholder="••••••••••••"
+                  placeholder=""
                   className="w-full pl-10 pr-11 py-2.5 bg-slate-950/70 border border-slate-700/60 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono"
                 />
                 <button

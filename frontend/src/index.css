@@ -25,6 +25,7 @@
   --customer-accent-hover: #3d5c22;
 
   --sidebar-w: 256px;
+  --sidebar-w-collapsed: 72px;
 
   font-family: 'Inter', system-ui, sans-serif;
   background-color: var(--bg-primary);
@@ -136,9 +137,12 @@ html {
   flex-direction: column;
   min-height: 100vh;
   min-width: 0;
-  transition: margin-left 0.25s ease;
+  transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.admin-main.sidebar-collapsed {
+  margin-left: calc(var(--sidebar-w-collapsed) + 2rem);
+}
 
 .admin-sidebar {
   width: var(--sidebar-w);
@@ -153,12 +157,43 @@ html {
   flex-direction: column;
   z-index: 50;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.25s ease, border-color 0.25s ease;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, border-color 0.25s ease;
   
-
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+}
+
+.admin-sidebar.collapsed {
+  width: var(--sidebar-w-collapsed);
+}
+
+.admin-sidebar.collapsed .sidebar-full-content {
+  display: none !important;
+}
+
+.admin-sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.admin-sidebar.collapsed .nav-link span:not(.nav-icon) {
+  display: none !important;
+}
+
+.admin-sidebar.collapsed .sidebar-header-box {
+  padding: 1.25rem 0.5rem 1rem !important;
+  justify-content: center !important;
+}
+
+.admin-sidebar.collapsed .sidebar-signout-btn {
+  justify-content: center !important;
+  padding: 0.75rem 0 !important;
+}
+
+.admin-sidebar.collapsed .sidebar-signout-btn span {
+  display: none !important;
 }
 
 .admin-sidebar::-webkit-scrollbar {

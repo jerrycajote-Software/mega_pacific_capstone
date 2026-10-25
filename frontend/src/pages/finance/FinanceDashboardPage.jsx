@@ -169,7 +169,7 @@ const FinanceDashboardPage = () => {
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', gap: 2 }}>
         <CircularProgress size={48} thickness={4} sx={{ color: 'primary.main' }} />
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
-          Loading financial intelligence overview...
+          Loading financial overview...
         </Typography>
       </Box>
     );

@@ -161,7 +161,7 @@ export function validateRealisticEmail(rawEmail) {
 
   // TLD must be purely alphabetical and between 2 and 24 characters
   if (!/^[a-zA-Z]{2,24}$/.test(tld)) {
-    return { isValid: false, error: 'Email top-level domain extension must contain at least 2 letters (e.g., .com, .ph).' };
+    return { isValid: false, error: 'Email top-level domain extension must contain(.com).' };
   }
 
   // Verify all domain segments are valid RFC host labels

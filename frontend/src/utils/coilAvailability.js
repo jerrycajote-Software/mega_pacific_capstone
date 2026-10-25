@@ -12,10 +12,9 @@ export const normalizeColor = (rawColor) => {
   return String(rawColor).trim().toLowerCase();
 };
 
-
 export const isCoilInStock = (coils, thickness, color) => {
-  if (!coils || !Array.isArray(coils) || coils.length === 0) return true;
-  if (!thickness || !color) return true;
+  if (!coils || !Array.isArray(coils) || coils.length === 0) return false;
+  if (!thickness || !color) return false;
 
   const targetThickness = normalizeThickness(thickness);
   const targetColor = normalizeColor(color);
@@ -25,10 +24,9 @@ export const isCoilInStock = (coils, thickness, color) => {
            normalizeColor(c.color) === targetColor;
   });
 
-  if (!matched) return true;
-  return Number(matched.coilCount) > 0;
+  if (!matched) return false;
+  return Number(matched.coilCount) > 0 && String(matched.status || '').toLowerCase() !== 'out of stock';
 };
-
 
 export const getFirstInStockColor = (coils, thickness, allColors = [], currentColor = null) => {
   if (!allColors || allColors.length === 0) return currentColor;
@@ -39,7 +37,6 @@ export const getFirstInStockColor = (coils, thickness, allColors = [], currentCo
   return firstInStock || currentColor || allColors[0];
 };
 
-
 export const getFirstInStockOption = (coils, color, options = [], currentOption = null) => {
   if (!options || options.length === 0) return currentOption;
   if (currentOption && isCoilInStock(coils, currentOption.thickness || currentOption.name, color)) {
@@ -48,3 +45,25 @@ export const getFirstInStockOption = (coils, color, options = [], currentOption 
   const firstInStock = options.find((opt) => isCoilInStock(coils, opt.thickness || opt.name, color));
   return firstInStock || currentOption || options[0];
 };
+
+export const getAvailableColorsForThickness = (coils, thickness) => {
+  if (!coils || !Array.isArray(coils) || coils.length === 0 || !thickness) return new Set();
+  const targetThickness = normalizeThickness(thickness);
+  const matching = coils.filter((c) => {
+    return normalizeThickness(c.thickness) === targetThickness &&
+           Number(c.coilCount) > 0 &&
+           String(c.status || '').toLowerCase() !== 'out of stock';
+  });
+  return new Set(matching.map((c) => c.color));
+};
+
+export const hasCoilStockForThickness = (coils, thickness) => {
+  if (!coils || !Array.isArray(coils) || coils.length === 0 || !thickness) return false;
+  const targetThickness = normalizeThickness(thickness);
+  return coils.some((c) => {
+    return normalizeThickness(c.thickness) === targetThickness &&
+           Number(c.coilCount) > 0 &&
+           String(c.status || '').toLowerCase() !== 'out of stock';
+  });
+};
+

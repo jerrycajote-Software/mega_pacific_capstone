@@ -335,7 +335,7 @@ const LoginPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@megapacific.com"
+                    placeholder=""
                     required
                     autoComplete="email"
                     style={{
@@ -384,7 +384,7 @@ const LoginPage = () => {
                     type={showPw ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••"
+                    placeholder=""
                     required
                     autoComplete="current-password"
                     style={{
@@ -433,7 +433,7 @@ const LoginPage = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.07em',
                   }}>
-                    {t("Login OTP (LOG-######)")}
+                    {t("Login OTP")}
                   </label>
                   <div className="lp-input-wrap" style={{ position: 'relative' }}>
                     <input
@@ -493,7 +493,7 @@ const LoginPage = () => {
                     {requiresOtp ? 'Verifying…' : 'Signing in…'}
                   </>
                 ) : (
-                  requiresOtp ? 'Verify OTP & Login' : 'Login Admin'
+                  requiresOtp ? 'Verify OTP & Login' : 'Login'
                 )}
               </button>
             </form>

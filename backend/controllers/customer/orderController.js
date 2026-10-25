@@ -76,7 +76,7 @@ const createOrder = async (req, res) => {
     if (!/^09[0-9]{9}$/.test(cleanPhone)) {
       return res.status(400).json({
         success: false,
-        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
       });
     }
   }
@@ -132,10 +132,10 @@ const createOrder = async (req, res) => {
         }
       });
 
-      if (coil && coil.coilCount <= 0) {
+      if (!coil || coil.coilCount <= 0) {
         return res.status(409).json({
           success: false,
-          error: `The ${color} color finish in ${cleanThick} thickness is currently out of stock in coil raw inventory.`,
+          error: `The material ${cleanThick} with color finish "${color}" is not available in Coil Inventory.`,
           details: { type: 'STOCK_ERROR', itemName: `${product.name} (${cleanThick} • ${color})`, available: 0, requested: quantity }
         });
       }
@@ -473,7 +473,7 @@ const createBulkOrder = async (req, res) => {
     if (!/^09[0-9]{9}$/.test(cleanPhone)) {
       return res.status(400).json({
         success: false,
-        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
       });
     }
   }
@@ -562,7 +562,7 @@ const createBulkOrder = async (req, res) => {
             }
           });
 
-          if (coil && coil.coilCount <= 0) {
+          if (!coil || coil.coilCount <= 0) {
             throw {
               type: 'STOCK_ERROR',
               itemName: `${product.name} (${cleanThick} • ${item.color})`,

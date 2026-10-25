@@ -217,7 +217,7 @@ const OwnerLoginPage = () => {
                 color: '#f0f0f0',
                 letterSpacing: '-0.01em',
               }}>
-                {t("Secure Login")}
+                {t("Owner Portal")}
               </h2>
             </div>
 
@@ -286,7 +286,7 @@ const OwnerLoginPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="owner@megapacific.com"
+                    placeholder=""
                     required
                     autoComplete="email"
                     style={{
@@ -334,7 +334,7 @@ const OwnerLoginPage = () => {
                     type={showPw ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••"
+                    placeholder=""
                     required
                     autoComplete="current-password"
                     style={{
@@ -382,7 +382,7 @@ const OwnerLoginPage = () => {
                     textTransform: 'uppercase',
                     letterSpacing: '0.07em',
                   }}>
-                    {t("Login OTP (LOG-######)")}
+                    {t("Login OTP")}
                   </label>
                   <div className="lp-input-wrap" style={{ position: 'relative' }}>
                     <input
@@ -441,7 +441,7 @@ const OwnerLoginPage = () => {
                     {requiresOtp ? 'Verifying…' : 'Authenticating…'}
                   </>
                 ) : (
-                  requiresOtp ? 'Verify OTP & Login' : 'Login as Owner'
+                  requiresOtp ? 'Verify OTP & Login' : 'Login'
                 )}
               </button>
             </form>
