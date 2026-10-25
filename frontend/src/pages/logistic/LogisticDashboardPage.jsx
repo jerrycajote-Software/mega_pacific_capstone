@@ -74,7 +74,6 @@ const LogisticDashboardPage = () => {
   usePreventBackToLogin();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [dispatchFilter, setDispatchFilter] = useState('all');
   const [data, setData] = useState({
     kpi: {},
@@ -84,8 +83,7 @@ const LogisticDashboardPage = () => {
     recentDeliveries: []
   });
 
-  const fetchDashboardData = async (isManual = false) => {
-    if (isManual) setRefreshing(true);
+  const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
@@ -93,20 +91,34 @@ const LogisticDashboardPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
-        setData(res.data.data);
-        if (isManual) toast.success('Logistics operations refreshed');
+        setData(prev => {
+          const next = res.data.data;
+          if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+          return next;
+        });
       }
     } catch (error) {
       console.error('Failed to load logistic dashboard:', error);
-      toast.error('Failed to load logistics data');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchDashboardData();
+    const syncInterval = setInterval(() => {
+      fetchDashboardData();
+    }, 10000);
+
+    const handleFocus = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const filteredDeliveries = useMemo(() => {
@@ -188,16 +200,7 @@ const LogisticDashboardPage = () => {
         </Box>
 
         <Stack direction="row" spacing={1.5}>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => fetchDashboardData(true)}
-            disabled={refreshing}
-            startIcon={<i className={`fi fi-rr-refresh ${refreshing ? 'spin-icon' : ''}`} style={{ fontSize: 13 }} />}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, px: 2, borderColor: 'divider', color: 'text.primary' }}
-          >
-            {refreshing ? 'Syncing...' : 'Refresh Fleet'}
-          </Button>
+
 
           <Button
             variant="contained"

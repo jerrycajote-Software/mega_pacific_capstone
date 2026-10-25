@@ -213,7 +213,7 @@ const VerifyEmailPage = () => {
               boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
             }}
           >
-            <i className="fi fi-rr-envelope" style={{ color: '#ffffff', fontSize: '24px' }}></i>
+           
           </Box>
 
           <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>

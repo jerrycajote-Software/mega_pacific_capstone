@@ -351,7 +351,7 @@ const sendOrderReceiptEmail = async (email, order) => {
   const fulfillmentType = order.fulfillmentType || 'Delivery';
   const isPickup = fulfillmentType.toLowerCase() === 'pickup';
   const deliveryAddress = isPickup
-    ? 'Mega Pacific Roofing — Plant Loading Dock 1, Imus Cavite (Store Pick-up)'
+    ? '379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite (Store Pick-up)'
     : [order.shippingAddress, order.shippingCity, order.shippingProvince, order.shippingZipCode].filter(Boolean).join(', ') || 'N/A';
 
   const items = order.items || [];
@@ -484,7 +484,7 @@ const sendOrderReceiptEmail = async (email, order) => {
               <tr>
                 <td style="padding: 12px 16px; width: 50%;">
                   <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">Fulfillment</span>
-                  <div style="font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 2px;">${isPickup ? 'Plant Pick-up (Plant Loading Dock 1)' : 'Jobsite Fleet Delivery'}</div>
+                  <div style="font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 2px;">${isPickup ? 'Plant Pick-up' : 'Jobsite Fleet Delivery'}</div>
                 </td>
                 <td style="padding: 12px 16px; width: 50%;">
                   <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">Contact Number</span>
@@ -667,7 +667,7 @@ const sendReadyForPickupEmail = async (email, order) => {
               </div>
               <div style="margin-bottom: 8px;">
                 <span style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px;">Pick-up Location</span>
-                <span style="font-size: 14px; font-weight: 700; color: #047857;">Mega Pacific Roofing — Plant Loading Dock 1</span>
+                <span style="font-size: 14px; font-weight: 700; color: #047857;">379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite</span>
                 <span style="font-size: 13px; color: #475569; display: block;">Aguinaldo Highway, Imus / Cavite Branch</span>
               </div>
               <div style="margin-bottom: 8px;">

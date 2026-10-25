@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { buildProductOptions, getDefaultOption } from './buildProductOptions';
+import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
 import {
   Box,
@@ -341,7 +341,7 @@ const VariantSelector = ({ options, selectedOption, onSelect, selectedColor, coi
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { user, token } = useAuth();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -476,7 +476,8 @@ const ProductDetails = () => {
   }, [product]);
   const hasOptions = productOptions.length > 0;
   const isPreOrder = product?.isPreOrder ?? true;
-  const isPerMeter = product?.unit === 'per meter' || !product?.unit;
+  const isCustomLengthEligible = isCustomLengthProfile(product?.type);
+  const isPerMeter = isCustomLengthEligible && (product?.unit === 'per meter' || !product?.unit || product?.unit?.toLowerCase().includes('meter'));
   const numLength = isPerMeter ? Math.max(MIN_PREORDER_LENGTH_METERS, Math.min(MAX_PREORDER_LENGTH_METERS, parseFloat(customLength) || 1.0)) : 1.0;
 
   const activePrice = selectedOption?.price ?? product?.price ?? 0;
@@ -701,13 +702,15 @@ const ProductDetails = () => {
               )}
               {hasDiscount && (
                 <Chip
-                  label={`Less ${activeDiscountPct}% OFF`}
+                  label={`LESS ${activeDiscountPct}% OFF`}
                   size="small"
                   sx={{
-                    fontWeight: 800,
+                    fontFamily: 'var(--font-display)',
+                    letterSpacing: '0.06em',
+                    fontWeight: 400,
                     bgcolor: '#dc2626',
                     color: '#ffffff',
-                    fontSize: '0.75rem',
+                    fontSize: '0.82rem',
                     height: 24,
                     boxShadow: '0 2px 8px rgba(220,38,38,0.3)'
                   }}
@@ -936,7 +939,9 @@ const ProductDetails = () => {
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-              <Typography variant="subtitle2" fontWeight="bold">Quantity of Sheets</Typography>
+              <Typography variant="subtitle2" fontWeight="bold">
+                {isPerMeter ? 'Quantity of Sheets' : 'Quantity'}
+              </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <IconButton onClick={handleDecrease} disabled={quantity <= 1} size="small"><i className="fi fi-rr-minus" style={{ fontSize: '12px' }}></i></IconButton>
                 <Box 
@@ -977,7 +982,7 @@ const ProductDetails = () => {
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2 }}>
               <Box>
                 <Typography variant="caption" color="text.secondary" fontWeight="bold">
-                  Total Order Price ({isPerMeter ? `${numLength}m × ` : ''}{quantity} {quantity === 1 ? 'sheet' : 'sheets'})
+                  Total Order Price ({isPerMeter ? `${numLength}m × ` : ''}{quantity} {quantity === 1 ? (isPerMeter ? 'sheet' : 'pc') : (isPerMeter ? 'sheets' : 'pcs')})
                 </Typography>
                 <Typography variant="h5" fontWeight="900" sx={{ color: '#16a34a', fontSize: { xs: '1.3rem', sm: '1.5rem' } }}>
                   ₱{totalCalculatedPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -1189,9 +1194,13 @@ const ProductDetails = () => {
                 <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', height: '100%', boxSizing: 'border-box' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     <Stack direction="row" spacing={2} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'grey.200', color: 'text.primary', fontWeight: 'bold' }}>
-                        {review.user?.name?.charAt(0).toUpperCase()}
-                      </Avatar>
+                      <Avatar 
+                        src={(review.user?.id && user?.id && review.user.id === user.id)
+                          ? (user?.avatarUrl || review.user?.avatarUrl || review.user?.customerProfile?.avatarUrl || '/default-profile.png')
+                          : (review.user?.avatarUrl || review.user?.customerProfile?.avatarUrl || '/default-profile.png')} 
+                        alt={review.user?.name || 'Customer'}
+                        sx={{ bgcolor: 'grey.200', color: 'text.primary', fontWeight: 'bold' }}
+                      />
                       <Box>
                         <Typography variant="subtitle2" fontWeight="bold">{review.user?.name}</Typography>
                         <Typography variant="caption" color="text.secondary">

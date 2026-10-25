@@ -76,7 +76,7 @@ const createAccount = async (req, res) => {
       if (!/^09[0-9]{9}$/.test(cleanContact)) {
         return res.status(400).json({
           success: false,
-          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).",
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567).",
         });
       }
     }
@@ -221,7 +221,7 @@ const updateAccount = async (req, res) => {
       if (!/^09[0-9]{9}$/.test(cleanContact)) {
         return res.status(400).json({
           success: false,
-          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).",
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567).",
         });
       }
     }

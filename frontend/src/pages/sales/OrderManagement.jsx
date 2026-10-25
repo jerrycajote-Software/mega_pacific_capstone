@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { generateReceiptPDF } from '../../utils/documentGenerator';
 
 const StatusBadge = ({ status }) => {
@@ -30,6 +30,7 @@ const OrderManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
   const fetchOrders = async () => {
     try {
@@ -50,11 +51,18 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchOrders, 10000);
+    const handleFocus = () => fetchOrders();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const handleApprove = async (id) => {
+    if (processingId) return;
+    setProcessingId(id);
     try {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
@@ -62,19 +70,25 @@ const OrderManagement = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
-        fetchOrders();
+        alert(res.data.message || 'Order approved and forwarded to Finance.');
+        await fetchOrders();
         if (selectedOrder && selectedOrder.rawId === id) setSelectedOrder(null);
       }
     } catch (err) {
       console.error('Failed to approve order', err);
-      alert('Failed to approve order');
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to approve order';
+      alert(errorMessage);
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleReject = async (id) => {
-    const reason = window.prompt("Reason for cancellation / rejection (e.g. 'Duplicate order', 'Customer request'):", "Duplicate order submission");
+    if (processingId) return;
+    const reason = window.prompt("Reason for cancellation / rejection ('Duplicate order', 'Customer request'):", "Duplicate order submission");
     if (reason === null) return;
 
+    setProcessingId(id);
     try {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
@@ -83,12 +97,15 @@ const OrderManagement = () => {
       });
       if (res.data.success) {
         alert(res.data.message || 'Order rejected and forwarded to Finance for customer refund.');
-        fetchOrders();
+        await fetchOrders();
         if (selectedOrder && selectedOrder.rawId === id) setSelectedOrder(null);
       }
     } catch (err) {
       console.error('Failed to reject order', err);
-      alert(err.response?.data?.error || 'Failed to reject order');
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to reject order';
+      alert(errorMessage);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -104,7 +121,23 @@ const OrderManagement = () => {
           <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Sales Order Approval</h2>
           <p style={{ margin: '6px 0 0', color: 'var(--text-muted)' }}>Review customer orders and approve them to forward to Finance.</p>
         </div>
-        <button onClick={fetchOrders} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', cursor: 'pointer' }}>
+        <button 
+          onClick={fetchOrders} 
+          disabled={loading || Boolean(processingId)}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            padding: '8px 16px', 
+            background: 'var(--bg-secondary)', 
+            border: '1px solid var(--border)', 
+            borderRadius: 8, 
+            color: 'var(--text-primary)', 
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '0.875rem'
+          }}
+        >
           <RefreshIcon sx={{ fontSize: 18 }} /> Refresh
         </button>
       </div>
@@ -147,11 +180,40 @@ const OrderManagement = () => {
                   </button>
                   {order.orderStatus === 'pending' && (
                     <span style={{ display: 'inline-flex', gap: 6, verticalAlign: 'middle' }}>
-                      <button onClick={() => handleApprove(order.rawId)} style={{ background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
-                        Approve
+                      <button 
+                        onClick={() => handleApprove(order.rawId)} 
+                        disabled={Boolean(processingId)}
+                        style={{ 
+                          background: processingId === order.rawId ? 'rgba(34,197,94,0.3)' : 'rgba(34,197,94,0.1)', 
+                          color: '#4ade80', 
+                          border: '1px solid rgba(74,222,128,0.3)', 
+                          padding: '6px 12px', 
+                          borderRadius: 6, 
+                          cursor: processingId ? 'not-allowed' : 'pointer', 
+                          fontWeight: 600, 
+                          fontSize: '0.8rem',
+                          opacity: processingId && processingId !== order.rawId ? 0.6 : 1
+                        }}
+                      >
+                        {processingId === order.rawId ? 'Approving...' : 'Approve'}
                       </button>
-                      <button onClick={() => handleReject(order.rawId)} title="Reject / Cancel Duplicate Order" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
-                        Reject
+                      <button 
+                        onClick={() => handleReject(order.rawId)} 
+                        disabled={Boolean(processingId)}
+                        title="Reject / Cancel Duplicate Order" 
+                        style={{ 
+                          background: processingId === order.rawId ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.1)', 
+                          color: '#ef4444', 
+                          border: '1px solid rgba(239,68,68,0.3)', 
+                          padding: '6px 10px', 
+                          borderRadius: 6, 
+                          cursor: processingId ? 'not-allowed' : 'pointer', 
+                          fontWeight: 600, 
+                          fontSize: '0.8rem',
+                          opacity: processingId && processingId !== order.rawId ? 0.6 : 1
+                        }}
+                      >
+                        {processingId === order.rawId ? 'Rejecting...' : 'Reject'}
                       </button>
                     </span>
                   )}
@@ -264,6 +326,7 @@ const OrderManagement = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: 12 }}>
                   <button 
                     onClick={() => handleReject(selectedOrder.rawId)} 
+                    disabled={Boolean(processingId)}
                     title="Reject / Cancel Duplicate Order"
                     style={{ 
                       background: 'rgba(239, 68, 68, 0.08)', 
@@ -271,30 +334,36 @@ const OrderManagement = () => {
                       border: '1px solid rgba(239, 68, 68, 0.35)', 
                       padding: '11px 16px', 
                       borderRadius: 10, 
-                      cursor: 'pointer', 
+                      cursor: processingId ? 'not-allowed' : 'pointer', 
                       fontWeight: 600,
                       fontSize: '0.875rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8,
+                      opacity: processingId ? 0.6 : 1,
                       transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
-                      e.currentTarget.style.borderColor = '#ef4444';
+                      if (!processingId) {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                        e.currentTarget.style.borderColor = '#ef4444';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
-                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                      if (!processingId) {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                        e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                      }
                     }}
                   >
                     <CloseIcon sx={{ fontSize: 18 }} />
-                    <span>Reject / Cancel</span>
+                    <span>{processingId === selectedOrder.rawId ? 'Processing...' : 'Reject / Cancel'}</span>
                   </button>
 
                   <button 
                     onClick={() => handleApprove(selectedOrder.rawId)} 
+                    disabled={Boolean(processingId)}
                     title="Approve order and forward to Finance"
                     style={{ 
                       background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', 
@@ -302,27 +371,32 @@ const OrderManagement = () => {
                       border: 'none', 
                       padding: '11px 20px', 
                       borderRadius: 10, 
-                      cursor: 'pointer', 
+                      cursor: processingId ? 'not-allowed' : 'pointer', 
                       fontWeight: 600,
                       fontSize: '0.875rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8,
+                      opacity: processingId ? 0.6 : 1,
                       boxShadow: '0 4px 12px rgba(34, 197, 94, 0.25)',
                       transition: 'all 0.2s ease'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(34, 197, 94, 0.4)';
+                      if (!processingId) {
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(34, 197, 94, 0.4)';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.25)';
+                      if (!processingId) {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.25)';
+                      }
                     }}
                   >
                     <CheckCircleIcon sx={{ fontSize: 18 }} />
-                    <span>Approve & Forward to Finance</span>
+                    <span>{processingId === selectedOrder.rawId ? 'Approving...' : 'Approve & Forward to Finance'}</span>
                   </button>
                 </div>
               ) : (

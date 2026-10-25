@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import {
   CircularProgress,
   Dialog,
@@ -12,7 +13,6 @@ import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import HistoryIcon from '@mui/icons-material/History';
 import SearchIcon from '@mui/icons-material/Search';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -58,10 +58,13 @@ const CoilInventoryPage = () => {
   const [addSuccessMsg, setAddSuccessMsg] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || '';
+  const isFetchingRef = useRef(false);
 
-  const fetchCoilData = async () => {
+  const fetchCoilData = async (showLoadingSpinner = false) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       const token = localStorage.getItem('appToken');
       const [coilsRes, summaryRes, logsRes] = await Promise.all([
         axios.get(`${API_URL}/api/logistic/coils`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -69,19 +72,54 @@ const CoilInventoryPage = () => {
         axios.get(`${API_URL}/api/logistic/coils/logs?limit=50`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
-      if (coilsRes.data?.success) setCoils(coilsRes.data.data);
-      if (summaryRes.data?.success) setSummary(summaryRes.data.data);
-      if (logsRes.data?.success) setLogs(logsRes.data.data);
+      if (coilsRes.data?.success) {
+        setCoils(prev => {
+          const next = coilsRes.data.data || [];
+          if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+          return next;
+        });
+      }
+      if (summaryRes.data?.success) {
+        setSummary(prev => {
+          const next = summaryRes.data.data;
+          if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+          return next;
+        });
+      }
+      if (logsRes.data?.success) {
+        setLogs(prev => {
+          const next = logsRes.data.data || [];
+          if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+          return next;
+        });
+      }
     } catch (err) {
       console.error('Failed to load coil data:', err);
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
   useEffect(() => {
-    fetchCoilData();
-  }, []);
+    let isMounted = true;
+    fetchCoilData(true);
+
+    const socket = io(API_URL, {
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('coil_inventory_updated', () => {
+      if (isMounted) {
+        fetchCoilData(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      socket.disconnect();
+    };
+  }, [API_URL]);
 
   const openDeductModal = (coil) => {
     setSelectedCoil(coil);
@@ -224,7 +262,7 @@ const CoilInventoryPage = () => {
   const handleConfirmAddCoil = async (e) => {
     e.preventDefault();
     if (!normalizedAddThickness) {
-      setAddError('Please specify a valid thickness gauge (e.g. 0.70mm).');
+      setAddError('Please specify a valid thickness gauge (ex. 0.70mm).');
       return;
     }
     if (selectedColorsToAdd.length === 0) {
@@ -356,18 +394,7 @@ const CoilInventoryPage = () => {
             <AddCircleIcon sx={{ fontSize: 18 }} />
             <span>+ Add Coil / Thickness</span>
           </button>
-          <button
-            onClick={fetchCoilData}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '0.6rem 0.95rem', borderRadius: 10,
-              background: 'var(--bg-secondary)', border: '1px solid var(--border-light)',
-              color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer'
-            }}
-          >
-            <RefreshIcon sx={{ fontSize: 16 }} /> Refresh
-          </button>
-        </div>
+          </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
@@ -902,7 +929,7 @@ const CoilInventoryPage = () => {
                   min="1"
                   max={selectedCoil.coilCount ?? 1}
                   required
-                  placeholder="e.g. 1"
+                  placeholder="1"
                   value={rollsToDeduct}
                   onChange={(e) => setRollsToDeduct(e.target.value)}
                   style={{
@@ -927,7 +954,7 @@ const CoilInventoryPage = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. ORD-084"
+                  placeholder="ORD-084"
                   value={orderRef}
                   onChange={(e) => setOrderRef(e.target.value)}
                   style={{
@@ -944,7 +971,7 @@ const CoilInventoryPage = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Mounted on roll-forming line for custom sheets"
+                  placeholder="Mounted on roll-forming line for custom sheets"
                   value={deductReason}
                   onChange={(e) => setDeductReason(e.target.value)}
                   style={{
@@ -1003,7 +1030,7 @@ const CoilInventoryPage = () => {
                   step="1"
                   min="1"
                   required
-                  placeholder="e.g. 2"
+                  placeholder="2"
                   value={rollsToRestock}
                   onChange={(e) => setRollsToRestock(e.target.value)}
                   style={{
@@ -1028,7 +1055,7 @@ const CoilInventoryPage = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Shipment batch #CS-2026-10"
+                  placeholder="ex. Shipment batch #CS-2026-10"
                   value={restockReason}
                   onChange={(e) => setRestockReason(e.target.value)}
                   style={{
@@ -1083,7 +1110,7 @@ const CoilInventoryPage = () => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 0.70mm or 0.75"
+                    placeholder="0.70mm or 0.75"
                     value={addThickness}
                     onChange={(e) => setAddThickness(e.target.value)}
                     style={{

@@ -60,13 +60,13 @@ export const generateReceiptPDF = (order) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12.5);
-  doc.text('MEGA PACIFIC ROOFING MANUFACTURING CORP.', 14, 11.5);
+  doc.text('MEGA PACIFIC METAL AND STEEL CORP.', 14, 11.5);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(230, 240, 220);
-  doc.text('Plant & Depot: Aguinaldo Highway, Imus, Cavite', 14, 17.5);
-  doc.text('Dispatch Hotline: (046) 471-2345 | 0917-123-4567 | info@megapacificroofing.ph', 14, 22.5);
+  doc.text('Plant: 379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite', 14, 17.5);
+  doc.text('Tel. NO.: (046) 416 9217 | Cel. No.: 0917 277 7727 | megapacificmetal@gmail.com', 14, 22.5);
 
   doc.setTextColor(30, 41, 59);
   doc.setFontSize(9);
@@ -123,7 +123,7 @@ export const generateReceiptPDF = (order) => {
   const customerEmail = order.customerEmail || order.shippingEmail || order.user?.email || 'N/A';
   const customerContact = order.shippingContactNumber || order.contactNumber || order.shippingPhone || order.phone || 'N/A';
   const addressLine = isPickup
-    ? 'Mega Pacific Plant — Loading Dock 1, Imus Cavite'
+    ? '379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite'
     : (order.shippingAddress || order.address || order.cityProvince || 'N/A');
 
   doc.setFont('helvetica', 'bold');
@@ -295,8 +295,8 @@ export const generateReceiptPDF = (order) => {
   doc.setFontSize(7);
   doc.setTextColor(113, 63, 18);
   const releaseNote = isPickup
-    ? 'Custom pre-order roll-formed roofing sheets are inspected, banded, and staged at Plant Loading Dock 1. Please present this official receipt reference.'
-    : 'All roll-formed products are dispatched strapped on fleet transit directly from our manufacturing bay. Please ensure a representative is available on site to sign the delivery handover sheet.';
+    ? 'Custom pre-order roll-formed roofing sheets are inspected, banded. Please present this official receipt reference.'
+    : 'All roll-formed products are dispatched strapped on fleet transit directly from our manufacturing site. Please ensure a representative is available on site to sign the delivery handover sheet.';
   const splitRelease = doc.splitTextToSize(releaseNote, noticeBoxW - 8);
   doc.text(splitRelease, 18, finalTableY + 13);
 
@@ -308,7 +308,7 @@ export const generateReceiptPDF = (order) => {
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(148, 163, 184);
-  doc.text('This is an official computer-generated receipt from Mega Pacific Roofing Manufacturing System. Genuine Mill Specs Guaranteed.', 14, footerY);
+  doc.text('This is an official computer-generated receipt from Mega Pacific Manufacturing System. Genuine Mill Specs Guaranteed.', 14, footerY);
   doc.text(`Document Reference: ${orderNum} | Generated: ${new Date().toLocaleString('en-PH')}`, pageWidth - 14, footerY, { align: 'right' });
 
   doc.save(`MegaPacific_Receipt_${order.id || 'Order'}.pdf`);
@@ -355,13 +355,13 @@ export const generateQuotationPDF = (quoteData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12.5);
-  doc.text('MEGA PACIFIC ROOFING MANUFACTURING CORP.', 14, 11.5);
+  doc.text('MEGA PACIFIC METAL AND STEEL CORP.', 14, 11.5);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(224, 231, 255);
   doc.text('Direct Manufacturer • High-Tensile Prime Steel Coils • Cut-To-Size Roll Forming', 14, 17.5);
-  doc.text('Imus Cavite Plant | Valenzuela & Subic Depots | Hotline: (046) 471-2345', 14, 22.5);
+  doc.text('Imus Cavite Plant | Tel. NO.: (046) 416 9217 | Cel. No.: 0917 277 7727', 14, 22.5);
 
   let currentY = 38;
 

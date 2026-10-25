@@ -268,7 +268,11 @@ const getProductReviews = async (req, res) => {
         id: r.user?.id,
         email: r.user?.email,
         name: r.user?.customerProfile?.name || (r.user?.email ? r.user.email.split('@')[0] : "Valued Customer"),
-        avatarUrl: r.user?.customerProfile?.avatarUrl || null
+        avatarUrl: r.user?.customerProfile?.avatarUrl || "/default-profile.png",
+        customerProfile: {
+          name: r.user?.customerProfile?.name || (r.user?.email ? r.user.email.split('@')[0] : "Valued Customer"),
+          avatarUrl: r.user?.customerProfile?.avatarUrl || "/default-profile.png"
+        }
       },
       reply: r.reply ? {
         ...r.reply,

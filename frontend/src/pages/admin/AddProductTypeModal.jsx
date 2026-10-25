@@ -209,7 +209,7 @@ const AddProductTypeModal = ({ isOpen, onClose, onTypeCreated }) => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={t('e.g. Mega Standing Seam')}
+                  placeholder={t('ex. Mega Standing Seam')}
                   style={M.input}
                   autoFocus
                   required

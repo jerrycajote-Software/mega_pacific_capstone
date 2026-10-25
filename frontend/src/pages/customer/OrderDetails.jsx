@@ -1074,10 +1074,10 @@ const OrderDetails = () => {
                     Official Retrieval Location
                   </Typography>
                   <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mt: 0.5 }}>
-                    Mega Pacific Metal & Steel Corp — Plant
+                    Mega Pacific Metal & Steel Corp.
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                    Aguinaldo Highway, Imus / Cavite Main Fabrication Complex
+                    379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite
                   </Typography>
                 </Box>
 
@@ -1099,10 +1099,10 @@ const OrderDetails = () => {
                       Dispatch Desk Contact
                     </Typography>
                     <Typography variant="body2" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
-                      (046) 471-2345
+                      Tel. NO.: (046) 416 9217
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Mobile: 0917-123-4567
+                      Tel. NO.: (046) 416 9217
                     </Typography>
                   </Box>
                 </Box>
@@ -1353,7 +1353,10 @@ const OrderDetails = () => {
                   Contact our plant logistics desk for loading bay access or schedule adjustments.
                 </Typography>
                 <Typography variant="body2" fontWeight={800} sx={{ color: '#4f772d', mt: 1 }}>
-                  Hotline: (046) 471-2345
+                  Tel. NO.: (046) 416 9217
+                </Typography>
+                <Typography variant="body2" fontWeight={800} sx={{ color: '#4f772d', mt: 1 }}>
+                  Cel. No.: 0917 277 7727
                 </Typography>
               </Box>
             </Box>
@@ -1481,7 +1484,7 @@ const OrderDetails = () => {
                     fullWidth 
                     size="small"
                     label="Review Headline (Optional)" 
-                    placeholder="e.g. Excellent gauge quality and clean cuts"
+                    placeholder="ex. Excellent gauge quality and clean cuts"
                     value={reviewForm.title} 
                     onChange={(e) => setReviewForm(prev => ({ ...prev, title: e.target.value }))} 
                     sx={{ mb: 2.5 }}

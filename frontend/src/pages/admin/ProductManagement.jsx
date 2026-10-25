@@ -218,7 +218,23 @@ const ProductManagement = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || '';
 
-  useEffect(() => { fetchProducts(); fetchProductTypes(); }, []);
+  useEffect(() => {
+    fetchProducts();
+    fetchProductTypes();
+    const syncInterval = setInterval(() => {
+      fetchProducts();
+    }, 10000);
+
+    const handleFocus = () => {
+      fetchProducts();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
 
   const fetchProductTypes = async () => {
@@ -654,7 +670,7 @@ const ProductManagement = () => {
                   
                   <div style={{ ...S.formGroup, marginBottom: 0 }}>
                     <label style={S.label}><Inventory2Icon sx={{ fontSize: 11 }} /> {t('Product Name')}</label>
-                    <input className="pm-input" name="name" type="text" required disabled={isReadOnly} value={formData.name} onChange={handleInputChange} placeholder={t('e.g. Rib Type Blue')} style={S.inputBase} />
+                    <input className="pm-input" name="name" type="text" required disabled={isReadOnly} value={formData.name} onChange={handleInputChange} placeholder={t('ex. Rib Type Blue')} style={S.inputBase} />
                   </div>
 
                  
@@ -678,7 +694,7 @@ const ProductManagement = () => {
                   <div style={{ ...S.formRow, gap: '0.8rem' }}>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}>{t('COLOR')}</label>
-                      <input className="pm-input" name="color" type="text" disabled={isReadOnly} value={formData.color} onChange={handleInputChange} placeholder={t('e.g. Red')} style={S.inputBase} />
+                      <input className="pm-input" name="color" type="text" disabled={isReadOnly} value={formData.color} onChange={handleInputChange} placeholder={t('ex. Red')} style={S.inputBase} />
                     </div>
                     <div style={{ ...S.formGroup, marginBottom: 0 }}>
                       <label style={S.label}><LocalOfferIcon sx={{ fontSize: 11 }} /> {t('Category Type')}</label>
@@ -822,10 +838,10 @@ const ProductManagement = () => {
                         {!isReadOnly && (
                           <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
                             <td style={S.variantTd}>
-                              <input className="pm-variant-input" style={S.variantInput} value={newVariant.name} onChange={e => setNewVariant(p => ({ ...p, name: e.target.value }))} placeholder={t('e.g. Per Meter')} />
+                              <input className="pm-variant-input" style={S.variantInput} value={newVariant.name} onChange={e => setNewVariant(p => ({ ...p, name: e.target.value }))} placeholder={t('ex. Per Meter')} />
                             </td>
                             <td style={S.variantTd}>
-                              <input className="pm-variant-input" style={S.variantInput} value={newVariant.color} onChange={e => setNewVariant(p => ({ ...p, color: e.target.value }))} placeholder={t('e.g. Red')} />
+                              <input className="pm-variant-input" style={S.variantInput} value={newVariant.color} onChange={e => setNewVariant(p => ({ ...p, color: e.target.value }))} placeholder={t('ex. Red')} />
                             </td>
                             <td style={S.variantTd}>
                               <input className="pm-variant-input" style={S.variantInput} type="number" min="0" value={newVariant.price} onChange={e => setNewVariant(p => ({ ...p, price: e.target.value }))} placeholder="0" />

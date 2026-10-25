@@ -143,7 +143,7 @@ model Address {
 model Product {
   id               Int              @id @default(autoincrement())
   name             String           @unique
-  type             String // e.g. Spandrel, Rib, Flat Type
+  type             String // ex. Spandrel, Rib, Flat Type
   description      String?
   price            Float // Base selling price (after discount)
   originalPrice    Float? // Pre-discount original price
@@ -175,7 +175,7 @@ model ProductVariant {
   id              Int            @id @default(autoincrement())
   productId       Int
   product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name            String // e.g. "Per Meter", "2 Meters", "Bundle"
+  name            String // ex. "Per Meter", "2 Meters", "Bundle"
   color           String?
   price           Float // Selling price (after discount)
   originalPrice   Float? // Pre-discount original price
@@ -339,8 +339,8 @@ model Expense {
 model CoilInventory {
   id              Int                @id @default(autoincrement())
   name            String             @default("Steel Coil")
-  thickness       String             // e.g. "0.35mm", "0.40mm", "0.50mm", "0.60mm"
-  color           String             // e.g. "Marshall Dark Gray"
+  thickness       String             // ex. "0.35mm", "0.40mm", "0.50mm", "0.60mm"
+  color           String             // ex. "Marshall Dark Gray"
   coilCount       Int                @default(1) // Physical count of coil rolls in stock
   minAlertCount   Int                @default(1) // Alert threshold for low stock (default 1 roll)
   availableMeters Float              @default(0) // Legacy / reference linear meters

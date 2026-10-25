@@ -45,17 +45,20 @@ const HeroSection = () => {
             justifyContent: 'center' 
           }}
         >
-          <Typography 
-            variant="overline" 
-            sx={{ 
-              color: 'primary.main', 
-              fontWeight: 800, 
-              letterSpacing: { xs: 1.5, sm: 2 },
-              fontSize: { xs: '0.75rem', sm: '0.85rem' }
-            }}
-          >
-            Premium Roofing & Steel Solutions
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.5, flexWrap: 'wrap' }}>
+            <Typography 
+              variant="overline" 
+              sx={{ 
+                color: 'primary.main', 
+                fontWeight: 800, 
+                letterSpacing: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.75rem', sm: '0.85rem' }
+              }}
+            >
+              Roofing & Steel Solutions
+            </Typography>
+            
+          </Box>
           <Typography 
             variant="h2" 
             component="h1" 

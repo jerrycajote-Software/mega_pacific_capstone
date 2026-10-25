@@ -7,7 +7,6 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import BadgeIcon from '@mui/icons-material/Badge';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CategoryIcon from '@mui/icons-material/Category';
@@ -24,7 +23,6 @@ const SalesDashboard = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [spin, setSpin] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [orderFilter, setOrderFilter] = useState('ALL');
   const [searchOrder, setSearchOrder] = useState('');
@@ -62,12 +60,20 @@ const SalesDashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    const syncInterval = setInterval(() => {
+      fetchData();
+    }, 10000);
 
-  const refresh = () => {
-    setSpin(true);
-    fetchData().then(() => setTimeout(() => setSpin(false), 700));
-  };
+    const handleFocus = () => {
+      fetchData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -171,8 +177,8 @@ const SalesDashboard = () => {
               letterSpacing: '0.06em',
               textTransform: 'uppercase'
             }}>
-              <BadgeIcon sx={{ fontSize: 14 }} />
-              Sales Operations Hub
+            
+              Sales Operations
             </span>
             <span style={{
               display: 'inline-flex',
@@ -223,7 +229,7 @@ const SalesDashboard = () => {
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
           >
-            <ShoppingCartIcon sx={{ fontSize: 16, color: 'var(--green)' }} />
+            
             Manage Orders
           </button>
 
@@ -246,7 +252,7 @@ const SalesDashboard = () => {
             onMouseEnter={e => { e.currentTarget.style.borderColor = '#8b5cf6'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
           >
-            <SupportAgentIcon sx={{ fontSize: 16, color: '#8b5cf6' }} />
+            
             Inquiries
             {customerService?.openInquiries > 0 && (
               <span style={{
@@ -262,28 +268,7 @@ const SalesDashboard = () => {
             )}
           </button>
 
-          <button
-            onClick={refresh}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 14px',
-              borderRadius: 10,
-              background: spin ? 'rgba(34, 197, 94, 0.1)' : 'var(--bg-primary)',
-              border: `1px solid ${spin ? 'var(--green)' : 'var(--border-light)'}`,
-              color: 'var(--text-primary)',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.18s ease'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
-            onMouseLeave={e => { if (!spin) e.currentTarget.style.borderColor = 'var(--border-light)'; }}
-          >
-            <RefreshIcon sx={{ fontSize: 16, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: 'var(--green)' }} />
-            Refresh
-          </button>
+
         </div>
       </div>
 
@@ -1002,21 +987,18 @@ const SalesDashboard = () => {
                         >
                           <td style={{ padding: '10px 12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: '50%',
-                                background: 'rgba(34, 197, 94, 0.12)',
-                                color: 'var(--green)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 700,
-                                fontSize: '0.8rem',
-                                flexShrink: 0
-                              }}>
-                                {order.customer ? order.customer.charAt(0).toUpperCase() : 'C'}
-                              </div>
+                              <img
+                                src={order.avatarUrl || '/default-profile.png'}
+                                alt={order.customer}
+                                style={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: '50%',
+                                  objectFit: 'cover',
+                                  flexShrink: 0,
+                                  border: '1px solid var(--border-light)'
+                                }}
+                              />
                               <div>
                                 <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                                   {order.customer}
@@ -1221,7 +1203,7 @@ const SalesDashboard = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CategoryIcon sx={{ fontSize: 18, color: 'var(--green)' }} />
+              
                 <h3 style={{ margin: 0, fontSize: '0.975rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                   Warehouse Stock Health
                 </h3>
@@ -1395,7 +1377,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <ShoppingCartIcon sx={{ fontSize: 18, color: 'var(--green)' }} />
+                  
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Process Pending Orders
@@ -1438,7 +1420,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <SupportAgentIcon sx={{ fontSize: 18, color: '#8b5cf6' }} />
+                  
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Customer Support Desk
@@ -1481,7 +1463,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <RateReviewIcon sx={{ fontSize: 18, color: '#eab308' }} />
+                  
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Customer Reviews & Feedback
@@ -1524,7 +1506,7 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <StorefrontIcon sx={{ fontSize: 18, color: 'var(--green)' }} />
+                  {/* <StorefrontIcon sx={{ fontSize: 18, color: 'var(--green)' }} /> */}
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Pre-Order Products

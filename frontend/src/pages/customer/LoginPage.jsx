@@ -167,7 +167,7 @@ const CustomerLoginPage = () => {
           }}
         >
           <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>
-            Welcome back
+            Welcome back!
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5 }}>
             Sign in to your account to continue shopping.

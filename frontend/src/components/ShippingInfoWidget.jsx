@@ -190,7 +190,7 @@ const ShippingInfoWidget = ({
                   label="Complete Address (Street, Building, Barangay)"
                   name="address"
                   required
-                  placeholder="e.g. Unit 4B, 123 Emerald St., Brgy. San Isidro"
+                  placeholder="ex. Unit 4B, 123 Emerald St., Brgy. San Isidro"
                   value={formData.address}
                   onChange={onInputChange}
                   error={!!errors.address}

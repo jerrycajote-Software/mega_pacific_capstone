@@ -5,6 +5,13 @@ const { validateRealisticEmail } = require("../../utils/emailValidator");
 
 const HARDCODED_SHIPPING_FEE = 100;
 
+const CUSTOM_LENGTH_PROFILE_TYPES = ['rib type', 'corrugated', 'tile profile'];
+
+const isCustomLengthProfile = (type) => {
+  if (!type || typeof type !== 'string') return false;
+  return CUSTOM_LENGTH_PROFILE_TYPES.includes(type.trim().toLowerCase());
+};
+
 const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel) => {
   const mode = (paymentMode || '').trim();
   const plan = paymentPlan || (mode.toLowerCase().includes('50%') || mode.toLowerCase().includes('cash on delivery') ? 'COD_50' : 'FULL_PAYMENT');
@@ -76,7 +83,7 @@ const createOrder = async (req, res) => {
     if (!/^09[0-9]{9}$/.test(cleanPhone)) {
       return res.status(400).json({
         success: false,
-        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
       });
     }
   }
@@ -94,7 +101,10 @@ const createOrder = async (req, res) => {
     let variantName = null;
     const parsedVariantId = variantId ? parseInt(variantId) : null;
     const isPreOrder = product.isPreOrder ?? true;
-    const customLength = req.body.customLength ? Math.min(21.0, Math.max(0.5, parseFloat(req.body.customLength))) : null;
+    const isCustomEligible = isCustomLengthProfile(product.type);
+    const customLength = (isCustomEligible && req.body.customLength)
+      ? Math.min(21.0, Math.max(0.5, parseFloat(req.body.customLength)))
+      : null;
     const thickness = req.body.thickness || null;
 
     if (parsedVariantId) {
@@ -132,16 +142,16 @@ const createOrder = async (req, res) => {
         }
       });
 
-      if (coil && coil.coilCount <= 0) {
+      if (!coil || coil.coilCount <= 0) {
         return res.status(409).json({
           success: false,
-          error: `The ${color} color finish in ${cleanThick} thickness is currently out of stock in coil raw inventory.`,
+          error: `The material ${cleanThick} with color finish "${color}" is not available in Coil Inventory.`,
           details: { type: 'STOCK_ERROR', itemName: `${product.name} (${cleanThick} • ${color})`, available: 0, requested: quantity }
         });
       }
     }
 
-    const isPerMeter = product.unit === "per meter" || product.unit === "meter" || isPreOrder;
+    const isPerMeter = isCustomEligible && (product.unit === "per meter" || product.unit === "meter" || isPreOrder);
     const lengthMultiplier = (customLength && isPerMeter) ? customLength : 1;
     const itemsTotal = Math.round(unitPrice * lengthMultiplier * parseInt(quantity) * 100) / 100;
     let shippingFee = 0;
@@ -473,7 +483,7 @@ const createBulkOrder = async (req, res) => {
     if (!/^09[0-9]{9}$/.test(cleanPhone)) {
       return res.status(400).json({
         success: false,
-        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+        error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
       });
     }
   }
@@ -500,8 +510,11 @@ const createBulkOrder = async (req, res) => {
           throw new Error(`Product ID ${productId} not found`);
         }
 
+        const isCustomEligible = isCustomLengthProfile(product.type);
         const isPreOrder = product.isPreOrder ?? true;
-        const customLength = item.customLength ? Math.min(21.0, Math.max(0.5, parseFloat(item.customLength))) : null;
+        const customLength = (isCustomEligible && item.customLength)
+          ? Math.min(21.0, Math.max(0.5, parseFloat(item.customLength)))
+          : null;
         const thickness = item.thickness || null;
 
         let unitPrice;
@@ -545,7 +558,7 @@ const createBulkOrder = async (req, res) => {
           }
         }
 
-        const isPerMeterItem = product.unit === "per meter" || product.unit === "meter" || isPreOrder;
+        const isPerMeterItem = isCustomEligible && (product.unit === "per meter" || product.unit === "meter" || isPreOrder);
         const lengthMultiplier = (customLength && isPerMeterItem) ? customLength : 1;
         totalAmount += Math.round(unitPrice * lengthMultiplier * parseInt(quantity) * 100) / 100;
 
@@ -562,7 +575,7 @@ const createBulkOrder = async (req, res) => {
             }
           });
 
-          if (coil && coil.coilCount <= 0) {
+          if (!coil || coil.coilCount <= 0) {
             throw {
               type: 'STOCK_ERROR',
               itemName: `${product.name} (${cleanThick} • ${item.color})`,

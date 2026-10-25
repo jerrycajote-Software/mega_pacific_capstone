@@ -78,7 +78,6 @@ const CustomChartTooltip = ({ active, payload, label }) => {
 
 const FinanceDashboardPage = () => {
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [activityFilter, setActivityFilter] = useState('all');
   const [data, setData] = useState({
     kpi: {},
@@ -131,8 +130,7 @@ const FinanceDashboardPage = () => {
     }
   };
 
-  const fetchDashboardData = async (isManual = false) => {
-    if (isManual) setRefreshing(true);
+  const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
@@ -141,20 +139,30 @@ const FinanceDashboardPage = () => {
       });
       if (res.data.success) {
         setData(res.data.data);
-        if (isManual) toast.success('Dashboard metrics refreshed');
       }
     } catch (error) {
       console.error('Failed to load finance dashboard:', error);
-      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchDashboardData();
     fetchDeliverySettings();
+    const syncInterval = setInterval(() => {
+      fetchDashboardData();
+    }, 10000);
+
+    const handleFocus = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const filteredActivity = useMemo(() => {
@@ -169,7 +177,7 @@ const FinanceDashboardPage = () => {
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', gap: 2 }}>
         <CircularProgress size={48} thickness={4} sx={{ color: 'primary.main' }} />
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
-          Loading financial intelligence overview...
+          Loading financial overview...
         </Typography>
       </Box>
     );
@@ -229,18 +237,7 @@ const FinanceDashboardPage = () => {
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={1.5}>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => fetchDashboardData(true)}
-            disabled={refreshing}
-            startIcon={<i className={`fi fi-rr-refresh ${refreshing ? 'spin-icon' : ''}`} style={{ fontSize: 13 }} />}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, px: 2, borderColor: 'divider', color: 'text.primary' }}
-          >
-            {refreshing ? 'Updating...' : 'Refresh Data'}
-          </Button>
-        </Stack>
+
       </Box>
 
       <Grid container spacing={2.5} sx={{ mb: 4 }}>

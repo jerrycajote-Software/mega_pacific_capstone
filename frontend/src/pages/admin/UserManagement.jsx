@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BadgeIcon from '@mui/icons-material/Badge';
@@ -50,7 +49,6 @@ const roleStyles = {
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [spin, setSpin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
@@ -77,12 +75,14 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
+    const syncInterval = setInterval(fetchUsers, 10000);
+    const handleFocus = () => fetchUsers();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
-
-  const refresh = () => {
-    setSpin(true);
-    fetchUsers().then(() => setTimeout(() => setSpin(false), 600));
-  };
 
   const handleToggleStatusClick = (user) => {
     const newStatus = user.status === 'active' ? 'suspended' : 'active';
@@ -160,33 +160,12 @@ const UserManagement = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            User Directory Management
+            User Management
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Oversee registered customer accounts, contact details, role clearances, and access states.
           </p>
         </div>
-
-        <button
-          onClick={refresh}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '0.55rem 1.1rem',
-            borderRadius: 10,
-            border: '1px solid var(--border-light)',
-            background: 'var(--bg-secondary)',
-            color: 'var(--text-primary)',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            cursor: spin ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s',
-          }}
-        >
-          <RefreshIcon sx={{ fontSize: 16, transform: spin ? 'rotate(360deg)' : 'none', transition: 'transform 0.6s' }} />
-          <span>{spin ? 'Refreshing...' : 'Refresh Directory'}</span>
-        </button>
       </div>
 
       {/* Metric Cards Bar */}

@@ -474,7 +474,7 @@ const SuperAdminDashboardPage = () => {
     if (createForm.contactNumber && createForm.contactNumber.trim()) {
       const cleanContact = createForm.contactNumber.trim();
       if (!/^09[0-9]{9}$/.test(cleanContact)) {
-        setCreateError('Contact number must be a valid 11-digit Philippine mobile number starting with 09 (e.g. 09171234567).');
+        setCreateError('Contact number must be a valid 11-digit Philippine mobile number starting with 09 (ex. 09171234567).');
         return;
       }
     }
@@ -1756,7 +1756,7 @@ const SuperAdminDashboardPage = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Juan dela Cruz"
+                  placeholder="Juan dela Cruz"
                   value={createForm.name}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -1834,7 +1834,7 @@ const SuperAdminDashboardPage = () => {
                     type="tel"
                     inputMode="numeric"
                     maxLength={11}
-                    placeholder="09XXXXXXXXX (e.g. 09171234567)"
+                    placeholder="09XXXXXXXXX (09171234567)"
                     value={createForm.contactNumber}
                     onChange={(e) => {
                       let digits = e.target.value.replace(/[^0-9]/g, '');
@@ -1849,7 +1849,7 @@ const SuperAdminDashboardPage = () => {
                 </div>
                 <div className="mt-1 flex items-center justify-between text-[11px] font-mono">
                   {createForm.contactNumber && !createForm.contactNumber.startsWith('09') ? (
-                    <span className="text-amber-400">Must start with 09 (e.g. 09171234567)</span>
+                    <span className="text-amber-400">Must start with 09 (09171234567)</span>
                   ) : createForm.contactNumber && createForm.contactNumber.length > 0 && createForm.contactNumber.length < 11 ? (
                     <span className="text-slate-400">11 digits required ({11 - createForm.contactNumber.length} more)</span>
                   ) : createForm.contactNumber && createForm.contactNumber.length === 11 ? (

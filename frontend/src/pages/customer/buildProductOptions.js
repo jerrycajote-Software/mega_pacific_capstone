@@ -13,11 +13,12 @@ export function buildProductOptions(product) {
 
   const isPreOrder = product.isPreOrder ?? true;
   const hasVariants = product.variants && product.variants.length > 0;
-  const baseThickness = product.thickness || '0.35mm';
-  const baseName = product.thickness ? `${product.thickness} Thickness` : (product.unit || 'per meter');
+  const isProfileEligible = isCustomLengthProfile(product?.type);
+  const baseThickness = product.thickness || (isProfileEligible ? '0.35mm' : null);
+  const baseName = product.thickness ? `${product.thickness} Thickness` : (product.unit || (isProfileEligible ? 'per meter' : 'per piece'));
 
   const baseCoveredByVariant = hasVariants && product.variants.some(v => 
-    (v.thickness && v.thickness.toLowerCase().trim() === baseThickness.toLowerCase().trim()) ||
+    (baseThickness && v.thickness && v.thickness.toLowerCase().trim() === baseThickness.toLowerCase().trim()) ||
     (v.name && v.name.toLowerCase().replace(/\s+/g, '') === baseName.toLowerCase().replace(/\s+/g, ''))
   );
 
@@ -64,4 +65,19 @@ export function buildProductOptions(product) {
 export function getDefaultOption(options) {
   if (!options || options.length === 0) return null;
   return options.find((o) => o.status === 'available' || o.stock > 0) || options[0] || null;
+}
+
+export const CUSTOM_LENGTH_PROFILE_TYPES = ['Rib Type', 'Corrugated', 'Tile Profile'];
+
+export function isCustomLengthProfile(typeOrProduct) {
+  const type = typeof typeOrProduct === 'string'
+    ? typeOrProduct
+    : (typeOrProduct?.type || typeOrProduct?.category || '');
+  if (!type || typeof type !== 'string') return false;
+  const normalized = type.trim().toLowerCase();
+  return (
+    normalized === 'rib type' ||
+    normalized === 'corrugated' ||
+    normalized === 'tile profile'
+  );
 }

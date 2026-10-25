@@ -314,7 +314,7 @@ const SettingsPage = () => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Two-Factor Auth (2FA / OTP):</span>
                 <span style={{ color: '#22c55e', fontWeight: 700, background: 'rgba(34,197,94,0.12)', padding: '2px 8px', borderRadius: 6 }}>
-                  Active (LOG-######)
+                  Active
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

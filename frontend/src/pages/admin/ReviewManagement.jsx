@@ -8,7 +8,6 @@ import {
   Alert,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import ReplyIcon from '@mui/icons-material/Reply';
 import EditIcon from '@mui/icons-material/Edit';
@@ -38,7 +37,6 @@ const ReviewManagement = () => {
 
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [spin, setSpin] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All'); // 'All' | 'Unreplied' | 'Replied' | '5Stars' | 'Critical'
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'highest' | 'lowest'
@@ -74,12 +72,14 @@ const ReviewManagement = () => {
 
   useEffect(() => {
     fetchReviews();
+    const syncInterval = setInterval(fetchReviews, 10000);
+    const handleFocus = () => fetchReviews();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
-
-  const refresh = () => {
-    setSpin(true);
-    fetchReviews().then(() => setTimeout(() => setSpin(false), 800));
-  };
 
   const handleOpenReply = (review) => {
     setReplyReviewId(review.id);
@@ -267,21 +267,6 @@ const ReviewManagement = () => {
             {isAdmin ? 'Supervise verified customer feedback and sales support communications.' : 'Monitor product quality ratings, address inquiries, and post official sales replies.'}
           </p>
         </div>
-
-        <button
-          onClick={refresh}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px',
-            background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12,
-            color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-        >
-          <RefreshIcon sx={{ fontSize: 16, animation: spin ? 'spin 0.8s linear infinite' : 'none', color: spin ? 'var(--green)' : 'var(--text-muted)' }} />
-          Refresh Data
-        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
@@ -562,17 +547,15 @@ const ReviewManagement = () => {
                       </div>
                     </div>
 
-                    <Avatar sx={{
-                      width: 40, height: 40, borderRadius: 12,
-                      bgcolor: '#4f772d', color: '#ffffff', fontWeight: 700, fontSize: '0.9rem',
-                      boxShadow: '0 2px 8px rgba(79,119,45,0.25)'
-                    }}>
-                      {review.user?.customerProfile?.avatarUrl ? (
-                        <img src={review.user.customerProfile.avatarUrl} alt={customerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        customerName.charAt(0).toUpperCase()
-                      )}
-                    </Avatar>
+                    <Avatar 
+                      src={review.user?.avatarUrl || review.user?.customerProfile?.avatarUrl || '/default-profile.png'}
+                      alt={customerName}
+                      sx={{
+                        width: 40, height: 40, borderRadius: 12,
+                        bgcolor: 'background.default',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                      }}
+                    />
                   </div>
 
                 </div>

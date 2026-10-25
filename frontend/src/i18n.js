@@ -21,7 +21,7 @@ const resources = {
       "units": "units",
       "Update Inventory Item": "Update Inventory Item",
       "Product Name": "Product Name",
-      "e.g. Rib Type Blue": "e.g. Rib Type Blue",
+      "ex. Rib Type Blue": "ex. Rib Type Blue",
       "Price (₱)": "Price (₱)",
       "Unit": "Unit",
       "per meter": "per meter",

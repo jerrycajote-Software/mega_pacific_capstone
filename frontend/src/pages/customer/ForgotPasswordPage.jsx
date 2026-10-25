@@ -116,21 +116,6 @@ const ForgotPasswordPage = () => {
                 : '0 12px 36px rgba(15,23,42,0.06)',
           }}
         >
-          <Box
-            sx={{
-              width: 52,
-              height: 52,
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 3,
-              background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
-              boxShadow: '0 6px 16px rgba(79,119,45,0.3)',
-            }}
-          >
-            <i className="fi fi-rr-lock" style={{ color: '#ffffff', fontSize: '24px' }}></i>
-          </Box>
 
           <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Forgot password?

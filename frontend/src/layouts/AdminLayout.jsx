@@ -6,6 +6,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import BadgeIcon from '@mui/icons-material/Badge';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import { Tooltip } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
@@ -24,6 +26,17 @@ const AdminLayout = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
+  });
+
+  const handleToggleSidebarNavigation = () => {
+    setIsSidebarCollapsed((prev) => {
+      const nextState = !prev;
+      localStorage.setItem('mega_admin_sidebar_collapsed', String(nextState));
+      return nextState;
+    });
+  };
 
   React.useEffect(() => {
     if (!user) return;
@@ -46,62 +59,69 @@ const AdminLayout = () => {
   return (
     <div className="admin-shell">
 
-      <aside className="admin-sidebar">
+      <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
 
-        {/* Sidebar header — user info */}
-        <div style={{ padding: '1.25rem 1.25rem 1rem', borderBottom: '1px solid var(--border-light)' }}>
-          <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {user?.name || 'Administrator'}
+        <div className="sidebar-header-box">
+          <div className="sidebar-header-content">
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontWeight: 600 }}>
+              Admin
+            </div>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user?.name || 'Administrator'}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user?.email || 'admin@megapacific.com'}
+            </div>
           </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {user?.email || 'admin@megapacific.com'}
-          </div>
+
+          <Tooltip title={isSidebarCollapsed ? "Expand Navigation" : "Hide Navigation"} arrow placement={isSidebarCollapsed ? "right" : "left"}>
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={handleToggleSidebarNavigation}
+              aria-label={isSidebarCollapsed ? "Expand Navigation" : "Hide Navigation"}
+            >
+              <MenuOpenIcon sx={{ fontSize: 19, transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none' }} />
+            </button>
+          </Tooltip>
         </div>
 
-        <div style={{ padding: '1rem 1.25rem 0.5rem', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+        <div className="sidebar-section-title">
           Navigation
         </div>
 
-        <nav style={{ padding: '0 0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <nav className="sidebar-nav">
           {navItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              <span style={{ flexShrink: 0 }}>{item.icon}</span>
-              <span>{item.name}</span>
-            </NavLink>
+            <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                <span className="sidebar-nav-label">{item.name}</span>
+              </NavLink>
+            </Tooltip>
           ))}
         </nav>
 
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--border-light)', marginTop: 'auto' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '0.75rem 1rem', width: '100%', borderRadius: 12,
-              background: 'none', border: '1px solid transparent', cursor: 'pointer',
-              color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500, transition: 'all 0.18s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
-              e.currentTarget.style.color = '#f87171';
-              e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'none';
-              e.currentTarget.style.color = 'var(--text-muted)';
-              e.currentTarget.style.borderColor = 'transparent';
-            }}
-          >
-            <LogoutIcon sx={{ fontSize: 18 }} />
-            <span>Sign Out</span>
-          </button>
+        <div className="sidebar-footer">
+          <Tooltip title="Sign Out" placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="sidebar-signout-btn"
+              aria-label="Sign Out"
+            >
+              <span className="nav-icon">
+                <LogoutIcon sx={{ fontSize: 18 }} />
+              </span>
+              <span className="sidebar-nav-label">Sign Out</span>
+            </button>
+          </Tooltip>
         </div>
       </aside>
 
-      <div className="admin-main">
+      <div className={`admin-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
 
         <header className="admin-topbar">
           <Link to="/admin/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'center', userSelect: 'none' }}>

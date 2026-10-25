@@ -34,7 +34,7 @@ const register = async (req, res) => {
             lastOtpSentAt: new Date(),
             customerProfile: {
               upsert: {
-                create: { name, contactNumber, address, city, province, zipCode },
+                create: { name, contactNumber, address, city, province, zipCode, avatarUrl: "/default-profile.png" },
                 update: { name, contactNumber, address, city, province, zipCode }
               }
             }
@@ -105,7 +105,8 @@ const register = async (req, res) => {
           address,
           city,
           province,
-          zipCode
+          zipCode,
+          avatarUrl: "/default-profile.png"
         }
       }
     };
@@ -374,7 +375,8 @@ const login = async (req, res) => {
         id: user.id,
         name: profile?.name || user.email.split('@')[0],
         email: user.email,
-        role: user.role
+        role: user.role,
+        avatarUrl: profile?.avatarUrl || (user.role === 'customer' ? "/default-profile.png" : null)
       }
     });
   } catch (error) {
@@ -447,7 +449,7 @@ const getProfile = async (req, res) => {
       city: profile?.city || null,
       province: profile?.province || null,
       zipCode: profile?.zipCode || null,
-      avatarUrl: profile?.avatarUrl || null,
+      avatarUrl: profile?.avatarUrl || (user.role === 'customer' ? "/default-profile.png" : null),
       addresses: userAddresses
     };
 
@@ -461,13 +463,13 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { contactNumber, address, city, province, zipCode } = req.body;
+    const { contactNumber, address, city, province, zipCode, avatarUrl } = req.body;
     
     if (contactNumber && String(contactNumber).trim()) {
       const cleanContact = String(contactNumber).trim();
       if (!/^09[0-9]{9}$/.test(cleanContact)) {
         return res.status(400).json({
-          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
         });
       }
     }
@@ -476,10 +478,17 @@ const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const profileData = { contactNumber, address, city, province, zipCode };
+    if (avatarUrl !== undefined) {
+      profileData.avatarUrl = avatarUrl;
+    }
     const role = user.role;
     
     if (role === 'customer') {
-      await prisma.customerProfile.update({ where: { userId }, data: profileData });
+      await prisma.customerProfile.upsert({
+        where: { userId },
+        update: profileData,
+        create: { userId, ...profileData }
+      });
 
       if (address && String(address).trim()) {
         const defaultAddress = await prisma.address.findFirst({
@@ -514,22 +523,117 @@ const updateProfile = async (req, res) => {
         }
       }
     } else if (role === 'admin') {
-      await prisma.adminProfile.update({ where: { userId }, data: { contactNumber } });
+      await prisma.adminProfile.upsert({
+        where: { userId },
+        update: { contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) },
+        create: { userId, contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) }
+      });
     } else if (role === 'super_admin' || role === 'superadmin') {
-      await prisma.superAdminProfile.update({ where: { userId }, data: { contactNumber } });
+      await prisma.superAdminProfile.upsert({
+        where: { userId },
+        update: { contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) },
+        create: { userId, contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) }
+      });
     } else if (role === 'owner') {
-      await prisma.ownerProfile.update({ where: { userId }, data: { contactNumber } });
+      await prisma.ownerProfile.upsert({
+        where: { userId },
+        update: { contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) },
+        create: { userId, contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) }
+      });
     } else if (role === 'sales') {
-      await prisma.salesProfile.update({ where: { userId }, data: { contactNumber } });
+      await prisma.salesProfile.upsert({
+        where: { userId },
+        update: { contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) },
+        create: { userId, contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) }
+      });
     } else if (role === 'logistic') {
-      await prisma.logisticProfile.update({ where: { userId }, data: { contactNumber } });
+      await prisma.logisticProfile.upsert({
+        where: { userId },
+        update: { contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) },
+        create: { userId, contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) }
+      });
     } else if (role === 'finance') {
-      await prisma.financeProfile.update({ where: { userId }, data: { contactNumber } });
+      await prisma.financeProfile.upsert({
+        where: { userId },
+        update: { contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) },
+        create: { userId, contactNumber, ...(avatarUrl !== undefined && { avatarUrl }) }
+      });
     }
 
     res.status(200).json({ data: { id: userId, email: user.email, role, ...profileData } });
   } catch (error) {
     res.status(500).json({ error: "Failed to update profile" });
+  }
+};
+
+const updateProfilePhoto = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { avatarUrl } = req.body;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User account not found." });
+    }
+
+    const role = user.role;
+    const targetAvatar = avatarUrl ? String(avatarUrl) : (role === 'customer' ? "/default-profile.png" : null);
+
+    if (role === 'customer') {
+      await prisma.customerProfile.upsert({
+        where: { userId },
+        update: { avatarUrl: targetAvatar },
+        create: { userId, avatarUrl: targetAvatar }
+      });
+    } else if (role === 'admin') {
+      await prisma.adminProfile.upsert({
+        where: { userId },
+        update: { avatarUrl: targetAvatar },
+        create: { userId, avatarUrl: targetAvatar }
+      });
+    } else if (role === 'super_admin' || role === 'superadmin') {
+      await prisma.superAdminProfile.upsert({
+        where: { userId },
+        update: { avatarUrl: targetAvatar },
+        create: { userId, avatarUrl: targetAvatar }
+      });
+    } else if (role === 'owner') {
+      await prisma.ownerProfile.upsert({
+        where: { userId },
+        update: { avatarUrl: targetAvatar },
+        create: { userId, avatarUrl: targetAvatar }
+      });
+    } else if (role === 'sales') {
+      await prisma.salesProfile.upsert({
+        where: { userId },
+        update: { avatarUrl: targetAvatar },
+        create: { userId, avatarUrl: targetAvatar }
+      });
+    } else if (role === 'logistic') {
+      await prisma.logisticProfile.upsert({
+        where: { userId },
+        update: { avatarUrl: targetAvatar },
+        create: { userId, avatarUrl: targetAvatar }
+      });
+    } else if (role === 'finance') {
+      await prisma.financeProfile.upsert({
+        where: { userId },
+        update: { avatarUrl: targetAvatar },
+        create: { userId, avatarUrl: targetAvatar }
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: (avatarUrl && avatarUrl !== "/default-profile.png") ? "Profile photo updated successfully." : "Profile photo reset to default.",
+      data: { avatarUrl: targetAvatar }
+    });
+  } catch (error) {
+    console.error("Update profile photo error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update profile photo: " + (error.message || "Unknown error")
+    });
   }
 };
 
@@ -755,7 +859,7 @@ const addAddress = async (req, res) => {
       const cleanContact = String(contactNumber).trim();
       if (!/^09[0-9]{9}$/.test(cleanContact)) {
         return res.status(400).json({
-          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
         });
       }
     }
@@ -800,7 +904,7 @@ const updateAddress = async (req, res) => {
       const cleanContact = String(contactNumber).trim();
       if (!/^09[0-9]{9}$/.test(cleanContact)) {
         return res.status(400).json({
-          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (e.g. 09171234567)."
+          error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
         });
       }
     }
@@ -903,4 +1007,4 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, getProfile, updateProfile, verifyOtp, resendOtp, forgotPassword, resetPassword, addAddress, updateAddress, deleteAddress, setDefaultAddress };
+module.exports = { register, login, logout, getProfile, updateProfile, updateProfilePhoto, verifyOtp, resendOtp, forgotPassword, resetPassword, addAddress, updateAddress, deleteAddress, setDefaultAddress };

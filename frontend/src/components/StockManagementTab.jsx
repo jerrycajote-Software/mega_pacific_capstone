@@ -13,7 +13,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import HistoryIcon from '@mui/icons-material/History';
 import SaveIcon from '@mui/icons-material/Save';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 
@@ -203,6 +202,13 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
   useEffect(() => {
     if (subTab === 'logs') {
       fetchLogs();
+      const interval = setInterval(fetchLogs, 10000);
+      const handleFocus = () => fetchLogs();
+      window.addEventListener('focus', handleFocus);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('focus', handleFocus);
+      };
     }
   }, [subTab]);
 
@@ -449,12 +455,6 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
                 ))}
               </select>
             </Box>
-
-            {onRefreshProducts && (
-              <IconButton onClick={onRefreshProducts} title="Refresh Inventory Data" style={{ color: 'var(--text-muted)' }}>
-                <RefreshIcon />
-              </IconButton>
-            )}
           </Box>
 
           {modifiedCount > 0 && (
@@ -568,7 +568,7 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
                         <td style={S.td}>
                           <input
                             type="text"
-                            placeholder="e.g. Supplier delivery"
+                            placeholder="ex. Supplier delivery"
                             value={input.reason || ''}
                             onChange={(e) => handleInputChange(item.key, 'reason', e.target.value)}
                             style={S.reasonInput}
@@ -605,9 +605,6 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
             <Typography style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
               Recent Restock Activity Log
             </Typography>
-            <Button size="small" onClick={fetchLogs} startIcon={<RefreshIcon />} style={{ color: 'var(--text-muted)', textTransform: 'none' }}>
-              Refresh Logs
-            </Button>
           </Box>
 
           {loadingLogs ? (

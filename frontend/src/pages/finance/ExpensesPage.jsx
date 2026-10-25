@@ -58,6 +58,13 @@ const Page = () => {
 
   useEffect(() => {
     fetchExpenses();
+    const interval = setInterval(fetchExpenses, 10000);
+    const handleFocus = () => fetchExpenses();
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const handleAddExpense = async () => {
@@ -223,7 +230,7 @@ const Page = () => {
               fullWidth 
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
-              placeholder="e.g. Fuel for delivery truck 1"
+              placeholder="ex. Fuel for delivery truck 1"
             />
             <TextField 
               label="Amount (₱)" 

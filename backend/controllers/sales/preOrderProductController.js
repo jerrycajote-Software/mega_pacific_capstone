@@ -91,30 +91,42 @@ const createPreOrderProduct = async (req, res) => {
     const discountPct = req.body.discountPercent !== undefined && req.body.discountPercent !== "" ? parseFloat(req.body.discountPercent) : 30;
     const sellingPrice = Math.round(rawOrigPrice * (1 - discountPct / 100) * 100) / 100;
 
-    const parsedColors = Array.isArray(colors) ? colors : typeof colors === "string" ? colors.split(",").map(c => c.trim()) : [];
+    const parsedColors = Array.isArray(colors) ? colors : typeof colors === "string" ? colors.split(",").map(c => c.trim()).filter(Boolean) : [];
 
     const normBaseThickness = normalizeThickness(thickness || "0.35mm");
 
-    
     const coilsInInventory = await prisma.coilInventory.findMany({
       where: {
         thickness: { equals: normBaseThickness, mode: "insensitive" }
       }
     });
 
-    if (coilsInInventory.length > 0) {
-      const availableColorSet = new Set(
-        coilsInInventory
-          .filter(c => (c.coilCount ?? 0) > 0)
-          .map(c => c.color.toLowerCase().trim())
-      );
-      const unavailableChosen = parsedColors.filter(c => !availableColorSet.has(c.toLowerCase().trim()));
-      if (unavailableChosen.length > 0) {
-        return res.status(400).json({
-          success: false,
-          error: `The color(s) ${unavailableChosen.join(", ")} are not available in coil inventory for ${normBaseThickness}.`
-        });
-      }
+    const inStockCoils = coilsInInventory.filter(c => (c.coilCount ?? 0) > 0);
+
+    if (inStockCoils.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot create pre-order product: Thickness "${thickness || normBaseThickness}" is not available in Coil Inventory. Steel coils must be stocked in inventory before products can be created.`
+      });
+    }
+
+    if (!parsedColors || parsedColors.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "At least one available color finish must be selected from Coil Inventory."
+      });
+    }
+
+    const availableColorSet = new Set(
+      inStockCoils.map(c => c.color.toLowerCase().trim())
+    );
+
+    const unavailableChosen = parsedColors.filter(c => !availableColorSet.has(c.toLowerCase().trim()));
+    if (unavailableChosen.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `The material ${normBaseThickness} with color(s) "${unavailableChosen.join(", ")}" is not available in Coil Inventory and cannot be created.`
+      });
     }
 
     if (Array.isArray(variants) && variants.length > 0) {
@@ -138,6 +150,16 @@ const createPreOrderProduct = async (req, res) => {
           });
         }
         seenVariantThicknesses.add(vThick);
+
+        const variantCoils = await prisma.coilInventory.findMany({
+          where: {
+            thickness: { equals: vThick, mode: "insensitive" }
+          }
+        });
+        const hasVariantStock = variantCoils.some(c => (c.coilCount ?? 0) > 0);
+        if (!hasVariantStock) {
+          v.status = "out_of_stock";
+        }
       }
     }
 
@@ -247,27 +269,38 @@ const updatePreOrderProduct = async (req, res) => {
 
     const normBaseThickness = normalizeThickness(thickness || existing.thickness || "0.35mm");
 
-    
-    if (colors !== undefined) {
+    if (colors !== undefined || thickness !== undefined) {
       const coilsInInventory = await prisma.coilInventory.findMany({
         where: {
           thickness: { equals: normBaseThickness, mode: "insensitive" }
         }
       });
 
-      if (coilsInInventory.length > 0) {
-        const availableColorSet = new Set(
-          coilsInInventory
-            .filter(c => (c.coilCount ?? 0) > 0)
-            .map(c => c.color.toLowerCase().trim())
-        );
-        const unavailableChosen = parsedColors.filter(c => !availableColorSet.has(c.toLowerCase().trim()));
-        if (unavailableChosen.length > 0) {
-          return res.status(400).json({
-            success: false,
-            error: `The color(s) ${unavailableChosen.join(", ")} are not available in coil inventory for ${normBaseThickness}.`
-          });
-        }
+      const inStockCoils = coilsInInventory.filter(c => (c.coilCount ?? 0) > 0);
+
+      if (inStockCoils.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: `Thickness "${thickness || normBaseThickness}" has no available raw materials in Coil Inventory. Steel coils must be stocked in inventory before products can be updated.`
+        });
+      }
+
+      if (!parsedColors || parsedColors.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "At least one available color finish must be selected from Coil Inventory."
+        });
+      }
+
+      const availableColorSet = new Set(
+        inStockCoils.map(c => c.color.toLowerCase().trim())
+      );
+      const unavailableChosen = parsedColors.filter(c => !availableColorSet.has(c.toLowerCase().trim()));
+      if (unavailableChosen.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: `The material ${normBaseThickness} with color(s) "${unavailableChosen.join(", ")}" is not available in Coil Inventory and cannot be assigned.`
+        });
       }
     }
 
@@ -339,6 +372,13 @@ const updatePreOrderProduct = async (req, res) => {
       for (const v of variants) {
         const vOrig = v.originalPrice !== undefined && v.originalPrice !== "" ? parseFloat(v.originalPrice) : parseFloat(v.price) || 0;
         const vSelling = Math.round(vOrig * (1 - discountPct / 100) * 100) / 100;
+        const vNorm = normalizeThickness(v.thickness || "");
+        const variantCoils = await prisma.coilInventory.findMany({
+          where: { thickness: { equals: vNorm, mode: "insensitive" } }
+        });
+        const hasVariantStock = variantCoils.some(c => (c.coilCount ?? 0) > 0);
+        const resolvedVariantStatus = hasVariantStock ? (v.status || "available") : "out_of_stock";
+
         if (v.id) {
           await prisma.productVariant.update({
             where: { id: parseInt(v.id, 10) },
@@ -347,7 +387,7 @@ const updatePreOrderProduct = async (req, res) => {
               thickness: v.thickness,
               originalPrice: vOrig,
               price: vSelling,
-              status: v.status || "available"
+              status: resolvedVariantStatus
             }
           });
         } else {
@@ -360,7 +400,7 @@ const updatePreOrderProduct = async (req, res) => {
               price: vSelling,
               discountPercent: discountPct,
               stock: 9999,
-              status: v.status || "available"
+              status: resolvedVariantStatus
             }
           });
         }
@@ -493,6 +533,14 @@ const addVariant = async (req, res) => {
       });
     }
 
+    const variantCoils = await prisma.coilInventory.findMany({
+      where: {
+        thickness: { equals: vThick, mode: "insensitive" }
+      }
+    });
+    const hasVariantStock = variantCoils.some(c => (c.coilCount ?? 0) > 0);
+    const resolvedStatus = hasVariantStock ? (status || "available") : "out_of_stock";
+
     const variant = await prisma.productVariant.create({
       data: {
         productId,
@@ -502,7 +550,7 @@ const addVariant = async (req, res) => {
         price: sellingPrice,
         discountPercent: discountPct,
         stock: 9999,
-        status: status || "available"
+        status: resolvedStatus
       }
     });
 

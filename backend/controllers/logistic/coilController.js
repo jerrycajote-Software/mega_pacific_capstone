@@ -301,7 +301,7 @@ const addCoil = async (req, res) => {
 
   try {
     if (!thickness || typeof thickness !== "string" || !thickness.trim()) {
-      return res.status(400).json({ success: false, error: "Coil thickness gauge is required (e.g. 0.40mm, 0.70mm)." });
+      return res.status(400).json({ success: false, error: "Coil thickness gauge is required (ex. 0.40mm, 0.70mm)." });
     }
 
     let normalizedThickness = thickness.trim();
