@@ -391,8 +391,8 @@ const CoilInventoryPage = () => {
               transition: 'all 0.2s ease'
             }}
           >
-            <AddCircleIcon sx={{ fontSize: 18 }} />
-            <span>+ Add Coil / Thickness</span>
+            {/* <AddCircleIcon sx={{ fontSize: 18 }} /> */}
+            <span>Add Coil / Thickness</span>
           </button>
           </div>
       </div>
@@ -1085,7 +1085,7 @@ const CoilInventoryPage = () => {
           fullWidth
         >
           <DialogTitle sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PaletteIcon sx={{ color: '#2563eb' }} />
+            {/* <PaletteIcon sx={{ color: '#2563eb' }} /> */}
             Add Coil Inventory / Thickness Specification
           </DialogTitle>
           <form onSubmit={handleConfirmAddCoil}>

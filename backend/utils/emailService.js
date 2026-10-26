@@ -624,7 +624,7 @@ const sendReadyForPickupEmail = async (email, order) => {
     console.log(`To: ${email}`);
     console.log(`Order: ${orderNum}`);
     console.log(`Customer: ${customerName}`);
-    console.log(`Plant Dock: Mega Pacific Roofing — Imus / Cavite Main Branch`);
+    console.log(`Plant: Mega Pacific Metal and Steel — Imus / Cavite Main Branch`);
     console.log(`Operating Hours: Monday to Saturday, 8:00 AM – 5:00 PM`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
   }
@@ -633,7 +633,7 @@ const sendReadyForPickupEmail = async (email, order) => {
     from: `"Mega Pacific Logistics" <${process.env.SMTP_FROM || 'noreply@megapacific.com'}>`,
     to: email,
     subject: `[Ready for Pick-up] Order ${orderNum} is Staged at Mega Pacific Plant`,
-    text: `Good news ${customerName}! Your order ${orderNum} is now ready for pick-up at Mega Pacific Roofing Plant (Imus, Cavite). Operating hours: Monday to Saturday, 8:00 AM - 5:00 PM. Please bring a valid government ID and your Order ID.`,
+    text: `Good news ${customerName}! Your order ${orderNum} is now ready for pick-up at Mega Pacific Roofing Plant (Imus, Cavite). Operating hours: Monday to Saturday, 8:00 AM - 5:00 PM. Please bring your Order Receipt.`,
     html: `
       <!DOCTYPE html>
       <html>

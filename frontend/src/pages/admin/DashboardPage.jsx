@@ -5,7 +5,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import BadgeIcon from '@mui/icons-material/Badge';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ShieldIcon from '@mui/icons-material/Shield';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -13,6 +13,12 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import MailIcon from '@mui/icons-material/Mail';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CircularProgress from '@mui/material/CircularProgress';
+import {
+  CustomAdminCustomersIcon,
+  CustomAdminStaffIcon,
+  CustomAdminVerificationIcon,
+  CustomAdminSecurityFlagsIcon
+} from '../../components/icons';
 
 const th = {
   padding: '0.875rem 1.25rem',
@@ -147,9 +153,11 @@ const DashboardPage = () => {
         gap: '1.25rem',
         marginBottom: '1.75rem'
       }}>
-        <div style={{
+        {/* Registered Customers KPI */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: '3px solid #2563eb',
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -160,8 +168,18 @@ const DashboardPage = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
               Registered Customers
             </span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.12)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <PeopleIcon sx={{ fontSize: 20 }} />
+            <div className="mpi-admin-badge" style={{
+              width: 46,
+              height: 46,
+              borderRadius: 13,
+              background: 'rgba(37,99,235,0.08)',
+              border: '1px solid rgba(37,99,235,0.18)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.1)'
+            }}>
+              <CustomAdminCustomersIcon size={28} />
             </div>
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
@@ -173,10 +191,11 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Operational Staff */}
-        <div style={{
+        {/* Operational Staff KPI */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: '3px solid #4f772d',
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -187,8 +206,18 @@ const DashboardPage = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
               Operational Staff
             </span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(79,119,45,0.15)', color: '#4f772d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <BadgeIcon sx={{ fontSize: 20 }} />
+            <div className="mpi-admin-badge" style={{
+              width: 46,
+              height: 46,
+              borderRadius: 13,
+              background: 'rgba(79,119,45,0.09)',
+              border: '1px solid rgba(79,119,45,0.22)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(79,119,45,0.12)'
+            }}>
+              <CustomAdminStaffIcon size={28} />
             </div>
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
@@ -200,9 +229,11 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div style={{
+        {/* Verification Health KPI */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: '3px solid #10b981',
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -213,8 +244,18 @@ const DashboardPage = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
               Verification Health
             </span>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(16,185,129,0.12)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CheckCircleIcon sx={{ fontSize: 20 }} />
+            <div className="mpi-admin-badge" style={{
+              width: 46,
+              height: 46,
+              borderRadius: 13,
+              background: 'rgba(16,185,129,0.09)',
+              border: '1px solid rgba(16,185,129,0.22)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(16,185,129,0.12)'
+            }}>
+              <CustomAdminVerificationIcon size={28} />
             </div>
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
@@ -226,9 +267,11 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div style={{
+        {/* Security Flags KPI */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: `3px solid ${kpi.flagsCount > 0 ? '#f59e0b' : '#22c55e'}`,
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -239,17 +282,18 @@ const DashboardPage = () => {
             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
               Security Flags
             </span>
-            <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: kpi.flagsCount > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(34,197,94,0.12)',
-              color: kpi.flagsCount > 0 ? '#f59e0b' : '#22c55e',
+            <div className="mpi-admin-badge" style={{
+              width: 46,
+              height: 46,
+              borderRadius: 13,
+              background: kpi.flagsCount > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)',
+              border: `1px solid ${kpi.flagsCount > 0 ? 'rgba(245,158,11,0.25)' : 'rgba(34,197,94,0.25)'}`,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              boxShadow: `0 2px 8px ${kpi.flagsCount > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(34,197,94,0.15)'}`
             }}>
-              <WarningIcon sx={{ fontSize: 20 }} />
+              <CustomAdminSecurityFlagsIcon size={28} />
             </div>
           </div>
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
@@ -303,7 +347,7 @@ const DashboardPage = () => {
               }}
             >
               <span>Manage Staff</span>
-              <ArrowForwardIcon sx={{ fontSize: 14 }} />
+              <ChevronRightIcon sx={{ fontSize: 16 }} />
             </button>
           </div>
 
@@ -311,11 +355,11 @@ const DashboardPage = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr>
-                  <th style={th}>Role Clearance</th>
-                  <th style={th}>Account Name</th>
-                  <th style={th}>Official Email</th>
-                  <th style={th}>Contact Number</th>
-                  <th style={th}>Status</th>
+                  <th style={{ ...th, minWidth: 160, whiteSpace: 'nowrap' }}>Role Clearance</th>
+                  <th style={{ ...th, minWidth: 120, whiteSpace: 'nowrap' }}>Account Name</th>
+                  <th style={{ ...th, minWidth: 180, whiteSpace: 'nowrap' }}>Official Email</th>
+                  <th style={{ ...th, minWidth: 130, whiteSpace: 'nowrap' }}>Contact Number</th>
+                  <th style={{ ...th, minWidth: 100, whiteSpace: 'nowrap' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -330,7 +374,7 @@ const DashboardPage = () => {
                     const badge = roleLabels[staff.role] || { label: staff.role.toUpperCase(), color: '#64748b', bg: 'rgba(100,116,139,0.1)' };
                     return (
                       <tr key={staff.id}>
-                        <td style={td}>
+                        <td style={{ ...td, whiteSpace: 'nowrap' }}>
                           <span style={{
                             display: 'inline-block',
                             fontSize: '0.72rem',
@@ -338,32 +382,34 @@ const DashboardPage = () => {
                             padding: '3px 8px',
                             borderRadius: 6,
                             background: badge.bg,
-                            color: badge.color
+                            color: badge.color,
+                            whiteSpace: 'nowrap'
                           }}>
                             {badge.label}
                           </span>
                         </td>
-                        <td style={{ ...td, fontWeight: 600 }}>{staff.name}</td>
-                        <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        <td style={{ ...td, fontWeight: 600, whiteSpace: 'nowrap' }}>{staff.name}</td>
+                        <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                           {staff.email}
                         </td>
-                        <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                        <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                           {staff.contactNumber || '—'}
                         </td>
-                        <td style={td}>
+                        <td style={{ ...td, whiteSpace: 'nowrap' }}>
                           <span style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: 4,
-                            fontSize: '0.72rem',
+                            gap: 6,
+                            fontSize: '0.74rem',
                             fontWeight: 700,
-                            padding: '3px 8px',
+                            padding: '3px 9px',
                             borderRadius: 6,
                             background: staff.status === 'active' ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
-                            color: staff.status === 'active' ? '#22c55e' : '#ef4444'
+                            color: staff.status === 'active' ? '#22c55e' : '#ef4444',
+                            whiteSpace: 'nowrap'
                           }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: staff.status === 'active' ? '#22c55e' : '#ef4444' }} />
-                            {staff.status === 'active' ? 'Active & Ready' : 'Suspended'}
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: staff.status === 'active' ? '#22c55e' : '#ef4444' }} />
+                            <span>{staff.status === 'active' ? 'Active' : 'Suspended'}</span>
                           </span>
                         </td>
                       </tr>
@@ -418,7 +464,7 @@ const DashboardPage = () => {
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Inspect profiles, addresses & status</div>
                   </div>
                 </div>
-                <ArrowForwardIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                <ChevronRightIcon sx={{ fontSize: 18, color: 'var(--text-muted)' }} />
               </div>
 
               <div
@@ -452,7 +498,7 @@ const DashboardPage = () => {
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Update contact numbers or passwords</div>
                   </div>
                 </div>
-                <ArrowForwardIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                <ChevronRightIcon sx={{ fontSize: 18, color: 'var(--text-muted)' }} />
               </div>
 
               <div
@@ -486,7 +532,7 @@ const DashboardPage = () => {
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Configure max concurrent sessions</div>
                   </div>
                 </div>
-                <ArrowForwardIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                <ChevronRightIcon sx={{ fontSize: 18, color: 'var(--text-muted)' }} />
               </div>
             </div>
           </div>
@@ -552,7 +598,7 @@ const DashboardPage = () => {
             }}
           >
             <span>View Full Directory</span>
-            <ArrowForwardIcon sx={{ fontSize: 14 }} />
+            <ChevronRightIcon sx={{ fontSize: 16 }} />
           </button>
         </div>
 
@@ -560,12 +606,12 @@ const DashboardPage = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr>
-                <th style={th}>Customer Name</th>
-                <th style={th}>Official Email</th>
-                <th style={th}>Contact Number</th>
-                <th style={th}>Registered Location</th>
-                <th style={th}>Email Verification</th>
-                <th style={th}>Joined Date</th>
+                <th style={{ ...th, minWidth: 160, whiteSpace: 'nowrap' }}>Customer Name</th>
+                <th style={{ ...th, minWidth: 180, whiteSpace: 'nowrap' }}>Official Email</th>
+                <th style={{ ...th, minWidth: 130, whiteSpace: 'nowrap' }}>Contact Number</th>
+                <th style={{ ...th, minWidth: 170, whiteSpace: 'nowrap' }}>Registered Location</th>
+                <th style={{ ...th, minWidth: 140, whiteSpace: 'nowrap' }}>Email Verification</th>
+                <th style={{ ...th, minWidth: 120, whiteSpace: 'nowrap' }}>Joined Date</th>
               </tr>
             </thead>
             <tbody>
@@ -578,7 +624,7 @@ const DashboardPage = () => {
               ) : (
                 recentCustomers.map((cust) => (
                   <tr key={cust.id}>
-                    <td style={{ ...td, fontWeight: 600 }}>
+                    <td style={{ ...td, fontWeight: 600, whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{
                           width: 28,
@@ -597,19 +643,19 @@ const DashboardPage = () => {
                         <span>{cust.name}</span>
                       </div>
                     </td>
-                    <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       {cust.email}
                     </td>
-                    <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                    <td style={{ ...td, fontFamily: 'monospace', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                       {cust.contactNumber || '—'}
                     </td>
-                    <td style={{ ...td, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <LocationOnIcon sx={{ fontSize: 13, color: 'var(--text-muted)' }} />
-                        <span>{cust.location}</span>
+                    <td style={{ ...td, fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+                        <LocationOnIcon sx={{ fontSize: 14, color: '#3b82f6', flexShrink: 0 }} />
+                        <span style={{ whiteSpace: 'nowrap' }}>{cust.location}</span>
                       </div>
                     </td>
-                    <td style={td}>
+                    <td style={{ ...td, whiteSpace: 'nowrap' }}>
                       <span style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -619,7 +665,8 @@ const DashboardPage = () => {
                         padding: '3px 8px',
                         borderRadius: 6,
                         background: cust.isEmailVerified ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.12)',
-                        color: cust.isEmailVerified ? '#22c55e' : '#f59e0b'
+                        color: cust.isEmailVerified ? '#22c55e' : '#f59e0b',
+                        whiteSpace: 'nowrap'
                       }}>
                         {cust.isEmailVerified ? '✓ Verified' : 'Pending OTP'}
                       </span>

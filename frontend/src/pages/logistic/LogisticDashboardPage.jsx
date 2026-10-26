@@ -33,7 +33,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { usePreventBackToLogin } from '../../hooks/usePreventBackToLogin';
+import {
+  CustomLogisticReadyToShipIcon,
+  CustomLogisticOutForDeliveryIcon,
+  CustomLogisticCompletedTodayIcon,
+  CustomLogisticStorePickupIcon
+} from '../../components/icons';
 
 const DONUT_COLORS = ['#2563EB', '#8B5CF6', '#10B981', '#F59E0B'];
 
@@ -149,7 +156,14 @@ const LogisticDashboardPage = () => {
       sub: 'Awaiting courier dispatch',
       color: '#F59E0B',
       bg: 'rgba(245, 158, 11, 0.08)',
-      icon: 'fi fi-rr-box-open'
+      borderColor: 'rgba(245, 158, 11, 0.25)',
+      badgeBg: 'rgba(245, 158, 11, 0.1)',
+      badgeColor: '#d97706',
+      badgeBorder: 'rgba(245, 158, 11, 0.25)',
+      glowShadow: 'rgba(245, 158, 11, 0.22)',
+      lightGlow: 'rgba(245, 158, 11, 0.04)',
+      darkGlow: 'rgba(245, 158, 11, 0.08)',
+      IconComponent: CustomLogisticReadyToShipIcon
     },
     {
       label: 'Out for Delivery',
@@ -158,7 +172,14 @@ const LogisticDashboardPage = () => {
       sub: 'En-route to customer',
       color: '#2563EB',
       bg: 'rgba(37, 99, 235, 0.08)',
-      icon: 'fi fi-rr-truck-side'
+      borderColor: 'rgba(37, 99, 235, 0.25)',
+      badgeBg: 'rgba(37, 99, 235, 0.1)',
+      badgeColor: '#2563eb',
+      badgeBorder: 'rgba(37, 99, 235, 0.25)',
+      glowShadow: 'rgba(37, 99, 235, 0.22)',
+      lightGlow: 'rgba(37, 99, 235, 0.04)',
+      darkGlow: 'rgba(37, 99, 235, 0.08)',
+      IconComponent: CustomLogisticOutForDeliveryIcon
     },
     {
       label: 'Completed Today',
@@ -167,7 +188,14 @@ const LogisticDashboardPage = () => {
       sub: 'Successfully received',
       color: '#10B981',
       bg: 'rgba(16, 185, 129, 0.08)',
-      icon: 'fi fi-sr-check-circle'
+      borderColor: 'rgba(16, 185, 129, 0.25)',
+      badgeBg: 'rgba(16, 185, 129, 0.1)',
+      badgeColor: '#059669',
+      badgeBorder: 'rgba(16, 185, 129, 0.25)',
+      glowShadow: 'rgba(16, 185, 129, 0.22)',
+      lightGlow: 'rgba(16, 185, 129, 0.04)',
+      darkGlow: 'rgba(16, 185, 129, 0.08)',
+      IconComponent: CustomLogisticCompletedTodayIcon
     },
     {
       label: 'Store Counter Pickups',
@@ -176,7 +204,14 @@ const LogisticDashboardPage = () => {
       sub: 'Ready for customer retrieval',
       color: '#8B5CF6',
       bg: 'rgba(139, 92, 246, 0.08)',
-      icon: 'fi fi-rr-shop'
+      borderColor: 'rgba(139, 92, 246, 0.25)',
+      badgeBg: 'rgba(139, 92, 246, 0.1)',
+      badgeColor: '#7c3aed',
+      badgeBorder: 'rgba(139, 92, 246, 0.25)',
+      glowShadow: 'rgba(139, 92, 246, 0.22)',
+      lightGlow: 'rgba(139, 92, 246, 0.04)',
+      darkGlow: 'rgba(139, 92, 246, 0.08)',
+      IconComponent: CustomLogisticStorePickupIcon
     }
   ];
 
@@ -200,14 +235,12 @@ const LogisticDashboardPage = () => {
         </Box>
 
         <Stack direction="row" spacing={1.5}>
-
-
           <Button
             variant="contained"
             color="primary"
             size="small"
             onClick={() => navigate('/logistic/deliveries')}
-            startIcon={<i className="fi fi-rr-boxes" style={{ fontSize: 13 }} />}
+            endIcon={<ChevronRightIcon sx={{ fontSize: 16 }} />}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, px: 2.5 }}
           >
             Manage Deliveries
@@ -216,67 +249,121 @@ const LogisticDashboardPage = () => {
       </Box>
 
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
-        {kpis.map((kpi, idx) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: 3.5,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 12px 24px -10px rgba(0,0,0,0.08)',
-                  borderColor: kpi.color
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 2.5,
-                    bgcolor: kpi.bg,
-                    color: kpi.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <i className={kpi.icon} style={{ fontSize: 20 }} />
+        {kpis.map((kpi, idx) => {
+          const IconComponent = kpi.IconComponent;
+          return (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: { xs: 2.5, md: 3 },
+                  borderRadius: 4,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                  background: theme => theme.palette.mode === 'dark'
+                    ? `linear-gradient(145deg, ${kpi.darkGlow} 0%, rgba(15, 23, 42, 0.85) 100%)`
+                    : `linear-gradient(145deg, ${kpi.lightGlow} 0%, #ffffff 100%)`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 4px 20px -8px rgba(0,0,0,0.05)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    background: `linear-gradient(90deg, ${kpi.color} 0%, transparent 100%)`,
+                    opacity: 0.9
+                  },
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: `0 16px 32px -10px ${kpi.glowShadow}, 0 4px 12px rgba(0,0,0,0.04)`,
+                    borderColor: kpi.color,
+                    '& .mpi-log-icon-wrap': {
+                      transform: 'scale(1.08) rotate(3deg)',
+                      borderColor: kpi.color,
+                      boxShadow: `0 8px 18px -4px ${kpi.glowShadow}`
+                    }
+                  }
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Box
+                    className="mpi-log-icon-wrap"
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 3,
+                      bgcolor: kpi.bg,
+                      border: '1.5px solid',
+                      borderColor: kpi.borderColor,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      boxShadow: `0 4px 12px ${kpi.glowShadow}`
+                    }}
+                  >
+                    <IconComponent size={28} />
+                  </Box>
+                  <Chip
+                    label={kpi.badge}
+                    size="small"
+                    sx={{
+                      bgcolor: kpi.badgeBg,
+                      color: kpi.badgeColor,
+                      border: '1px solid',
+                      borderColor: kpi.badgeBorder,
+                      fontWeight: 800,
+                      fontSize: '0.68rem',
+                      borderRadius: 2
+                    }}
+                  />
                 </Box>
-                <Chip
-                  label={kpi.badge}
-                  size="small"
-                  sx={{
-                    bgcolor: 'grey.100',
-                    color: 'text.secondary',
-                    fontWeight: 700,
-                    fontSize: '0.65rem'
-                  }}
-                />
-              </Box>
 
-              <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ mb: 0.5 }}>
-                {kpi.label}
-              </Typography>
-              <Typography variant="h5" fontWeight={900} sx={{ color: 'text.primary', letterSpacing: '-0.02em', mb: 0.5 }}>
-                {kpi.value}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {kpi.sub}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
+                <div>
+                  <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ mb: 0.5 }}>
+                    {kpi.label}
+                  </Typography>
+                  <Typography
+                    variant="h3"
+                    fontWeight={900}
+                    sx={{
+                      color: 'text.primary',
+                      letterSpacing: '-0.03em',
+                      fontVariantNumeric: 'tabular-nums',
+                      lineHeight: 1.1,
+                      mb: 1
+                    }}
+                  >
+                    {kpi.value}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        bgcolor: kpi.color,
+                        boxShadow: `0 0 6px ${kpi.color}`
+                      }}
+                    />
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                      {kpi.sub}
+                    </Typography>
+                  </Box>
+                </div>
+              </Paper>
+            </Grid>
+          );
+        })}
       </Grid>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>

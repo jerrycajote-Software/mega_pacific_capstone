@@ -13,6 +13,8 @@ import MailIcon from '@mui/icons-material/Mail';
 import PhoneIcon from '@mui/icons-material/Phone';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
+import '../../components/icons/customIcons.css';
+
 
 const th = {
   padding: '1rem 1.25rem',
@@ -184,7 +186,7 @@ const SalesManagement = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <BadgeIcon sx={{ fontSize: 28, color: '#60a5fa' }} /> Staff Management
+             Staff Management
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             Manage operational staff accounts for sales, logistics, and finance.
@@ -277,20 +279,41 @@ const SalesManagement = () => {
                     {new Date(emp.createdAt).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td style={{ ...td, textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
                       {emp.status === 'pending' && isSuperAdmin && (
-                        <button onClick={() => toggleStatusClick(emp)}
-                          style={{ background: 'rgba(74,222,128,0.1)', border: 'none', padding: '6px 10px', borderRadius: 8, color: '#4ade80', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', fontWeight: 500 }}>
-                          <CheckCircleIcon sx={{ fontSize: 14 }} /> Verify
+                        <button
+                          onClick={() => toggleStatusClick(emp)}
+                          style={{
+                            background: 'rgba(74,222,128,0.1)',
+                            border: '1px solid rgba(74,222,128,0.25)',
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            color: '#4ade80',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <CheckCircleIcon sx={{ fontSize: 15 }} /> Verify Staff
                         </button>
                       )}
-                      <button onClick={() => openEdit(emp)}
-                        style={{ background: 'rgba(96,165,250,0.1)', border: 'none', padding: '6px 10px', borderRadius: 8, color: '#60a5fa', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', fontWeight: 500 }}>
-                        <EditIcon sx={{ fontSize: 14 }} /> Edit
+                      <button
+                        onClick={() => openEdit(emp)}
+                        className="mpi-staff-edit-btn"
+                        title="Edit staff profile and contact details"
+                      >
+                        <EditIcon sx={{ fontSize: 15 }} /> Edit Profile
                       </button>
-                      <button onClick={() => openReset(emp)}
-                        style={{ background: 'rgba(251,191,36,0.1)', border: 'none', padding: '6px 10px', borderRadius: 8, color: '#fbbf24', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', fontWeight: 500 }}>
-                        <LockResetIcon sx={{ fontSize: 14 }} /> Reset PW
+                      <button
+                        onClick={() => openReset(emp)}
+                        className="mpi-staff-reset-btn"
+                        title="Reset password for this staff account"
+                      >
+                        <LockResetIcon sx={{ fontSize: 15 }} /> Reset Password
                       </button>
                     </div>
                   </td>

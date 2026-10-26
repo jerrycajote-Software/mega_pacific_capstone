@@ -20,6 +20,12 @@ import {
   IconButton,
 } from '@mui/material';
 import { io } from 'socket.io-client';
+import {
+  CustomCustomerTotalOrdersIcon,
+  CustomCustomerInProgressIcon,
+  CustomCustomerCompletedIcon,
+  CustomCustomerTotalSpentIcon
+} from '../../components/icons';
 
 const getOrderStatusMeta = (status, fulfillmentType, paymentStatus) => {
   const s = (status || '').toLowerCase();
@@ -603,26 +609,13 @@ const OrdersPage = () => {
 
       <Box sx={{ mb: 3.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box 
-            sx={{ 
-              width: 44, 
-              height: 44, 
-              borderRadius: 2.5, 
-              bgcolor: 'rgba(79, 119, 45, 0.1)', 
-              color: '#4f772d', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
-            }}
-          >
-            <i className="fi fi-rr-shopping-bag" style={{ fontSize: 22 }} />
-          </Box>
+          
           <Box>
             <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
               My Orders
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Track real-time fabrication, staging, and dispatch progress for your roofing materials.
+              Track real-time fabrication, and dispatch progress for your roofing materials.
             </Typography>
           </Box>
         </Box>
@@ -685,110 +678,288 @@ const OrdersPage = () => {
             mb: 3.5 
           }}
         >
+          {/* Total Orders */}
           <Paper 
             elevation={0} 
+            className="mpi-cust-kpi-card"
+            onClick={() => setActiveTab('all')}
             sx={{ 
-              p: 2.5, 
-              borderRadius: 3, 
+              p: { xs: 2, sm: 2.25 }, 
+              borderRadius: 3.5, 
               border: '1px solid', 
-              borderColor: 'divider', 
+              borderColor: activeTab === 'all' ? 'rgba(59, 130, 246, 0.4)' : 'divider', 
+              borderTop: '3px solid #3b82f6',
               bgcolor: 'background.paper',
+              boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
+              cursor: 'pointer',
               display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              flexDirection: 'column',
+              gap: 1.5,
             }}
           >
-            <Avatar sx={{ bgcolor: 'action.hover', color: 'text.primary', width: 42, height: 42, borderRadius: 2 }}>
-              <i className="fi fi-rr-shopping-bag" style={{ fontSize: 18 }} />
-            </Avatar>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Box
+                className="mpi-cust-badge"
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  bgcolor: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.22)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.12)'
+                }}
+              >
+                <CustomCustomerTotalOrdersIcon size={28} />
+              </Box>
+              <Chip
+                label="All-Time"
+                size="small"
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  height: 22,
+                  bgcolor: 'rgba(59, 130, 246, 0.08)',
+                  color: '#2563eb',
+                  border: '1px solid rgba(59, 130, 246, 0.18)',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase'
+                }}
+              />
+            </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                Total Orders
-              </Typography>
-              <Typography variant="h5" fontWeight={900} color="text.primary">
+              <Typography 
+                variant="h5" 
+                fontWeight={900} 
+                color="text.primary"
+                sx={{ fontSize: { xs: '1.45rem', sm: '1.75rem' }, lineHeight: 1.15 }}
+              >
                 {stats.total}
               </Typography>
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                fontWeight={700} 
+                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
+              >
+                Total Orders
+              </Typography>
             </Box>
           </Paper>
 
+          {/* In Progress */}
           <Paper 
             elevation={0} 
+            className="mpi-cust-kpi-card"
+            onClick={() => setActiveTab('in_progress')}
             sx={{ 
-              p: 2.5, 
-              borderRadius: 3, 
+              p: { xs: 2, sm: 2.25 }, 
+              borderRadius: 3.5, 
               border: '1px solid', 
-              borderColor: 'divider', 
+              borderColor: activeTab === 'in_progress' ? 'rgba(245, 158, 11, 0.4)' : 'divider', 
+              borderTop: '3px solid #f59e0b',
               bgcolor: 'background.paper',
+              boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
+              cursor: 'pointer',
               display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              flexDirection: 'column',
+              gap: 1.5,
             }}
           >
-            <Avatar sx={{ bgcolor: 'rgba(217, 119, 6, 0.1)', color: '#d97706', width: 42, height: 42, borderRadius: 2 }}>
-              <i className="fi fi-rr-time-fast" style={{ fontSize: 18 }} />
-            </Avatar>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Box
+                className="mpi-cust-badge"
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  bgcolor: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.22)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.12)'
+                }}
+              >
+                <CustomCustomerInProgressIcon size={28} />
+              </Box>
+              <Chip
+                label="Active Queue"
+                size="small"
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  height: 22,
+                  bgcolor: 'rgba(245, 158, 11, 0.08)',
+                  color: '#d97706',
+                  border: '1px solid rgba(245, 158, 11, 0.18)',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase'
+                }}
+              />
+            </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                In Progress
-              </Typography>
-              <Typography variant="h5" fontWeight={900} sx={{ color: '#d97706' }}>
+              <Typography 
+                variant="h5" 
+                fontWeight={900} 
+                sx={{ color: '#d97706', fontSize: { xs: '1.45rem', sm: '1.75rem' }, lineHeight: 1.15 }}
+              >
                 {stats.inProgress}
               </Typography>
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                fontWeight={700} 
+                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
+              >
+                In Progress
+              </Typography>
             </Box>
           </Paper>
 
+          {/* Completed */}
           <Paper 
             elevation={0} 
+            className="mpi-cust-kpi-card"
+            onClick={() => setActiveTab('completed')}
             sx={{ 
-              p: 2.5, 
-              borderRadius: 3, 
+              p: { xs: 2, sm: 2.25 }, 
+              borderRadius: 3.5, 
               border: '1px solid', 
-              borderColor: 'divider', 
+              borderColor: activeTab === 'completed' ? 'rgba(16, 185, 129, 0.4)' : 'divider', 
+              borderTop: '3px solid #10b981',
               bgcolor: 'background.paper',
+              boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
+              cursor: 'pointer',
               display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              flexDirection: 'column',
+              gap: 1.5,
             }}
           >
-            <Avatar sx={{ bgcolor: 'rgba(22, 163, 74, 0.1)', color: '#16a34a', width: 42, height: 42, borderRadius: 2 }}>
-              <i className="fi fi-sr-check-circle" style={{ fontSize: 18 }} />
-            </Avatar>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Box
+                className="mpi-cust-badge"
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  bgcolor: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.22)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.12)'
+                }}
+              >
+                <CustomCustomerCompletedIcon size={28} />
+              </Box>
+              <Chip
+                label="Fulfilled"
+                size="small"
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  height: 22,
+                  bgcolor: 'rgba(16, 185, 129, 0.08)',
+                  color: '#059669',
+                  border: '1px solid rgba(16, 185, 129, 0.18)',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase'
+                }}
+              />
+            </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                Completed
-              </Typography>
-              <Typography variant="h5" fontWeight={900} sx={{ color: '#16a34a' }}>
+              <Typography 
+                variant="h5" 
+                fontWeight={900} 
+                sx={{ color: '#16a34a', fontSize: { xs: '1.45rem', sm: '1.75rem' }, lineHeight: 1.15 }}
+              >
                 {stats.completed}
               </Typography>
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                fontWeight={700} 
+                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
+              >
+                Completed
+              </Typography>
             </Box>
           </Paper>
 
+          {/* Total Spent */}
           <Paper 
             elevation={0} 
+            className="mpi-cust-kpi-card"
             sx={{ 
-              p: 2.5, 
-              borderRadius: 3, 
+              p: { xs: 2, sm: 2.25 }, 
+              borderRadius: 3.5, 
               border: '1px solid', 
               borderColor: 'divider', 
+              borderTop: '3px solid #4f772d',
               bgcolor: 'background.paper',
+              boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
               display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              flexDirection: 'column',
+              gap: 1.5,
             }}
           >
-            <Avatar sx={{ bgcolor: 'rgba(79, 119, 45, 0.1)', color: '#4f772d', width: 42, height: 42, borderRadius: 2 }}>
-              <i className="fi fi-rr-wallet" style={{ fontSize: 18 }} />
-            </Avatar>
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                Total Spent
-              </Typography>
-              <Typography variant="h6" fontWeight={900} color="text.primary" noWrap sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Box
+                className="mpi-cust-badge"
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  bgcolor: 'rgba(79, 119, 45, 0.08)',
+                  border: '1px solid rgba(79, 119, 45, 0.22)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(79, 119, 45, 0.12)'
+                }}
+              >
+                <CustomCustomerTotalSpentIcon size={28} />
+              </Box>
+              <Chip
+                label="Investment"
+                size="small"
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  height: 22,
+                  bgcolor: 'rgba(79, 119, 45, 0.08)',
+                  color: '#4f772d',
+                  border: '1px solid rgba(79, 119, 45, 0.18)',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase'
+                }}
+              />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography 
+                variant="h5" 
+                fontWeight={900} 
+                color="text.primary"
+                noWrap
+                sx={{ fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' }, lineHeight: 1.15 }}
+                title={formatCurrency(stats.totalSpent)}
+              >
                 {formatCurrency(stats.totalSpent)}
+              </Typography>
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                fontWeight={700} 
+                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
+              >
+                Total Spent
               </Typography>
             </Box>
           </Paper>

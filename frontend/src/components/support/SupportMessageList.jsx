@@ -41,8 +41,11 @@ const SupportMessageList = ({
     <Box
       sx={{
         flexGrow: 1,
-        p: { xs: 2, sm: 3 },
+        p: { xs: 1.5, sm: 3 },
         overflowY: 'auto',
+        overflowX: 'hidden',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
         bgcolor: (theme) => theme.palette.mode === 'dark' ? '#0b1120' : '#f8fafc',
         display: 'flex',
         flexDirection: 'column',

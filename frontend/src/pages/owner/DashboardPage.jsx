@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import InventoryIcon from '@mui/icons-material/Inventory2';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CircularProgress from '@mui/material/CircularProgress';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  CustomOwnerRevenueIcon,
+  CustomOwnerCoilStockIcon,
+  CustomOwnerInventoryValueIcon,
+  CustomOwnerOrdersVolumeIcon,
+  CustomOwnerAvgOrderValueIcon
+} from '../../components/icons';
 
 const Widget = ({ title, action, children, style = {} }) => (
   <div className="widget" style={{ ...style, borderTop: '3px solid #f59e0b', background: 'var(--bg-card)', borderColor: 'var(--border-light)' }}>
@@ -26,21 +29,80 @@ const Widget = ({ title, action, children, style = {} }) => (
   </div>
 );
 
-const StatCard = ({ label, value, sub, icon, iconBg }) => (
-  <div className="widget" style={{ padding: '1.5rem', cursor: 'default', transition: 'border-color 0.2s', borderTop: '3px solid transparent', background: 'var(--bg-card)', borderColor: 'var(--border-light)' }}
-    onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(245,158,11,0.5)'}
-    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-light)'}
-  >
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-      <div style={{ padding: '0.6rem', borderRadius: 12, background: iconBg }}>
-        {icon}
+const StatCard = ({ label, value, sub, icon, accentColor, bgGradient, badgeColor, badgeBg, badgeBorder }) => {
+  const isLongVal = typeof value === 'string' && value.length > 12;
+  return (
+    <div
+      className="widget mpi-owner-kpi-card"
+      style={{
+        padding: '1.4rem',
+        cursor: 'default',
+        borderRadius: 16,
+        border: '1px solid var(--border-light)',
+        borderTop: `3px solid ${accentColor}`,
+        background: 'var(--bg-card)',
+        boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+        <div
+          className="mpi-owner-badge"
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 13,
+            background: bgGradient,
+            border: `1px solid ${accentColor}33`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: `0 2px 10px ${accentColor}22`
+          }}
+        >
+          {icon}
+        </div>
+        <span
+          style={{
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            padding: '4px 9px',
+            borderRadius: 8,
+            color: badgeColor,
+            background: badgeBg,
+            border: `1px solid ${badgeBorder}`,
+            letterSpacing: '0.02em',
+            textTransform: 'uppercase'
+          }}
+        >
+          {sub}
+        </span>
       </div>
-      <span className="badge-green" style={{ fontSize: '0.7rem' }}>{sub}</span>
+      <div>
+        <div
+          style={{
+            fontSize: isLongVal ? '1.45rem' : '1.75rem',
+            fontWeight: 800,
+            lineHeight: 1.15,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+            wordBreak: 'break-word'
+          }}
+          title={typeof value === 'string' ? value : undefined}
+        >
+          {value}
+        </div>
+        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginTop: 6, letterSpacing: '0.01em' }}>
+          {label}
+        </div>
+      </div>
     </div>
-    <div style={{ fontSize: '1.75rem', fontWeight: 800, lineHeight: 1.1, color: 'var(--text-primary)' }}>{value}</div>
-    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>{label}</div>
-  </div>
-);
+  );
+};
+
 
 const statusMap = {
   Completed: { cls: 'badge-green', Icon: CheckCircleIcon },
@@ -137,12 +199,62 @@ const OwnerDashboardPage = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1.25rem' }}>
-        <StatCard label="Gross Revenue" value={totals.revenue} sub="Total" icon={<TrendingUpIcon sx={{ fontSize: 20, color: '#fbbf24' }} />} iconBg="rgba(245,158,11,0.15)" />
-        <StatCard label="Raw Coil Stock" value={totals.rawCoilMeters || '95,400 m'} sub={`${data.coilHealth?.totalCoils || 56} Coils`} icon={<InventoryIcon sx={{ fontSize: 20, color: '#38bdf8' }} />} iconBg="rgba(14,165,233,0.15)" />
-        <StatCard label="Total Inventory Value" value={totals.inventoryValue} sub="Capital" icon={<AttachMoneyIcon sx={{ fontSize: 20, color: '#34d399' }} />} iconBg="rgba(16,185,129,0.15)" />
-        <StatCard label="Total Orders" value={totals.orders} sub="Volume" icon={<ShoppingCartIcon sx={{ fontSize: 20, color: '#f43f5e' }} />} iconBg="rgba(244,63,94,0.15)" />
-        <StatCard label="Avg Order Value" value={totals.avgOrderValue} sub="AOV" icon={<TrendingUpIcon sx={{ fontSize: 20, color: '#a78bfa' }} />} iconBg="rgba(139,92,246,0.15)" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+        <StatCard
+          label="Gross Revenue"
+          value={totals.revenue}
+          sub="Total"
+          icon={<CustomOwnerRevenueIcon size={30} />}
+          accentColor="#f59e0b"
+          bgGradient="rgba(245, 158, 11, 0.1)"
+          badgeColor="#d97706"
+          badgeBg="rgba(245, 158, 11, 0.12)"
+          badgeBorder="rgba(245, 158, 11, 0.28)"
+        />
+        <StatCard
+          label="Raw Coil Stock"
+          value={totals.rawCoilMeters || '95,400 m'}
+          sub={`${data.coilHealth?.totalCoils || 56} Coils`}
+          icon={<CustomOwnerCoilStockIcon size={30} />}
+          accentColor="#0ea5e9"
+          bgGradient="rgba(14, 165, 233, 0.1)"
+          badgeColor="#0284c7"
+          badgeBg="rgba(14, 165, 233, 0.12)"
+          badgeBorder="rgba(14, 165, 233, 0.28)"
+        />
+        <StatCard
+          label="Total Inventory Value"
+          value={totals.inventoryValue}
+          sub="Capital"
+          icon={<CustomOwnerInventoryValueIcon size={30} />}
+          accentColor="#10b981"
+          bgGradient="rgba(16, 185, 129, 0.1)"
+          badgeColor="#059669"
+          badgeBg="rgba(16, 185, 129, 0.12)"
+          badgeBorder="rgba(16, 185, 129, 0.28)"
+        />
+        <StatCard
+          label="Total Orders"
+          value={totals.orders}
+          sub="Volume"
+          icon={<CustomOwnerOrdersVolumeIcon size={30} />}
+          accentColor="#f43f5e"
+          bgGradient="rgba(244, 63, 94, 0.1)"
+          badgeColor="#e11d48"
+          badgeBg="rgba(244, 63, 94, 0.12)"
+          badgeBorder="rgba(244, 63, 94, 0.28)"
+        />
+        <StatCard
+          label="Avg Order Value"
+          value={totals.avgOrderValue}
+          sub="AOV"
+          icon={<CustomOwnerAvgOrderValueIcon size={30} />}
+          accentColor="#8b5cf6"
+          bgGradient="rgba(139, 92, 246, 0.1)"
+          badgeColor="#7c3aed"
+          badgeBg="rgba(139, 92, 246, 0.12)"
+          badgeBorder="rgba(139, 92, 246, 0.28)"
+        />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>

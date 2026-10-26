@@ -20,6 +20,7 @@ import {
   Chip,
 } from '@mui/material';
 import LogoutConfirmModal from './LogoutConfirmModal';
+import { openCustomerSupport } from '../utils/supportEvents';
 
 const NAV_LINKS = [
   { to: '/dashboard', label: 'Home', icon: 'fi fi-rr-home' },
@@ -97,7 +98,8 @@ const CustomerHeader = () => {
                 fontWeight: 800,
                 letterSpacing: '0.2em',
                 fontFamily: 'Arial, sans-serif',
-                mt: 0.5,
+                lineHeight: 1,
+                mt: { xs: '-1px', sm: '-2px' },
               }}
             >
               METAL AND STEEL CORP
@@ -200,7 +202,7 @@ const CustomerHeader = () => {
               <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
               <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
             </Box>
-            <Typography sx={{ color: '#64748b', fontSize: '7.5px', fontWeight: 800, letterSpacing: '0.2em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+            <Typography sx={{ color: '#64748b', fontSize: '7.5px', fontWeight: 800, letterSpacing: '0.2em', lineHeight: 1, mt: '-1px', fontFamily: 'Arial, sans-serif' }}>
               METAL AND STEEL CORP
             </Typography>
           </Box>
@@ -280,6 +282,32 @@ const CustomerHeader = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>3D Roof Designer</Typography>
                     <Chip label="Desktop" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#fef3c7', color: '#92400e', fontWeight: 700 }} />
+                  </Box>
+                }
+              />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => {
+                setMobileDrawerOpen(false);
+                openCustomerSupport();
+              }}
+              sx={{
+                borderRadius: 2,
+                color: 'text.primary',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: '#4f772d' }}>
+                <i className="fi fi-rr-comment-alt" style={{ fontSize: '16px' }}></i>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography sx={{ fontSize: '0.9rem', fontWeight: 600 }}>Live Support Desk</Typography>
+                    <Chip label="Online" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#dcfce7', color: '#15803d', fontWeight: 700 }} />
                   </Box>
                 }
               />

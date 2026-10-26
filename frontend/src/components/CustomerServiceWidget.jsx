@@ -179,16 +179,27 @@ const CustomerServiceWidget = () => {
         PaperProps={{
           sx: {
             width: isMaximized
-              ? { xs: '100vw', sm: '92vw', md: 880, lg: 1040 }
-              : { xs: '100vw', sm: 540, md: 620 },
-            maxWidth: '100vw',
-            height: '100vh',
+              ? { xs: '100%', sm: '92vw', md: 880, lg: 1040 }
+              : { xs: '100%', sm: 540, md: 620 },
+            maxWidth: { xs: '100%', sm: '100vw' },
+            height: '100%',
+            maxHeight: '100vh',
             bgcolor: 'background.paper',
             boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.18)',
             transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            boxSizing: 'border-box'
+          }
+        }}
+        sx={{
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: isMaximized
+              ? { xs: '100%', sm: '92vw', md: 880, lg: 1040 }
+              : { xs: '100%', sm: 540, md: 620 },
+            maxWidth: { xs: '100%', sm: '100vw' }
           }
         }}
       >

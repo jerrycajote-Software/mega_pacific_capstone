@@ -40,6 +40,12 @@ import {
 } from 'recharts';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import {
+  CustomFinanceRevenueIcon,
+  CustomFinancePendingIcon,
+  CustomFinanceExpensesIcon,
+  CustomFinanceNetIncomeIcon
+} from '../../components/icons';
 
 const DONUT_COLORS = ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4'];
 
@@ -191,7 +197,14 @@ const FinanceDashboardPage = () => {
       trend: '+12.4% vs last mo',
       color: '#10B981',
       bg: 'rgba(16, 185, 129, 0.08)',
-      icon: 'fi fi-rr-money-bill-wave'
+      borderColor: 'rgba(16, 185, 129, 0.25)',
+      badgeBg: 'rgba(16, 185, 129, 0.1)',
+      badgeColor: '#059669',
+      badgeBorder: 'rgba(16, 185, 129, 0.25)',
+      glowShadow: 'rgba(16, 185, 129, 0.22)',
+      lightGlow: 'rgba(16, 185, 129, 0.04)',
+      darkGlow: 'rgba(16, 185, 129, 0.08)',
+      IconComponent: CustomFinanceRevenueIcon
     },
     {
       label: 'Pending Payments',
@@ -200,7 +213,14 @@ const FinanceDashboardPage = () => {
       trend: 'Bank verification queue',
       color: '#F59E0B',
       bg: 'rgba(245, 158, 11, 0.08)',
-      icon: 'fi fi-rr-time-fast'
+      borderColor: 'rgba(245, 158, 11, 0.25)',
+      badgeBg: 'rgba(245, 158, 11, 0.1)',
+      badgeColor: '#d97706',
+      badgeBorder: 'rgba(245, 158, 11, 0.25)',
+      glowShadow: 'rgba(245, 158, 11, 0.22)',
+      lightGlow: 'rgba(245, 158, 11, 0.04)',
+      darkGlow: 'rgba(245, 158, 11, 0.08)',
+      IconComponent: CustomFinancePendingIcon
     },
     {
       label: 'Total Expenses',
@@ -209,7 +229,14 @@ const FinanceDashboardPage = () => {
       trend: 'Approved disbursals',
       color: '#EF4444',
       bg: 'rgba(239, 68, 68, 0.08)',
-      icon: 'fi fi-rr-chart-pie-alt'
+      borderColor: 'rgba(239, 68, 68, 0.25)',
+      badgeBg: 'rgba(239, 68, 68, 0.1)',
+      badgeColor: '#dc2626',
+      badgeBorder: 'rgba(239, 68, 68, 0.25)',
+      glowShadow: 'rgba(239, 68, 68, 0.22)',
+      lightGlow: 'rgba(239, 68, 68, 0.04)',
+      darkGlow: 'rgba(239, 68, 68, 0.08)',
+      IconComponent: CustomFinanceExpensesIcon
     },
     {
       label: 'Net Operating Income',
@@ -218,7 +245,14 @@ const FinanceDashboardPage = () => {
       trend: 'Net EBITDA',
       color: '#2563EB',
       bg: 'rgba(37, 99, 235, 0.08)',
-      icon: 'fi fi-rr-chart-histogram'
+      borderColor: 'rgba(37, 99, 235, 0.25)',
+      badgeBg: 'rgba(37, 99, 235, 0.1)',
+      badgeColor: '#2563eb',
+      badgeBorder: 'rgba(37, 99, 235, 0.25)',
+      glowShadow: 'rgba(37, 99, 235, 0.22)',
+      lightGlow: 'rgba(37, 99, 235, 0.04)',
+      darkGlow: 'rgba(37, 99, 235, 0.08)',
+      IconComponent: CustomFinanceNetIncomeIcon
     }
   ];
 
@@ -241,67 +275,158 @@ const FinanceDashboardPage = () => {
       </Box>
 
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
-        {kpis.map((kpi, idx) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: 3.5,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 12px 24px -10px rgba(0,0,0,0.08)',
-                  borderColor: kpi.color
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        {kpis.map((kpi, idx) => {
+          const IconComponent = kpi.IconComponent;
+          return (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: { xs: 2.5, md: 3 },
+                  borderRadius: 4,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'background.paper',
+                  background: theme => theme.palette.mode === 'dark' 
+                    ? `linear-gradient(145deg, ${kpi.darkGlow} 0%, rgba(15, 23, 42, 0.85) 100%)`
+                    : `linear-gradient(145deg, ${kpi.lightGlow} 0%, #ffffff 100%)`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 4px 20px -8px rgba(0,0,0,0.05)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    background: `linear-gradient(90deg, ${kpi.color} 0%, transparent 100%)`,
+                    opacity: 0.9
+                  },
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: `0 16px 32px -10px ${kpi.glowShadow}, 0 4px 12px rgba(0,0,0,0.04)`,
+                    borderColor: kpi.color,
+                    '& .mpi-fin-icon-wrap': {
+                      transform: 'scale(1.08) rotate(2deg)',
+                      borderColor: kpi.color,
+                      boxShadow: `0 8px 18px -4px ${kpi.glowShadow}`
+                    }
+                  }
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.2 }}>
+                  <Box
+                    className="mpi-fin-icon-wrap"
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 3,
+                      bgcolor: kpi.bg,
+                      border: '1.5px solid',
+                      borderColor: kpi.borderColor,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      boxShadow: `0 4px 12px ${kpi.glowShadow}`
+                    }}
+                  >
+                    <IconComponent size={28} />
+                  </Box>
+                  <Chip
+                    label={kpi.badge}
+                    size="small"
+                    sx={{
+                      bgcolor: kpi.badgeBg,
+                      color: kpi.badgeColor,
+                      border: '1px solid',
+                      borderColor: kpi.badgeBorder,
+                      fontWeight: 700,
+                      fontSize: '0.68rem',
+                      letterSpacing: '0.02em',
+                      px: 0.5,
+                      height: 24,
+                      borderRadius: 2
+                    }}
+                  />
+                </Box>
+
+                <Box sx={{ my: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      display: 'block',
+                      mb: 0.75
+                    }}
+                  >
+                    {kpi.label}
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 900,
+                      color: 'text.primary',
+                      letterSpacing: '-0.03em',
+                      fontSize: { xs: '1.6rem', md: '1.85rem' },
+                      fontVariantNumeric: 'tabular-nums',
+                      lineHeight: 1.15
+                    }}
+                  >
+                    {kpi.value}
+                  </Typography>
+                </Box>
+
                 <Box
                   sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 2.5,
-                    bgcolor: kpi.bg,
-                    color: kpi.color,
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    gap: 0.75,
+                    mt: 2,
+                    pt: 1.5,
+                    borderTop: '1px solid',
+                    borderColor: 'divider',
+                    width: '100%'
                   }}
                 >
-                  <i className={kpi.icon} style={{ fontSize: 20 }} />
+                  <Box
+                    sx={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      bgcolor: kpi.color,
+                      boxShadow: `0 0 8px ${kpi.color}`,
+                      flexShrink: 0
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontWeight: 600,
+                      fontSize: '0.74rem',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {kpi.trend}
+                  </Typography>
                 </Box>
-                <Chip
-                  label={kpi.badge}
-                  size="small"
-                  sx={{
-                    bgcolor: 'grey.100',
-                    color: 'text.secondary',
-                    fontWeight: 700,
-                    fontSize: '0.65rem'
-                  }}
-                />
-              </Box>
-
-              <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ mb: 0.5 }}>
-                {kpi.label}
-              </Typography>
-              <Typography variant="h5" fontWeight={900} sx={{ color: 'text.primary', letterSpacing: '-0.02em', mb: 1 }}>
-                {kpi.value}
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <span style={{ color: kpi.color, fontWeight: 700 }}>●</span> {kpi.trend}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
+              </Paper>
+            </Grid>
+          );
+        })}
       </Grid>
 
       <Paper

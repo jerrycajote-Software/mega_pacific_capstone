@@ -29,6 +29,8 @@ import 'react-quill-new/dist/quill.snow.css';
 
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { CustomPreOrderIcon } from '../../components/icons';
 
 import { ROOFING_COLORS, STANDARD_THICKNESSES, DECKING_THICKNESSES } from '../../constants/roofingSpecs';
 import { isCoilInStock, getAvailableColorsForThickness, hasCoilStockForThickness } from '../../utils/coilAvailability';
@@ -702,7 +704,7 @@ const PreOrderProductsPage = () => {
               boxShadow: '0 4px 14px rgba(37,99,235,0.35)'
             }}
           >
-            <AddCircleIcon sx={{ fontSize: 18 }} /> Add New Pre-Order Product
+            Add New Pre-Order Product
           </button>
         </div>
       </div>
@@ -1142,22 +1144,38 @@ const PreOrderProductsPage = () => {
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '1.25rem 1.75rem', borderBottom: '1px solid var(--border-light)',
-              position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10
+              position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10,
+              backdropFilter: 'blur(10px)'
             }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  {editingProduct ? 'Update Pre-Order Product' : 'Add New Pre-Order Product'}
-                </h2>
-                <div style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  Fill in the details to create or update a customizable pre-order roofing profile.
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+                    {editingProduct ? 'Update Pre-Order Product' : 'Add New Pre-Order Product'}
+                  </h2>
+                  <div style={{ margin: '0.15rem 0 0', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                    Fill in profile specifications, dimensional tolerances, coil thicknesses, and live inventory finishes.
+                  </div>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-light)',
-                  background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer'
+                  width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border-light)',
+                  background: 'var(--bg-primary)', color: 'var(--text-muted)', cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = '#ef4444';
+                  e.currentTarget.style.color = '#ef4444';
+                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border-light)';
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                  e.currentTarget.style.background = 'var(--bg-primary)';
                 }}
               >
                 <CloseIcon sx={{ fontSize: 18 }} />
@@ -1175,37 +1193,51 @@ const PreOrderProductsPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '0.85rem 1.15rem',
-                borderRadius: 12,
-                background: formData.isActive ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
-                border: formData.isActive ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)',
-                marginBottom: '1.5rem'
+                padding: '0.9rem 1.25rem',
+                borderRadius: 14,
+                background: formData.isActive
+                  ? 'linear-gradient(90deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.03) 100%)'
+                  : 'linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.03) 100%)',
+                border: formData.isActive ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                marginBottom: '1.5rem',
+                gap: 16
               }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: formData.isActive ? '#10b981' : '#ef4444', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: formData.isActive ? '#10b981' : '#ef4444' }} />
-                    Customer Catalog Visibility: {formData.isActive ? 'Active (Displayed to Customers)' : 'Disabled (Hidden from Customers)'}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    {formData.isActive
-                      ? 'Customers can browse this product, view specs, specify custom lengths, and place pre-orders.'
-                      : 'This product is hidden from customer browsing and cannot be ordered until re-enabled.'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 10, height: 10, borderRadius: '50%',
+                    background: formData.isActive ? '#22c55e' : '#ef4444',
+                    boxShadow: formData.isActive ? '0 0 10px #22c55e' : '0 0 10px #ef4444',
+                    flexShrink: 0
+                  }} />
+                  <div>
+                    <div style={{ fontWeight: 750, fontSize: '0.88rem', color: formData.isActive ? '#16a34a' : '#ef4444' }}>
+                      Customer Catalog Visibility: {formData.isActive ? 'Active (Displayed to Customers)' : 'Disabled (Hidden from Customers)'}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                      {formData.isActive
+                        ? 'Customers can browse this product, view specs, specify custom lengths, and place pre-orders.'
+                        : 'This product is hidden from customer browsing and cannot be ordered until re-enabled.'}
+                    </div>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
                   style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 8,
+                    padding: '0.5rem 1.15rem',
+                    borderRadius: 10,
                     border: 'none',
-                    background: formData.isActive ? '#ef4444' : '#10b981',
+                    background: formData.isActive ? '#ef4444' : '#16a34a',
                     color: '#ffffff',
                     fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                    whiteSpace: 'nowrap',
+                    boxShadow: formData.isActive ? '0 2px 8px rgba(239,68,68,0.25)' : '0 2px 8px rgba(22,163,74,0.25)',
+                    transition: 'all 0.18s ease'
                   }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
                   {formData.isActive ? 'Disable Product' : 'Enable Product'}
                 </button>
@@ -1224,13 +1256,13 @@ const PreOrderProductsPage = () => {
                     onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImageFiles(e.dataTransfer.files); }}
                     onClick={() => fileInputRef.current?.click()}
                     style={{
-                      border: `2px dashed ${isDragging ? '#3b82f6' : 'var(--border-light)'}`,
+                      border: `2px dashed ${isDragging ? '#22c55e' : 'var(--border-light)'}`,
                       borderRadius: 14,
-                      background: isDragging ? 'rgba(59,130,246,0.06)' : 'var(--bg-primary)',
+                      background: isDragging ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-primary)',
                       padding: '1.5rem 1rem',
                       textAlign: 'center',
                       cursor: 'pointer',
-                      transition: 'all 0.18s'
+                      transition: 'all 0.18s ease'
                     }}
                   >
                     <input
@@ -1241,12 +1273,12 @@ const PreOrderProductsPage = () => {
                       style={{ display: 'none' }}
                       onChange={(e) => handleImageFiles(e.target.files)}
                     />
-                    <CloudUploadIcon sx={{ fontSize: 32, color: '#3b82f6', marginBottom: 1 }} />
+                    <CloudUploadIcon sx={{ fontSize: 34, color: isDragging ? '#22c55e' : 'var(--text-muted)', marginBottom: 1 }} />
                     <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
                       Drag & drop images
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                      or <span style={{ color: '#3b82f6', textDecoration: 'underline' }}>browse files</span>
+                      or <span style={{ color: 'var(--green)', textDecoration: 'underline' }}>browse files</span>
                     </div>
                     <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 6 }}>
                       PNG, JPG, WEBP · max 5 MB
@@ -1401,117 +1433,215 @@ const PreOrderProductsPage = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '1rem',
+                    padding: '1rem',
+                    borderRadius: 14,
+                    background: 'rgba(0, 0, 0, 0.02)',
+                    border: '1px solid var(--border-light)'
+                  }}>
+                    {/* Left Column: Base Thickness */}
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        height: 24,
+                        marginBottom: 8
+                      }}>
+                        <label style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 750,
+                          color: 'var(--text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          whiteSpace: 'nowrap'
+                        }}>
                           Base Thickness
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => openNewThicknessModal({ type: 'base' })}
+                      </div>
+
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          value={formData.thickness}
+                          onChange={(e) => {
+                            if (e.target.value === '__ADD_NEW__') {
+                              openNewThicknessModal({ type: 'base' });
+                              return;
+                            }
+                            const newThick = e.target.value;
+                            const newAvailableSet = getAvailableColorsForThickness(coils, newThick);
+
+                            setFormData(prev => ({
+                              ...prev,
+                              thickness: newThick,
+                              colors: prev.colors.filter(c => newAvailableSet.has(c))
+                            }));
+                          }}
                           style={{
-                            background: 'none', border: 'none', color: '#2563eb', fontSize: '0.72rem',
-                            fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, padding: 0
+                            width: '100%',
+                            padding: '0.65rem 2.2rem 0.65rem 0.85rem',
+                            borderRadius: 10,
+                            background: 'var(--bg-primary)',
+                            border: baseConflictVariantIndex >= 0 ? '1.5px solid #ef4444' : '1px solid var(--border-light)',
+                            color: baseConflictVariantIndex >= 0 ? '#ef4444' : 'var(--text-primary)',
+                            fontSize: '0.84rem',
+                            fontWeight: 600,
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            appearance: 'none',
+                            cursor: 'pointer'
                           }}
                         >
-                          <AddCircleOutlineIcon sx={{ fontSize: 13 }} /> Add New Thickness
-                        </button>
+                          {availableThicknesses.map(t => {
+                            const isUsedInVar = variants.findIndex(v => normalizeThickness(v.thickness) === normalizeThickness(t));
+                            const hasStock = hasCoilStockForThickness(coils, t);
+                            const finishesSet = getAvailableColorsForThickness(coils, t);
+                            return (
+                              <option key={t} value={t}>
+                                {t} {!hasStock ? '(No Coil Stock in Inventory)' : `(${finishesSet.size} finishes in stock)`} {isUsedInVar >= 0 ? `(⚠️ Used in Variant #${isUsedInVar + 1})` : ''}
+                              </option>
+                            );
+                          })}
+                          <option value="__ADD_NEW__" style={{ color: '#2563eb', fontWeight: 700 }}>
+                            Add New Thickness
+                          </option>
+                        </select>
+                        <div style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                          color: 'var(--text-muted)',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}>
+                          <ExpandMoreIcon sx={{ fontSize: 18 }} />
+                        </div>
                       </div>
-                      <select
-                        value={formData.thickness}
-                        onChange={(e) => {
-                          if (e.target.value === '__ADD_NEW__') {
-                            openNewThicknessModal({ type: 'base' });
-                            return;
-                          }
-                          const newThick = e.target.value;
-                          const newAvailableSet = getAvailableColorsForThickness(coils, newThick);
 
-                          setFormData(prev => ({
-                            ...prev,
-                            thickness: newThick,
-                            colors: prev.colors.filter(c => newAvailableSet.has(c))
-                          }));
-                        }}
-                        style={{
-                          width: '100%', padding: '0.65rem 0.85rem', borderRadius: 10,
-                          background: 'var(--bg-primary)',
-                          border: baseConflictVariantIndex >= 0 ? '1px solid #ef4444' : '1px solid var(--border-light)',
-                          color: baseConflictVariantIndex >= 0 ? '#ef4444' : 'var(--text-primary)',
-                          fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box'
-                        }}
-                      >
-                        {availableThicknesses.map(t => {
-                          const isUsedInVar = variants.findIndex(v => normalizeThickness(v.thickness) === normalizeThickness(t));
-                          const hasStock = hasCoilStockForThickness(coils, t);
-                          const finishesSet = getAvailableColorsForThickness(coils, t);
-                          return (
-                            <option key={t} value={t}>
-                              {t} {!hasStock ? '(No Coil Stock in Inventory)' : `(${finishesSet.size} finishes in stock)`} {isUsedInVar >= 0 ? `(⚠️ Used in Variant #${isUsedInVar + 1})` : ''}
-                            </option>
-                          );
-                        })}
-                        <option value="__ADD_NEW__" style={{ color: '#2563eb', fontWeight: 700 }}>
-                          + Add New Thickness...
-                        </option>
-                      </select>
-                      {!hasCoilStockForThickness(coils, formData.thickness) && (
-                        <div style={{ marginTop: 6, fontSize: '0.72rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <ErrorOutlineIcon sx={{ fontSize: 14, flexShrink: 0 }} />
-                          <span>No coils available in Coil Inventory for thickness "{formData.thickness}". Raw steel coils must be stocked in Logistics before creating or updating pre-order products with this gauge.</span>
-                        </div>
-                      )}
-                      {baseConflictVariantIndex >= 0 && (
-                        <div style={{ marginTop: 6, fontSize: '0.72rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <ErrorOutlineIcon sx={{ fontSize: 14, flexShrink: 0 }} />
-                          <span>Conflict: Thickness "{formData.thickness}" is also used in Variant #{baseConflictVariantIndex + 1}. Base and variants must have different thicknesses.</span>
-                        </div>
-                      )}
+                      <div style={{ marginTop: 6, minHeight: 20 }}>
+                        {!hasCoilStockForThickness(coils, formData.thickness) ? (
+                          <div style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <ErrorOutlineIcon sx={{ fontSize: 14, flexShrink: 0 }} />
+                            <span>No coils in Coil Inventory for "{formData.thickness}".</span>
+                          </div>
+                        ) : baseConflictVariantIndex >= 0 ? (
+                          <div style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <ErrorOutlineIcon sx={{ fontSize: 14, flexShrink: 0 }} />
+                            <span>Conflict: Already used in Variant #{baseConflictVariantIndex + 1}.</span>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ color: '#16a34a', fontWeight: 700 }}>✓ In Stock</span>
+                            <span>•</span>
+                            <span>{getAvailableColorsForThickness(coils, formData.thickness).size} color finish(es) ready</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
+                    {/* Right Column: Category Profile Type */}
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        height: 24,
+                        marginBottom: 8
+                      }}>
+                        <label style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 750,
+                          color: 'var(--text-muted)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          whiteSpace: 'nowrap'
+                        }}>
                           Category Profile Type
                         </label>
-                        <span style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: 4,
-                          background: isCustomLengthProfile(formData.type) ? 'rgba(34, 197, 94, 0.12)' : 'rgba(100, 116, 139, 0.12)',
-                          color: isCustomLengthProfile(formData.type) ? '#16a34a' : '#64748b'
+                      </div>
+
+                      <div style={{ position: 'relative' }}>
+                        <select
+                          value={formData.type}
+                          onChange={(e) => {
+                            const nextType = e.target.value;
+                            const willSupportLength = isCustomLengthProfile(nextType);
+                            const wasSupportingLength = isCustomLengthProfile(formData.type);
+                            let updatedUnit = formData.unit;
+                            if (!willSupportLength && wasSupportingLength && (formData.unit === 'per meter' || !formData.unit)) {
+                              updatedUnit = 'per piece';
+                            } else if (willSupportLength && !wasSupportingLength && (formData.unit === 'per piece' || formData.unit === 'pc')) {
+                              updatedUnit = 'per meter';
+                            }
+                            setFormData({ ...formData, type: nextType, unit: updatedUnit });
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 2.2rem 0.65rem 0.85rem',
+                            borderRadius: 10,
+                            background: 'var(--bg-primary)',
+                            border: '1px solid var(--border-light)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.84rem',
+                            fontWeight: 600,
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            appearance: 'none',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="Rib Type">Rib Type</option>
+                          <option value="Corrugated">Corrugated</option>
+                          <option value="Tile Profile">Tile Profile</option>
+                          <option value="Bended Accessories">Bended Accessories</option>
+                          <option value="Steel Decking">Steel Decking</option>
+                        </select>
+                        <div style={{
+                          position: 'absolute',
+                          right: 10,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                          color: 'var(--text-muted)',
+                          display: 'flex',
+                          alignItems: 'center'
                         }}>
-                          {isCustomLengthProfile(formData.type) ? 'Custom Cut Length (0.5m – 21m)' : 'Standard Piece / Fixed Unit'}
+                          <ExpandMoreIcon sx={{ fontSize: 18 }} />
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: 6, minHeight: 20, display: 'flex', alignItems: 'center' }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          background: isCustomLengthProfile(formData.type) ? 'rgba(34, 197, 94, 0.12)' : 'rgba(100, 116, 139, 0.12)',
+                          color: isCustomLengthProfile(formData.type) ? '#16a34a' : '#64748b',
+                          border: isCustomLengthProfile(formData.type) ? '1px solid rgba(34, 197, 94, 0.25)' : '1px solid rgba(100, 116, 139, 0.25)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {isCustomLengthProfile(formData.type) ? (
+                            <>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a' }} />
+                              Custom Cut Length (0.5m – 21m)
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#64748b' }} />
+                              Standard Piece / Fixed Unit
+                            </>
+                          )}
                         </span>
                       </div>
-                      <select
-                        value={formData.type}
-                        onChange={(e) => {
-                          const nextType = e.target.value;
-                          const willSupportLength = isCustomLengthProfile(nextType);
-                          const wasSupportingLength = isCustomLengthProfile(formData.type);
-                          let updatedUnit = formData.unit;
-                          if (!willSupportLength && wasSupportingLength && (formData.unit === 'per meter' || !formData.unit)) {
-                            updatedUnit = 'per piece';
-                          } else if (willSupportLength && !wasSupportingLength && (formData.unit === 'per piece' || formData.unit === 'pc')) {
-                            updatedUnit = 'per meter';
-                          }
-                          setFormData({ ...formData, type: nextType, unit: updatedUnit });
-                        }}
-                        style={{
-                          width: '100%', padding: '0.65rem 0.85rem', borderRadius: 10,
-                          background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
-                          color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box'
-                        }}
-                      >
-                        <option value="Rib Type">Rib Type</option>
-                        <option value="Corrugated">Corrugated</option>
-                        <option value="Tile Profile">Tile Profile</option>
-                        <option value="Bended Accessories">Bended Accessories</option>
-                        <option value="Steel Decking">Steel Decking</option>
-                      </select>
                     </div>
                   </div>
 
@@ -1789,7 +1919,7 @@ const PreOrderProductsPage = () => {
                       background: 'rgba(59,130,246,0.06)', color: '#3b82f6', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer'
                     }}
                   >
-                    <AddCircleIcon sx={{ fontSize: 16 }} /> Add Thickness Variant Row
+                   Add Thickness Variant Row
                   </button>
                   <button
                     type="button"
@@ -1800,18 +1930,27 @@ const PreOrderProductsPage = () => {
                       background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer'
                     }}
                   >
-                    <AddCircleOutlineIcon sx={{ fontSize: 16, color: '#16a34a' }} /> New Thickness Gauge
+                   New Thickness Gauge
                   </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   style={{
-                    padding: '0.65rem 1.25rem', borderRadius: 10, border: '1px solid var(--border-light)',
-                    background: 'transparent', color: 'var(--text-muted)', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer'
+                    padding: '0.65rem 1.4rem', borderRadius: 10, border: '1px solid var(--border-light)',
+                    background: 'var(--bg-primary)', color: 'var(--text-muted)', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.18s ease'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--text-primary)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'var(--border-light)';
+                    e.currentTarget.style.color = 'var(--text-muted)';
                   }}
                 >
                   Cancel
@@ -1821,14 +1960,27 @@ const PreOrderProductsPage = () => {
                   disabled={submitting}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '0.65rem 1.6rem', borderRadius: 10, border: 'none',
-                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                    color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(37,99,235,0.35)'
+                    padding: '0.65rem 1.75rem', borderRadius: 10, border: 'none',
+                    background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                    color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(34,197,94,0.35)',
+                    opacity: submitting ? 0.7 : 1,
+                    transition: 'all 0.18s ease'
                   }}
+                  onMouseEnter={e => { if (!submitting) e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { if (!submitting) e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
-                  
-                  {editingProduct ? 'Update Pre-Order Product' : 'Create Pre-Order Product'}
+                  {submitting ? (
+                    <>
+                      <CircularProgress size={16} sx={{ color: '#fff' }} />
+                      <span>Saving Profile...</span>
+                    </>
+                  ) : (
+                    <>
+                      
+                      <span>{editingProduct ? 'Save Changes' : 'Add Pre-Order Product'}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -1850,9 +2002,7 @@ const PreOrderProductsPage = () => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
-                  <StraightenIcon sx={{ fontSize: 18 }} />
-                </div>
+                
                 <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   Add New Thickness Gauge
                 </h3>

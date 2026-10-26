@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
-import DashboardIcon from '@mui/icons-material/Dashboard';
+import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import { CustomDashboardIcon, CustomNavToggleIcon } from '../components/icons';
 import { Tooltip } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { useAdminTheme } from '../context/ThemeContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
-  { name: 'Dashboard',  path: '/owner/dashboard',  icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Dashboard',  path: '/owner/dashboard',  icon: <CustomDashboardIcon size={20} /> },
 ];
 
 const OwnerLayout = () => {
   usePreventBackToLogin();
   const { logout, user } = useAuth();
+  const { mode } = useAdminTheme();
+  const isDark = mode === 'dark';
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
@@ -32,6 +35,20 @@ const OwnerLayout = () => {
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
+  };
+
+  const checkIsActive = (itemPath) => {
+    const currentPath = (location.pathname || '').toLowerCase().replace(/\/$/, '');
+    const targetPath = (itemPath || '').toLowerCase().replace(/\/$/, '');
+    if (!currentPath || !targetPath) return false;
+    if (currentPath === targetPath) return true;
+    if (targetPath.endsWith('/dashboard') && currentPath === targetPath.replace('/dashboard', '')) {
+      return true;
+    }
+    if (currentPath.startsWith(`${targetPath}/`)) {
+      return true;
+    }
+    return false;
   };
 
   return (
@@ -57,7 +74,7 @@ const OwnerLayout = () => {
               onClick={handleToggleSidebarNavigation}
               aria-label={isSidebarCollapsed ? "Expand Navigation" : "Hide Navigation"}
             >
-              <MenuOpenIcon sx={{ fontSize: 19, transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none' }} />
+              <CustomNavToggleIcon isCollapsed={isSidebarCollapsed} size={19} />
             </button>
           </Tooltip>
         </div>
@@ -67,17 +84,43 @@ const OwnerLayout = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
-            <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-              >
-                <span className="nav-icon" style={{ color: 'inherit' }}>{item.icon}</span>
-                <span className="sidebar-nav-label">{item.name}</span>
-              </NavLink>
-            </Tooltip>
-          ))}
+          {navItems.map((item) => {
+            const isTabActive = checkIsActive(item.path);
+            return (
+              <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
+                <NavLink
+                  to={item.path}
+                  data-active={isTabActive ? "true" : undefined}
+                  className={({ isActive }) => `nav-link${isActive || isTabActive ? ' active' : ''}`}
+                  style={({ isActive }) => {
+                    const active = isActive || isTabActive;
+                    if (!active) return undefined;
+                    return isDark ? {
+                      background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.32) 0%, rgba(217, 119, 6, 0.18) 60%, rgba(245, 158, 11, 0.08) 100%)',
+                      color: '#ffffff',
+                      border: '1.5px solid rgba(251, 191, 36, 0.75)',
+                      boxShadow: '0 4px 18px rgba(245, 158, 11, 0.35)',
+                      fontWeight: 700,
+                    } : {
+                      background: '#fef3c7',
+                      color: '#92400e',
+                      border: '1.5px solid #f59e0b',
+                      boxShadow: '0 4px 14px rgba(245, 158, 11, 0.28)',
+                      fontWeight: 700,
+                    };
+                  }}
+                >
+                  <span className="nav-icon" style={{ color: 'inherit' }}>{item.icon}</span>
+                  <span
+                    className="sidebar-nav-label"
+                    style={isTabActive ? { fontWeight: 750, color: isDark ? '#ffffff' : '#92400e' } : undefined}
+                  >
+                    {item.name}
+                  </span>
+                </NavLink>
+              </Tooltip>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">

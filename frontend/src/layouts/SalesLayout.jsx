@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import RateReviewIcon from '@mui/icons-material/RateReview';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import {
+  CustomDashboardIcon,
+  CustomPreOrderIcon,
+  CustomOrdersIcon,
+  CustomReviewsIcon,
+  CustomSupportIcon,
+  CustomNavToggleIcon
+} from '../components/icons';
 import { useAuth } from '../context/AuthContext';
+import { useAdminTheme } from '../context/ThemeContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import { io } from 'socket.io-client';
@@ -16,17 +19,20 @@ import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const navItems = [
-  { name: 'Dashboard',           path: '/sales/dashboard',          icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Pre-Order Products',  path: '/sales/pre-order-products', icon: <StorefrontIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Orders',              path: '/sales/orders',             icon: <ShoppingCartIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Reviews',             path: '/sales/reviews',            icon: <RateReviewIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Support',             path: '/sales/customer-service',   icon: <SupportAgentIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Dashboard',           path: '/sales/dashboard',          icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Pre-Order Products',  path: '/sales/pre-order-products', icon: <CustomPreOrderIcon size={20} /> },
+  { name: 'Orders',              path: '/sales/orders',             icon: <CustomOrdersIcon size={20} /> },
+  { name: 'Reviews',             path: '/sales/reviews',            icon: <CustomReviewsIcon size={20} /> },
+  { name: 'Support',             path: '/sales/customer-service',   icon: <CustomSupportIcon size={20} /> },
 ];
 
 const SalesLayout = () => {
   usePreventBackToLogin();
   const { logout, user } = useAuth();
+  const { mode } = useAdminTheme();
+  const isDark = mode === 'dark';
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [notification, setNotification] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -66,6 +72,23 @@ const SalesLayout = () => {
     setNotification(null);
   };
 
+  const checkIsActive = (itemPath) => {
+    const currentPath = (location.pathname || '').toLowerCase().replace(/\/$/, '');
+    const targetPath = (itemPath || '').toLowerCase().replace(/\/$/, '');
+    if (!currentPath || !targetPath) return false;
+    if (currentPath === targetPath) return true;
+    if (targetPath.endsWith('/dashboard') && currentPath === targetPath.replace('/dashboard', '')) {
+      return true;
+    }
+    if (currentPath.startsWith(`${targetPath}/`)) {
+      return true;
+    }
+    if (targetPath === '/sales/pre-order-products' && currentPath === '/sales/inventory') {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <div className="admin-shell">
 
@@ -91,7 +114,7 @@ const SalesLayout = () => {
               onClick={handleToggleSidebarNavigation}
               aria-label={isSidebarCollapsed ? "Expand Navigation" : "Hide Navigation"}
             >
-              <MenuOpenIcon sx={{ fontSize: 19, transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none' }} />
+              <CustomNavToggleIcon isCollapsed={isSidebarCollapsed} size={19} />
             </button>
           </Tooltip>
         </div>
@@ -101,17 +124,43 @@ const SalesLayout = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
-            <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-              >
-                <span className="nav-icon">{item.icon}</span>
-                <span className="sidebar-nav-label">{item.name}</span>
-              </NavLink>
-            </Tooltip>
-          ))}
+          {navItems.map((item) => {
+            const isTabActive = checkIsActive(item.path);
+            return (
+              <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
+                <NavLink
+                  to={item.path}
+                  data-active={isTabActive ? "true" : undefined}
+                  className={({ isActive }) => `nav-link${isActive || isTabActive ? ' active' : ''}`}
+                  style={({ isActive }) => {
+                    const active = isActive || isTabActive;
+                    if (!active) return undefined;
+                    return isDark ? {
+                      background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.28) 0%, rgba(16, 185, 129, 0.16) 60%, rgba(34, 197, 94, 0.08) 100%)',
+                      color: '#ffffff',
+                      border: '1.5px solid rgba(74, 222, 128, 0.65)',
+                      boxShadow: '0 4px 20px -2px rgba(34, 197, 94, 0.35)',
+                      fontWeight: 700,
+                    } : {
+                      background: '#dcfce7',
+                      color: '#15803d',
+                      border: '1.5px solid #22c55e',
+                      boxShadow: '0 4px 14px rgba(34, 197, 94, 0.25)',
+                      fontWeight: 700,
+                    };
+                  }}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <span
+                    className="sidebar-nav-label"
+                    style={isTabActive ? { fontWeight: 750, color: isDark ? '#ffffff' : '#15803d' } : undefined}
+                  >
+                    {item.name}
+                  </span>
+                </NavLink>
+              </Tooltip>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">

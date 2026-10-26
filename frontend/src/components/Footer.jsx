@@ -84,7 +84,7 @@ const Footer = () => {
                 <Typography component="span" sx={{ color: '#1e3a8a', fontSize: 'inherit', fontWeight: 'inherit' }}>MEGA</Typography>
                 <Typography component="span" sx={{ color: (theme) => theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a', fontSize: 'inherit', fontWeight: 'inherit' }}>PACIFIC</Typography>
               </Box>
-              <Typography sx={{ color: '#64748b', fontSize: '10px', fontWeight: 800, letterSpacing: '0.2em', mt: 0.5, fontFamily: 'Arial, sans-serif' }}>
+              <Typography sx={{ color: '#64748b', fontSize: '10px', fontWeight: 800, letterSpacing: '0.2em', lineHeight: 1, mt: '-2px', fontFamily: 'Arial, sans-serif' }}>
                 METAL AND STEEL CORP
               </Typography>
             </Box>
@@ -270,7 +270,7 @@ const Footer = () => {
         
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
           <Typography variant="body2" color="text.secondary" align="center">
-            © {new Date().getFullYear()} Mega Pacific Roofing Systems. All rights reserved.
+            © {new Date().getFullYear()} Mega Pacific Metal and Steel Roofing Systems. All rights reserved.
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <MastercardBadge />

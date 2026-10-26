@@ -12,24 +12,27 @@ const SupportHeader = ({
   return (
     <Box
       sx={{
-        p: { xs: 2, sm: 2.5 },
+        p: { xs: 1.5, sm: 2.5 },
         bgcolor: 'background.paper',
         borderBottom: '1px solid',
         borderColor: 'divider',
         display: 'flex',
         flexDirection: 'column',
-        gap: 1.5,
-        flexShrink: 0
+        gap: { xs: 1, sm: 1.5 },
+        flexShrink: 0,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, maxWidth: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, minWidth: 0, flex: 1 }}>
           <Box
             sx={{
               position: 'relative',
-              width: 44,
-              height: 44,
-              borderRadius: 2.5,
+              width: { xs: 36, sm: 44 },
+              height: { xs: 36, sm: 44 },
+              borderRadius: 2,
               bgcolor: 'primary.main',
               color: '#ffffff',
               display: 'flex',
@@ -39,14 +42,14 @@ const SupportHeader = ({
               flexShrink: 0
             }}
           >
-            <i className="fi fi-rr-comment-alt" style={{ fontSize: '20px' }}></i>
+            <i className="fi fi-rr-comment-alt" style={{ fontSize: '18px' }}></i>
             <Box
               sx={{
                 position: 'absolute',
                 bottom: -2,
                 right: -2,
-                width: 12,
-                height: 12,
+                width: 10,
+                height: 10,
                 borderRadius: '50%',
                 bgcolor: '#22c55e',
                 border: '2px solid #ffffff'
@@ -54,17 +57,17 @@ const SupportHeader = ({
             />
           </Box>
 
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.2, color: 'text.primary' }}>
+          <Box sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+              <Typography variant="subtitle1" noWrap sx={{ fontWeight: 800, fontSize: { xs: '0.88rem', sm: '1.05rem' }, lineHeight: 1.2, color: 'text.primary' }}>
                 Customer Support & Sales Desk
               </Typography>
               <Chip
                 label="Online"
                 size="small"
                 sx={{
-                  height: 20,
-                  fontSize: '0.65rem',
+                  height: 18,
+                  fontSize: '0.62rem',
                   fontWeight: 700,
                   bgcolor: '#dcfce7',
                   color: '#15803d',
@@ -72,13 +75,13 @@ const SupportHeader = ({
                 }}
               />
             </Box>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
-              Direct line to Mega Pacific roofing consultants & orders team
+            <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block', mt: 0.25, fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>
+              Direct line to Mega Pacific consultants & orders team
             </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
           <Tooltip title={loading ? 'Refreshing conversation...' : 'Refresh messages'}>
             <span>
               <IconButton
@@ -90,7 +93,7 @@ const SupportHeader = ({
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 2,
-                  p: 0.75,
+                  p: { xs: 0.5, sm: 0.75 },
                   color: 'text.secondary',
                   '&:hover': { color: 'primary.main', borderColor: 'primary.main' }
                 }}
@@ -98,7 +101,7 @@ const SupportHeader = ({
                 <i
                   className="fi fi-rr-refresh"
                   style={{
-                    fontSize: '14px',
+                    fontSize: '13px',
                     display: 'inline-block',
                     animation: loading ? 'spin 1s linear infinite' : 'none'
                   }}
@@ -135,12 +138,12 @@ const SupportHeader = ({
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 2,
-                p: 0.75,
+                p: { xs: 0.5, sm: 0.75 },
                 color: 'text.secondary',
                 '&:hover': { bgcolor: 'error.light', color: 'error.main', borderColor: 'error.main' }
               }}
             >
-              <i className="fi fi-rr-cross" style={{ fontSize: '14px' }}></i>
+              <i className="fi fi-rr-cross" style={{ fontSize: '13px' }}></i>
             </IconButton>
           </Tooltip>
         </Box>
@@ -150,20 +153,24 @@ const SupportHeader = ({
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', sm: 'center' },
             justifyContent: 'space-between',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 0.35, sm: 1 },
             px: 1.5,
             py: 0.75,
             borderRadius: 1.5,
             bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc',
             border: '1px solid',
-            borderColor: 'divider'
+            borderColor: 'divider',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
           }}
         >
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem' }}>
             Ticket ID: <span style={{ fontFamily: 'monospace', color: '#4f772d', fontWeight: 700 }}>#INQ-{inquiryId}</span>
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
             ⚡ Response within 15 mins during business hours
           </Typography>
         </Box>

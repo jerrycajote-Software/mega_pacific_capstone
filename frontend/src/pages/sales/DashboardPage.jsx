@@ -13,10 +13,16 @@ import CategoryIcon from '@mui/icons-material/Category';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import StarIcon from '@mui/icons-material/Star';
 import SearchIcon from '@mui/icons-material/Search';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import ClearIcon from '@mui/icons-material/Clear';
+import {
+  CustomGrossRevenueIcon,
+  CustomOrderPipelineIcon,
+  CustomActiveDispatchIcon,
+  CustomCustomerSentimentIcon
+} from '../../components/icons';
 
 const SalesDashboard = () => {
   const { user } = useAuth();
@@ -398,11 +404,12 @@ const SalesDashboard = () => {
               height: 38,
               borderRadius: 10,
               background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <TrendingUpIcon sx={{ fontSize: 20, color: 'var(--green)' }} />
+              <CustomGrossRevenueIcon size={24} />
             </div>
           </div>
 
@@ -450,11 +457,12 @@ const SalesDashboard = () => {
               height: 38,
               borderRadius: 10,
               background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <AccessTimeIcon sx={{ fontSize: 20, color: '#f59e0b' }} />
+              <CustomOrderPipelineIcon size={24} />
             </div>
           </div>
 
@@ -510,11 +518,12 @@ const SalesDashboard = () => {
               height: 38,
               borderRadius: 10,
               background: 'rgba(14, 165, 233, 0.1)',
+              border: '1px solid rgba(14, 165, 233, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <LocalShippingIcon sx={{ fontSize: 20, color: '#0ea5e9' }} />
+              <CustomActiveDispatchIcon size={24} />
             </div>
           </div>
 
@@ -562,11 +571,12 @@ const SalesDashboard = () => {
               height: 38,
               borderRadius: 10,
               background: 'rgba(139, 92, 246, 0.1)',
+              border: '1px solid rgba(139, 92, 246, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <SupportAgentIcon sx={{ fontSize: 20, color: '#8b5cf6' }} />
+              <CustomCustomerSentimentIcon size={24} />
             </div>
           </div>
 
@@ -858,18 +868,33 @@ const SalesDashboard = () => {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--green)',
-                  fontSize: '0.8rem',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 10,
+                  fontSize: '0.78rem',
                   fontWeight: 700,
+                  color: 'var(--green)',
+                  background: 'rgba(34, 197, 94, 0.08)',
+                  border: '1.5px solid rgba(34, 197, 94, 0.28)',
                   cursor: 'pointer',
-                  padding: '4px 8px',
-                  borderRadius: 6
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 2px 6px rgba(34, 197, 94, 0.08)'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(34, 197, 94, 0.16)';
+                  e.currentTarget.style.borderColor = 'var(--green)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.18)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(34, 197, 94, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.28)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(34, 197, 94, 0.08)';
                 }}
               >
-                Full Orders Hub <ArrowForwardIcon sx={{ fontSize: 14 }} />
+                <span>Full Orders Hub</span>
+                <ChevronRightIcon sx={{ fontSize: 16 }} />
               </button>
             </div>
 
@@ -948,15 +973,15 @@ const SalesDashboard = () => {
               </div>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border-light)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 620 }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    <th style={{ padding: '8px 12px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Customer</th>
-                    <th style={{ padding: '8px 12px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Order ID</th>
-                    <th style={{ padding: '8px 12px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</th>
-                    <th style={{ padding: '8px 12px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right' }}>Total</th>
-                    <th style={{ padding: '8px 12px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right' }}>Action</th>
+                  <tr style={{ borderBottom: '1px solid var(--border-light)', background: 'rgba(0,0,0,0.02)' }}>
+                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', width: '36%' }}>Customer</th>
+                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', width: '16%', whiteSpace: 'nowrap' }}>Order ID</th>
+                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', width: '18%', whiteSpace: 'nowrap' }}>Status</th>
+                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right', width: '16%', whiteSpace: 'nowrap' }}>Total</th>
+                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right', width: '14%', whiteSpace: 'nowrap' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -980,97 +1005,133 @@ const SalesDashboard = () => {
                           key={order.id}
                           style={{
                             borderBottom: '1px solid var(--border-light)',
-                            transition: 'background 0.15s ease'
+                            transition: 'all 0.15s ease'
                           }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.015)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'rgba(34, 197, 94, 0.03)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent';
+                          }}
                         >
-                          <td style={{ padding: '10px 12px' }}>
+                          <td style={{ padding: '12px 14px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <img
                                 src={order.avatarUrl || '/default-profile.png'}
                                 alt={order.customer}
                                 style={{
-                                  width: 32,
-                                  height: 32,
+                                  width: 34,
+                                  height: 34,
                                   borderRadius: '50%',
                                   objectFit: 'cover',
                                   flexShrink: 0,
-                                  border: '1px solid var(--border-light)'
+                                  border: '1.5px solid var(--border-light)'
                                 }}
                               />
-                              <div>
-                                <div style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {order.customer}
                                 </div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                  {order.date} • {order.paymentMode || 'COD'}
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                  <span>{order.date}</span>
+                                  <span style={{ opacity: 0.35 }}>•</span>
+                                  <span style={{
+                                    fontSize: '0.68rem',
+                                    padding: '1px 6px',
+                                    borderRadius: 4,
+                                    background: 'var(--bg-primary)',
+                                    border: '1px solid var(--border-light)',
+                                    color: 'var(--text-muted)'
+                                  }}>
+                                    {order.paymentMode || 'COD'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
                           </td>
 
-                          <td style={{ padding: '10px 12px' }}>
+                          <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                             <span style={{
-                              fontFamily: 'monospace',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                               fontWeight: 700,
-                              fontSize: '0.8rem',
+                              fontSize: '0.78rem',
                               color: 'var(--green)',
-                              background: 'rgba(34, 197, 94, 0.08)',
-                              padding: '2px 8px',
-                              borderRadius: 6
+                              background: 'rgba(34, 197, 94, 0.09)',
+                              border: '1px solid rgba(34, 197, 94, 0.25)',
+                              padding: '3px 8px',
+                              borderRadius: 6,
+                              letterSpacing: '0.03em',
+                              whiteSpace: 'nowrap'
                             }}>
                               {order.id}
                             </span>
                           </td>
 
-                          <td style={{ padding: '10px 12px' }}>
+                          <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                             <span style={{
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 6,
-                              padding: '3px 8px',
+                              padding: '3px 10px',
                               borderRadius: 9999,
                               fontSize: '0.72rem',
                               fontWeight: 700,
                               background: cfg.bg,
                               color: cfg.color,
-                              border: `1px solid ${cfg.border}`
+                              border: `1px solid ${cfg.border}`,
+                              whiteSpace: 'nowrap'
                             }}>
-                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color }} />
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, boxShadow: `0 0 6px ${cfg.color}` }} />
                               {cfg.label}
                             </span>
                           </td>
 
-                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                          <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                             <span style={{
                               fontSize: '0.875rem',
                               fontWeight: 800,
                               color: 'var(--text-primary)',
-                              fontVariantNumeric: 'tabular-nums'
+                              fontVariantNumeric: 'tabular-nums',
+                              letterSpacing: '-0.01em'
                             }}>
                               {order.total}
                             </span>
                           </td>
 
-                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                          <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                             <button
                               onClick={() => navigate('/sales/orders')}
                               style={{
-                                padding: '4px 10px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '5px 12px',
                                 borderRadius: 8,
                                 background: 'var(--bg-primary)',
                                 border: '1px solid var(--border-light)',
                                 color: 'var(--text-primary)',
-                                fontSize: '0.72rem',
+                                fontSize: '0.74rem',
                                 fontWeight: 600,
                                 cursor: 'pointer',
-                                transition: 'all 0.15s ease'
+                                transition: 'all 0.18s ease'
                               }}
-                              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
-                              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.borderColor = 'var(--green)';
+                                e.currentTarget.style.color = 'var(--green)';
+                                e.currentTarget.style.background = 'rgba(34, 197, 94, 0.06)';
+                                e.currentTarget.style.transform = 'translateX(2px)';
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.borderColor = 'var(--border-light)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                                e.currentTarget.style.background = 'var(--bg-primary)';
+                                e.currentTarget.style.transform = 'translateX(0)';
+                              }}
                             >
-                              Manage
+                              <span>Manage</span>
+                              
                             </button>
                           </td>
                         </tr>
@@ -1194,6 +1255,181 @@ const SalesDashboard = () => {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
+          
+
+          <div style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-light)',
+            borderRadius: 16,
+            padding: '1.25rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+          }}>
+            <h3 style={{ margin: '0 0 1rem', fontSize: '0.975rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              Quick Operations Desk
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div
+                onClick={() => navigate('/sales/orders')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-light)',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  
+                  <div>
+                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Process Pending Orders
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      Approve quotations & dispatch
+                    </div>
+                  </div>
+                </div>
+                {counts.pending > 0 ? (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    color: '#f59e0b',
+                    padding: '2px 8px',
+                    borderRadius: 9999
+                  }}>
+                    {counts.pending} pending
+                  </span>
+                ) : (
+                  <ChevronRightIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                )}
+              </div>
+
+              <div
+                onClick={() => navigate('/sales/customer-service')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-light)',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#8b5cf6'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  
+                  <div>
+                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Customer Support Desk
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      Live chat & inquiry resolutions
+                    </div>
+                  </div>
+                </div>
+                {customerService?.openInquiries > 0 ? (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    background: 'rgba(139, 92, 246, 0.15)',
+                    color: '#8b5cf6',
+                    padding: '2px 8px',
+                    borderRadius: 9999
+                  }}>
+                    {customerService.openInquiries} open
+                  </span>
+                ) : (
+                  <ChevronRightIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                )}
+              </div>
+
+              <div
+                onClick={() => navigate('/sales/reviews')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-light)',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#eab308'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  
+                  <div>
+                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Customer Reviews & Feedback
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      Publish staff replies & macros
+                    </div>
+                  </div>
+                </div>
+                {customerService?.pendingReviews > 0 ? (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    background: 'rgba(234, 179, 8, 0.15)',
+                    color: '#ca8a04',
+                    padding: '2px 8px',
+                    borderRadius: 9999
+                  }}>
+                    {customerService.pendingReviews} awaiting
+                  </span>
+                ) : (
+                  <ChevronRightIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+                )}
+              </div>
+
+              <div
+                onClick={() => navigate('/sales/pre-order-products')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-light)',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {/* <StorefrontIcon sx={{ fontSize: 18, color: 'var(--green)' }} /> */}
+                  <div>
+                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Pre-Order Products
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      Manage custom roofing profiles & pricing
+                    </div>
+                  </div>
+                </div>
+                <ChevronRightIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+          </div>
+
           <div style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-light)',
@@ -1346,179 +1582,6 @@ const SalesDashboard = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          <div style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-light)',
-            borderRadius: 16,
-            padding: '1.25rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-          }}>
-            <h3 style={{ margin: '0 0 1rem', fontSize: '0.975rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Quick Operations Desk
-            </h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div
-                onClick={() => navigate('/sales/orders')}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  
-                  <div>
-                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Process Pending Orders
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                      Approve quotations & dispatch
-                    </div>
-                  </div>
-                </div>
-                {counts.pending > 0 ? (
-                  <span style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    color: '#f59e0b',
-                    padding: '2px 8px',
-                    borderRadius: 9999
-                  }}>
-                    {counts.pending} pending
-                  </span>
-                ) : (
-                  <ArrowForwardIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
-                )}
-              </div>
-
-              <div
-                onClick={() => navigate('/sales/customer-service')}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#8b5cf6'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  
-                  <div>
-                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Customer Support Desk
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                      Live chat & inquiry resolutions
-                    </div>
-                  </div>
-                </div>
-                {customerService?.openInquiries > 0 ? (
-                  <span style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    background: 'rgba(139, 92, 246, 0.15)',
-                    color: '#8b5cf6',
-                    padding: '2px 8px',
-                    borderRadius: 9999
-                  }}>
-                    {customerService.openInquiries} open
-                  </span>
-                ) : (
-                  <ArrowForwardIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
-                )}
-              </div>
-
-              <div
-                onClick={() => navigate('/sales/reviews')}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = '#eab308'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  
-                  <div>
-                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Customer Reviews & Feedback
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                      Publish staff replies & macros
-                    </div>
-                  </div>
-                </div>
-                {customerService?.pendingReviews > 0 ? (
-                  <span style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    background: 'rgba(234, 179, 8, 0.15)',
-                    color: '#ca8a04',
-                    padding: '2px 8px',
-                    borderRadius: 9999
-                  }}>
-                    {customerService.pendingReviews} awaiting
-                  </span>
-                ) : (
-                  <ArrowForwardIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
-                )}
-              </div>
-
-              <div
-                onClick={() => navigate('/sales/pre-order-products')}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border-light)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {/* <StorefrontIcon sx={{ fontSize: 18, color: 'var(--green)' }} /> */}
-                  <div>
-                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Pre-Order Products
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                      Manage custom roofing profiles & pricing
-                    </div>
-                  </div>
-                </div>
-                <ArrowForwardIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
-              </div>
-            </div>
           </div>
 
         </div>

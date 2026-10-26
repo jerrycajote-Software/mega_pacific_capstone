@@ -1,30 +1,36 @@
 import React, { useState } from 'react';
 
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
-import BadgeIcon from '@mui/icons-material/Badge';
-import SettingsIcon from '@mui/icons-material/Settings';
+import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import {
+  CustomDashboardIcon,
+  CustomUsersIcon,
+  CustomStaffManagementIcon,
+  CustomSettingsIcon,
+  CustomNavToggleIcon
+} from '../components/icons';
 import { Tooltip } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { useAdminTheme } from '../context/ThemeContext';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import { io } from 'socket.io-client';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
-  { name: 'Dashboard', path: '/admin/dashboard', icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Users', path: '/admin/users', icon: <PeopleIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Staff Management', path: '/admin/accounts', icon: <BadgeIcon sx={{ fontSize: 18 }} /> },
-  { name: 'Settings', path: '/admin/settings', icon: <SettingsIcon sx={{ fontSize: 18 }} /> },
+  { name: 'Dashboard', path: '/admin/dashboard', icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Users', path: '/admin/users', icon: <CustomUsersIcon size={20} /> },
+  { name: 'Staff Management', path: '/admin/accounts', icon: <CustomStaffManagementIcon size={20} /> },
+  { name: 'Settings', path: '/admin/settings', icon: <CustomSettingsIcon size={20} /> },
 ];
 
 const AdminLayout = () => {
   usePreventBackToLogin();
   const { logout, user } = useAuth();
+  const { mode } = useAdminTheme();
+  const isDark = mode === 'dark';
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
@@ -56,6 +62,23 @@ const AdminLayout = () => {
     setIsLogoutOpen(true);
   };
 
+  const checkIsActive = (itemPath) => {
+    const currentPath = (location.pathname || '').toLowerCase().replace(/\/$/, '');
+    const targetPath = (itemPath || '').toLowerCase().replace(/\/$/, '');
+    if (!currentPath || !targetPath) return false;
+    if (currentPath === targetPath) return true;
+    if (targetPath.endsWith('/dashboard') && currentPath === targetPath.replace('/dashboard', '')) {
+      return true;
+    }
+    if (currentPath.startsWith(`${targetPath}/`)) {
+      return true;
+    }
+    if (targetPath === '/admin/accounts' && (currentPath === '/admin/staff' || currentPath === '/admin/sales-management')) {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <div className="admin-shell">
 
@@ -81,7 +104,7 @@ const AdminLayout = () => {
               onClick={handleToggleSidebarNavigation}
               aria-label={isSidebarCollapsed ? "Expand Navigation" : "Hide Navigation"}
             >
-              <MenuOpenIcon sx={{ fontSize: 19, transform: isSidebarCollapsed ? 'rotate(180deg)' : 'none' }} />
+              <CustomNavToggleIcon isCollapsed={isSidebarCollapsed} size={19} />
             </button>
           </Tooltip>
         </div>
@@ -91,17 +114,43 @@ const AdminLayout = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
-            <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-              >
-                <span className="nav-icon">{item.icon}</span>
-                <span className="sidebar-nav-label">{item.name}</span>
-              </NavLink>
-            </Tooltip>
-          ))}
+          {navItems.map((item) => {
+            const isTabActive = checkIsActive(item.path);
+            return (
+              <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
+                <NavLink
+                  to={item.path}
+                  data-active={isTabActive ? "true" : undefined}
+                  className={({ isActive }) => `nav-link${isActive || isTabActive ? ' active' : ''}`}
+                  style={({ isActive }) => {
+                    const active = isActive || isTabActive;
+                    if (!active) return undefined;
+                    return isDark ? {
+                      background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.28) 0%, rgba(16, 185, 129, 0.16) 60%, rgba(34, 197, 94, 0.08) 100%)',
+                      color: '#ffffff',
+                      border: '1.5px solid rgba(74, 222, 128, 0.65)',
+                      boxShadow: '0 4px 20px -2px rgba(34, 197, 94, 0.35)',
+                      fontWeight: 700,
+                    } : {
+                      background: '#dcfce7',
+                      color: '#15803d',
+                      border: '1.5px solid #22c55e',
+                      boxShadow: '0 4px 14px rgba(34, 197, 94, 0.25)',
+                      fontWeight: 700,
+                    };
+                  }}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <span
+                    className="sidebar-nav-label"
+                    style={isTabActive ? { fontWeight: 750, color: isDark ? '#ffffff' : '#15803d' } : undefined}
+                  >
+                    {item.name}
+                  </span>
+                </NavLink>
+              </Tooltip>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
