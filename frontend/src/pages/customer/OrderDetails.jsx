@@ -831,7 +831,7 @@ const OrderDetails = () => {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 2.5, mb: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <i className="fi fi-rr-layers" style={{ fontSize: 18, color: '#4f772d' }} />
+                
                 <Typography variant="h6" fontWeight={800} color="text.primary">
                   Ordered Products
                 </Typography>
@@ -1350,7 +1350,7 @@ const OrderDetails = () => {
                   Need Help with this Order?
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}>
-                  Contact our plant logistics desk for loading bay access or schedule adjustments.
+                  Contact our warehouse logistics for your inquires.
                 </Typography>
                 <Typography variant="body2" fontWeight={800} sx={{ color: '#4f772d', mt: 1 }}>
                   Tel. NO.: (046) 416 9217

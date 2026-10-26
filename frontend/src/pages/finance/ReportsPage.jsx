@@ -79,7 +79,7 @@ const ReportsPage = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.text('MEGA PACIFIC ROOFING SYSTEM', 14, 13);
+      doc.text('MEGA PACIFIC METAL AND STEEL ROOFING SYSTEM', 14, 13);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.text('OFFICIAL FINANCIAL STATEMENT & P&L REPORT', 14, 21);
@@ -153,7 +153,7 @@ const ReportsPage = () => {
 
       
       const pnlData = [
-        ['MEGA PACIFIC ROOFING SYSTEM - FINANCIAL REPORT'],
+        ['MEGA PACIFIC METAL AND STEEL ROOFING SYSTEM - FINANCIAL REPORT'],
         ['Period:', reportData.periodLabel],
         ['Generated Date:', new Date(reportData.generatedAt).toLocaleString()],
         [],
@@ -264,7 +264,8 @@ const ReportsPage = () => {
             color="primary"
             onClick={handleExportPDF}
             disabled={loading || !reportData}
-            startIcon={<i className="fi fi-rr-file-pdf" style={{ fontSize: 14 }} />}
+            startIcon={<i className="fi fi-rr-file-pdf" 
+            style={{ fontSize: 14 }} />}
             sx={{
               borderRadius: 2.5,
               textTransform: 'none',

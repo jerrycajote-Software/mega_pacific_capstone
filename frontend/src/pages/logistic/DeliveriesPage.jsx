@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import { CustomLogisticsDetailsIcon } from '../../components/icons';
 
 const StatusBadge = ({ status }) => {
   const s = status ? status.toLowerCase() : '';
@@ -368,7 +369,8 @@ const DeliveriesPage = () => {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 6,
-                              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.35)'
+                              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.35)',
+                              transition: 'all 0.18s ease'
                             }}
                           >
                             <NotificationsActiveIcon sx={{ fontSize: 14 }} />
@@ -392,7 +394,8 @@ const DeliveriesPage = () => {
                               fontSize: '0.76rem',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: 6
+                              gap: 6,
+                              transition: 'all 0.18s ease'
                             }}
                           >
                             <CheckCircleIcon sx={{ fontSize: 14 }} />
@@ -402,22 +405,26 @@ const DeliveriesPage = () => {
 
                         <button
                           onClick={() => setSelectedOrder(order)}
+                          className="mpi-logistics-action-btn"
+                          title={`Inspect dispatch control for ${order.id}`}
                           style={{
-                            background: 'rgba(59,130,246,0.1)',
-                            color: '#60a5fa',
-                            border: 'none',
-                            padding: '6px 10px',
-                            borderRadius: 6,
+                            background: 'rgba(34, 197, 94, 0.08)',
+                            color: '#15803d',
+                            border: '1px solid rgba(34, 197, 94, 0.28)',
+                            padding: '6px 13px',
+                            borderRadius: 8,
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: 4,
-                            fontWeight: 600,
-                            fontSize: '0.78rem'
+                            gap: 6,
+                            fontWeight: 700,
+                            fontSize: '0.78rem',
+                            whiteSpace: 'nowrap'
                           }}
                         >
-                          <VisibilityIcon sx={{ fontSize: 16 }} />
-                          Details
+                          <CustomLogisticsDetailsIcon size={16} />
+                          <span>View Details</span>
+                          <ChevronRightIcon sx={{ fontSize: 15 }} />
                         </button>
                       </div>
                     </td>
@@ -503,7 +510,7 @@ const DeliveriesPage = () => {
                 </p>
                 <p style={{ margin: 0, fontWeight: 600 }}>
                   {selectedOrder.fulfillmentType === 'Pickup'
-                    ? 'Mega Pacific Roofing — Plant, Imus Main Branch/ Cavite'
+                    ? 'Mega Pacific Metal and Steel — Located, Imus Main Branch/ Cavite'
                     : (selectedOrder.address || 'N/A')}
                 </p>
                 {selectedOrder.fulfillmentType !== 'Pickup' && (

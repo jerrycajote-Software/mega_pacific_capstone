@@ -17,6 +17,13 @@ import PeopleIcon from '@mui/icons-material/People';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckIcon from '@mui/icons-material/Check';
 import CircularProgress from '@mui/material/CircularProgress';
+import {
+  CustomAdminCustomersIcon,
+  CustomAdminUserAccountIcon,
+  CustomAdminStaffIcon,
+  CustomAdminSuspendedIcon
+} from '../../components/icons';
+
 
 const th = {
   padding: '0.875rem 1.25rem',
@@ -174,9 +181,11 @@ const UserManagement = () => {
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '1rem'
       }}>
-        <div style={{
+        {/* Total Registered */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: '3px solid #2563eb',
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
@@ -184,8 +193,19 @@ const UserManagement = () => {
           gap: 14,
           boxShadow: '0 4px 18px -6px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(59,130,246,0.12)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <PeopleIcon sx={{ fontSize: 22 }} />
+          <div className="mpi-admin-badge" style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: 'rgba(37,99,235,0.08)',
+            border: '1px solid rgba(37,99,235,0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(37,99,235,0.1)'
+          }}>
+            <CustomAdminCustomersIcon size={26} />
           </div>
           <div>
             <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.total}</div>
@@ -193,9 +213,11 @@ const UserManagement = () => {
           </div>
         </div>
 
-        <div style={{
+        {/* Customer Accounts */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: '3px solid #10b981',
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
@@ -203,8 +225,19 @@ const UserManagement = () => {
           gap: 14,
           boxShadow: '0 4px 18px -6px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(16,185,129,0.12)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AccountCircleIcon sx={{ fontSize: 22 }} />
+          <div className="mpi-admin-badge" style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: 'rgba(16,185,129,0.08)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(16,185,129,0.1)'
+          }}>
+            <CustomAdminUserAccountIcon size={26} />
           </div>
           <div>
             <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.customers}</div>
@@ -212,9 +245,11 @@ const UserManagement = () => {
           </div>
         </div>
 
-        <div style={{
+        {/* Operational Roles */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: '3px solid #4f772d',
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
@@ -222,8 +257,19 @@ const UserManagement = () => {
           gap: 14,
           boxShadow: '0 4px 18px -6px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(79,119,45,0.15)', color: '#4f772d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <BadgeIcon sx={{ fontSize: 22 }} />
+          <div className="mpi-admin-badge" style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: 'rgba(79,119,45,0.09)',
+            border: '1px solid rgba(79,119,45,0.22)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(79,119,45,0.12)'
+          }}>
+            <CustomAdminStaffIcon size={26} />
           </div>
           <div>
             <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.staff}</div>
@@ -231,9 +277,11 @@ const UserManagement = () => {
           </div>
         </div>
 
-        <div style={{
+        {/* Suspended Accounts */}
+        <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
+          borderTop: `3px solid ${metrics.suspended > 0 ? '#ef4444' : '#10b981'}`,
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
@@ -241,17 +289,19 @@ const UserManagement = () => {
           gap: 14,
           boxShadow: '0 4px 18px -6px rgba(0,0,0,0.1)'
         }}>
-          <div style={{
-            width: 40,
-            height: 40,
-            borderRadius: 10,
-            background: metrics.suspended > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)',
-            color: metrics.suspended > 0 ? '#ef4444' : '#22c55e',
+          <div className="mpi-admin-badge" style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: metrics.suspended > 0 ? 'rgba(239,68,68,0.09)' : 'rgba(16,185,129,0.08)',
+            border: `1px solid ${metrics.suspended > 0 ? 'rgba(239,68,68,0.22)' : 'rgba(16,185,129,0.2)'}`,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: `0 2px 8px ${metrics.suspended > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)'}`
           }}>
-            <BlockIcon sx={{ fontSize: 20 }} />
+            <CustomAdminSuspendedIcon size={26} isSuspended={metrics.suspended > 0} />
           </div>
           <div>
             <div style={{ fontSize: '1.45rem', fontWeight: 800, color: metrics.suspended > 0 ? '#ef4444' : 'var(--text-primary)', lineHeight: 1.1 }}>
@@ -362,13 +412,13 @@ const UserManagement = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr>
-                <th style={th}>User Profile</th>
-                <th style={th}>Contact Info</th>
-                <th style={th}>Registered Location</th>
-                <th style={th}>Role</th>
-                <th style={th}>Account Status</th>
-                <th style={th}>Registered Date</th>
-                <th style={{ ...th, textAlign: 'right' }}>Access Control</th>
+                <th style={{ ...th, minWidth: 200 }}>User Profile</th>
+                <th style={{ ...th, minWidth: 220 }}>Contact Info</th>
+                <th style={{ ...th, minWidth: 220, whiteSpace: 'nowrap' }}>Registered Location</th>
+                <th style={{ ...th, minWidth: 110, whiteSpace: 'nowrap' }}>Role</th>
+                <th style={{ ...th, minWidth: 120, whiteSpace: 'nowrap' }}>Account Status</th>
+                <th style={{ ...th, minWidth: 130, whiteSpace: 'nowrap' }}>Registered Date</th>
+                <th style={{ ...th, minWidth: 120, textAlign: 'right', whiteSpace: 'nowrap' }}>Access Control</th>
               </tr>
             </thead>
             <tbody>
@@ -432,10 +482,10 @@ const UserManagement = () => {
                         </div>
                       </td>
 
-                      <td style={td}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          <LocationOnIcon sx={{ fontSize: 14, color: 'var(--text-muted)' }} />
-                          <span>{user?.location || 'CALABARZON, Region IV-A'}</span>
+                      <td style={{ ...td, whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.82rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                          <LocationOnIcon sx={{ fontSize: 15, color: '#3b82f6', flexShrink: 0 }} />
+                          <span style={{ whiteSpace: 'nowrap' }}>{user?.location || 'CALABARZON, Region IV\u2011A'}</span>
                         </div>
                       </td>
 

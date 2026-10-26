@@ -1,0 +1,2072 @@
+/* Mega Pacific Custom Animated Colorful Navigation Icons Stylesheet */
+
+.mpi-icon-base {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  overflow: visible;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
+}
+
+.nav-link:hover .mpi-icon-base,
+.mpi-icon-base:hover {
+  transform: translateY(-1px) scale(1.1);
+}
+
+.nav-link.active .mpi-icon-base {
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.45));
+}
+
+/* 1. Dashboard Icon Animations */
+@keyframes mpiDashPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #22d3ee);
+  }
+}
+
+@keyframes mpiDashBar1 {
+  0%, 100% { height: 7px; y: 15px; }
+  50% { height: 11px; y: 11px; }
+}
+
+@keyframes mpiDashBar2 {
+  0%, 100% { height: 13px; y: 9px; }
+  50% { height: 8px; y: 14px; }
+}
+
+@keyframes mpiDashBar3 {
+  0%, 100% { height: 10px; y: 12px; }
+  50% { height: 14px; y: 8px; }
+}
+
+.mpi-dash-pulse-dot {
+  transform-origin: 23px 7px;
+  animation: mpiDashPulse 2s ease-in-out infinite;
+}
+
+.mpi-dash-bar-1 {
+  animation: mpiDashBar1 2.2s ease-in-out infinite;
+}
+
+.mpi-dash-bar-2 {
+  animation: mpiDashBar2 2.6s ease-in-out infinite 0.3s;
+}
+
+.mpi-dash-bar-3 {
+  animation: mpiDashBar3 2.4s ease-in-out infinite 0.6s;
+}
+
+/* 2. Pre-Order Products Icon Animations */
+@keyframes mpiClockHand {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes mpiBoxFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+@keyframes mpiSparklePing {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #fef08a);
+  }
+}
+
+.mpi-preorder-clock {
+  transform-origin: 22px 10px;
+  animation: mpiClockHand 8s linear infinite;
+}
+
+.mpi-preorder-box {
+  animation: mpiBoxFloat 2.8s ease-in-out infinite;
+}
+
+.mpi-preorder-sparkle {
+  transform-origin: 8px 6px;
+  animation: mpiSparklePing 2.2s ease-in-out infinite;
+}
+
+/* 3. Orders Icon Animations */
+@keyframes mpiWheelSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes mpiBadgeGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #10b981);
+  }
+}
+
+@keyframes mpiDocSlide {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.mpi-order-wheel {
+  transform-origin: center;
+}
+
+.nav-link:hover .mpi-order-wheel,
+.mpi-icon-base:hover .mpi-order-wheel {
+  animation: mpiWheelSpin 1.2s linear infinite;
+}
+
+.mpi-order-badge {
+  transform-origin: 22px 9px;
+  animation: mpiBadgeGlow 2.4s ease-in-out infinite;
+}
+
+.mpi-order-doc {
+  animation: mpiDocSlide 3s ease-in-out infinite;
+}
+
+/* 4. Reviews Icon Animations */
+@keyframes mpiStarTwinkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+  }
+  50% {
+    transform: scale(1.15) rotate(4deg);
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.9));
+  }
+}
+
+@keyframes mpiBubbleBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.mpi-review-star {
+  transform-origin: 16px 14px;
+  animation: mpiStarTwinkle 2.5s ease-in-out infinite;
+}
+
+.mpi-review-bubble {
+  transform-origin: 16px 15px;
+  animation: mpiBubbleBreathe 3.5s ease-in-out infinite;
+}
+
+/* 5. Support Icon Animations */
+@keyframes mpiWaveExpand {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes mpiMicBlink {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+    filter: drop-shadow(0 0 4px #06b6d4);
+  }
+}
+
+.mpi-support-wave-1 {
+  transform-origin: 24px 8px;
+  animation: mpiWaveExpand 2s ease-in-out infinite;
+}
+
+.mpi-support-wave-2 {
+  transform-origin: 24px 8px;
+  animation: mpiWaveExpand 2s ease-in-out infinite 0.4s;
+}
+
+.mpi-support-mic-tip {
+  transform-origin: 13px 22px;
+  animation: mpiMicBlink 1.6s ease-in-out infinite;
+}
+
+/* 6. Expenses Icon Animations */
+@keyframes mpiArrowDrop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2.5px); }
+}
+
+@keyframes mpiCoinWobble {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-1.5px) rotate(-6deg);
+  }
+}
+
+.mpi-expense-arrow {
+  animation: mpiArrowDrop 1.8s ease-in-out infinite;
+}
+
+.mpi-expense-coin {
+  transform-origin: 22px 21px;
+  animation: mpiCoinWobble 2.6s ease-in-out infinite;
+}
+
+/* 7. Payment Icon Animations */
+@keyframes mpiNfcRadiate {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes mpiChipGleam {
+  0%, 100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 1px rgba(251, 191, 36, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.9));
+  }
+}
+
+.mpi-payment-nfc-1 {
+  transform-origin: 22px 8px;
+  animation: mpiNfcRadiate 1.8s ease-in-out infinite;
+}
+
+.mpi-payment-nfc-2 {
+  transform-origin: 22px 8px;
+  animation: mpiNfcRadiate 1.8s ease-in-out infinite 0.3s;
+}
+
+.mpi-payment-chip {
+  animation: mpiChipGleam 2.8s ease-in-out infinite;
+}
+
+/* 8. Refunds Icon Animations */
+@keyframes mpiRefundSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes mpiRefundCoinPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.16);
+    filter: drop-shadow(0 0 4px #38bdf8);
+  }
+}
+
+.mpi-refund-arrows {
+  transform-origin: 16px 16px;
+  animation: mpiRefundSpin 8s linear infinite;
+}
+
+.nav-link:hover .mpi-refund-arrows,
+.mpi-icon-base:hover .mpi-refund-arrows {
+  animation-duration: 3s;
+}
+
+.mpi-refund-center-coin {
+  transform-origin: 16px 16px;
+  animation: mpiRefundCoinPulse 2.4s ease-in-out infinite;
+}
+
+/* 9. Reports Icon Animations */
+@keyframes mpiReportBarGrow1 {
+  0%, 100% { height: 6px; y: 19px; }
+  50% { height: 10px; y: 15px; }
+}
+
+@keyframes mpiReportBarGrow2 {
+  0%, 100% { height: 12px; y: 13px; }
+  50% { height: 16px; y: 9px; }
+}
+
+@keyframes mpiReportBarGrow3 {
+  0%, 100% { height: 17px; y: 8px; }
+  50% { height: 13px; y: 12px; }
+}
+
+@keyframes mpiTrendPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.15) translate(1px, -1px);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #22c55e);
+  }
+}
+
+.mpi-report-bar-1 {
+  animation: mpiReportBarGrow1 2.4s ease-in-out infinite;
+}
+
+.mpi-report-bar-2 {
+  animation: mpiReportBarGrow2 2.4s ease-in-out infinite 0.3s;
+}
+
+.mpi-report-bar-3 {
+  animation: mpiReportBarGrow3 2.4s ease-in-out infinite 0.6s;
+}
+
+.mpi-report-trend {
+  transform-origin: 23px 7px;
+  animation: mpiTrendPulse 2s ease-in-out infinite;
+}
+
+/* 10. Deliveries Icon Animations */
+@keyframes mpiTruckBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.8px); }
+}
+
+@keyframes mpiSpeedLineSlide {
+  0% {
+    transform: translateX(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateX(-3px);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 0.2;
+  }
+}
+
+.mpi-delivery-truck {
+  animation: mpiTruckBounce 0.8s ease-in-out infinite;
+}
+
+.mpi-delivery-wheel {
+  transform-origin: center;
+  animation: mpiWheelSpin 2s linear infinite;
+}
+
+.mpi-delivery-speed-lines {
+  animation: mpiSpeedLineSlide 1.2s ease-in-out infinite;
+}
+
+/* 11. Coil Inventory Icon Animations */
+@keyframes mpiCoilSheen {
+  0%, 100% {
+    opacity: 0.4;
+    transform: rotate(0deg);
+  }
+  50% {
+    opacity: 0.95;
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes mpiTagSway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-8deg); }
+}
+
+.mpi-coil-core {
+  transform-origin: 14px 16px;
+  animation: mpiCoilSheen 5s ease-in-out infinite;
+}
+
+.mpi-coil-tag {
+  transform-origin: 24px 6px;
+  animation: mpiTagSway 2.5s ease-in-out infinite;
+}
+
+/* 12. Users Icon Animations */
+@keyframes mpiAvatarBobPrimary {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+@keyframes mpiAvatarBobSecondary {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(1.2px); }
+}
+
+@keyframes mpiUserNodePing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #38bdf8);
+  }
+}
+
+.mpi-user-main {
+  animation: mpiAvatarBobPrimary 2.8s ease-in-out infinite;
+}
+
+.mpi-user-secondary {
+  animation: mpiAvatarBobSecondary 3.2s ease-in-out infinite 0.4s;
+}
+
+.mpi-user-node {
+  transform-origin: center;
+  animation: mpiUserNodePing 2s ease-in-out infinite;
+}
+
+/* 13. Staff Management Icon Animations */
+@keyframes mpiBadgeSwing {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+@keyframes mpiStaffStarGleam {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.4));
+  }
+  50% {
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.95));
+  }
+}
+
+.mpi-staff-badge {
+  transform-origin: 16px 4px;
+  animation: mpiBadgeSwing 3.6s ease-in-out infinite;
+}
+
+.mpi-staff-star {
+  transform-origin: 22px 19px;
+  animation: mpiStaffStarGleam 2.2s ease-in-out infinite;
+}
+
+/* 14. Settings Icon Animations */
+@keyframes mpiGearClockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes mpiGearCounterClockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes mpiCoreGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #06b6d4);
+  }
+}
+
+.mpi-settings-gear-primary {
+  transform-origin: 13px 13px;
+  animation: mpiGearClockwise 9s linear infinite;
+}
+
+.mpi-settings-gear-secondary {
+  transform-origin: 23px 21px;
+  animation: mpiGearCounterClockwise 6s linear infinite;
+}
+
+.mpi-settings-core {
+  transform-origin: 13px 13px;
+  animation: mpiCoreGlow 2.5s ease-in-out infinite;
+}
+
+.nav-link:hover .mpi-settings-gear-primary,
+.mpi-icon-base:hover .mpi-settings-gear-primary {
+  animation-duration: 3s;
+}
+
+.nav-link:hover .mpi-settings-gear-secondary,
+.mpi-icon-base:hover .mpi-settings-gear-secondary {
+  animation-duration: 2s;
+}
+
+/* 15. Navigation Toggle Icon (Collapse / Expand) */
+@keyframes mpiToggleChevronLeft {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-2px);
+  }
+}
+
+@keyframes mpiToggleChevronRight {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+}
+
+.mpi-toggle-icon {
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
+}
+
+.sidebar-toggle-btn:hover .mpi-toggle-icon {
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+  transform: scale(1.08);
+}
+
+.mpi-toggle-arrow-expanded {
+  animation: mpiToggleChevronLeft 1.8s ease-in-out infinite;
+}
+
+.mpi-toggle-arrow-collapsed {
+  animation: mpiToggleChevronRight 1.8s ease-in-out infinite;
+}
+
+/* Active Nav Indicator Glow Keyframes */
+@keyframes mpiActiveIndicatorGlow {
+  0% {
+    opacity: 0.85;
+    box-shadow: 0 0 6px #22c55e, 0 0 2px #4ade80;
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 12px #22c55e, 0 0 6px #4ade80;
+  }
+}
+
+/* 16. Gross Revenue KPI Icon Animations */
+@keyframes mpiRevenueArrowFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px) translateX(1px);
+  }
+}
+
+@keyframes mpiRevenueCoinShine {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+  }
+  50% {
+    transform: scale(1.15) rotate(6deg);
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.9));
+  }
+}
+
+@keyframes mpiRevenueBarPulse1 {
+  0%, 100% { height: 7px; y: 21px; }
+  50% { height: 10px; y: 18px; }
+}
+
+@keyframes mpiRevenueBarPulse2 {
+  0%, 100% { height: 12px; y: 16px; }
+  50% { height: 15px; y: 13px; }
+}
+
+@keyframes mpiRevenueBarPulse3 {
+  0%, 100% { height: 17px; y: 11px; }
+  50% { height: 20px; y: 8px; }
+}
+
+.mpi-rev-arrow {
+  animation: mpiRevenueArrowFloat 2.2s ease-in-out infinite;
+}
+
+.mpi-rev-coin {
+  transform-origin: 24px 22px;
+  animation: mpiRevenueCoinShine 3s ease-in-out infinite;
+}
+
+.mpi-rev-bar-1 {
+  animation: mpiRevenueBarPulse1 2.2s ease-in-out infinite;
+}
+
+.mpi-rev-bar-2 {
+  animation: mpiRevenueBarPulse2 2.2s ease-in-out infinite 0.25s;
+}
+
+.mpi-rev-bar-3 {
+  animation: mpiRevenueBarPulse3 2.2s ease-in-out infinite 0.5s;
+}
+
+/* 17. Order Pipeline KPI Icon Animations */
+@keyframes mpiPipelineClockHand {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes mpiPipelineNodePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #f59e0b);
+  }
+}
+
+@keyframes mpiPipelineFlow {
+  0% { transform: translateX(0); opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { transform: translateX(6px); opacity: 0.4; }
+}
+
+.mpi-pipe-clock-hand {
+  transform-origin: 16px 14px;
+  animation: mpiPipelineClockHand 6s linear infinite;
+}
+
+.mpi-pipe-node {
+  transform-origin: center;
+  animation: mpiPipelineNodePulse 2.4s ease-in-out infinite;
+}
+
+.mpi-pipe-flow-dot {
+  animation: mpiPipelineFlow 2s ease-in-out infinite;
+}
+
+/* 18. Active Dispatch KPI Icon Animations */
+@keyframes mpiDispatchTruckVibe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.8px); }
+}
+
+@keyframes mpiDispatchWheelSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes mpiDispatchGpsWave {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes mpiDispatchSpeedDash {
+  0% { transform: translateX(0); opacity: 0.2; }
+  50% { transform: translateX(-3px); opacity: 0.9; }
+  100% { transform: translateX(0); opacity: 0.2; }
+}
+
+.mpi-disp-truck {
+  animation: mpiDispatchTruckVibe 0.9s ease-in-out infinite;
+}
+
+.mpi-disp-wheel {
+  transform-origin: center;
+  animation: mpiDispatchWheelSpin 1.8s linear infinite;
+}
+
+.mpi-disp-gps {
+  transform-origin: 17px 8px;
+  animation: mpiDispatchGpsWave 2s ease-in-out infinite;
+}
+
+.mpi-disp-speed {
+  animation: mpiDispatchSpeedDash 1.2s ease-in-out infinite;
+}
+
+/* 19. Customer Sentiment KPI Icon Animations */
+@keyframes mpiSentimentStarGlow {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 2px rgba(234, 179, 8, 0.5));
+  }
+  50% {
+    transform: scale(1.2) rotate(6deg);
+    filter: drop-shadow(0 0 7px rgba(250, 204, 21, 0.95));
+  }
+}
+
+@keyframes mpiSentimentWavePing {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.22);
+  }
+  100% {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes mpiSentimentBeacon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #a855f7);
+  }
+}
+
+.mpi-senti-star {
+  transform-origin: 22px 11px;
+  animation: mpiSentimentStarGlow 2.5s ease-in-out infinite;
+}
+
+.mpi-senti-wave {
+  transform-origin: 25px 8px;
+  animation: mpiSentimentWavePing 2.2s ease-in-out infinite;
+}
+
+.mpi-senti-beacon {
+  transform-origin: 12px 23px;
+  animation: mpiSentimentBeacon 1.8s ease-in-out infinite;
+}
+
+/* 20. Finance Revenue KPI Icon Animations */
+@keyframes mpiFinRevBillFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes mpiFinRevCoinShine {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 1px rgba(245, 158, 11, 0.4));
+  }
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 4px rgba(254, 240, 138, 0.85));
+  }
+}
+
+@keyframes mpiFinRevSparklePing {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #34d399);
+  }
+}
+
+.mpi-fin-rev-bill {
+  animation: mpiFinRevBillFloat 3s ease-in-out infinite;
+}
+
+.mpi-fin-rev-coin-top {
+  transform-origin: 23.5px 18px;
+  animation: mpiFinRevCoinShine 2.4s ease-in-out infinite;
+}
+
+.mpi-fin-rev-sparkle {
+  transform-origin: 29px 6px;
+  animation: mpiFinRevSparklePing 2s ease-in-out infinite;
+}
+
+/* 21. Finance Pending Payments KPI Icon Animations */
+@keyframes mpiFinPendHandTick {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(15deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes mpiFinPendArcPulse {
+  0%, 100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 1px #f59e0b);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px #fbbf24);
+  }
+}
+
+@keyframes mpiFinPendBeacon {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #fde047);
+  }
+}
+
+.mpi-fin-pend-hand {
+  transform-origin: 16px 17px;
+  animation: mpiFinPendHandTick 4s ease-in-out infinite;
+}
+
+.mpi-fin-pend-arc {
+  animation: mpiFinPendArcPulse 2.5s ease-in-out infinite;
+}
+
+.mpi-fin-pend-dot {
+  transform-origin: 7px 8px;
+  animation: mpiFinPendBeacon 1.8s ease-in-out infinite;
+}
+
+/* 22. Finance Expenses KPI Icon Animations */
+@keyframes mpiFinExpSliceBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes mpiFinExpTicketFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+.mpi-fin-exp-slice-1 {
+  transform-origin: 13px 13.5px;
+  animation: mpiFinExpSliceBounce 2.8s ease-in-out infinite;
+}
+
+.mpi-fin-exp-slice-2 {
+  transform-origin: 13px 13.5px;
+  animation: mpiFinExpSliceBounce 2.8s ease-in-out infinite 0.4s;
+}
+
+.mpi-fin-exp-slice-3 {
+  transform-origin: 13px 13.5px;
+  animation: mpiFinExpSliceBounce 2.8s ease-in-out infinite 0.8s;
+}
+
+.mpi-fin-exp-ticket {
+  animation: mpiFinExpTicketFloat 3.2s ease-in-out infinite;
+}
+
+/* 23. Finance Net Income KPI Icon Animations */
+@keyframes mpiFinNetBarRhythm1 {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.12);
+  }
+}
+
+@keyframes mpiFinNetBarRhythm2 {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.08);
+  }
+}
+
+@keyframes mpiFinNetBarRhythm3 {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.05);
+  }
+}
+
+@keyframes mpiFinNetApexPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    filter: drop-shadow(0 0 5px #38bdf8);
+  }
+}
+
+@keyframes mpiFinNetGemFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.mpi-fin-net-bar-1 {
+  transform-origin: 4px 27.5px;
+  animation: mpiFinNetBarRhythm1 2.2s ease-in-out infinite;
+}
+
+.mpi-fin-net-bar-2 {
+  transform-origin: 11px 27.5px;
+  animation: mpiFinNetBarRhythm2 2.2s ease-in-out infinite 0.3s;
+}
+
+.mpi-fin-net-bar-3 {
+  transform-origin: 18px 27.5px;
+  animation: mpiFinNetBarRhythm3 2.2s ease-in-out infinite 0.6s;
+}
+
+.mpi-fin-net-apex {
+  transform-origin: 26px 5.5px;
+  animation: mpiFinNetApexPulse 2s ease-in-out infinite;
+}
+
+.mpi-fin-net-gem {
+  animation: mpiFinNetGemFloat 2.6s ease-in-out infinite;
+}
+
+/* 24. Refund Pending KPI Icon Animations */
+@keyframes mpiRefPendSandTrickle {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -8;
+  }
+}
+
+@keyframes mpiRefPendLoopPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #f59e0b);
+  }
+}
+
+@keyframes mpiRefPendBeaconPing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #fde047);
+  }
+}
+
+.mpi-ref-pend-stream {
+  animation: mpiRefPendSandTrickle 1s linear infinite;
+}
+
+.mpi-ref-pend-loop {
+  animation: mpiRefPendLoopPulse 2.8s ease-in-out infinite;
+}
+
+.mpi-ref-pend-beacon {
+  transform-origin: 25px 7px;
+  animation: mpiRefPendBeaconPing 1.8s ease-in-out infinite;
+}
+
+/* 25. Refund Completed KPI Icon Animations */
+@keyframes mpiRefCompCheckGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.95));
+  }
+}
+
+@keyframes mpiRefCompCoinFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes mpiRefCompSparklePing {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #6ee7b7);
+  }
+}
+
+.mpi-ref-comp-check {
+  animation: mpiRefCompCheckGlow 2.4s ease-in-out infinite;
+}
+
+.mpi-ref-comp-coin {
+  animation: mpiRefCompCoinFloat 2.6s ease-in-out infinite;
+}
+
+.mpi-ref-comp-sparkle {
+  transform-origin: 25px 6px;
+  animation: mpiRefCompSparklePing 2s ease-in-out infinite;
+}
+
+/* 26. Refund Disbursed Today KPI Icon Animations */
+@keyframes mpiRefDisbBillFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiRefDisbClaspGleam {
+  0%, 100% {
+    filter: drop-shadow(0 1px 2px rgba(180, 83, 9, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px rgba(254, 240, 138, 0.9));
+  }
+}
+
+@keyframes mpiRefDisbSparkPing {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #38bdf8);
+  }
+}
+
+.mpi-ref-disb-bill {
+  animation: mpiRefDisbBillFloat 2.8s ease-in-out infinite;
+}
+
+.mpi-ref-disb-clasp {
+  animation: mpiRefDisbClaspGleam 2.2s ease-in-out infinite;
+}
+
+.mpi-ref-disb-spark {
+  transform-origin: 28px 6px;
+  animation: mpiRefDisbSparkPing 2s ease-in-out infinite;
+}
+
+/* 27. Logistic Ready To Ship KPI Icon Animations */
+@keyframes mpiLogReadyBoxFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiLogReadyTapeShimmer {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #fde047);
+  }
+}
+
+@keyframes mpiLogReadyBeaconPing {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+    filter: drop-shadow(0 0 5px #f59e0b);
+  }
+}
+
+.mpi-log-ready-box {
+  animation: mpiLogReadyBoxFloat 2.8s ease-in-out infinite;
+}
+
+.mpi-log-ready-tape {
+  animation: mpiLogReadyTapeShimmer 2.2s ease-in-out infinite;
+}
+
+.mpi-log-ready-beacon {
+  transform-origin: 27px 7px;
+  animation: mpiLogReadyBeaconPing 1.8s ease-in-out infinite;
+}
+
+/* 28. Logistic Out For Delivery KPI Icon Animations */
+@keyframes mpiLogTransitTruckBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes mpiLogTransitWindDash {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(-5px);
+    opacity: 0;
+  }
+}
+
+@keyframes mpiLogTransitPinPulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #60a5fa);
+  }
+}
+
+.mpi-log-transit-truck {
+  animation: mpiLogTransitTruckBounce 1.6s ease-in-out infinite;
+}
+
+.mpi-log-transit-wind {
+  animation: mpiLogTransitWindDash 1.4s ease-out infinite;
+}
+
+.mpi-log-transit-pin {
+  transform-origin: 26px 8px;
+  animation: mpiLogTransitPinPulse 2s ease-in-out infinite;
+}
+
+/* 29. Logistic Completed Today KPI Icon Animations */
+@keyframes mpiLogCompCheckGlow {
+  0%, 100% {
+    filter: drop-shadow(0 1px 2px rgba(4, 120, 87, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.9));
+  }
+}
+
+@keyframes mpiLogCompSealPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes mpiLogCompSparklePing {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #a7f3d0);
+  }
+}
+
+.mpi-log-comp-check {
+  animation: mpiLogCompCheckGlow 2.4s ease-in-out infinite;
+}
+
+.mpi-log-comp-seal {
+  transform-origin: 16px 16px;
+  animation: mpiLogCompSealPulse 3s ease-in-out infinite;
+}
+
+.mpi-log-comp-sparkle {
+  transform-origin: 26px 6px;
+  animation: mpiLogCompSparklePing 2.2s ease-in-out infinite;
+}
+
+/* 30. Logistic Store Counter Pickups KPI Icon Animations */
+@keyframes mpiLogPickupAwningSway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(1deg);
+  }
+}
+
+@keyframes mpiLogPickupBoxFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiLogPickupRadarPing {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #c4b5fd);
+  }
+}
+
+.mpi-log-pickup-awning {
+  transform-origin: 16px 6px;
+  animation: mpiLogPickupAwningSway 3.2s ease-in-out infinite;
+}
+
+.mpi-log-pickup-box {
+  animation: mpiLogPickupBoxFloat 2.6s ease-in-out infinite;
+}
+
+.mpi-log-pickup-radar {
+  transform-origin: 26px 8px;
+  animation: mpiLogPickupRadarPing 2s ease-in-out infinite;
+}
+
+/* 31. Quick Logistics Actions Details Icon Animations & Button */
+@keyframes mpiLogDetailDocFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes mpiLogDetailScanBeam {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scaleX(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.1);
+    filter: drop-shadow(0 0 3px #38bdf8);
+  }
+}
+
+@keyframes mpiLogDetailCheckGlow {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #4ade80);
+  }
+}
+
+.mpi-log-detail-doc {
+  animation: mpiLogDetailDocFloat 2.6s ease-in-out infinite;
+}
+
+.mpi-log-detail-scan {
+  animation: mpiLogDetailScanBeam 2s ease-in-out infinite;
+}
+
+.mpi-log-detail-check {
+  animation: mpiLogDetailCheckGlow 2.2s ease-in-out infinite;
+}
+
+.mpi-logistics-action-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.mpi-logistics-action-btn:hover {
+  background: rgba(34, 197, 94, 0.16) !important;
+  border-color: #22c55e !important;
+  color: #166534 !important;
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.18) !important;
+}
+
+[data-theme="dark"] .mpi-logistics-action-btn {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(74, 222, 128, 0.35) !important;
+  color: #4ade80 !important;
+}
+
+[data-theme="dark"] .mpi-logistics-action-btn:hover {
+  background: rgba(34, 197, 94, 0.22) !important;
+  border-color: #4ade80 !important;
+  color: #86efac !important;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.28) !important;
+}
+
+.mpi-logistics-action-btn:hover svg:last-child {
+  transform: translateX(2px);
+}
+
+/* 32. Admin Registered Customers Icon Animations */
+@keyframes mpiAdmCustAvatarFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiAdmCustBeaconPulse {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #38bdf8);
+  }
+}
+
+.mpi-adm-cust-avatar {
+  animation: mpiAdmCustAvatarFloat 2.8s ease-in-out infinite;
+}
+
+.mpi-adm-cust-beacon {
+  transform-origin: 25px 7px;
+  animation: mpiAdmCustBeaconPulse 2s ease-in-out infinite;
+}
+
+/* 33. Admin Operational Staff Icon Animations */
+@keyframes mpiAdmStaffBadgeSway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(1.5deg);
+  }
+}
+
+@keyframes mpiAdmStaffStarGleam {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.9));
+  }
+}
+
+.mpi-adm-staff-badge {
+  transform-origin: 16px 4px;
+  animation: mpiAdmStaffBadgeSway 3.2s ease-in-out infinite;
+}
+
+.mpi-adm-staff-star {
+  transform-origin: 16px 20px;
+  animation: mpiAdmStaffStarGleam 2.4s ease-in-out infinite;
+}
+
+/* 34. Admin Verification Health Icon Animations */
+@keyframes mpiAdmVerifShieldPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes mpiAdmVerifCheckGlow {
+  0%, 100% {
+    filter: drop-shadow(0 1px 2px rgba(4, 120, 87, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.9));
+  }
+}
+
+.mpi-adm-verif-shield {
+  transform-origin: 16px 16px;
+  animation: mpiAdmVerifShieldPulse 3s ease-in-out infinite;
+}
+
+.mpi-adm-verif-check {
+  animation: mpiAdmVerifCheckGlow 2.2s ease-in-out infinite;
+}
+
+/* 35. Admin Security Flags Icon Animations */
+@keyframes mpiAdmSecFlagPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+  }
+}
+
+@keyframes mpiAdmSecExclamBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.mpi-adm-sec-flag {
+  transform-origin: 16px 17px;
+  animation: mpiAdmSecFlagPulse 2.4s ease-in-out infinite;
+}
+
+.mpi-adm-sec-exclam {
+  animation: mpiAdmSecExclamBlink 1.8s ease-in-out infinite;
+}
+
+/* 36. Admin Suspended Accounts Icon Animations */
+@keyframes mpiAdmSuspSlashPing {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.9));
+  }
+}
+
+.mpi-adm-susp-ring {
+  animation: mpiAdmSuspSlashPing 2.5s ease-in-out infinite;
+}
+
+/* 37. Admin Device Concurrency Icon Animations */
+@keyframes mpiAdmDevScreenGleam {
+  0%, 100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #38bdf8);
+  }
+}
+
+@keyframes mpiAdmDevSyncWave {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+.mpi-adm-dev-screen {
+  animation: mpiAdmDevScreenGleam 2.8s ease-in-out infinite;
+}
+
+.mpi-adm-dev-sync {
+  transform-origin: 24px 8px;
+  animation: mpiAdmDevSyncWave 2.2s ease-in-out infinite;
+}
+
+/* 38. Admin Facility Operating Plant Icon Animations */
+@keyframes mpiAdmFacChimneySmoke {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 0.8;
+  }
+}
+
+@keyframes mpiAdmFacGearTurn {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mpi-adm-fac-smoke {
+  animation: mpiAdmFacChimneySmoke 2.5s ease-in-out infinite;
+}
+
+.mpi-adm-fac-gear {
+  transform-origin: 23px 22px;
+  animation: mpiAdmFacGearTurn 8s linear infinite;
+}
+
+/* 39. Admin Password Guard Icon Animations */
+@keyframes mpiAdmPwdKeyTurn {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes mpiAdmPwdSparkGleam {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #fde047);
+  }
+}
+
+.mpi-adm-pwd-key {
+  transform-origin: 12px 20px;
+  animation: mpiAdmPwdKeyTurn 2.8s ease-in-out infinite;
+}
+
+.mpi-adm-pwd-spark {
+  transform-origin: 25px 7px;
+  animation: mpiAdmPwdSparkGleam 2s ease-in-out infinite;
+}
+
+/* 40. Admin Platform Guard Status Icon Animations */
+@keyframes mpiAdmPlatHubPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.4));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.9));
+  }
+}
+
+@keyframes mpiAdmPlatNodeOrbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mpi-adm-plat-hub {
+  transform-origin: 16px 16px;
+  animation: mpiAdmPlatHubPulse 2.4s ease-in-out infinite;
+}
+
+.mpi-adm-plat-nodes {
+  transform-origin: 16px 16px;
+  animation: mpiAdmPlatNodeOrbit 10s linear infinite;
+}
+
+/* Staff Management Action Buttons */
+.mpi-staff-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mpi-staff-edit-btn {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: #2563eb;
+}
+
+.mpi-staff-edit-btn:hover {
+  background: rgba(37, 99, 235, 0.16);
+  border-color: #2563eb;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+}
+
+.mpi-staff-reset-btn {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #d97706;
+}
+
+.mpi-staff-reset-btn:hover {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: #f59e0b;
+  color: #b45309;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.18);
+}
+
+[data-theme="dark"] .mpi-staff-edit-btn {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .mpi-staff-edit-btn:hover {
+  background: rgba(37, 99, 235, 0.22);
+  border-color: #60a5fa;
+  color: #93c5fd;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+}
+
+[data-theme="dark"] .mpi-staff-reset-btn {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .mpi-staff-reset-btn:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: #fbbf24;
+  color: #fef08a;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28);
+}
+
+/* 41. Admin User Account Metric Icon Animations */
+@keyframes mpiAdminAccHeadBob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes mpiAdminAccRingSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.mpi-admin-acc-head {
+  animation: mpiAdminAccHeadBob 2.8s ease-in-out infinite;
+}
+
+.mpi-admin-acc-ring {
+  transform-origin: 24px 24px;
+  animation: mpiAdminAccRingSpin 24s linear infinite;
+}
+
+/* 42. Admin Modern KPI Card Micro-Interactions */
+.mpi-admin-kpi-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.mpi-admin-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12) !important;
+}
+
+.mpi-admin-badge {
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.mpi-admin-kpi-card:hover .mpi-admin-badge {
+  transform: scale(1.05);
+}
+
+/* 43. Owner Revenue KPI Icon Animations */
+@keyframes mpiOwnerRevCoinFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiOwnerRevSparkGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.4);
+    filter: drop-shadow(0 0 3px #fef08a);
+  }
+}
+
+.mpi-owner-rev-coin {
+  animation: mpiOwnerRevCoinFloat 2.8s ease-in-out infinite;
+}
+
+.mpi-owner-rev-spark {
+  transform-origin: 42px 10px;
+  animation: mpiOwnerRevSparkGlow 2s ease-in-out infinite;
+}
+
+/* 44. Owner Coil Stock KPI Icon Animations */
+@keyframes mpiOwnerCoilDashShift {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 20;
+  }
+}
+
+@keyframes mpiOwnerCoilRibbonFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+.mpi-owner-coil-spin {
+  animation: mpiOwnerCoilDashShift 3s linear infinite;
+}
+
+.mpi-owner-coil-ribbon {
+  animation: mpiOwnerCoilRibbonFloat 2.6s ease-in-out infinite;
+}
+
+/* 45. Owner Inventory Value KPI Icon Animations */
+@keyframes mpiOwnerValDialTurn {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(25deg);
+  }
+  70% {
+    transform: rotate(-15deg);
+  }
+}
+
+@keyframes mpiOwnerValSparkle {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 3px #ffffff);
+  }
+}
+
+.mpi-owner-val-dial {
+  transform-origin: 22px 25px;
+  animation: mpiOwnerValDialTurn 6s ease-in-out infinite;
+}
+
+.mpi-owner-val-spark {
+  animation: mpiOwnerValSparkle 2.2s ease-in-out infinite;
+}
+
+/* 46. Owner Orders Volume KPI Icon Animations */
+@keyframes mpiOwnerVolWheelRoll {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mpiOwnerVolBoxBob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+.mpi-owner-vol-wheel-left,
+.mpi-owner-vol-wheel-right {
+  transform-origin: center;
+  animation: mpiOwnerVolWheelRoll 4s linear infinite;
+}
+
+.mpi-owner-vol-box {
+  animation: mpiOwnerVolBoxBob 2.5s ease-in-out infinite;
+}
+
+/* 47. Owner Average Order Value KPI Icon Animations */
+@keyframes mpiOwnerAovBeamSway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes mpiOwnerAovStarPulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 4px #e9d5ff);
+  }
+}
+
+.mpi-owner-aov-beam {
+  transform-origin: 24px 16.5px;
+  animation: mpiOwnerAovBeamSway 4s ease-in-out infinite;
+}
+
+.mpi-owner-aov-star {
+  transform-origin: 38px 9px;
+  animation: mpiOwnerAovStarPulse 2s ease-in-out infinite;
+}
+
+/* 48. Owner Dashboard Stat Card Themed Classes */
+.mpi-owner-kpi-card {
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mpi-owner-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.14) !important;
+}
+
+.mpi-owner-badge {
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.mpi-owner-kpi-card:hover .mpi-owner-badge {
+  transform: scale(1.06);
+}
+
+/* 49. Customer Total Orders KPI Icon Animations */
+@keyframes mpiCustOrderDocFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiCustOrderSparkle {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 3px #60a5fa);
+  }
+}
+
+.mpi-cust-order-doc {
+  animation: mpiCustOrderDocFloat 3s ease-in-out infinite;
+}
+
+.mpi-cust-order-spark {
+  transform-origin: 34px 10px;
+  animation: mpiCustOrderSparkle 2.2s ease-in-out infinite;
+}
+
+/* 50. Customer In Progress KPI Icon Animations */
+@keyframes mpiCustProgHandSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mpiCustProgPulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
+  }
+}
+
+.mpi-cust-prog-hand {
+  transform-origin: 24px 24px;
+  animation: mpiCustProgHandSweep 6s linear infinite;
+}
+
+.mpi-cust-prog-ring {
+  transform-origin: 24px 24px;
+  animation: mpiCustProgPulse 2.5s ease-in-out infinite;
+}
+
+/* 51. Customer Completed KPI Icon Animations */
+@keyframes mpiCustCompCheckGleam {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.9));
+  }
+}
+
+@keyframes mpiCustCompSparkle {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+    filter: drop-shadow(0 0 4px #a7f3d0);
+  }
+}
+
+.mpi-cust-comp-check {
+  animation: mpiCustCompCheckGleam 2.6s ease-in-out infinite;
+}
+
+.mpi-cust-comp-spark {
+  transform-origin: 36px 12px;
+  animation: mpiCustCompSparkle 2s ease-in-out infinite;
+}
+
+/* 52. Customer Total Spent KPI Icon Animations */
+@keyframes mpiCustSpentCoinFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiCustSpentCoinGleam {
+  0%, 100% {
+    opacity: 0.7;
+    filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.85));
+  }
+}
+
+.mpi-cust-spent-coin {
+  animation: mpiCustSpentCoinFloat 2.8s ease-in-out infinite;
+}
+
+.mpi-cust-spent-spark {
+  transform-origin: 35px 14px;
+  animation: mpiCustSpentCoinGleam 2.2s ease-in-out infinite;
+}
+
+/* 53. Customer Orders KPI Card Classes */
+.mpi-cust-kpi-card {
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mpi-cust-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.12) !important;
+}
+
+.mpi-cust-badge {
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.mpi-cust-kpi-card:hover .mpi-cust-badge {
+  transform: scale(1.06);
+}
+
+
+
+
+

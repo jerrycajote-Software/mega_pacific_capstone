@@ -8,8 +8,14 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import FactoryIcon from '@mui/icons-material/Factory';
 import HubIcon from '@mui/icons-material/Hub';
 import KeyIcon from '@mui/icons-material/Key';
-import SaveIcon from '@mui/icons-material/Save';
 import CircularProgress from '@mui/material/CircularProgress';
+import {
+  CustomAdminConcurrencyIcon,
+  CustomAdminFacilityIcon,
+  CustomAdminPasswordGuardIcon,
+  CustomAdminPlatformGuardIcon
+} from '../../components/icons';
+
 
 const SettingsPage = () => {
   const [maxDevices, setMaxDevices] = useState('3');
@@ -102,16 +108,28 @@ const SettingsPage = () => {
         {/* Left Column: Editable Configuration */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Security & Access Card */}
-          <div style={{
+          <div className="mpi-admin-kpi-card" style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-light)',
+            borderTop: '3px solid #4f772d',
             borderRadius: 18,
             padding: '1.75rem',
             boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(79,119,45,0.15)', color: '#4f772d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <DevicesIcon sx={{ fontSize: 20 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '1.25rem' }}>
+              <div className="mpi-admin-badge" style={{
+                width: 46,
+                height: 46,
+                borderRadius: 13,
+                background: 'rgba(79,119,45,0.09)',
+                border: '1px solid rgba(79,119,45,0.22)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(79,119,45,0.12)'
+              }}>
+                <CustomAdminConcurrencyIcon size={28} />
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -193,7 +211,7 @@ const SettingsPage = () => {
                       transition: 'all 0.2s'
                     }}
                   >
-                    {saving ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : <SaveIcon sx={{ fontSize: 16 }} />}
+                    {saving && <CircularProgress size={16} sx={{ color: '#fff' }} />}
                     <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
                   </button>
                 </div>
@@ -202,16 +220,28 @@ const SettingsPage = () => {
           </div>
 
           {/* Password Security Standards Card */}
-          <div style={{
+          <div className="mpi-admin-kpi-card" style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-light)',
+            borderTop: '3px solid #2563eb',
             borderRadius: 18,
             padding: '1.75rem',
             boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.12)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <KeyIcon sx={{ fontSize: 20 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '1.25rem' }}>
+              <div className="mpi-admin-badge" style={{
+                width: 46,
+                height: 46,
+                borderRadius: 13,
+                background: 'rgba(37,99,235,0.08)',
+                border: '1px solid rgba(37,99,235,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(37,99,235,0.1)'
+              }}>
+                <CustomAdminPasswordGuardIcon size={28} />
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -247,16 +277,28 @@ const SettingsPage = () => {
         {/* Right Column: Platform Identity & Operational Status */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Platform Identity Card */}
-          <div style={{
+          <div className="mpi-admin-kpi-card" style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-light)',
+            borderTop: '3px solid #f59e0b',
             borderRadius: 18,
             padding: '1.75rem',
             boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FactoryIcon sx={{ fontSize: 20 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '1.25rem' }}>
+              <div className="mpi-admin-badge" style={{
+                width: 46,
+                height: 46,
+                borderRadius: 13,
+                background: 'rgba(245,158,11,0.09)',
+                border: '1px solid rgba(245,158,11,0.22)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(245,158,11,0.12)'
+              }}>
+                <CustomAdminFacilityIcon size={28} />
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -289,16 +331,28 @@ const SettingsPage = () => {
           </div>
 
           {/* Active Security Safeguards */}
-          <div style={{
+          <div className="mpi-admin-kpi-card" style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-light)',
+            borderTop: '3px solid #10b981',
             borderRadius: 18,
             padding: '1.75rem',
             boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.25rem' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(16,185,129,0.12)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <HubIcon sx={{ fontSize: 20 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: '1.25rem' }}>
+              <div className="mpi-admin-badge" style={{
+                width: 46,
+                height: 46,
+                borderRadius: 13,
+                background: 'rgba(16,185,129,0.09)',
+                border: '1px solid rgba(16,185,129,0.22)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(16,185,129,0.12)'
+              }}>
+                <CustomAdminPlatformGuardIcon size={28} />
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>

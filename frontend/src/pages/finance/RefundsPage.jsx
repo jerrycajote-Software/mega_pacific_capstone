@@ -31,11 +31,18 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DownloadIcon from '@mui/icons-material/Download';
 import { toast } from 'react-hot-toast';
+import { generateRefundVoucherPDF } from '../../utils/documentGenerator';
+import {
+  CustomRefundPendingIcon,
+  CustomRefundCompletedIcon,
+  CustomRefundDisbursedTodayIcon
+} from '../../components/icons';
 
 const formatCurrency = (amt) =>
   `₱${Number(amt || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -199,7 +206,7 @@ const RefundsPage = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3.5, flexWrap: 'wrap', gap: 2 }}>
         <div>
           <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <CurrencyExchangeIcon sx={{ fontSize: 32, color: '#f59e0b' }} />
+            {/* <CurrencyExchangeIcon sx={{ fontSize: 32, color: '#f59e0b' }} /> */}
             Refund Management
           </Typography>
           <Typography variant="body2" sx={{ color: 'var(--text-muted)', mt: 0.5 }}>
@@ -220,14 +227,51 @@ const RefundsPage = () => {
             border: '1px solid rgba(245, 158, 11, 0.25)',
             boxShadow: '0 4px 20px -2px rgba(245, 158, 11, 0.08)',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            transition: 'all 0.25s ease',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, #f59e0b 0%, transparent 100%)',
+              opacity: 0.9
+            },
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 12px 28px -6px rgba(245, 158, 11, 0.22)',
+              borderColor: 'rgba(245, 158, 11, 0.45)',
+              '& .mpi-ref-card-icon': {
+                transform: 'scale(1.08) rotate(3deg)',
+                borderColor: '#f59e0b',
+                boxShadow: '0 6px 16px rgba(245, 158, 11, 0.28)'
+              }
+            }
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
             <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#f59e0b' }}>
               Pending Action
             </Typography>
-            <HourglassEmptyIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
+            <Box
+              className="mpi-ref-card-icon"
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                bgcolor: 'rgba(245, 158, 11, 0.1)',
+                border: '1.5px solid rgba(245, 158, 11, 0.28)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.12)'
+              }}
+            >
+              <CustomRefundPendingIcon size={26} />
+            </Box>
           </Box>
           <Typography variant="h4" sx={{ fontWeight: 900, color: '#f59e0b' }}>
             {stats.pendingCount}
@@ -244,14 +288,53 @@ const RefundsPage = () => {
             borderRadius: 3.5,
             bgcolor: 'var(--bg-secondary)',
             border: '1px solid rgba(16, 185, 129, 0.25)',
-            boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.08)'
+            boxShadow: '0 4px 20px -2px rgba(16, 185, 129, 0.08)',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.25s ease',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, #10b981 0%, transparent 100%)',
+              opacity: 0.9
+            },
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 12px 28px -6px rgba(16, 185, 129, 0.22)',
+              borderColor: 'rgba(16, 185, 129, 0.45)',
+              '& .mpi-ref-card-icon': {
+                transform: 'scale(1.08) rotate(3deg)',
+                borderColor: '#10b981',
+                boxShadow: '0 6px 16px rgba(16, 185, 129, 0.28)'
+              }
+            }
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
             <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#10b981' }}>
               Total Refunded
             </Typography>
-            <CheckCircleIcon sx={{ color: '#10b981', fontSize: 20 }} />
+            <Box
+              className="mpi-ref-card-icon"
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                bgcolor: 'rgba(16, 185, 129, 0.1)',
+                border: '1.5px solid rgba(16, 185, 129, 0.28)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.12)'
+              }}
+            >
+              <CustomRefundCompletedIcon size={26} />
+            </Box>
           </Box>
           <Typography variant="h4" sx={{ fontWeight: 900, color: '#10b981' }}>
             {stats.completedCount}
@@ -268,14 +351,53 @@ const RefundsPage = () => {
             borderRadius: 3.5,
             bgcolor: 'var(--bg-secondary)',
             border: '1px solid rgba(59, 130, 246, 0.25)',
-            boxShadow: '0 4px 20px -2px rgba(59, 130, 246, 0.08)'
+            boxShadow: '0 4px 20px -2px rgba(59, 130, 246, 0.08)',
+            position: 'relative',
+            overflow: 'hidden',
+            transition: 'all 0.25s ease',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, #3b82f6 0%, transparent 100%)',
+              opacity: 0.9
+            },
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 12px 28px -6px rgba(59, 130, 246, 0.22)',
+              borderColor: 'rgba(59, 130, 246, 0.45)',
+              '& .mpi-ref-card-icon': {
+                transform: 'scale(1.08) rotate(3deg)',
+                borderColor: '#3b82f6',
+                boxShadow: '0 6px 16px rgba(59, 130, 246, 0.28)'
+              }
+            }
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
             <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#3b82f6' }}>
               Disbursed Today
             </Typography>
-            <AccountBalanceWalletIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
+            <Box
+              className="mpi-ref-card-icon"
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                bgcolor: 'rgba(59, 130, 246, 0.1)',
+                border: '1.5px solid rgba(59, 130, 246, 0.28)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.12)'
+              }}
+            >
+              <CustomRefundDisbursedTodayIcon size={26} />
+            </Box>
           </Box>
           <Typography variant="h4" sx={{ fontWeight: 900, color: '#3b82f6' }}>
             {stats.todayCount}
@@ -476,14 +598,31 @@ const RefundsPage = () => {
                             Return Money
                           </Button>
                         ) : (
-                          <IconButton
+                          <Button
                             size="small"
                             onClick={() => handleOpenReceiptModal(r)}
-                            sx={{ color: '#60a5fa', bgcolor: 'rgba(59, 130, 246, 0.1)', '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.2)' } }}
-                            title="View Refund Receipt"
+                            endIcon={<ChevronRightIcon sx={{ fontSize: 15 }} />}
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.78rem',
+                              color: 'primary.main',
+                              bgcolor: 'rgba(34, 197, 94, 0.08)',
+                              border: '1px solid rgba(34, 197, 94, 0.25)',
+                              borderRadius: 2,
+                              px: 1.5,
+                              py: 0.6,
+                              whiteSpace: 'nowrap',
+                              transition: 'all 0.18s ease',
+                              '&:hover': {
+                                bgcolor: 'rgba(34, 197, 94, 0.16)',
+                                borderColor: 'primary.main',
+                                transform: 'translateX(2px)'
+                              }
+                            }}
                           >
-                            <VisibilityIcon sx={{ fontSize: 18 }} />
-                          </IconButton>
+                            View Receipt
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -734,13 +873,22 @@ const RefundsPage = () => {
           )}
         </DialogContent>
 
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid var(--border)' }}>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
           <Button
             onClick={() => setReceiptModalOpen(false)}
-            variant="contained"
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
+            color="inherit"
+            sx={{ textTransform: 'none', fontWeight: 600, color: 'var(--text-muted)' }}
           >
             Close
+          </Button>
+          <Button
+            onClick={() => generateRefundVoucherPDF(selectedRefund)}
+            variant="contained"
+            color="primary"
+            startIcon={<DownloadIcon sx={{ fontSize: 18 }} />}
+            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5 }}
+          >
+            Download Voucher PDF
           </Button>
         </DialogActions>
       </Dialog>

@@ -3,9 +3,8 @@ import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { generateReceiptPDF } from '../../utils/documentGenerator';
 
 const StatusBadge = ({ status }) => {
@@ -109,6 +108,10 @@ const OrderManagement = () => {
     }
   };
 
+  const handleViewOrderDetails = (order) => {
+    setSelectedOrder(order);
+  };
+
   const filteredOrders = orders.filter(o => 
     o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
     o.customerName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -116,30 +119,9 @@ const OrderManagement = () => {
 
   return (
     <div style={{ padding: '2rem 2.5rem', color: 'var(--text-primary)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Sales Order Approval</h2>
-          <p style={{ margin: '6px 0 0', color: 'var(--text-muted)' }}>Review customer orders and approve them to forward to Finance.</p>
-        </div>
-        <button 
-          onClick={fetchOrders} 
-          disabled={loading || Boolean(processingId)}
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 8, 
-            padding: '8px 16px', 
-            background: 'var(--bg-secondary)', 
-            border: '1px solid var(--border)', 
-            borderRadius: 8, 
-            color: 'var(--text-primary)', 
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '0.875rem'
-          }}
-        >
-          <RefreshIcon sx={{ fontSize: 18 }} /> Refresh
-        </button>
+      <div style={{ marginBottom: '2rem' }}>
+        <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Sales Order Approval</h2>
+        <p style={{ margin: '6px 0 0', color: 'var(--text-muted)' }}>Review customer orders and approve them to forward to Finance.</p>
       </div>
 
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', padding: '1.5rem' }}>
@@ -166,57 +148,95 @@ const OrderManagement = () => {
           </thead>
           <tbody>
             {filteredOrders.map(order => (
-              <tr key={order.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '1rem', fontWeight: 600, color: '#4ade80' }}>{order.id}</td>
+              <tr 
+                key={order.id} 
+                style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.15s ease' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <td style={{ padding: '1rem', fontWeight: 600, color: '#4ade80', whiteSpace: 'nowrap' }}>{order.id}</td>
                 <td style={{ padding: '1rem' }}>{order.customerName}</td>
-                <td style={{ padding: '1rem', color: '#22c55e', fontWeight: 600 }}>₱{order.totalAmount.toLocaleString()}</td>
-                <td style={{ padding: '1rem' }}><StatusBadge status={order.orderStatus} /></td>
-                <td style={{ padding: '1rem', textAlign: 'right' }}>
-                  <button onClick={() => setSelectedOrder(order)} title="View Order Details" style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa', border: 'none', padding: '6px', borderRadius: 6, cursor: 'pointer', marginRight: 8 }}>
-                    <VisibilityIcon sx={{ fontSize: 18 }} />
-                  </button>
-                  <button onClick={() => generateReceiptPDF(order)} title="Download Official Receipt (PDF)" style={{ background: 'rgba(79,119,45,0.15)', color: '#4ade80', border: 'none', padding: '6px', borderRadius: 6, cursor: 'pointer', marginRight: 8 }}>
-                    <i className="fi fi-rr-receipt" style={{ fontSize: 16 }} />
-                  </button>
-                  {order.orderStatus === 'pending' && (
-                    <span style={{ display: 'inline-flex', gap: 6, verticalAlign: 'middle' }}>
-                      <button 
-                        onClick={() => handleApprove(order.rawId)} 
-                        disabled={Boolean(processingId)}
-                        style={{ 
-                          background: processingId === order.rawId ? 'rgba(34,197,94,0.3)' : 'rgba(34,197,94,0.1)', 
-                          color: '#4ade80', 
-                          border: '1px solid rgba(74,222,128,0.3)', 
-                          padding: '6px 12px', 
-                          borderRadius: 6, 
-                          cursor: processingId ? 'not-allowed' : 'pointer', 
-                          fontWeight: 600, 
-                          fontSize: '0.8rem',
-                          opacity: processingId && processingId !== order.rawId ? 0.6 : 1
-                        }}
-                      >
-                        {processingId === order.rawId ? 'Approving...' : 'Approve'}
-                      </button>
-                      <button 
-                        onClick={() => handleReject(order.rawId)} 
-                        disabled={Boolean(processingId)}
-                        title="Reject / Cancel Duplicate Order" 
-                        style={{ 
-                          background: processingId === order.rawId ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.1)', 
-                          color: '#ef4444', 
-                          border: '1px solid rgba(239,68,68,0.3)', 
-                          padding: '6px 10px', 
-                          borderRadius: 6, 
-                          cursor: processingId ? 'not-allowed' : 'pointer', 
-                          fontWeight: 600, 
-                          fontSize: '0.8rem',
-                          opacity: processingId && processingId !== order.rawId ? 0.6 : 1
-                        }}
-                      >
-                        {processingId === order.rawId ? 'Rejecting...' : 'Reject'}
-                      </button>
-                    </span>
-                  )}
+                <td style={{ padding: '1rem', color: '#22c55e', fontWeight: 600, whiteSpace: 'nowrap' }}>₱{order.totalAmount.toLocaleString()}</td>
+                <td style={{ padding: '1rem', whiteSpace: 'nowrap' }}><StatusBadge status={order.orderStatus} /></td>
+                <td style={{ padding: '1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+                    <button 
+                      onClick={() => handleViewOrderDetails(order)} 
+                      title="View Order Details"
+                      style={{ 
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '6px 14px',
+                        borderRadius: 8,
+                        background: 'var(--bg-primary)',
+                        border: '1px solid var(--border-light, var(--border))',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = 'var(--green, #22c55e)';
+                        e.currentTarget.style.color = 'var(--green, #22c55e)';
+                        e.currentTarget.style.background = 'rgba(34, 197, 94, 0.08)';
+                        e.currentTarget.style.transform = 'translateX(2px)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = 'var(--border-light, var(--border))';
+                        e.currentTarget.style.color = 'var(--text-primary)';
+                        e.currentTarget.style.background = 'var(--bg-primary)';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }}
+                    >
+                      <span>View Details</span>
+                      <ChevronRightIcon sx={{ fontSize: 15 }} />
+                    </button>
+
+                    {order.orderStatus === 'pending' && (
+                      <span style={{ display: 'inline-flex', gap: 6 }}>
+                        <button 
+                          onClick={() => handleApprove(order.rawId)} 
+                          disabled={Boolean(processingId)}
+                          style={{ 
+                            background: processingId === order.rawId ? 'rgba(34,197,94,0.3)' : 'rgba(34,197,94,0.1)', 
+                            color: '#4ade80', 
+                            border: '1px solid rgba(74,222,128,0.3)', 
+                            padding: '6px 12px', 
+                            borderRadius: 8, 
+                            cursor: processingId ? 'not-allowed' : 'pointer', 
+                            fontWeight: 600, 
+                            fontSize: '0.78rem',
+                            opacity: processingId && processingId !== order.rawId ? 0.6 : 1,
+                            transition: 'all 0.18s ease'
+                          }}
+                        >
+                          {processingId === order.rawId ? 'Approving...' : 'Approve'}
+                        </button>
+                        <button 
+                          onClick={() => handleReject(order.rawId)} 
+                          disabled={Boolean(processingId)}
+                          title="Reject / Cancel Duplicate Order" 
+                          style={{ 
+                            background: processingId === order.rawId ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.1)', 
+                            color: '#ef4444', 
+                            border: '1px solid rgba(239,68,68,0.3)', 
+                            padding: '6px 10px', 
+                            borderRadius: 8, 
+                            cursor: processingId ? 'not-allowed' : 'pointer', 
+                            fontWeight: 600, 
+                            fontSize: '0.78rem',
+                            opacity: processingId && processingId !== order.rawId ? 0.6 : 1,
+                            transition: 'all 0.18s ease'
+                          }}
+                        >
+                          {processingId === order.rawId ? 'Rejecting...' : 'Reject'}
+                        </button>
+                      </span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

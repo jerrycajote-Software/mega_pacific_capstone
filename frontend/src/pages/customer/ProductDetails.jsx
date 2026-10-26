@@ -1036,7 +1036,7 @@ const ProductDetails = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexWrap: 'wrap', gap: 1.5, mb: additionalItems.length > 0 ? 2 : 0 }}>
             <Box>
               <Typography variant="h6" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                <i className="fi fi-rr-boxes" style={{ fontSize: 20, color: '#16a34a' }} />
+              
                 Need to add another product to this order?
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -1048,7 +1048,7 @@ const ProductDetails = () => {
               variant="outlined"
               color="primary"
               onClick={() => setIsAddProductModalOpen(true)}
-              startIcon={<i className="fi fi-rr-plus" style={{ fontSize: 13 }} />}
+              
               sx={{
                 borderRadius: 2.5,
                 fontWeight: 800,

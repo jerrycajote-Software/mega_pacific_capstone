@@ -55,7 +55,7 @@ const HeroSection = () => {
                 fontSize: { xs: '0.75rem', sm: '0.85rem' }
               }}
             >
-              Roofing & Steel Solutions
+              Metal Roofing & Steel Solutions
             </Typography>
             
           </Box>

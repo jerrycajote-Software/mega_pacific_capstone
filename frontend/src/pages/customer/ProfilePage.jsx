@@ -339,7 +339,7 @@ const ProfilePage = () => {
       
       <Box sx={{ mb: 3.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box 
+          {/* <Box 
             sx={{ 
               width: 44, 
               height: 44, 
@@ -352,7 +352,7 @@ const ProfilePage = () => {
             }}
           >
             <i className="fi fi-rr-user" style={{ fontSize: 22 }} />
-          </Box>
+          </Box> */}
           <Box>
             <Typography variant="h4" fontWeight={900} color="text.primary" sx={{ letterSpacing: '-0.02em', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
               My Profile
@@ -551,34 +551,6 @@ const ProfilePage = () => {
             >
               Track My Orders
             </Button>
-          </Paper>
-
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: 2.5, 
-              borderRadius: 3, 
-              border: '1px solid', 
-              borderColor: 'divider', 
-              bgcolor: 'background.default'
-            }}
-          >
-            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-              <Avatar sx={{ bgcolor: 'rgba(79, 119, 45, 0.1)', color: '#4f772d', width: 36, height: 36 }}>
-                <i className="fi fi-rr-headset" style={{ fontSize: 16 }} />
-              </Avatar>
-              <Box>
-                <Typography variant="subtitle2" fontWeight={800} color="text.primary">
-                  Need Help with Delivery?
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25, lineHeight: 1.4 }}>
-                  Our dispatch logistics team can assist with access clearances for narrow roads and boom-truck unloading.
-                </Typography>
-                <Typography variant="body2" fontWeight={800} sx={{ color: '#4f772d', mt: 1 }}>
-                  Tel. NO.: (046) 416 9217
-                </Typography>
-              </Box>
-            </Box>
           </Paper>
         </Stack>
 

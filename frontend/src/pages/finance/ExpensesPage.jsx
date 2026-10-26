@@ -24,12 +24,25 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CloseIcon from '@mui/icons-material/Close';
+import DownloadIcon from '@mui/icons-material/Download';
+import { generateExpenseVoucherPDF } from '../../utils/documentGenerator';
 
 const Page = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openAddModal, setOpenAddModal] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState(null);
+
+  const handleViewExpenseVoucher = (expense) => {
+    setSelectedExpense(expense);
+  };
+
+  const handleDownloadVoucherPdf = (expense) => {
+    generateExpenseVoucherPDF(expense);
+  };
 
   const [formData, setFormData] = useState({
     category: 'Logistics',
@@ -122,14 +135,12 @@ const Page = () => {
           sx={{ display: 'flex', gap: 1, borderRadius: 2, px: 3, py: 1.5 }}
           onClick={() => setOpenAddModal(true)}
         >
-          <i className="fi fi-rr-plus"></i> Add Expense
+         Add Expense
         </Button>
       </Box>
 
       <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'primary.light', bgcolor: 'primary.50', mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-        <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <i className="fi fi-rr-receipt" style={{ fontSize: '24px' }}></i>
-        </Box>
+        
         <Box>
           <Typography variant="body2" color="primary.main" fontWeight={700}>Total Expenses</Typography>
           <Typography variant="h4" fontWeight="900" color="primary.dark">₱{totalExpenses.toLocaleString()}</Typography>
@@ -189,12 +200,31 @@ const Page = () => {
                       }} 
                     />
                   </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1} justifyContent="flex-end">
-                      <IconButton size="small" title="View Receipt">
-                        <i className="fi fi-rr-document" style={{ fontSize: '16px' }}></i>
-                      </IconButton>
-                    </Stack>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    <Button
+                      size="small"
+                      onClick={() => handleViewExpenseVoucher(row)}
+                      endIcon={<ChevronRightIcon sx={{ fontSize: 15 }} />}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.78rem',
+                        color: 'primary.main',
+                        bgcolor: 'rgba(34, 197, 94, 0.08)',
+                        border: '1px solid rgba(34, 197, 94, 0.25)',
+                        borderRadius: 2,
+                        px: 1.5,
+                        py: 0.6,
+                        transition: 'all 0.18s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(34, 197, 94, 0.16)',
+                          borderColor: 'primary.main',
+                          transform: 'translateX(2px)'
+                        }
+                      }}
+                    >
+                      View Voucher
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -246,6 +276,130 @@ const Page = () => {
           <Button onClick={() => setOpenAddModal(false)} color="inherit">Cancel</Button>
           <Button onClick={handleAddExpense} variant="contained" color="primary">Save Expense</Button>
         </DialogActions>
+      </Dialog>
+
+      {/* View Expense Voucher Modal */}
+      <Dialog 
+        open={Boolean(selectedExpense)} 
+        onClose={() => setSelectedExpense(null)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3.5, overflow: 'hidden' }
+        }}
+      >
+        {selectedExpense && (
+          <>
+            <DialogTitle sx={{ 
+              fontWeight: 800, 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              pb: 2
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Typography variant="h6" fontWeight={800} color="text.primary">
+                  Expense Voucher {selectedExpense.reference}
+                </Typography>
+                <Chip 
+                  label={selectedExpense.status || 'Approved'} 
+                  size="small" 
+                  sx={{ 
+                    bgcolor: 'success.50', 
+                    color: 'success.dark', 
+                    fontWeight: 700, 
+                    fontSize: '0.7rem' 
+                  }} 
+                />
+              </Box>
+              <IconButton size="small" onClick={() => setSelectedExpense(null)} sx={{ color: 'text.secondary' }}>
+                <CloseIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+            </DialogTitle>
+
+            <DialogContent dividers sx={{ p: 3 }}>
+              <Stack spacing={2.5}>
+                {/* 2x2 Metadata Grid */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Category
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
+                      {selectedExpense.category}
+                    </Typography>
+                  </Paper>
+
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Date Logged
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
+                      {new Date(selectedExpense.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </Typography>
+                  </Paper>
+
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Amount Disbursed
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800} color="success.main" sx={{ mt: 0.25 }}>
+                      ₱{Number(selectedExpense.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Paper>
+
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Fiscal Clearance
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
+                      Certified & Audited
+                    </Typography>
+                  </Paper>
+                </Box>
+
+                {/* Particulars / Description */}
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', mb: 1 }}>
+                    Description & Particulars
+                  </Typography>
+                  <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="body2" color="text.primary" sx={{ lineHeight: 1.6 }}>
+                      {selectedExpense.description}
+                    </Typography>
+                  </Paper>
+                </Box>
+
+                {/* Issuer Authority Note */}
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                  Issuer: Mega Pacific Metal And Steel Roofing System • Finance & Treasury Division, Imus Plant
+                </Typography>
+              </Stack>
+            </DialogContent>
+
+            <DialogActions sx={{ p: 2.5, gap: 1.5 }}>
+              <Button onClick={() => setSelectedExpense(null)} color="inherit" sx={{ fontWeight: 600 }}>
+                Close
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<DownloadIcon sx={{ fontSize: 18 }} />}
+                onClick={() => handleDownloadVoucherPdf(selectedExpense)}
+                sx={{
+                  fontWeight: 700,
+                  borderRadius: 2,
+                  px: 2.5,
+                  textTransform: 'none'
+                }}
+              >
+                Download Official Voucher (PDF)
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
     </Box>
   );

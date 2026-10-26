@@ -264,7 +264,7 @@ const AddProductToOrderModal = ({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ pr: 2 }}>
             <Typography variant="h6" fontWeight={900} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, color: 'text.primary', fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
-              <i className="fi fi-rr-box-alt" style={{ fontSize: 22, color: '#16a34a' }} />
+              
               Add Products to Your Order
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
@@ -991,7 +991,7 @@ const AddProductToOrderModal = ({
                             }
                           }}
                         >
-                          <i className="fi fi-rr-plus" style={{ fontSize: 14, marginRight: 8 }} />
+                          
                           {isModalCoilInStock ? 'Add to Current Order' : 'Combination Out of Stock'}
                         </Button>
                       </>

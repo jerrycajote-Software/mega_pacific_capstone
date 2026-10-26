@@ -510,7 +510,7 @@ const Checkout = () => {
     submittingRef.current = true;
     setIsSubmitting(true);
 
-    if (isEditingAddress || !hasProfile) {
+    if (formData.fulfillmentType === 'Delivery' && (isEditingAddress || !hasProfile)) {
       await saveProfileAddress();
     }
 
@@ -537,11 +537,11 @@ const Checkout = () => {
       let res;
       if (state.isBulk || orderItems.length > 1) {
         const bulkPayload = {
-          userId: user?.id,
+          userId: user?.id || user?.userId,
           fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
           shippingName: formData.customerName,
-          shippingContactNumber: formData.contactNumber,
+          shippingContactNumber: formData.contactNumber || formData.gcashNumber || '',
           shippingAddress: formData.address,
           shippingCity: formData.city,
           shippingProvince: formData.province,
@@ -549,12 +549,12 @@ const Checkout = () => {
           notes: formData.notes,
           ...paymentDetails,
           items: orderItems.map(item => ({
-            productId: item.product.id,
-            variantId: item.variant?.id || item.variantId || null,
-            quantity: item.quantity,
-            customLength: item.customLength ? Number(item.customLength) : null,
-            thickness: item.thickness || null,
-            color: item.color || null
+            productId: item?.product?.id || item?.productId || item?.id,
+            variantId: item?.variant?.id || item?.variantId || null,
+            quantity: item?.quantity || 1,
+            customLength: item?.customLength ? Number(item.customLength) : null,
+            thickness: item?.thickness || null,
+            color: item?.color || null
           }))
         };
         res = await axios.post(`${API_URL}/api/customer/orders/bulk`, bulkPayload, {
@@ -563,17 +563,17 @@ const Checkout = () => {
       } else {
         const singleItem = orderItems[0];
         const singlePayload = {
-          userId: user?.id,
-          productId: singleItem.product.id,
-          variantId: singleItem.variant?.id || singleItem.variantId || null,
-          quantity: singleItem.quantity,
-          customLength: singleItem.customLength ? Number(singleItem.customLength) : null,
-          thickness: singleItem.thickness || null,
-          color: singleItem.color || null,
+          userId: user?.id || user?.userId,
+          productId: singleItem?.product?.id || singleItem?.productId || singleItem?.id,
+          variantId: singleItem?.variant?.id || singleItem?.variantId || null,
+          quantity: singleItem?.quantity || 1,
+          customLength: singleItem?.customLength ? Number(singleItem.customLength) : null,
+          thickness: singleItem?.thickness || null,
+          color: singleItem?.color || null,
           fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
           shippingName: formData.customerName,
-          shippingContactNumber: formData.contactNumber,
+          shippingContactNumber: formData.contactNumber || formData.gcashNumber || '',
           shippingAddress: formData.address,
           shippingCity: formData.city,
           shippingProvince: formData.province,
@@ -606,7 +606,8 @@ const Checkout = () => {
            }));
          }
       } else {
-        setErrors({ submit: err.response?.data?.error || 'Failed to place order. Please try again.' });
+        const serverError = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || err.message;
+        setErrors({ submit: serverError || 'Failed to place order. Please try again.' });
       }
       submittingRef.current = false;
       setIsSubmitting(false);
@@ -729,36 +730,16 @@ const Checkout = () => {
         </Typography>
       </Box>
 
-      {}
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3.5 }}>
-        <Box>
-          <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1.5, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' } }}>
-            <Avatar sx={{ bgcolor: 'rgba(30, 58, 138, 0.08)', color: '#1e3a8a', width: 44, height: 44, borderRadius: 2.5 }}>
-              <i className="fi fi-rr-credit-card" style={{ fontSize: 22 }} />
-            </Avatar>
-            Secure Checkout
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Review order items, choose delivery logistics, and select verified payment terms.
-          </Typography>
-        </Box>
-
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Chip
-            icon={<i className="fi fi-rr-shield-check" style={{ fontSize: 14, color: '#16a34a' }} />}
-            label="256-Bit SSL Encrypted"
-            size="small"
-            sx={{
-              bgcolor: 'rgba(22, 163, 74, 0.08)',
-              color: '#15803d',
-              fontWeight: 700,
-              fontSize: '0.72rem',
-              border: '1px solid rgba(22, 163, 74, 0.2)',
-              px: 0.5,
-              py: 1.75
-            }}
-          />
-        </Stack>
+      <Box sx={{ mb: 3.5 }}>
+        <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1.5, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' } }}>
+          <Avatar sx={{ bgcolor: 'rgba(30, 58, 138, 0.08)', color: '#1e3a8a', width: 44, height: 44, borderRadius: 2.5 }}>
+            <i className="fi fi-rr-credit-card" style={{ fontSize: 22 }} />
+          </Avatar>
+          Secure Checkout
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Review order items, choose delivery logistics, and select verified payment terms.
+        </Typography>
       </Box>
 
       <Paper
@@ -771,7 +752,7 @@ const Checkout = () => {
           borderColor: 'divider',
           bgcolor: 'background.paper',
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(2, 1fr)',
           gap: { xs: 1, sm: 2 }
         }}
       >
@@ -829,34 +810,6 @@ const Checkout = () => {
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' }, fontSize: '0.7rem' }}>
               {formData.paymentPlan === 'COD_50' ? '50% Downpayment' : 'Full Payment'}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              bgcolor: 'grey.200',
-              color: 'text.secondary',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.85rem',
-              fontWeight: 800,
-              flexShrink: 0
-            }}
-          >
-            3
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="caption" fontWeight={800} sx={{ color: 'text.secondary', display: 'block', fontSize: { xs: '0.75rem', sm: '0.85rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Confirmation
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' }, fontSize: '0.7rem' }}>
-              Order & Tracking
             </Typography>
           </Box>
         </Box>
@@ -1004,7 +957,7 @@ const Checkout = () => {
                         Origin: <strong>Imus, Cavite, Region IV-A</strong> • Operational Hours: Mon–Sat, 8:00 AM – 5:00 PM
                       </Typography>
                       <Typography variant="caption" color="#15803d" sx={{ display: 'block', lineHeight: 1.5 }}>
-                        Our logistics coordinator will send SMS notifications when roll-forming is done and your materials ready to pickup.
+                        Our logistics coordinator will send Email when roll-forming is done and your materials ready to pickup.
                       </Typography>
                     </Box>
                   </Box>
@@ -1102,96 +1055,11 @@ const Checkout = () => {
                 />
               </Paper>
 
-              <Paper
-                elevation={0}
-                sx={{
-                  p: { xs: 2.5, sm: 3.5 },
-                  borderRadius: 3.5,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper',
-                  boxShadow: '0 4px 20px -8px rgba(0,0,0,0.04)'
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                  <Avatar sx={{ bgcolor: 'primary.main', color: '#fff', width: 34, height: 34, fontWeight: 800, fontSize: '0.9rem' }}>
-                    3
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em' }}>
-                      Order Confirmation & Guarantees
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Verify order specifics before dispatch authorization
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5, mb: 3 }}>
-                  <Box sx={{ p: 1.75, borderRadius: 2.5, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <i className="fi fi-rr-badge-check" style={{ fontSize: 20, color: '#16a34a' }} />
-                    <Box>
-                      <Typography variant="caption" fontWeight={700} display="block">Direct Manufacturer</Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Genuine prime coil specs</Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ p: 1.75, borderRadius: 2.5, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <i className="fi fi-rr-truck-loading" style={{ fontSize: 20, color: '#2563eb' }} />
-                    <Box>
-                      <Typography variant="caption" fontWeight={700} display="block">Strapped Fleet Transit</Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Damage-free jobsite arrival</Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ p: 1.75, borderRadius: 2.5, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <i className="fi fi-rr-receipt" style={{ fontSize: 20, color: '#9333ea' }} />
-                    <Box>
-                      <Typography variant="caption" fontWeight={700} display="block">BIR-Compliant Invoice</Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>Official receipt on delivery</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-
-                {errors.submit && (
-                  <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                    {errors.submit}
-                  </Alert>
-                )}
-
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {formData.paymentPlan === 'COD_50' ? 'Amount Due Right Now (50% Downpayment):' : 'Full Order Amount Due Now:'}
-                    </Typography>
-                    <Typography variant="h5" fontWeight={900} color="primary.main">
-                      ₱{(formData.paymentPlan === 'COD_50' ? grandTotal * 0.5 : grandTotal).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </Typography>
-                  </Box>
-
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    disabled={isSubmitting}
-                    startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <i className="fi fi-rr-lock" style={{ fontSize: 16 }} />}
-                    sx={{
-                      py: 1.6,
-                      px: 4,
-                      borderRadius: 3,
-                      fontWeight: 800,
-                      fontSize: '1rem',
-                      textTransform: 'none',
-                      boxShadow: '0 8px 24px -6px rgba(79, 119, 45, 0.4)',
-                      '&:hover': {
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 12px 28px -6px rgba(79, 119, 45, 0.5)'
-                      }
-                    }}
-                  >
-                    {isSubmitting ? 'Processing Order...' : formData.paymentPlan === 'COD_50' ? 'Confirm & Place Order (50%)' : 'Confirm & Place Order (Full)'}
-                  </Button>
-                </Box>
-              </Paper>
+              {errors.submit && (
+                <Alert severity="error" sx={{ borderRadius: 2 }}>
+                  {errors.submit}
+                </Alert>
+              )}
             </Stack>
           </form>
         </Grid>
@@ -1359,7 +1227,7 @@ const Checkout = () => {
                             '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' }
                           }}
                         >
-                          + Add another cut/length of this profile
+                          Add another cut/length of this profile
                         </Button>
                       </Box>
                     </Box>
@@ -1373,7 +1241,7 @@ const Checkout = () => {
               color="primary"
               fullWidth
               onClick={() => handleOpenAddModal(null)}
-              startIcon={<i className="fi fi-rr-plus" style={{ fontSize: 13 }} />}
+              
               sx={{
                 py: 1,
                 mb: 2.25,
@@ -1534,6 +1402,12 @@ const Checkout = () => {
               </Typography>
             </Box>
 
+            {errors.submit && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+                {errors.submit}
+              </Alert>
+            )}
+
             <Button
               type="submit"
               form="checkout-form"
@@ -1542,7 +1416,7 @@ const Checkout = () => {
               fullWidth
               size="large"
               disabled={isSubmitting}
-              startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <i className="fi fi-rr-lock" style={{ fontSize: 14 }} />}
+              startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : undefined}
               sx={{
                 py: 1.5,
                 borderRadius: 2.5,
@@ -1582,7 +1456,6 @@ const Checkout = () => {
                   total: grandTotal
                 });
               }}
-              startIcon={<i className="fi fi-rr-document" style={{ fontSize: 14, color: '#1e3a8a' }} />}
               sx={{
                 py: 1.2,
                 borderRadius: 2.5,

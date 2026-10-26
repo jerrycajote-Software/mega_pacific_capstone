@@ -79,13 +79,18 @@ const createOrder = async (req, res) => {
   }
 
   if (shippingContactNumber && String(shippingContactNumber).trim()) {
-    const cleanPhone = String(shippingContactNumber).trim();
+    const cleanPhone = String(shippingContactNumber).trim().replace(/[-\s]/g, '');
     if (!/^09[0-9]{9}$/.test(cleanPhone)) {
       return res.status(400).json({
         success: false,
         error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
       });
     }
+  }
+
+  const resolvedUserId = req.user?.userId || req.user?.id || (userId ? parseInt(userId) : null);
+  if (!resolvedUserId || isNaN(resolvedUserId)) {
+    return res.status(401).json({ success: false, error: "User authentication required. Please log in again." });
   }
 
   try {
@@ -183,7 +188,7 @@ const createOrder = async (req, res) => {
     const newOrder = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
-          userId: parseInt(userId),
+          userId: resolvedUserId,
           total,
           status: "pending",
           paymentStatus: finalPaymentStatus,
@@ -479,13 +484,18 @@ const createBulkOrder = async (req, res) => {
   }
 
   if (shippingContactNumber && String(shippingContactNumber).trim()) {
-    const cleanPhone = String(shippingContactNumber).trim();
+    const cleanPhone = String(shippingContactNumber).trim().replace(/[-\s]/g, '');
     if (!/^09[0-9]{9}$/.test(cleanPhone)) {
       return res.status(400).json({
         success: false,
         error: "Contact number must be an 11-digit Philippine mobile number starting with 09 (ex. 09171234567)."
       });
     }
+  }
+
+  const resolvedUserId = req.user?.userId || req.user?.id || (userId ? parseInt(userId) : null);
+  if (!resolvedUserId || isNaN(resolvedUserId)) {
+    return res.status(401).json({ success: false, error: "User authentication required. Please log in again." });
   }
 
   const { paymentMode: finalPaymentMode, paymentStatus: finalPaymentStatus } = resolvePaymentInfo(
@@ -616,7 +626,7 @@ const createBulkOrder = async (req, res) => {
 
       const order = await tx.order.create({
         data: {
-          userId: parseInt(userId),
+          userId: resolvedUserId,
           total: finalTotal,
           status: "pending",
           paymentStatus: finalPaymentStatus,

@@ -24,14 +24,17 @@ const SupportComposer = ({
       component="form"
       onSubmit={onSendMessage}
       sx={{
-        p: { xs: 1.5, sm: 2 },
+        p: { xs: 1.25, sm: 2 },
         borderTop: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.paper',
         display: 'flex',
         flexDirection: 'column',
         gap: 1.25,
-        flexShrink: 0
+        flexShrink: 0,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
       }}
     >
       <TextField
@@ -40,7 +43,7 @@ const SupportComposer = ({
         minRows={2}
         maxRows={5}
         size="small"
-        placeholder="Type your message or technical question here... (Press Enter to send, Shift+Enter for new line)"
+        placeholder="Type your message or technical question here..."
         value={newMessage}
         onChange={(e) => onChangeMessage(e.target.value)}
         onKeyDown={handleKeyDown}
