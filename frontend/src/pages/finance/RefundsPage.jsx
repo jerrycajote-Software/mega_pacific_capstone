@@ -582,7 +582,7 @@ const RefundsPage = () => {
                             size="small"
                             variant="contained"
                             onClick={() => handleOpenProcessModal(r)}
-                            startIcon={<CurrencyExchangeIcon sx={{ fontSize: 16 }} />}
+                            
                             sx={{
                               bgcolor: '#f59e0b',
                               color: '#ffffff',
@@ -648,7 +648,7 @@ const RefundsPage = () => {
       >
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, borderBottom: '1px solid var(--border)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CurrencyExchangeIcon sx={{ color: '#f59e0b' }} />
+            
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
               Process Customer Refund
             </Typography>
@@ -773,7 +773,7 @@ const RefundsPage = () => {
             onClick={handleProcessRefund}
             variant="contained"
             disabled={submitting}
-            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <CurrencyExchangeIcon />}
+            
             sx={{
               bgcolor: '#10b981',
               color: '#ffffff',
@@ -784,7 +784,7 @@ const RefundsPage = () => {
               '&:hover': { bgcolor: '#059669' }
             }}
           >
-            {submitting ? 'Processing & Notifying...' : 'Confirm & Return Money'}
+            {submitting ? 'Processing & Notifying...' : 'Confirm and Return Money'}
           </Button>
         </DialogActions>
       </Dialog>

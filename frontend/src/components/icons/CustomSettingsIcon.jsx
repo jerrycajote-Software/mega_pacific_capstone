@@ -3,9 +3,8 @@ import './customIcons.css';
 
 /**
  * CustomSettingsIcon
- * Full-color animated icon for Settings in Admin layout.
- * Features dual interlocking precision gearwheels with synchronized counter-rotations,
- * a glowing central telemetry power core, and smooth acceleration upon hover.
+ * Clean, colored custom icon for Settings in Admin layout.
+ * Features an industrial precision mechanical gear in steel slate and silver.
  */
 const CustomSettingsIcon = ({ size = 20, className = '' }) => {
   return (
@@ -13,68 +12,31 @@ const CustomSettingsIcon = ({ size = 20, className = '' }) => {
       className={`mpi-icon-base ${className}`}
       width={size}
       height={size}
-      viewBox="0 0 32 32"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="Settings Icon"
     >
-      <defs>
-        <linearGradient id="mpiSettingGear1Grad" x1="5" y1="5" x2="21" y2="21" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#a855f7" />
-          <stop offset="50%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#3b82f6" />
-        </linearGradient>
+      {/* Precision 8-Tooth Industrial Gear */}
+      <path
+        d="M10.2 3.2L9.6 4.7C9.1 4.9 8.6 5.2 8.2 5.6L6.7 5.1L5.1 6.7L5.6 8.2C5.2 8.6 4.9 9.1 4.7 9.6L3.2 10.2V12.6L4.7 13.2C4.9 13.7 5.2 14.2 5.6 14.6L5.1 16.1L6.7 17.7L8.2 17.2C8.6 17.6 9.1 17.9 9.6 18.1L10.2 19.6H12.6L13.2 18.1C13.7 17.9 14.2 17.6 14.6 17.2L16.1 17.7L17.7 16.1L17.2 14.6C17.6 14.2 17.9 13.7 18.1 13.2L19.6 12.6V10.2L18.1 9.6C17.9 9.1 17.6 8.6 17.2 8.2L17.7 6.7L16.1 5.1L14.6 5.6C14.2 5.2 13.7 4.9 13.2 4.7L12.6 3.2H10.2Z"
+        stroke="#64748b"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        fill="#94a3b8"
+        fillOpacity="0.22"
+      />
 
-        <linearGradient id="mpiSettingGear2Grad" x1="17" y1="15" x2="29" y2="27" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#22d3ee" />
-          <stop offset="50%" stopColor="#06b6d4" />
-          <stop offset="100%" stopColor="#10b981" />
-        </linearGradient>
-
-        <radialGradient id="mpiSettingCoreGrad" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="50%" stopColor="#fef08a" />
-          <stop offset="100%" stopColor="#06b6d4" />
-        </radialGradient>
-      </defs>
-
-      {/* Secondary Interlocking Gear (Bottom-Right, Counter-Clockwise Rotation) */}
-      <g className="mpi-settings-gear-secondary">
-        <path
-          d="M23 17V18M23 24V25M27 21H26M20 21H19M25.8 18.2L25.1 18.9M20.9 23.1L20.2 23.8M25.8 23.8L25.1 23.1M20.9 18.9L20.2 18.2"
-          stroke="url(#mpiSettingGear2Grad)"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-        />
-        <circle cx="23" cy="21" r="3.2" fill="url(#mpiSettingGear2Grad)" />
-        <circle cx="23" cy="21" r="1.3" fill="#0f172a" />
-      </g>
-
-      {/* Primary Dominant Gear (Top-Left, Clockwise Rotation) */}
-      <g className="mpi-settings-gear-primary">
-        {/* Gear Teeth Outer Perimeter */}
-        <path
-          d="M13 5.5V7M13 19V20.5M20.5 13H19M7 13H5.5M18.3 7.7L17.2 8.8M8.8 17.2L7.7 18.3M18.3 18.3L17.2 17.2M8.8 8.8L7.7 7.7"
-          stroke="url(#mpiSettingGear1Grad)"
-          strokeWidth="3.8"
-          strokeLinecap="round"
-        />
-        
-        {/* Gear Main Hub Ring */}
-        <circle cx="13" cy="13" r="5.6" fill="url(#mpiSettingGear1Grad)" stroke="#ffffff" strokeWidth="0.8" />
-        
-        {/* Gear Center Hollow Bore */}
-        <circle cx="13" cy="13" r="2.8" fill="#0f172a" />
-      </g>
-
-      {/* Glowing Central Telemetry Power Core */}
+      {/* Center Axle Spindle */}
       <circle
-        className="mpi-settings-core"
-        cx="13"
-        cy="13"
-        r="1.5"
-        fill="url(#mpiSettingCoreGrad)"
+        cx="11.4"
+        cy="11.4"
+        r="3"
+        stroke="#475569"
+        strokeWidth="1.8"
+        fill="#64748b"
+        fillOpacity="0.35"
       />
     </svg>
   );

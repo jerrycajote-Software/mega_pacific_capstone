@@ -152,6 +152,7 @@ model Product {
   stock            Int // Base stock (fallback when no variants)
   imageUrl         String?
   imageUrls        String[]         @default([])
+  videoUrl         String?
   color            String?
   isPreOrder       Boolean          @default(true)
   isActive         Boolean          @default(true)

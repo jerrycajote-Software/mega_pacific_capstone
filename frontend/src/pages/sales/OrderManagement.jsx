@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { generateReceiptPDF } from '../../utils/documentGenerator';
+import CustomMessageDialog from '../../components/CustomMessageDialog';
+import { useCustomDialog } from '../../hooks/useCustomDialog';
 
 const StatusBadge = ({ status }) => {
   const s = status ? status.toLowerCase() : '';
@@ -17,8 +18,7 @@ const StatusBadge = ({ status }) => {
   if (s === 'rejected' || s === 'cancelled') { color = '#ef4444'; bg = 'rgba(239,68,68,0.1)'; }
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 99, background: bg, color, fontSize: '0.75rem', fontWeight: 600 }}>
-      <AccessTimeIcon sx={{ fontSize: 12 }} />
+    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 99, background: bg, color, fontSize: '0.75rem', fontWeight: 600 }}>
       <span style={{ textTransform: 'capitalize' }}>{status.replace(/_/g, ' ')}</span>
     </span>
   );
@@ -30,6 +30,15 @@ const OrderManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+
+  const {
+    dialogState,
+    showWarning,
+    showSuccess,
+    showError,
+    showConfirm,
+    showPrompt
+  } = useCustomDialog();
 
   const fetchOrders = async () => {
     try {
@@ -57,53 +66,108 @@ const OrderManagement = () => {
     };
   }, []);
 
-  const handleApprove = async (id) => {
+  const handleApprove = (orderOrId) => {
     if (processingId) return;
-    setProcessingId(id);
-    try {
-      const token = localStorage.getItem('appToken');
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const res = await axios.patch(`${API_URL}/api/sales/orders/${id}/approve`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.data.success) {
-        alert(res.data.message || 'Order approved and forwarded to Finance.');
-        await fetchOrders();
-        if (selectedOrder && selectedOrder.rawId === id) setSelectedOrder(null);
+    const target = typeof orderOrId === 'object' && orderOrId !== null
+      ? orderOrId 
+      : (orders.find(o => o.rawId === orderOrId) || { rawId: orderOrId, id: `#ORD-${orderOrId}` });
+    const orderId = target.id || `#ORD-${target.rawId}`;
+    const rawId = target.rawId || target.id;
+
+    showConfirm({
+      type: 'warning',
+      title: 'Confirm Order Approval',
+      message: `Are you sure you want to approve Order ${orderId}?`,
+      description: 'This will record sales approval and forward the order directly to Finance for payment verification.',
+      confirmText: 'Confirm Order Approval',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        setProcessingId(rawId);
+        try {
+          const token = localStorage.getItem('appToken');
+          const API_URL = import.meta.env.VITE_API_URL || '';
+          const res = await axios.patch(`${API_URL}/api/sales/orders/${rawId}/approve`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data.success) {
+            await fetchOrders();
+            if (selectedOrder && selectedOrder.rawId === rawId) setSelectedOrder(null);
+            showSuccess({
+              title: 'Order Approved Successfully',
+              message: res.data.message || 'Order approved and forwarded to Finance.',
+              confirmText: 'Acknowledge'
+            });
+          }
+        } catch (err) {
+          console.error('Failed to approve order', err);
+          const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to approve order';
+          showError({
+            title: 'Approval Failed',
+            message: errorMessage,
+            confirmText: 'Dismiss'
+          });
+        } finally {
+          setProcessingId(null);
+        }
       }
-    } catch (err) {
-      console.error('Failed to approve order', err);
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to approve order';
-      alert(errorMessage);
-    } finally {
-      setProcessingId(null);
-    }
+    });
   };
 
-  const handleReject = async (id) => {
+  const handleReject = (orderOrId) => {
     if (processingId) return;
-    const reason = window.prompt("Reason for cancellation / rejection ('Duplicate order', 'Customer request'):", "Duplicate order submission");
-    if (reason === null) return;
+    const target = typeof orderOrId === 'object' && orderOrId !== null
+      ? orderOrId 
+      : (orders.find(o => o.rawId === orderOrId) || { rawId: orderOrId, id: `#ORD-${orderOrId}` });
+    const orderId = target.id || `#ORD-${target.rawId}`;
+    const rawId = target.rawId || target.id;
 
-    setProcessingId(id);
-    try {
-      const token = localStorage.getItem('appToken');
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const res = await axios.patch(`${API_URL}/api/sales/orders/${id}/reject`, { reason }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.data.success) {
-        alert(res.data.message || 'Order rejected and forwarded to Finance for customer refund.');
-        await fetchOrders();
-        if (selectedOrder && selectedOrder.rawId === id) setSelectedOrder(null);
+    showPrompt({
+      type: 'danger',
+      title: 'Warning: Confirm Order Rejection',
+      message: `Are you sure you want to reject Order ${orderId}?`,
+      description: 'This will cancel the order and submit a refund transaction request to Finance.',
+      inputLabel: 'Reason for Cancellation / Rejection',
+      defaultValue: 'Duplicate order submission',
+      placeholder: 'ex. Duplicate order submission, customer request',
+      presets: [
+        'Duplicate order submission',
+        'Customer cancellation request',
+        'Material out of stock',
+        'Incorrect specifications'
+      ],
+      required: true,
+      confirmText: 'Confirm Rejection',
+      cancelText: 'Keep Order Active',
+      onConfirm: async (reason) => {
+        setProcessingId(rawId);
+        try {
+          const token = localStorage.getItem('appToken');
+          const API_URL = import.meta.env.VITE_API_URL || '';
+          const res = await axios.patch(`${API_URL}/api/sales/orders/${rawId}/reject`, { reason }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data.success) {
+            await fetchOrders();
+            if (selectedOrder && selectedOrder.rawId === rawId) setSelectedOrder(null);
+            showSuccess({
+              title: 'Order Rejection Recorded',
+              message: res.data.message || 'Order rejected and forwarded to Finance for customer refund.',
+              confirmText: 'Acknowledge'
+            });
+          }
+        } catch (err) {
+          console.error('Failed to reject order', err);
+          const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to reject order';
+          showError({
+            title: 'Rejection Failed',
+            message: errorMessage,
+            confirmText: 'Dismiss'
+          });
+        } finally {
+          setProcessingId(null);
+        }
       }
-    } catch (err) {
-      console.error('Failed to reject order', err);
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to reject order';
-      alert(errorMessage);
-    } finally {
-      setProcessingId(null);
-    }
+    });
   };
 
   const handleViewOrderDetails = (order) => {
@@ -196,7 +260,7 @@ const OrderManagement = () => {
                     {order.orderStatus === 'pending' && (
                       <span style={{ display: 'inline-flex', gap: 6 }}>
                         <button 
-                          onClick={() => handleApprove(order.rawId)} 
+                          onClick={() => handleApprove(order)} 
                           disabled={Boolean(processingId)}
                           style={{ 
                             background: processingId === order.rawId ? 'rgba(34,197,94,0.3)' : 'rgba(34,197,94,0.1)', 
@@ -214,7 +278,7 @@ const OrderManagement = () => {
                           {processingId === order.rawId ? 'Approving...' : 'Approve'}
                         </button>
                         <button 
-                          onClick={() => handleReject(order.rawId)} 
+                          onClick={() => handleReject(order)} 
                           disabled={Boolean(processingId)}
                           title="Reject / Cancel Duplicate Order" 
                           style={{ 
@@ -336,7 +400,7 @@ const OrderManagement = () => {
                   e.currentTarget.style.borderColor = 'var(--border)';
                 }}
               >
-                <i className="fi fi-rr-receipt" style={{ fontSize: 16, color: '#3b82f6' }} />
+                
                 <span>Download Official Receipt (PDF)</span>
               </button>
 
@@ -375,12 +439,12 @@ const OrderManagement = () => {
                       }
                     }}
                   >
-                    <CloseIcon sx={{ fontSize: 18 }} />
+                    
                     <span>{processingId === selectedOrder.rawId ? 'Processing...' : 'Reject / Cancel'}</span>
                   </button>
 
                   <button 
-                    onClick={() => handleApprove(selectedOrder.rawId)} 
+                    onClick={() => handleApprove(selectedOrder)} 
                     disabled={Boolean(processingId)}
                     title="Approve order and forward to Finance"
                     style={{ 
@@ -413,42 +477,22 @@ const OrderManagement = () => {
                       }
                     }}
                   >
-                    <CheckCircleIcon sx={{ fontSize: 18 }} />
+                    
                     <span>{processingId === selectedOrder.rawId ? 'Approving...' : 'Approve & Forward to Finance'}</span>
                   </button>
                 </div>
               ) : (
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button 
-                    onClick={() => setSelectedOrder(null)} 
-                    style={{ 
-                      padding: '9px 20px', 
-                      borderRadius: 8, 
-                      border: '1px solid var(--border)', 
-                      background: 'var(--bg-secondary)', 
-                      color: 'var(--text-muted)', 
-                      fontWeight: 600, 
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'var(--text-primary)';
-                      e.currentTarget.style.background = 'var(--bg-tertiary)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = 'var(--text-muted)';
-                      e.currentTarget.style.background = 'var(--bg-secondary)';
-                    }}
-                  >
-                    Close
-                  </button>
+                  
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Custom Metal & Steel Message / Warning Dialog */}
+      <CustomMessageDialog {...dialogState} />
     </div>
   );
 };

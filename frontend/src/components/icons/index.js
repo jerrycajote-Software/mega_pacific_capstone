@@ -63,5 +63,27 @@ export { default as CustomCustomerInProgressIcon } from './CustomCustomerInProgr
 export { default as CustomCustomerCompletedIcon } from './CustomCustomerCompletedIcon';
 export { default as CustomCustomerTotalSpentIcon } from './CustomCustomerTotalSpentIcon';
 
+export { default as CustomCustomerHomeIcon } from './CustomCustomerHomeIcon';
+export { default as CustomCustomerCatalogIcon } from './CustomCustomerCatalogIcon';
+export { default as CustomCustomerProfileIcon } from './CustomCustomerProfileIcon';
+export { default as CustomCustomerSupportDeskIcon } from './CustomCustomerSupportDeskIcon';
 
+export { default as CustomFulfillmentPlacedIcon } from './CustomFulfillmentPlacedIcon';
+export { default as CustomFulfillmentFabricatingIcon } from './CustomFulfillmentFabricatingIcon';
+export { default as CustomFulfillmentPickupIcon } from './CustomFulfillmentPickupIcon';
+export { default as CustomFulfillmentDeliveryIcon } from './CustomFulfillmentDeliveryIcon';
+export { default as CustomFulfillmentCompleteIcon } from './CustomFulfillmentCompleteIcon';
+export { default as CustomFulfillmentCancelledIcon } from './CustomFulfillmentCancelledIcon';
+
+export { default as CustomStorePickupChipIcon } from './CustomStorePickupChipIcon';
+export { default as CustomPendingPaymentChipIcon } from './CustomPendingPaymentChipIcon';
+export { default as CustomEmptyOrdersSearchIcon } from './CustomEmptyOrdersSearchIcon';
+export { default as CustomEmptyReviewsIcon } from './CustomEmptyReviewsIcon';
+
+export {
+  CustomDialogWarningIcon,
+  CustomDialogSuccessIcon,
+  CustomDialogDangerIcon,
+  CustomDialogInfoIcon
+} from './CustomDialogIcons';
 

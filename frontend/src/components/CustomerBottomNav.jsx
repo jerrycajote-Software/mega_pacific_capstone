@@ -1,11 +1,16 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  CustomCustomerHomeIcon,
+  CustomCustomerCatalogIcon,
+  CustomCustomerProfileIcon,
+} from './icons';
 
 const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Home', iconClass: 'fi fi-rr-home', activeIconClass: 'fi fi-sr-home' },
-  { path: '/products', label: 'Catalog', iconClass: 'fi fi-rr-box-open', activeIconClass: 'fi fi-sr-box' },
-  { path: '/profile', label: 'Profile', iconClass: 'fi fi-rr-user', activeIconClass: 'fi fi-sr-user' },
+  { path: '/dashboard', label: 'Home', icon: CustomCustomerHomeIcon },
+  { path: '/products', label: 'Catalog', icon: CustomCustomerCatalogIcon },
+  { path: '/profile', label: 'Profile', icon: CustomCustomerProfileIcon },
 ];
 
 const CustomerBottomNav = () => {
@@ -41,6 +46,7 @@ const CustomerBottomNav = () => {
             ? location.pathname === '/dashboard' || location.pathname === '/'
             : location.pathname.startsWith(item.path)
         );
+        const IconComponent = item.icon;
 
         return (
           <Box
@@ -65,7 +71,7 @@ const CustomerBottomNav = () => {
             }}
           >
             <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.25 }}>
-              <i className={isActive ? item.activeIconClass : item.iconClass} style={{ fontSize: '20px' }}></i>
+              <IconComponent size={22} isActive={isActive} />
             </Box>
 
             <Typography

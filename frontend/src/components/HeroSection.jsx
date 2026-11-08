@@ -1,13 +1,7 @@
 import React from 'react';
-import { Box, Typography, Button, Container, Chip } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import useIsMobileBrowser from '../hooks/useDeviceDetect';
+import { Box, Typography, Container } from '@mui/material';
 
 const HeroSection = () => {
-  const navigate = useNavigate();
-  const isMobile = useIsMobileBrowser();
-
-
   return (
     <Box 
       sx={{ 
@@ -38,8 +32,8 @@ const HeroSection = () => {
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, px: { xs: 2.5, sm: 4 } }}>
         <Box 
           sx={{ 
-            minHeight: { xs: 'auto', md: 380 }, 
-            py: { xs: 4, sm: 6, md: 7 }, 
+            minHeight: { xs: 'auto', md: 260 }, 
+            py: { xs: 4, sm: 5, md: 6 }, 
             display: 'flex', 
             flexDirection: 'column', 
             justifyContent: 'center' 
@@ -57,7 +51,6 @@ const HeroSection = () => {
             >
               Metal Roofing & Steel Solutions
             </Typography>
-            
           </Box>
           <Typography 
             variant="h2" 
@@ -76,7 +69,7 @@ const HeroSection = () => {
           <Typography 
             variant="body1" 
             sx={{ 
-              mb: 3.5, 
+              mb: 0, 
               color: 'text.secondary', 
               fontSize: { xs: '0.95rem', md: '1.05rem' }, 
               maxWidth: 600,
@@ -85,68 +78,6 @@ const HeroSection = () => {
           >
             Discover our wide range of durable roofing systems, steel trusses, and construction materials designed to withstand the test of time.
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={() => navigate('/products')}
-              sx={{
-                px: { xs: 3, sm: 4 },
-                py: { xs: 1.25, sm: 1.5 },
-                fontSize: { xs: '0.9rem', sm: '1rem' },
-                fontWeight: 800,
-                borderRadius: 2.5,
-                boxShadow: '0 4px 14px rgba(79,119,45,0.3)',
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: 'center',
-                textTransform: 'none',
-                '&:hover': {
-                  boxShadow: '0 8px 20px rgba(79,119,45,0.45)',
-                  transform: 'translateY(-1px)',
-                },
-              }}
-            >
-              Explore Roofing Products
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              size="large"
-              onClick={() => navigate('/roof-designer')}
-              sx={{
-                px: { xs: 2.5, sm: 3 },
-                py: { xs: 1.25, sm: 1.5 },
-                fontSize: { xs: '0.9rem', sm: '1rem' },
-                fontWeight: 700,
-                borderRadius: 2.5,
-                width: { xs: '100%', sm: 'auto' },
-                justifyContent: 'center',
-                textTransform: 'none',
-                borderWidth: 2,
-                '&:hover': {
-                  borderWidth: 2,
-                  bgcolor: 'rgba(79, 119, 45, 0.05)',
-                },
-              }}
-            >
-              <span>3D Roof Designer</span>
-              {isMobile && (
-                <Chip 
-                  label="Desktop" 
-                  size="small" 
-                  sx={{ 
-                    height: 18, 
-                    fontSize: '0.62rem', 
-                    fontWeight: 800, 
-                    bgcolor: 'rgba(79, 119, 45, 0.1)',
-                    color: 'primary.main',
-                    ml: 1,
-                  }} 
-                />
-              )}
-            </Button>
-          </Box>
         </Box>
       </Container>
     </Box>

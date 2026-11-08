@@ -46,12 +46,19 @@ const extractShortDesc = (htmlStr) => {
 
 const ZOOM_SCALE = 2.5;
 
-const ImageGallery = ({ images, productName }) => {
+const getYouTubeEmbedUrl = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/i);
+  return match ? `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=0&rel=0` : null;
+};
+
+const ImageGallery = ({ images, productName, videoUrl }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [imageError, setImageError] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState('image'); // 'image' | 'video'
   const imageContainerRef = useRef(null);
 
   const imgs = useMemo(() => {
@@ -60,10 +67,18 @@ const ImageGallery = ({ images, productName }) => {
     return list.filter((img) => typeof img === 'string' && img.trim().length > 0);
   }, [images]);
 
+  const hasVideo = Boolean(videoUrl && typeof videoUrl === 'string' && videoUrl.trim());
+  const youtubeEmbedUrl = useMemo(() => hasVideo ? getYouTubeEmbedUrl(videoUrl) : null, [hasVideo, videoUrl]);
+
   useEffect(() => {
     setActiveIndex(0);
     setImageError(false);
-  }, [images]);
+    if (imgs.length === 0 && hasVideo) {
+      setSelectedMedia('video');
+    } else {
+      setSelectedMedia('image');
+    }
+  }, [images, hasVideo]);
 
   const hasImages = imgs.length > 0 && !imageError;
   const currentImg = imgs[activeIndex] || imgs[0] || null;
@@ -90,7 +105,7 @@ const ImageGallery = ({ images, productName }) => {
   const handleMouseEnter = useCallback(() => setIsZooming(true), []);
   const handleMouseLeave = useCallback(() => setIsZooming(false), []);
 
-  if (!hasImages || !currentImg) {
+  if (!hasImages && !hasVideo) {
     return (
       <Paper 
         elevation={0} 
@@ -134,90 +149,146 @@ const ImageGallery = ({ images, productName }) => {
 
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper 
-        ref={imageContainerRef}
-        elevation={0}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={() => setLightboxOpen(true)}
-        sx={{ 
-          position: 'relative', 
-          width: '100%',
-          height: { xs: 280, sm: 420, md: 540 },
-          minHeight: { xs: 280, sm: 420, md: 540 },
-          flexShrink: 0,
-          borderRadius: { xs: 3, md: 4 }, 
-          bgcolor: '#ffffff',
-          border: '1px solid',
-          borderColor: 'divider',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'zoom-in',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: 12,
-            right: 12,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            bgcolor: 'rgba(0,0,0,0.45)',
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3Cpath d='M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z'/%3E%3C/svg%3E")`,
-            backgroundSize: '20px 20px',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            opacity: isZooming ? 0 : 0.7,
-            transition: 'opacity 0.2s ease',
-            pointerEvents: 'none',
-            zIndex: 2,
-          }
-        }}
-      >
-        <Box 
-          component="img" 
-          src={currentImg} 
-          alt={`${productName} image ${activeIndex + 1}`} 
-          onError={() => setImageError(true)}
-          draggable={false}
+      {selectedMedia === 'video' && hasVideo ? (
+        <Paper 
+          ref={imageContainerRef}
+          elevation={0}
           sx={{ 
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            maxHeight: '100%', 
-            maxWidth: '100%', 
-            width: 'auto',
-            height: 'auto',
-            objectFit: 'contain',
-            transition: 'opacity 0.2s ease',
-            opacity: isZooming ? 0 : 1,
-            pointerEvents: 'none',
-          }} 
-        />
-
-        <Box 
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
+            position: 'relative', 
             width: '100%',
-            height: '100%',
-            backgroundImage: `url(${currentImg})`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: `${ZOOM_SCALE * 100}%`,
-            backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
-            opacity: isZooming ? 1 : 0,
-            transition: isZooming ? 'none' : 'opacity 0.25s ease',
-            pointerEvents: 'none',
-            zIndex: 1,
+            height: { xs: 280, sm: 420, md: 540 },
+            minHeight: { xs: 280, sm: 420, md: 540 },
+            flexShrink: 0,
+            borderRadius: { xs: 3, md: 4 }, 
+            bgcolor: '#090d16',
+            border: '1px solid',
+            borderColor: 'divider',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-        />
-      </Paper>
+        >
+          <Chip 
+            label="Product Video" 
+            size="small" 
+            sx={{ 
+              position: 'absolute', 
+              top: 16, 
+              right: 16, 
+              zIndex: 3, 
+              bgcolor: 'rgba(0,0,0,0.75)', 
+              color: '#fff', 
+              fontWeight: 700,
+              fontSize: '0.72rem',
+              letterSpacing: '0.04em'
+            }} 
+          />
+          {youtubeEmbedUrl ? (
+            <Box 
+              component="iframe" 
+              src={youtubeEmbedUrl} 
+              title={`${productName} Product Video`} 
+              sx={{ width: '100%', height: '100%', border: 'none' }} 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen 
+            />
+          ) : (
+            <Box 
+              component="video" 
+              src={videoUrl} 
+              controls 
+              playsInline 
+              controlsList="nodownload" 
+              sx={{ width: '100%', height: '100%', objectFit: 'contain', bgcolor: '#090d16' }} 
+            />
+          )}
+        </Paper>
+      ) : (
+        <Paper 
+          ref={imageContainerRef}
+          elevation={0}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={() => setLightboxOpen(true)}
+          sx={{ 
+            position: 'relative', 
+            width: '100%',
+            height: { xs: 280, sm: 420, md: 540 },
+            minHeight: { xs: 280, sm: 420, md: 540 },
+            flexShrink: 0,
+            borderRadius: { xs: 3, md: 4 }, 
+            bgcolor: '#ffffff',
+            border: '1px solid',
+            borderColor: 'divider',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'zoom-in',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: 12,
+              right: 12,
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              bgcolor: 'rgba(0,0,0,0.45)',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3Cpath d='M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z'/%3E%3C/svg%3E")`,
+              backgroundSize: '20px 20px',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              opacity: isZooming ? 0 : 0.7,
+              transition: 'opacity 0.2s ease',
+              pointerEvents: 'none',
+              zIndex: 2,
+            }
+          }}
+        >
+          <Box 
+            component="img" 
+            src={currentImg} 
+            alt={`${productName} image ${activeIndex + 1}`} 
+            onError={() => setImageError(true)}
+            draggable={false}
+            sx={{ 
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              maxHeight: '100%', 
+              maxWidth: '100%', 
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'contain',
+              transition: 'opacity 0.2s ease',
+              opacity: isZooming ? 0 : 1,
+              pointerEvents: 'none',
+            }} 
+          />
 
-      {}
+          <Box 
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundImage: `url(${currentImg})`,
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: `${ZOOM_SCALE * 100}%`,
+              backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+              opacity: isZooming ? 1 : 0,
+              transition: isZooming ? 'none' : 'opacity 0.25s ease',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+        </Paper>
+      )}
+
       <Stack 
         direction="row" 
         spacing={1} 
@@ -228,29 +299,72 @@ const ImageGallery = ({ images, productName }) => {
           height: 92, 
           minHeight: 92, 
           flexShrink: 0, 
-          visibility: imgs.length > 1 ? 'visible' : 'hidden',
+          visibility: (imgs.length > 1 || (hasVideo && imgs.length >= 1)) ? 'visible' : 'hidden',
         }}
       >
-        {imgs.length > 1 && imgs.map((url, i) => (
+        {hasVideo && (
+          <Box 
+            onClick={() => setSelectedMedia('video')}
+            sx={{ 
+              width: 84, 
+              height: 84, 
+              flexShrink: 0, 
+              borderRadius: 2, 
+              border: '2px solid', 
+              borderColor: selectedMedia === 'video' ? 'primary.main' : 'transparent',
+              cursor: 'pointer',
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: selectedMedia === 'video' ? 1 : 0.75,
+              transition: 'opacity 0.2s, border-color 0.2s, transform 0.2s',
+              '&:hover': { opacity: 1, transform: 'scale(1.02)' }
+            }}
+          >
             <Box 
-              key={i} 
-              onClick={() => setActiveIndex(i)}
               sx={{ 
-                width: 84, 
-                height: 84, 
-                flexShrink: 0, 
-                borderRadius: 2, 
-                border: '2px solid', 
-                borderColor: i === activeIndex ? 'primary.main' : 'transparent',
-                cursor: 'pointer',
-                opacity: i === activeIndex ? 1 : 0.6,
-                transition: 'opacity 0.2s, border-color 0.2s',
-                '&:hover': { opacity: 1 }
+                width: 28, 
+                height: 28, 
+                borderRadius: '50%', 
+                bgcolor: '#ef4444', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                mb: 0.5,
+                boxShadow: '0 2px 6px rgba(239,68,68,0.4)'
               }}
             >
-              <Box component="img" src={url} alt={`Thumbnail ${i + 1}`} sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 1 }} />
+              <i className="fi fi-rr-play" style={{ fontSize: '11px', color: '#fff', marginLeft: '2px' }}></i>
             </Box>
-          ))}
+            <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em' }}>
+              VIDEO
+            </Typography>
+          </Box>
+        )}
+
+        {imgs.map((url, i) => (
+          <Box 
+            key={i} 
+            onClick={() => { setSelectedMedia('image'); setActiveIndex(i); }}
+            sx={{ 
+              width: 84, 
+              height: 84, 
+              flexShrink: 0, 
+              borderRadius: 2, 
+              border: '2px solid', 
+              borderColor: selectedMedia === 'image' && i === activeIndex ? 'primary.main' : 'transparent',
+              cursor: 'pointer',
+              opacity: selectedMedia === 'image' && i === activeIndex ? 1 : 0.6,
+              transition: 'opacity 0.2s, border-color 0.2s',
+              '&:hover': { opacity: 1 }
+            }}
+          >
+            <Box component="img" src={url} alt={`Thumbnail ${i + 1}`} sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 1 }} />
+          </Box>
+        ))}
       </Stack>
 
       {}
@@ -703,7 +817,7 @@ const ProductDetails = () => {
               }} 
             />
           )}
-          <ImageGallery images={productImages} productName={product.name} />
+          <ImageGallery images={productImages} productName={product.name} videoUrl={product.videoUrl} />
         </Box>
 
         <Box sx={{ width: '100%', minWidth: 0 }}>

@@ -21,11 +21,17 @@ import {
 } from '@mui/material';
 import LogoutConfirmModal from './LogoutConfirmModal';
 import { openCustomerSupport } from '../utils/supportEvents';
+import {
+  CustomCustomerHomeIcon,
+  CustomCustomerCatalogIcon,
+  CustomCustomerProfileIcon,
+  CustomCustomerSupportDeskIcon,
+} from './icons';
 
 const NAV_LINKS = [
-  { to: '/dashboard', label: 'Home', icon: 'fi fi-rr-home' },
-  { to: '/products', label: 'Products', icon: 'fi fi-rr-box-open' },
-  { to: '/profile', label: 'Profile', icon: 'fi fi-rr-user' },
+  { to: '/dashboard', label: 'Home', icon: CustomCustomerHomeIcon },
+  { to: '/products', label: 'Products', icon: CustomCustomerCatalogIcon },
+  { to: '/profile', label: 'Profile', icon: CustomCustomerProfileIcon },
 ];
 
 const CustomerHeader = () => {
@@ -43,11 +49,16 @@ const CustomerHeader = () => {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: 'background.paper',
+          bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(12px)',
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(51, 65, 85, 0.7)' : 'rgba(226, 232, 240, 0.9)',
+          boxShadow: (theme) => theme.palette.mode === 'dark'
+            ? '0 4px 20px -2px rgba(0, 0, 0, 0.5)'
+            : '0 2px 12px -2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)',
           color: 'text.primary',
           zIndex: 1100,
+          transition: 'all 0.25s ease',
         }}
       >
         <Toolbar sx={{ gap: { xs: 1, sm: 2 }, px: { xs: 1.5, sm: 3 } }}>
@@ -75,6 +86,8 @@ const CustomerHeader = () => {
               alignItems: 'flex-start',
               textDecoration: 'none',
               mr: { xs: 1, md: 3 },
+              transition: 'transform 0.2s ease',
+              '&:hover': { transform: 'translateY(-1px)' },
             }}
           >
             <Box
@@ -106,9 +119,24 @@ const CustomerHeader = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5, flexGrow: 1 }}>
+          <Box
+            sx={{
+              display: { xs: 'none', md: 'inline-flex' },
+              alignItems: 'center',
+              gap: 0.75,
+              p: '5px 7px',
+              borderRadius: '9999px',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.65)' : '#f1f5f9',
+              border: '1px solid',
+              borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(51, 65, 85, 0.75)' : 'rgba(226, 232, 240, 0.9)',
+              boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.04)',
+            }}
+          >
             {NAV_LINKS.map((link) => {
-              const isActive = location.pathname === link.to;
+              const isActive = link.to === '/dashboard'
+                ? (location.pathname === '/' || location.pathname === '/dashboard')
+                : location.pathname.startsWith(link.to);
+
               return (
                 <Button
                   key={link.to}
@@ -116,13 +144,39 @@ const CustomerHeader = () => {
                   to={link.to}
                   size="small"
                   sx={{
-                    color: isActive ? 'primary.main' : 'text.secondary',
-                    fontWeight: isActive ? 700 : 500,
+                    px: 2.2,
+                    py: 0.6,
+                    borderRadius: '9999px',
+                    fontSize: '0.86rem',
                     textTransform: 'none',
-                    borderRadius: 2,
-                    px: 1.5,
-                    bgcolor: isActive ? 'primary.50' : 'transparent',
-                    '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
+                    fontWeight: isActive ? 750 : 600,
+                    color: isActive
+                      ? (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d'
+                      : 'text.secondary',
+                    bgcolor: isActive
+                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.2)' : '#ffffff'
+                      : 'transparent',
+                    border: '1px solid',
+                    borderColor: isActive
+                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(74, 222, 128, 0.45)' : 'rgba(34, 197, 94, 0.35)'
+                      : 'transparent',
+                    boxShadow: isActive
+                      ? (theme) => theme.palette.mode === 'dark'
+                        ? '0 2px 10px rgba(34, 197, 94, 0.25)'
+                        : '0 2px 8px rgba(34, 197, 94, 0.16), 0 1px 2px rgba(0, 0, 0, 0.04)'
+                      : 'none',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      bgcolor: isActive
+                        ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.26)' : '#ffffff'
+                        : (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.14)' : '#dcfce7',
+                      color: (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d',
+                      borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(74, 222, 128, 0.35)' : 'rgba(34, 197, 94, 0.3)',
+                      transform: 'translateY(-1px)',
+                      boxShadow: (theme) => theme.palette.mode === 'dark'
+                        ? '0 4px 12px rgba(34, 197, 94, 0.25)'
+                        : '0 3px 10px rgba(34, 197, 94, 0.18)',
+                    },
                   }}
                 >
                   {link.label}
@@ -132,40 +186,77 @@ const CustomerHeader = () => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, ml: 'auto' }}>
-            <Avatar
-              src={user?.avatarUrl || '/default-profile.png'}
-              alt={user?.name || 'Customer'}
+            <Box
+              component={Link}
+              to="/profile"
               sx={{
-                width: { xs: 32, sm: 36 },
-                height: { xs: 32, sm: 36 },
-                bgcolor: 'background.default',
-                border: '1.5px solid',
-                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.2,
+                textDecoration: 'none',
+                color: 'text.primary',
+                p: '3px 10px 3px 4px',
+                borderRadius: '9999px',
+                border: '1px solid',
+                borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(51, 65, 85, 0.7)' : 'rgba(226, 232, 240, 0.9)',
+                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(248, 250, 252, 0.9)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.12)' : '#f0fdf4',
+                  borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(74, 222, 128, 0.35)' : 'rgba(34, 197, 94, 0.35)',
+                  transform: 'translateY(-1px)',
+                },
               }}
-            />
-            <Typography
-              variant="body2"
-              fontWeight={600}
-              sx={{ display: { xs: 'none', sm: 'block' }, maxWidth: 120, noWrap: true }}
             >
-              {user?.name}
-            </Typography>
+              <Avatar
+                src={user?.avatarUrl || '/default-profile.png'}
+                alt={user?.name || 'Customer'}
+                sx={{
+                  width: { xs: 30, sm: 34 },
+                  height: { xs: 30, sm: 34 },
+                  bgcolor: 'background.default',
+                  border: '1.5px solid',
+                  borderColor: (theme) => theme.palette.mode === 'dark' ? '#334155' : '#cbd5e1',
+                }}
+              />
+              <Typography
+                variant="body2"
+                fontWeight={700}
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  maxWidth: 130,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  fontSize: '0.84rem'
+                }}
+              >
+                {user?.name || 'Customer'}
+              </Typography>
+            </Box>
 
-            <Tooltip title="Logout">
+            <Tooltip title="Sign Out">
               <IconButton
                 onClick={handleLogout}
                 size="small"
-                aria-label="Logout"
+                aria-label="Sign Out"
                 sx={{
-                  color: 'error.main',
+                  color: '#ef4444',
                   border: '1px solid',
-                  borderColor: 'error.light',
-                  borderRadius: 2,
-                  p: { xs: 0.75, sm: 1 },
-                  '&:hover': { bgcolor: 'error.light', color: 'error.dark' },
+                  borderColor: 'rgba(239, 68, 68, 0.25)',
+                  borderRadius: '50%',
+                  width: { xs: 32, sm: 36 },
+                  height: { xs: 32, sm: 36 },
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: 'rgba(239, 68, 68, 0.1)',
+                    borderColor: '#ef4444',
+                    color: '#dc2626',
+                    transform: 'scale(1.05)',
+                  },
                 }}
               >
-                <i className="fi fi-rr-sign-out-alt" style={{ fontSize: '15px' }}></i>
+                <i className="fi fi-rr-sign-out-alt" style={{ fontSize: '14px' }}></i>
               </IconButton>
             </Tooltip>
           </Box>
@@ -237,7 +328,11 @@ const CustomerHeader = () => {
 
         <List sx={{ p: 0, flexGrow: 1 }}>
           {NAV_LINKS.map((link) => {
-            const isActive = location.pathname === link.to;
+            const isActive = link.to === '/dashboard'
+              ? (location.pathname === '/' || location.pathname === '/dashboard')
+              : location.pathname.startsWith(link.to);
+            const IconComponent = link.icon;
+
             return (
               <ListItem key={link.to} disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton
@@ -246,47 +341,34 @@ const CustomerHeader = () => {
                     navigate(link.to);
                   }}
                   sx={{
-                    borderRadius: 2,
-                    bgcolor: isActive ? 'primary.50' : 'transparent',
-                    color: isActive ? 'primary.main' : 'text.primary',
+                    borderRadius: 2.5,
+                    bgcolor: isActive
+                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.18)' : '#dcfce7'
+                      : 'transparent',
+                    color: isActive
+                      ? (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d'
+                      : 'text.primary',
                     fontWeight: isActive ? 700 : 500,
-                    '&:hover': { bgcolor: 'action.hover' },
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: isActive
+                        ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.24)' : '#dcfce7'
+                        : (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.1)' : '#f0fdf4',
+                      color: (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d',
+                      transform: 'translateX(3px)',
+                    },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36, color: isActive ? 'primary.main' : 'text.secondary' }}>
-                    <i className={link.icon} style={{ fontSize: '16px' }}></i>
+                  <ListItemIcon sx={{ minWidth: 36, display: 'flex', alignItems: 'center' }}>
+                    <IconComponent size={20} isActive={isActive} />
                   </ListItemIcon>
-                  <ListItemText primary={link.label} primaryTypographyProps={{ fontWeight: isActive ? 700 : 500, fontSize: '0.9rem' }} />
+                  <ListItemText primary={link.label} primaryTypographyProps={{ fontWeight: isActive ? 750 : 500, fontSize: '0.9rem' }} />
                 </ListItemButton>
               </ListItem>
             );
           })}
 
-          <ListItem disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton
-              onClick={() => {
-                setMobileDrawerOpen(false);
-                navigate('/roof-designer');
-              }}
-              sx={{
-                borderRadius: 2,
-                color: 'text.secondary',
-                '&:hover': { bgcolor: 'action.hover' },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>
-                <i className="fi fi-rr-home" style={{ fontSize: '16px' }}></i>
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>3D Roof Designer</Typography>
-                    <Chip label="Desktop" size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: '#fef3c7', color: '#92400e', fontWeight: 700 }} />
-                  </Box>
-                }
-              />
-            </ListItemButton>
-          </ListItem>
+
 
           <ListItem disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
@@ -300,8 +382,8 @@ const CustomerHeader = () => {
                 '&:hover': { bgcolor: 'action.hover' },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 36, color: '#4f772d' }}>
-                <i className="fi fi-rr-comment-alt" style={{ fontSize: '16px' }}></i>
+              <ListItemIcon sx={{ minWidth: 36, display: 'flex', alignItems: 'center' }}>
+                <CustomCustomerSupportDeskIcon size={20} />
               </ListItemIcon>
               <ListItemText
                 primary={

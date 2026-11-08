@@ -24,10 +24,11 @@ import StraightenIcon from '@mui/icons-material/Straighten';
 import PaletteIcon from '@mui/icons-material/Palette';
 import WarehouseIcon from '@mui/icons-material/Warehouse';
 import SaveIcon from '@mui/icons-material/Save';
+import VideocamIcon from '@mui/icons-material/Videocam';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { compressChatImage } from '../../utils/chatImageHelper';
-import { uploadBatchImagesToStorage } from '../../utils/uploadService';
+import { uploadBatchImagesToStorage, uploadVideoToStorage } from '../../utils/uploadService';
 
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
@@ -75,6 +76,7 @@ const EMPTY_FORM = {
   colors: ROOFING_COLORS.map(c => c.name),
   maxMeters: 21.0,
   imageUrls: [],
+  videoUrl: '',
   isActive: true
 };
 
@@ -116,6 +118,11 @@ const PreOrderProductsPage = () => {
   const [newThicknessError, setNewThicknessError] = useState('');
 
   const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const [videoError, setVideoError] = useState('');
+  const [isVideoDragging, setIsVideoDragging] = useState(false);
+  const [showVideoUrlInput, setShowVideoUrlInput] = useState(false);
+  const [videoUrlInput, setVideoUrlInput] = useState('');
   const API_URL = import.meta.env.VITE_API_URL || '';
 
   const fetchProducts = async (showLoadingSpinner = false) => {
@@ -276,10 +283,14 @@ const PreOrderProductsPage = () => {
       ...EMPTY_FORM,
       isActive: true,
       thickness: initialThick,
-      colors: initialColors
+      colors: initialColors,
+      videoUrl: ''
     });
     setVariants([]);
     setErrorMsg('');
+    setVideoError('');
+    setShowVideoUrlInput(false);
+    setVideoUrlInput('');
     setIsModalOpen(true);
   };
 
@@ -303,6 +314,7 @@ const PreOrderProductsPage = () => {
       colors: validColors,
       maxMeters: p.maxMeters ?? 21.0,
       imageUrls: p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls : (p.imageUrl ? [p.imageUrl] : []),
+      videoUrl: p.videoUrl || '',
       isActive: p.isActive !== false
     });
     setVariants(p.variants ? p.variants.map(v => ({
@@ -313,6 +325,9 @@ const PreOrderProductsPage = () => {
       status: v.status || 'available'
     })) : []);
     setErrorMsg('');
+    setVideoError('');
+    setShowVideoUrlInput(false);
+    setVideoUrlInput('');
     setIsModalOpen(true);
   };
 
@@ -399,6 +414,66 @@ const PreOrderProductsPage = () => {
       ...prev,
       imageUrls: prev.imageUrls.filter((_, i) => i !== idx)
     }));
+  };
+
+  const handleSelectProductVideo = (file) => {
+    if (!file) return;
+
+    if (formData.videoUrl) {
+      setVideoError('Only one video can be uploaded per product. Please remove the existing video first to replace it.');
+      return;
+    }
+
+    const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska'];
+    const hasValidType = validVideoTypes.includes(file.type) || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
+    if (!hasValidType) {
+      setVideoError('Unsupported video format. Please upload an MP4, WEBM, or MOV video file.');
+      return;
+    }
+
+    const MAX_VIDEO_BYTES = 25 * 1024 * 1024; // 25 MB max limit
+    if (file.size > MAX_VIDEO_BYTES) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      setVideoError(`Video file size (${sizeMb} MB) exceeds the 25 MB limit. Please select a shorter or compressed video.`);
+      return;
+    }
+
+    setVideoError('');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setFormData(prev => ({ ...prev, videoUrl: e.target.result }));
+    };
+    reader.onerror = () => {
+      setVideoError('Failed to read video file. Please try again.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveProductVideo = () => {
+    setFormData(prev => ({ ...prev, videoUrl: '' }));
+    setVideoError('');
+    setShowVideoUrlInput(false);
+    setVideoUrlInput('');
+    if (videoInputRef.current) {
+      videoInputRef.current.value = '';
+    }
+  };
+
+  const handleApplyVideoUrl = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = (videoUrlInput || '').trim();
+    if (!trimmed) {
+      setVideoError('Please enter a valid video link.');
+      return;
+    }
+    if (!/^https?:\/\//i.test(trimmed)) {
+      setVideoError('Please enter a valid URL starting with http:// or https://');
+      return;
+    }
+    setFormData(prev => ({ ...prev, videoUrl: trimmed }));
+    setVideoError('');
+    setShowVideoUrlInput(false);
+    setVideoUrlInput('');
   };
 
   const openNewThicknessModal = (target = { type: 'base' }) => {
@@ -591,11 +666,18 @@ const PreOrderProductsPage = () => {
 
     try {
       const storedImageUrls = await uploadBatchImagesToStorage(formData.imageUrls || [], 'products');
+
+      let storedVideoUrl = null;
+      if (formData.videoUrl && typeof formData.videoUrl === 'string' && formData.videoUrl.trim()) {
+        storedVideoUrl = await uploadVideoToStorage(formData.videoUrl.trim(), 'products/videos');
+      }
+
       const token = localStorage.getItem('appToken');
       const payload = {
         ...formData,
         imageUrls: storedImageUrls,
         imageUrl: storedImageUrls && storedImageUrls.length > 0 ? storedImageUrls[0] : null,
+        videoUrl: storedVideoUrl,
         colors: validColors,
         isActive: formData.isActive !== false,
         originalPrice: parseFloat(formData.originalPrice),
@@ -610,11 +692,13 @@ const PreOrderProductsPage = () => {
 
       if (editingProduct) {
         await axios.put(`${API_URL}/api/sales/pre-order-products/${editingProduct.id}`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 120000,
         });
       } else {
         await axios.post(`${API_URL}/api/sales/pre-order-products`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 120000,
         });
       }
 
@@ -622,7 +706,17 @@ const PreOrderProductsPage = () => {
       fetchProducts();
     } catch (err) {
       console.error('Save error:', err);
-      setErrorMsg(err.response?.data?.error || 'Failed to save product.');
+      const serverErr = err.response?.data?.error || err.response?.data?.message || err.message;
+      const isInsufficient = 
+        err.response?.status === 507 || 
+        err.response?.data?.code === 'STORAGE_INSUFFICIENT' ||
+        /insufficient|storage_limit|quota|out of space/i.test(serverErr || '');
+
+      if (isInsufficient) {
+        setErrorMsg('Storage is insufficient in production hosting. Please free up storage space in your Supabase project or contact support.');
+      } else {
+        setErrorMsg(serverErr || 'Failed to save pre-order product.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -916,7 +1010,26 @@ const PreOrderProductsPage = () => {
                             )}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{p.name}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontWeight: 750, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{p.name}</span>
+                              {p.videoUrl && (
+                                <span 
+                                  title="Product showcase video attached"
+                                  style={{ 
+                                    fontSize: '0.66rem', 
+                                    padding: '0.12rem 0.45rem', 
+                                    borderRadius: 4, 
+                                    background: 'rgba(59,130,246,0.12)', 
+                                    color: '#3b82f6', 
+                                    border: '1px solid rgba(59,130,246,0.25)', 
+                                    fontWeight: 700,
+                                    letterSpacing: '0.04em'
+                                  }}
+                                >
+                                  VIDEO
+                                </span>
+                              )}
+                            </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
                               <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 4, background: 'var(--bg-tertiary)', color: 'var(--text-muted)', border: '1px solid var(--border-light)' }}>
                                 {p.type || 'Rib Type'}
@@ -1298,6 +1411,171 @@ const PreOrderProductsPage = () => {
                       ))}
                     </div>
                   )}
+
+                  <div style={{ marginTop: '1.25rem', paddingTop: '1.15rem', borderTop: '1px solid var(--border-light)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Product Video (1 Max)
+                      </label>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 700, color: '#16a34a', background: 'rgba(22, 163, 74, 0.1)', padding: '0.15rem 0.5rem', borderRadius: 6 }}>
+                        Max 25 MB
+                      </span>
+                    </div>
+
+                    {videoError && (
+                      <div style={{ 
+                        padding: '0.55rem 0.75rem', 
+                        borderRadius: 8, 
+                        background: 'rgba(239, 68, 68, 0.1)', 
+                        border: '1px solid rgba(239, 68, 68, 0.3)', 
+                        color: '#ef4444', 
+                        fontSize: '0.74rem', 
+                        marginBottom: 10,
+                        lineHeight: 1.35
+                      }}>
+                        {videoError}
+                      </div>
+                    )}
+
+                    {formData.videoUrl ? (
+                      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-light)', background: 'var(--bg-primary)', position: 'relative' }}>
+                        {/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/i.test(formData.videoUrl) ? (
+                          <div style={{ padding: '1rem', textAlign: 'center', background: '#0f172a', color: '#fff' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 4 }}>Linked YouTube Video</div>
+                            <div style={{ fontSize: '0.78rem', wordBreak: 'break-all', color: '#60a5fa' }}>{formData.videoUrl}</div>
+                          </div>
+                        ) : (
+                          <video 
+                            src={formData.videoUrl} 
+                            controls 
+                            playsInline 
+                            style={{ width: '100%', maxHeight: 180, display: 'block', background: '#000' }} 
+                          />
+                        )}
+                        <div style={{ padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-light)' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#16a34a', fontWeight: 600 }}>
+                            Ready for product showcase
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRemoveProductVideo}
+                            style={{
+                              padding: '0.25rem 0.65rem',
+                              borderRadius: 6,
+                              border: 'none',
+                              background: '#ef4444',
+                              color: '#fff',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Remove Video
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div
+                          onDragOver={(e) => { e.preventDefault(); setIsVideoDragging(true); }}
+                          onDragLeave={() => setIsVideoDragging(false)}
+                          onDrop={(e) => { 
+                            e.preventDefault(); 
+                            setIsVideoDragging(false); 
+                            const droppedFile = e.dataTransfer.files?.[0];
+                            if (droppedFile) handleSelectProductVideo(droppedFile);
+                          }}
+                          onClick={() => videoInputRef.current?.click()}
+                          style={{
+                            border: `2px dashed ${isVideoDragging ? '#3b82f6' : 'var(--border-light)'}`,
+                            borderRadius: 14,
+                            background: isVideoDragging ? 'rgba(59, 130, 246, 0.08)' : 'var(--bg-primary)',
+                            padding: '1.25rem 1rem',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.18s ease'
+                          }}
+                        >
+                          <input
+                            ref={videoInputRef}
+                            type="file"
+                            accept="video/mp4,video/webm,video/quicktime,video/x-matroska"
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                              const picked = e.target.files?.[0];
+                              if (picked) handleSelectProductVideo(picked);
+                            }}
+                          />
+                          <VideocamIcon sx={{ fontSize: 32, color: isVideoDragging ? '#3b82f6' : 'var(--text-muted)', marginBottom: 0.5 }} />
+                          <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+                            Drag & drop product video
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 3 }}>
+                            or <span style={{ color: '#3b82f6', textDecoration: 'underline' }}>browse file</span>
+                          </div>
+                          <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', marginTop: 5 }}>
+                            MP4, WEBM, MOV · max 25 MB (1 video)
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: 8, textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => setShowVideoUrlInput(!showVideoUrlInput)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#60a5fa',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              textDecoration: 'underline'
+                            }}
+                          >
+                            {showVideoUrlInput ? 'Cancel link input' : 'or paste video link (YouTube / CDN)'}
+                          </button>
+                        </div>
+
+                        {showVideoUrlInput && (
+                          <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+                            <input
+                              type="url"
+                              placeholder="https://youtu.be/... or .mp4 URL"
+                              value={videoUrlInput}
+                              onChange={(e) => setVideoUrlInput(e.target.value)}
+                              style={{
+                                flex: 1,
+                                padding: '0.45rem 0.65rem',
+                                borderRadius: 8,
+                                background: 'var(--bg-primary)',
+                                border: '1px solid var(--border-light)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.76rem',
+                                outline: 'none'
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={handleApplyVideoUrl}
+                              style={{
+                                padding: '0.45rem 0.85rem',
+                                borderRadius: 8,
+                                border: 'none',
+                                background: '#2563eb',
+                                color: '#fff',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              Apply Link
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

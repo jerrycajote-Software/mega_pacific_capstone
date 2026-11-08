@@ -25,6 +25,8 @@ import {
   getColorHex
 } from '../../constants/roofingSpecs';
 
+const METERS_PER_ROLL = 4100;
+
 const CoilInventoryPage = () => {
   const [coils, setCoils] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -375,7 +377,7 @@ const CoilInventoryPage = () => {
             </span>
           </div>
           <p style={{ margin: '0.35rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Track physical master coil rolls per thickness gauge across 14 official finishes. Record roll-forming allocations and shipments in roll counts.
+            Track physical master coil rolls per thickness gauge across 14 official finishes (1 Roll = 4,100 linear meters). Record roll-forming allocations and shipments in roll counts.
           </p>
         </div>
 
@@ -406,7 +408,7 @@ const CoilInventoryPage = () => {
             {summary?.totalRolls ?? 0} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Rolls</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: 4 }}>
-            Steel Master Rolls in Storage
+            ~{((summary?.totalRolls ?? 0) * METERS_PER_ROLL).toLocaleString()} linear meters (1 Roll = 4,100m)
           </div>
         </div>
 
@@ -418,7 +420,7 @@ const CoilInventoryPage = () => {
             {summary?.thicknessCounts?.['0.35mm'] ?? 0} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Rolls</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            14 Colors Available in 0.35mm
+            ~{((summary?.thicknessCounts?.['0.35mm'] ?? 0) * METERS_PER_ROLL).toLocaleString()} linear meters
           </div>
         </div>
 
@@ -430,7 +432,7 @@ const CoilInventoryPage = () => {
             {((summary?.thicknessCounts?.['0.40mm'] || 0) + (summary?.thicknessCounts?.['0.50mm'] || 0) + (summary?.thicknessCounts?.['0.60mm'] || 0))} <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Rolls</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            Heavy & Commercial Gauges
+            ~{(((summary?.thicknessCounts?.['0.40mm'] || 0) + (summary?.thicknessCounts?.['0.50mm'] || 0) + (summary?.thicknessCounts?.['0.60mm'] || 0)) * METERS_PER_ROLL).toLocaleString()} linear meters
           </div>
         </div>
 
@@ -661,7 +663,7 @@ const CoilInventoryPage = () => {
                                 </span>
                               </div>
 
-                              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0.75rem 0 0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '0.75rem 0 0.25rem' }}>
                                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
                                   Physical Roll Count
                                 </div>
@@ -673,6 +675,12 @@ const CoilInventoryPage = () => {
                                     {count === 1 ? 'Roll' : 'Rolls'}
                                   </span>
                                 </div>
+                              </div>
+
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                  ~{(count * METERS_PER_ROLL).toLocaleString()} linear meters
+                                </span>
                               </div>
 
                               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
@@ -729,7 +737,7 @@ const CoilInventoryPage = () => {
                     <tr style={{ background: 'rgba(0,0,0,0.05)', borderBottom: '1px solid var(--border-light)' }}>
                       <th style={{ padding: '0.9rem 1.25rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Color Finish (14 Standard)</th>
                       <th style={{ padding: '0.9rem 1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Thickness</th>
-                      <th style={{ padding: '0.9rem 1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Coil Count (Rolls)</th>
+                      <th style={{ padding: '0.9rem 1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Coil Count & Linear Meters</th>
                       <th style={{ padding: '0.9rem 1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Status</th>
                       <th style={{ padding: '0.9rem 1.25rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', textAlign: 'right' }}>Actions</th>
                     </tr>
@@ -766,6 +774,9 @@ const CoilInventoryPage = () => {
                                 </span>
                                 <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                                   {count === 1 ? 'Roll' : 'Rolls'}
+                                </span>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                  (~{(count * METERS_PER_ROLL).toLocaleString()} m)
                                 </span>
                               </div>
                               <div style={{ marginTop: 4 }}>
@@ -871,10 +882,16 @@ const CoilInventoryPage = () => {
                           </span>
                         </td>
                         <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: isDeduction ? '#ef4444' : '#10b981' }}>
-                          {isDeduction ? `-${rollQty} roll${rollQty > 1 ? 's' : ''}` : `+${rollQty} roll${rollQty > 1 ? 's' : ''}`}
+                          <div>{isDeduction ? `-${rollQty} roll${rollQty > 1 ? 's' : ''}` : `+${rollQty} roll${rollQty > 1 ? 's' : ''}`}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                            ~{(rollQty * METERS_PER_ROLL).toLocaleString()} m
+                          </div>
                         </td>
                         <td style={{ padding: '0.85rem 1rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                          {remainingBalance} roll{remainingBalance !== 1 ? 's' : ''}
+                          <div>{remainingBalance} roll{remainingBalance !== 1 ? 's' : ''}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                            ~{(remainingBalance * METERS_PER_ROLL).toLocaleString()} m
+                          </div>
                         </td>
                         <td style={{ padding: '0.85rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                           {log.reason || '—'}
@@ -920,9 +937,14 @@ const CoilInventoryPage = () => {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                  Coil Rolls to Deduct *
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block' }}>
+                    Coil Rolls to Deduct *
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    1 Roll = 4,100 linear meters
+                  </span>
+                </div>
                 <input
                   type="number"
                   step="1"
@@ -939,11 +961,16 @@ const CoilInventoryPage = () => {
                   }}
                 />
                 {rollsToDeduct && !isNaN(parseInt(rollsToDeduct, 10)) && (
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                    Remaining after deduction:{' '}
-                    <strong style={{ color: (selectedCoil.coilCount - parseInt(rollsToDeduct, 10)) <= 0 ? '#ef4444' : '#10b981' }}>
-                      {Math.max(0, (selectedCoil.coilCount ?? 0) - parseInt(rollsToDeduct, 10))} Roll(s)
-                    </strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4, fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                    <span>
+                      Deducting: <strong>{parseInt(rollsToDeduct, 10)} Roll(s)</strong> ({(parseInt(rollsToDeduct, 10) * METERS_PER_ROLL).toLocaleString()} m)
+                    </span>
+                    <span>
+                      Remaining:{' '}
+                      <strong style={{ color: (selectedCoil.coilCount - parseInt(rollsToDeduct, 10)) <= 0 ? '#ef4444' : '#10b981' }}>
+                        {Math.max(0, (selectedCoil.coilCount ?? 0) - parseInt(rollsToDeduct, 10))} Roll(s) (~{(Math.max(0, (selectedCoil.coilCount ?? 0) - parseInt(rollsToDeduct, 10)) * METERS_PER_ROLL).toLocaleString()} m)
+                      </strong>
+                    </span>
                   </div>
                 )}
               </div>
@@ -1022,9 +1049,14 @@ const CoilInventoryPage = () => {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                  Coil Rolls to Add *
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block' }}>
+                    Coil Rolls to Add *
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    1 Roll = 4,100 linear meters
+                  </span>
+                </div>
                 <input
                   type="number"
                   step="1"
@@ -1040,11 +1072,16 @@ const CoilInventoryPage = () => {
                   }}
                 />
                 {rollsToRestock && !isNaN(parseInt(rollsToRestock, 10)) && (
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                    New Stock after Restock:{' '}
-                    <strong style={{ color: '#10b981' }}>
-                      {(selectedCoil.coilCount ?? 0) + parseInt(rollsToRestock, 10)} Roll(s)
-                    </strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4, fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                    <span>
+                      Adding: <strong>{parseInt(rollsToRestock, 10)} Roll(s)</strong> ({(parseInt(rollsToRestock, 10) * METERS_PER_ROLL).toLocaleString()} m)
+                    </span>
+                    <span>
+                      New Stock:{' '}
+                      <strong style={{ color: '#10b981' }}>
+                        {(selectedCoil.coilCount ?? 0) + parseInt(rollsToRestock, 10)} Roll(s) (~{(((selectedCoil.coilCount ?? 0) + parseInt(rollsToRestock, 10)) * METERS_PER_ROLL).toLocaleString()} m)
+                      </strong>
+                    </span>
                   </div>
                 )}
               </div>
@@ -1311,7 +1348,7 @@ const CoilInventoryPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                    Initial Rolls per Color *
+                    Initial Rolls per Color * (1 Roll = 4,100m)
                   </label>
                   <input
                     type="number"
@@ -1327,7 +1364,7 @@ const CoilInventoryPage = () => {
                     }}
                   />
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                    Total new rolls: {(parseInt(initialRolls, 10) || 0) * selectedColorsToAdd.length}
+                    Total new rolls: {(parseInt(initialRolls, 10) || 0) * selectedColorsToAdd.length} (~{(((parseInt(initialRolls, 10) || 0) * selectedColorsToAdd.length) * METERS_PER_ROLL).toLocaleString()} m)
                   </span>
                 </div>
 

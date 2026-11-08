@@ -679,13 +679,13 @@ const Checkout = () => {
                 navigate(`/order/${success}`);
               }
             }} 
-            startIcon={<i className="fi fi-rr-receipt" style={{ fontSize: '14px' }}></i>}
+            
             sx={{ fontWeight: 700 }}
           >
             Download Official Receipt (PDF)
           </Button>
           <Button variant="contained" color="primary" onClick={() => navigate(`/order/${success}`)} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <i className="fi fi-rr-box" style={{ fontSize: '14px' }}></i>
+            
             View Order
           </Button>
         </Box>

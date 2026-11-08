@@ -1,5 +1,7 @@
 const prisma = require("../../config/db");
 
+const METERS_PER_COIL_ROLL = 4100;
+
 const OFFICIAL_COIL_COLORS = [
   "Marshall Dark Gray",
   "Saipan Brown",
@@ -42,8 +44,13 @@ const getCoils = async (req, res) => {
 
     const enriched = coils.map((c) => {
       const coilStatus = getCoilStatus(c);
+      const count = c.coilCount || 0;
+      const linearMeters = count * METERS_PER_COIL_ROLL;
       return {
         ...c,
+        availableMeters: linearMeters,
+        linearMeters,
+        metersPerRoll: METERS_PER_COIL_ROLL,
         status: coilStatus
       };
     });
@@ -79,7 +86,7 @@ const getCoilSummary = async (req, res) => {
     for (const c of coils) {
       const count = c.coilCount || 0;
       totalRolls += count;
-      totalMeters += (c.availableMeters || 0);
+      totalMeters += count * METERS_PER_COIL_ROLL;
       thicknessCounts[c.thickness] = (thicknessCounts[c.thickness] || 0) + count;
 
       const status = getCoilStatus(c);
@@ -94,6 +101,7 @@ const getCoilSummary = async (req, res) => {
         totalCoils: totalRolls,
         totalRolls,
         totalMeters: Math.round(totalMeters),
+        metersPerRoll: METERS_PER_COIL_ROLL,
         totalVariants: coils.length,
         thicknessCounts,
         optimalCount,
@@ -141,7 +149,8 @@ const deductCoil = async (req, res) => {
       const updatedCoil = await tx.coilInventory.update({
         where: { id },
         data: {
-          coilCount: remainingCount
+          coilCount: remainingCount,
+          availableMeters: remainingCount * METERS_PER_COIL_ROLL
         }
       });
 
@@ -153,9 +162,9 @@ const deductCoil = async (req, res) => {
           previousCount,
           coilsDeducted: countToDeduct,
           remainingCount,
-          previousMeters: previousCount,
-          metersDeducted: countToDeduct,
-          remainingMeters: remainingCount,
+          previousMeters: previousCount * METERS_PER_COIL_ROLL,
+          metersDeducted: countToDeduct * METERS_PER_COIL_ROLL,
+          remainingMeters: remainingCount * METERS_PER_COIL_ROLL,
           actionType: "deduction",
           reason: reason || (orderId ? `Production Order #ORD-${orderId}` : "Manual roll-forming job deduction")
         }
@@ -217,7 +226,8 @@ const restockCoil = async (req, res) => {
       const updatedCoil = await tx.coilInventory.update({
         where: { id },
         data: {
-          coilCount: remainingCount
+          coilCount: remainingCount,
+          availableMeters: remainingCount * METERS_PER_COIL_ROLL
         }
       });
 
@@ -228,9 +238,9 @@ const restockCoil = async (req, res) => {
           previousCount,
           coilsDeducted: -countToAdd,
           remainingCount,
-          previousMeters: previousCount,
-          metersDeducted: -countToAdd,
-          remainingMeters: remainingCount,
+          previousMeters: previousCount * METERS_PER_COIL_ROLL,
+          metersDeducted: -countToAdd * METERS_PER_COIL_ROLL,
+          remainingMeters: remainingCount * METERS_PER_COIL_ROLL,
           actionType: "restock",
           reason: reason || "Coil roll delivery restock"
         }
@@ -378,7 +388,7 @@ const addCoil = async (req, res) => {
             color: col,
             coilCount: parsedInitialCount,
             minAlertCount: parsedAlertCount,
-            availableMeters: parsedInitialCount * 1000
+            availableMeters: parsedInitialCount * METERS_PER_COIL_ROLL
           }
         });
 
@@ -390,8 +400,8 @@ const addCoil = async (req, res) => {
             coilsDeducted: -parsedInitialCount,
             remainingCount: parsedInitialCount,
             previousMeters: 0,
-            metersDeducted: -parsedInitialCount * 1000,
-            remainingMeters: parsedInitialCount * 1000,
+            metersDeducted: -parsedInitialCount * METERS_PER_COIL_ROLL,
+            remainingMeters: parsedInitialCount * METERS_PER_COIL_ROLL,
             actionType: "creation",
             reason: `Initial stock provisioning for gauge/color: ${normalizedThickness} ${col}`
           }
@@ -427,6 +437,7 @@ const addCoil = async (req, res) => {
 };
 
 module.exports = {
+  METERS_PER_COIL_ROLL,
   getCoils,
   getCoilSummary,
   deductCoil,

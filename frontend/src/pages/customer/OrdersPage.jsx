@@ -24,7 +24,8 @@ import {
   CustomCustomerTotalOrdersIcon,
   CustomCustomerInProgressIcon,
   CustomCustomerCompletedIcon,
-  CustomCustomerTotalSpentIcon
+  CustomCustomerTotalSpentIcon,
+  CustomEmptyOrdersSearchIcon
 } from '../../components/icons';
 
 const getOrderStatusMeta = (status, fulfillmentType, paymentStatus) => {
@@ -440,7 +441,7 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
               e.stopPropagation();
               generateReceiptPDF(order);
             }}
-            startIcon={<i className="fi fi-rr-receipt" style={{ fontSize: 13, color: '#4f772d' }} />}
+            
             sx={{ 
               fontWeight: 700, 
               textTransform: 'none', 
@@ -457,7 +458,7 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'text.secondary', fontSize: '0.8rem', fontWeight: 700 }}>
             <span>View Full Details</span>
-            <i className="fi fi-rr-arrow-right" style={{ fontSize: 12, marginTop: 1 }} />
+            
           </Box>
         </Box>
       </CardActionArea>
@@ -969,7 +970,7 @@ const OrdersPage = () => {
       <Box sx={{ mb: 2.5 }}>
         <TextField
           fullWidth
-          placeholder="Search by Order ID (#0022), roofing profile name, or payment method…"
+          placeholder="Search by Order ID, roofing profile name, or payment method…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
@@ -1067,35 +1068,39 @@ const OrdersPage = () => {
             bgcolor: 'background.paper' 
           }}
         >
-          <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-            <i className="fi fi-rr-search-alt" style={{ fontSize: 26, color: '#94a3b8' }} />
+          <Box 
+            sx={{ 
+              width: { xs: 72, sm: 84 }, 
+              height: { xs: 72, sm: 84 }, 
+              borderRadius: '50%', 
+              background: 'linear-gradient(145deg, #ffffff, #f1f5f9)', 
+              border: '1.5px solid', 
+              borderColor: 'divider', 
+              boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255, 255, 255, 0.8)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              mx: 'auto', 
+              mb: 2.5 
+            }}
+          >
+            <CustomEmptyOrdersSearchIcon size={52} />
           </Box>
           <Typography variant="h5" fontWeight={900} gutterBottom>
             {orders.length === 0 ? "You haven't placed any orders yet" : 'No orders found'}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, maxWidth: 420, mx: 'auto' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: orders.length === 0 ? 3.5 : 0, maxWidth: 420, mx: 'auto' }}>
             {orders.length === 0
               ? 'Customize your first roofing profile or browse our catalog to get started.'
               : 'No orders matched your active filter or search keywords. Try selecting another tab or clearing search.'}
           </Typography>
-          {orders.length === 0 ? (
+          {orders.length === 0 && (
             <Button 
               variant="contained" 
               onClick={() => navigate('/dashboard')}
               sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#4f772d', '&:hover': { bgcolor: '#3d5c22' }, px: 3, py: 1 }}
             >
               Browse Roofing Catalog
-            </Button>
-          ) : (
-            <Button 
-              variant="outlined" 
-              onClick={() => {
-                setActiveTab('all');
-                setSearchTerm('');
-              }}
-              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}
-            >
-              Reset Filters
             </Button>
           )}
         </Paper>

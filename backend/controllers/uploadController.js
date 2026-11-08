@@ -58,8 +58,40 @@ const handleUploadBatchImages = async (req, res) => {
   }
 };
 
+const handleUploadVideo = async (req, res) => {
+  try {
+    const { video, folder = "products/videos" } = req.body;
+
+    if (!video) {
+      return res.status(400).json({
+        success: false,
+        message: "No video payload provided for upload.",
+      });
+    }
+
+    const publicUrl = await storageService.uploadBase64Video(video, folder);
+    const { isConfigured } = storageService.getStorageConfig();
+
+    return res.status(200).json({
+      success: true,
+      url: publicUrl,
+      isCdn: isConfigured && /^https?:\/\//i.test(publicUrl),
+      message: "Product video processed successfully.",
+    });
+  } catch (error) {
+    console.error("Video upload controller error:", error);
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      code: error.code || "UPLOAD_ERROR",
+      message: error.message || "Failed to process video upload.",
+    });
+  }
+};
+
 module.exports = {
   handleUploadImage,
   handleUploadBatchImages,
+  handleUploadVideo,
 };
 

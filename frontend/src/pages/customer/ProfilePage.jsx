@@ -613,7 +613,7 @@ const ProfilePage = () => {
               <Button
                 variant="contained"
                 onClick={handleOpenAddModal}
-                startIcon={<i className="fi fi-rr-plus" style={{ fontSize: 12 }} />}
+                
                 sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#4f772d', '&:hover': { bgcolor: '#3d5c22' } }}
               >
                 Add Your First Address

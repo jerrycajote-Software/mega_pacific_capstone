@@ -24,19 +24,29 @@ import {
 import CancelIcon from '@mui/icons-material/Cancel';
 import StarIcon from '@mui/icons-material/Star';
 import { io } from 'socket.io-client';
+import {
+  CustomFulfillmentPlacedIcon,
+  CustomFulfillmentFabricatingIcon,
+  CustomFulfillmentPickupIcon,
+  CustomFulfillmentDeliveryIcon,
+  CustomFulfillmentCompleteIcon,
+  CustomFulfillmentCancelledIcon,
+  CustomStorePickupChipIcon,
+  CustomPendingPaymentChipIcon
+} from '../../components/icons';
 
 const deliveryStatusSteps = [
-  { key: 'pending', label: 'Order Placed', subtitle: 'Received', iconClass: 'fi fi-rr-time-fast' },
-  { key: 'processing', label: 'Fabricating / Packing', subtitle: 'Plant Production', iconClass: 'fi fi-rr-box' },
-  { key: 'out_for_delivery', label: 'Out for Delivery', subtitle: 'Fleet Dispatch', iconClass: 'fi fi-rr-truck-side' },
-  { key: 'delivered', label: 'Delivered', subtitle: 'Handed Over', iconClass: 'fi fi-sr-check-circle' }
+  { key: 'pending', label: 'Order Placed', subtitle: 'Order received', activeSubtitle: 'Order received', iconClass: 'fi fi-rr-time-fast', IconComponent: CustomFulfillmentPlacedIcon },
+  { key: 'processing', label: 'In Production', subtitle: 'Cutting & packing', activeSubtitle: 'Cutting & packing', iconClass: 'fi fi-rr-box', IconComponent: CustomFulfillmentFabricatingIcon },
+  { key: 'out_for_delivery', label: 'Out for Delivery', subtitle: 'On the way', activeSubtitle: 'On the way', iconClass: 'fi fi-rr-truck-side', IconComponent: CustomFulfillmentDeliveryIcon },
+  { key: 'delivered', label: 'Delivered', subtitle: 'Delivered', activeSubtitle: 'Delivered', iconClass: 'fi fi-sr-check-circle', IconComponent: CustomFulfillmentCompleteIcon }
 ];
 
 const pickupStatusSteps = [
-  { key: 'pending', label: 'Order Placed', subtitle: 'Received', iconClass: 'fi fi-rr-time-fast' },
-  { key: 'processing', label: 'Fabricating / Staging', subtitle: 'Plant Production', iconClass: 'fi fi-rr-box' },
-  { key: 'ready_for_pickup', label: 'Ready for Pick-up', subtitle: 'Staged at Dock 1', iconClass: 'fi fi-rr-shop' },
-  { key: 'completed', label: 'Picked Up', subtitle: 'Retrieval Complete', iconClass: 'fi fi-sr-check-circle' }
+  { key: 'pending', label: 'Order Placed', subtitle: 'Order received', activeSubtitle: 'Order received', iconClass: 'fi fi-rr-time-fast', IconComponent: CustomFulfillmentPlacedIcon },
+  { key: 'processing', label: 'In Production', subtitle: 'Cutting & preparing', activeSubtitle: 'Cutting & preparing', iconClass: 'fi fi-rr-box', IconComponent: CustomFulfillmentFabricatingIcon },
+  { key: 'ready_for_pickup', label: 'Ready for Pick-up', subtitle: 'Ready at store', activeSubtitle: 'Ready at store', iconClass: 'fi fi-rr-shop', IconComponent: CustomFulfillmentPickupIcon },
+  { key: 'completed', label: 'Picked Up', subtitle: 'Order completed', activeSubtitle: 'Order completed', iconClass: 'fi fi-sr-check-circle', IconComponent: CustomFulfillmentCompleteIcon }
 ];
 
 const getOrderStatusMeta = (status, fulfillmentType) => {
@@ -53,6 +63,7 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
       badgeBg: 'rgba(220, 38, 38, 0.08)',
       badgeBorder: 'rgba(220, 38, 38, 0.25)',
       icon: 'fi fi-rr-cross-circle',
+      IconComponent: CustomFulfillmentCancelledIcon,
       stepIndex: -1,
       isTerminal: true
     };
@@ -64,12 +75,13 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
       label: isPickup ? 'Picked Up & Completed' : 'Delivered & Completed',
       shortLabel: isPickup ? 'Picked Up' : 'Completed',
       description: isPickup 
-        ? 'All items have been verified, signed for, and picked up from Mega Pacific Plant'
+        ? 'All items have been verified and picked up from Mega Pacific Plant & Store.'
         : 'Your order was successfully delivered and received.',
       badgeColor: '#16a34a',
       badgeBg: 'rgba(22, 163, 74, 0.08)',
       badgeBorder: 'rgba(22, 163, 74, 0.25)',
       icon: 'fi fi-sr-check-circle',
+      IconComponent: CustomFulfillmentCompleteIcon,
       stepIndex: 3,
       isTerminal: true
     };
@@ -85,6 +97,7 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
       badgeBg: 'rgba(22, 163, 74, 0.08)',
       badgeBorder: 'rgba(22, 163, 74, 0.25)',
       icon: 'fi fi-sr-check-circle',
+      IconComponent: CustomFulfillmentCompleteIcon,
       stepIndex: 3,
       isTerminal: true
     };
@@ -93,13 +106,14 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
   if (isPickup && s === 'ready_for_pickup') {
     return {
       statusKey: 'ready_for_pickup',
-      label: 'Ready for Pick-up at Plant',
+      label: 'Ready for Pick-up at Store',
       shortLabel: 'Ready for Pick-up',
-      description: 'Your sheet order is banded, inspected, and staged at Plant Dock 1. Please present your pass upon arrival.',
+      description: 'Your order is prepared, inspected, and ready for pick-up at our store. Please present your order reference upon arrival.',
       badgeColor: '#7c3aed',
       badgeBg: 'rgba(124, 58, 237, 0.08)',
       badgeBorder: 'rgba(124, 58, 237, 0.3)',
       icon: 'fi fi-rr-shop',
+      IconComponent: CustomFulfillmentPickupIcon,
       stepIndex: 2,
       isTerminal: false
     };
@@ -115,6 +129,7 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
       badgeBg: 'rgba(37, 99, 235, 0.08)',
       badgeBorder: 'rgba(37, 99, 235, 0.25)',
       icon: 'fi fi-rr-truck-side',
+      IconComponent: CustomFulfillmentDeliveryIcon,
       stepIndex: 2,
       isTerminal: false
     };
@@ -123,15 +138,16 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
   if (s === 'processing' || s === 'finance_verified') {
     return {
       statusKey: 'processing',
-      label: isPickup ? 'Fabrication & Staging in Progress' : 'Fabrication & Packing in Progress',
-      shortLabel: 'Fabricating',
+      label: isPickup ? 'Production in Progress' : 'Production & Packing in Progress',
+      shortLabel: 'In Production',
       description: isPickup
-        ? 'Plant production crew is cutting, inspecting, and banding your sheets for dock staging.'
-        : 'Plant crew is custom-cutting sheets and packaging for logistics transit.',
+        ? 'Our production crew is cutting, inspecting, and preparing your order for store pick-up.'
+        : 'Our production crew is cutting sheets and preparing your order for delivery.',
       badgeColor: '#d97706',
       badgeBg: 'rgba(217, 119, 6, 0.08)',
       badgeBorder: 'rgba(217, 119, 6, 0.25)',
       icon: 'fi fi-rr-box',
+      IconComponent: CustomFulfillmentFabricatingIcon,
       stepIndex: 1,
       isTerminal: false
     };
@@ -141,11 +157,12 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
     statusKey: 'pending',
     label: 'Order Placed & Awaiting Confirmation',
     shortLabel: 'Order Placed',
-    description: 'Your order details have been received and logged in the dispatch production queue.',
+    description: 'Your order details have been received and logged in our production queue.',
     badgeColor: '#0284c7',
     badgeBg: 'rgba(2, 132, 199, 0.08)',
     badgeBorder: 'rgba(2, 132, 199, 0.25)',
     icon: 'fi fi-rr-time-fast',
+    IconComponent: CustomFulfillmentPlacedIcon,
     stepIndex: 0,
     isTerminal: false
   };
@@ -439,7 +456,7 @@ const OrderDetails = () => {
             <Chip
               label={isPickup ? 'Store Pick-up' : 'Fleet Delivery'}
               size="small"
-              icon={<i className={isPickup ? 'fi fi-rr-shop' : 'fi fi-rr-truck-side'} style={{ fontSize: 13, marginLeft: 6 }} />}
+              icon={isPickup ? <CustomStorePickupChipIcon size={16} /> : <CustomFulfillmentDeliveryIcon size={16} />}
               sx={{
                 fontWeight: 700,
                 fontSize: '0.75rem',
@@ -453,7 +470,7 @@ const OrderDetails = () => {
             <Chip
               label={order.paymentStatus === 'paid' ? 'Paid' : 'Payment Pending'}
               size="small"
-              icon={<i className={order.paymentStatus === 'paid' ? 'fi fi-sr-check-circle' : 'fi fi-rr-time-fast'} style={{ fontSize: 12, marginLeft: 6 }} />}
+              icon={order.paymentStatus === 'paid' ? <CustomFulfillmentCompleteIcon size={15} /> : <CustomPendingPaymentChipIcon size={15} />}
               sx={{
                 fontWeight: 700,
                 fontSize: '0.75rem',
@@ -493,18 +510,26 @@ const OrderDetails = () => {
             gap: 2
           }}
         >
-          <Avatar 
+          <Box 
             sx={{ 
-              bgcolor: statusMeta.badgeColor, 
-              color: '#ffffff', 
-              width: 44, 
-              height: 44, 
-              boxShadow: `0 4px 14px ${statusMeta.badgeColor}33`,
+              width: 50, 
+              height: 50, 
+              borderRadius: '50%',
+              background: 'linear-gradient(145deg, #ffffff, #f1f5f9)',
+              border: '2px solid #cbd5e1',
+              boxShadow: `0 4px 14px ${statusMeta.badgeColor}25, inset 0 1px 2px rgba(255,255,255,0.8)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               flexShrink: 0
             }}
           >
-            <i className={statusMeta.icon} style={{ fontSize: 20 }} />
-          </Avatar>
+            {statusMeta.IconComponent ? (
+              <statusMeta.IconComponent size={30} />
+            ) : (
+              <i className={statusMeta.icon} style={{ fontSize: 22, color: statusMeta.badgeColor }} />
+            )}
+          </Box>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 800, letterSpacing: 0.5, color: statusMeta.badgeColor, display: 'block' }}>
               Fulfillment Status
@@ -553,7 +578,13 @@ const OrderDetails = () => {
                 mb: 1.5 
               }}
             >
-              <i className={order.paymentStatus === 'refunded' ? "fi fi-sr-shield-check" : order.paymentStatus === 'refund_pending' ? "fi fi-rr-time-fast" : "fi fi-rr-cross-circle"} style={{ fontSize: 26 }} />
+              {order.paymentStatus === 'refunded' ? (
+                <CustomFulfillmentCompleteIcon size={30} />
+              ) : order.paymentStatus === 'refund_pending' ? (
+                <CustomFulfillmentPlacedIcon size={30} />
+              ) : (
+                <CustomFulfillmentCancelledIcon size={30} />
+              )}
             </Avatar>
             <Typography variant="h6" fontWeight={800} color={order.paymentStatus === 'refunded' ? '#10b981' : order.paymentStatus === 'refund_pending' ? '#f59e0b' : 'error.main'}>
               {order.paymentStatus === 'refunded' 
@@ -580,19 +611,22 @@ const OrderDetails = () => {
             <Box 
               sx={{ 
                 position: 'absolute', 
-                top: { xs: 24, sm: 28 }, 
+                top: { xs: 26, sm: 30 }, 
                 left: { xs: '6%', sm: '8%' }, 
                 right: { xs: '6%', sm: '8%' }, 
-                height: 5, 
-                bgcolor: 'grey.100', 
+                height: 6, 
+                bgcolor: '#e2e8f0', 
                 borderRadius: 3,
+                border: '1px solid #cbd5e1',
                 zIndex: 0
               }}
             >
               <Box 
                 sx={{ 
                   height: '100%', 
-                  bgcolor: isReadyForPickup ? '#7c3aed' : '#16a34a', 
+                  background: isReadyForPickup 
+                    ? 'linear-gradient(90deg, #16a34a, #7c3aed)' 
+                    : 'linear-gradient(90deg, #4ade80, #16a34a)', 
                   borderRadius: 3,
                   transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)', 
                   width: `${(Math.max(currentStatusIndex, 0) / (currentSteps.length - 1)) * 100}%` 
@@ -605,34 +639,33 @@ const OrderDetails = () => {
                 const isStepCompleted = index < currentStatusIndex || (isCompleted && index === currentStatusIndex);
                 const isCurrentActive = index === currentStatusIndex && !isCompleted;
 
-                let nodeBg = '#ffffff';
-                let nodeColor = '#94a3b8';
-                let nodeBorder = '2px solid #e2e8f0';
+                let nodeBg = 'linear-gradient(145deg, #ffffff, #f8fafc)';
+                let nodeBorder = '2px solid #cbd5e1';
+                let nodeShadow = '0 2px 6px rgba(0,0,0,0.06)';
 
                 if (isStepCompleted) {
-                  nodeBg = '#16a34a';
-                  nodeColor = '#ffffff';
-                  nodeBorder = '3px solid #ffffff';
+                  nodeBg = 'linear-gradient(145deg, #ffffff, #f0fdf4)';
+                  nodeBorder = '2.5px solid #16a34a';
+                  nodeShadow = '0 4px 14px rgba(22, 163, 74, 0.25)';
                 } else if (isCurrentActive) {
-                  nodeBg = isReadyForPickup ? '#7c3aed' : '#4f772d';
-                  nodeColor = '#ffffff';
-                  nodeBorder = '3px solid #ffffff';
+                  nodeBg = isReadyForPickup ? 'linear-gradient(145deg, #ffffff, #faf5ff)' : 'linear-gradient(145deg, #ffffff, #f0fdf4)';
+                  nodeBorder = `2.5px solid ${isReadyForPickup ? '#7c3aed' : '#16a34a'}`;
+                  nodeShadow = `0 6px 18px ${isReadyForPickup ? 'rgba(124, 58, 237, 0.35)' : 'rgba(22, 163, 74, 0.35)'}`;
                 }
 
                 return (
-                  <Box key={step.key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: { xs: 72, sm: 110 } }}>
+                  <Box key={step.key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: { xs: 78, sm: 114 } }}>
                     <Box
                       sx={{
-                        width: { xs: 38, sm: 46 },
-                        height: { xs: 38, sm: 46 },
+                        width: { xs: 46, sm: 54 },
+                        height: { xs: 46, sm: 54 },
                         borderRadius: '50%',
-                        bgcolor: nodeBg,
-                        color: nodeColor,
+                        background: nodeBg,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         border: nodeBorder,
-                        boxShadow: (isStepCompleted || isCurrentActive) ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
+                        boxShadow: nodeShadow,
                         transition: 'all 0.4s ease',
                         position: 'relative'
                       }}
@@ -641,18 +674,24 @@ const OrderDetails = () => {
                         <Box
                           sx={{
                             position: 'absolute',
-                            inset: -4,
+                            inset: -5,
                             borderRadius: '50%',
-                            border: `2px solid ${isReadyForPickup ? '#7c3aed' : '#4f772d'}`,
-                            opacity: 0.5,
+                            border: `2px solid ${isReadyForPickup ? '#7c3aed' : '#16a34a'}`,
+                            opacity: 0.6,
                             animation: 'pulse 2s infinite'
                           }}
                         />
                       )}
-                      <i 
-                        className={isStepCompleted ? 'fi fi-sr-check' : step.iconClass} 
-                        style={{ fontSize: isStepCompleted ? 16 : 18 }} 
-                      />
+                      {isStepCompleted ? (
+                        <CustomFulfillmentCompleteIcon size={28} />
+                      ) : step.IconComponent ? (
+                        <step.IconComponent size={28} />
+                      ) : (
+                        <i 
+                          className={step.iconClass} 
+                          style={{ fontSize: 20 }} 
+                        />
+                      )}
                     </Box>
 
                     <Typography 
@@ -673,12 +712,12 @@ const OrderDetails = () => {
                       sx={{ 
                         display: { xs: 'none', sm: 'block' },
                         fontSize: '0.7rem', 
-                        color: isCurrentActive ? (isReadyForPickup ? '#7c3aed' : '#4f772d') : 'text.secondary',
+                        color: isCurrentActive ? (isReadyForPickup ? '#7c3aed' : '#16a34a') : isStepCompleted ? 'text.secondary' : 'text.disabled',
                         fontWeight: isCurrentActive ? 700 : 400,
                         mt: 0.25
                       }}
                     >
-                      {isStepCompleted ? 'Completed' : isCurrentActive ? 'Active Stage' : step.subtitle}
+                      {isStepCompleted ? 'Completed' : (isCurrentActive ? (step.activeSubtitle || step.subtitle) : step.subtitle)}
                     </Typography>
                   </Box>
                 );
@@ -705,7 +744,7 @@ const OrderDetails = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
             <Chip
               icon={<i className="fi fi-rr-shop" style={{ fontSize: 13, marginLeft: 6 }} />}
-              label="SIGNAL TRANSMITTED • READY FOR PICK-UP"
+              label="READY FOR PICK-UP"
               sx={{
                 bgcolor: '#7c3aed',
                 color: '#ffffff',
@@ -715,7 +754,7 @@ const OrderDetails = () => {
               }}
             />
             <Typography variant="caption" color="text.secondary">
-              Verified & Staged by Mega Pacific Logistics Dispatch
+              Verified & prepared by Mega Pacific team
             </Typography>
           </Box>
 
@@ -725,16 +764,16 @@ const OrderDetails = () => {
                 Your Order is Ready to Pick-up
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.6 }}>
-                Your custom-cut roofing sheets, flashings, and accessories have passed fabrication quality inspection and are bundled at our facility loading bay. You may now dispatch your vehicle for loading and retrieval.
+                Your custom-cut roofing sheets, flashings, and accessories have passed quality inspection and are ready for pick-up. You may now visit our store to claim your order.
               </Typography>
 
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 2.5 }}>
                 <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
                   <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', display: 'block', mb: 0.5 }}>
-                    Plant Address & Loading Bay
+                    Plant & Store Address
                   </Typography>
                   <Typography variant="body2" fontWeight={800} color="text.primary">
-                    Mega Pacific Plant — Loading Dock 1
+                    Mega Pacific Plant & Main Store
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Aguinaldo Highway, Imus / Cavite Main Branch
@@ -758,7 +797,7 @@ const OrderDetails = () => {
                 <i className="fi fi-rr-info" style={{ fontSize: 18, color: '#ca8a04', marginTop: 2 }} />
                 <Box>
                   <Typography variant="caption" fontWeight={800} color="#854d0e" display="block">
-                    Requirements for Handover:
+                    Requirements for Pick-up:
                   </Typography>
                   <Typography variant="caption" color="#713f12" sx={{ lineHeight: 1.4 }}>
                     1. Valid Government-Issued ID &nbsp;•&nbsp; 2. Digital Order Pass <strong>{formattedOrderId}</strong> &nbsp;•&nbsp; If sending a third-party hauler, provide an authorization letter.
@@ -785,13 +824,13 @@ const OrderDetails = () => {
                 <i className="fi fi-rr-qr" style={{ fontSize: 26 }} />
               </Avatar>
               <Typography variant="caption" color="text.secondary" fontWeight={700} textTransform="uppercase">
-                Official Retrieval Pass
+                Official Pick-up Pass
               </Typography>
               <Typography variant="h5" fontWeight={900} color="text.primary" sx={{ my: 0.5, letterSpacing: '0.04em' }}>
                 {formattedOrderId}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2 }}>
-                Present this code at Plant Security Gate
+                Present this order number upon pick-up
               </Typography>
               <Button
                 variant="outlined"
@@ -1061,9 +1100,8 @@ const OrderDetails = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 2, mb: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-              <i className={isPickup ? 'fi fi-rr-shop' : 'fi fi-rr-marker'} style={{ fontSize: 18, color: '#4f772d' }} />
               <Typography variant="h6" fontWeight={800} color="text.primary">
-                {isPickup ? 'Plant Handover & Retrieval Info' : 'Shipping & Jobsite Destination'}
+                {isPickup ? 'Store Pick-up Location & Schedule' : 'Shipping & Jobsite Destination'}
               </Typography>
             </Box>
 
@@ -1071,7 +1109,7 @@ const OrderDetails = () => {
               <Stack spacing={2.5}>
                 <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
                   <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase">
-                    Official Retrieval Location
+                    Store Pick-up Address
                   </Typography>
                   <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mt: 0.5 }}>
                     Mega Pacific Metal & Steel Corp.
@@ -1096,7 +1134,7 @@ const OrderDetails = () => {
 
                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase">
-                      Dispatch Desk Contact
+                      Store Contact Desk
                     </Typography>
                     <Typography variant="body2" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
                       Tel. NO.: (046) 416 9217
@@ -1110,7 +1148,7 @@ const OrderDetails = () => {
                 {order.notes && (
                   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase">
-                      Customer Retrieval Notes
+                      Customer Pick-up Notes
                     </Typography>
                     <Typography variant="body2" sx={{ mt: 0.5, fontStyle: 'italic' }}>
                       "{order.notes}"
@@ -1167,7 +1205,7 @@ const OrderDetails = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 2, mb: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-              <i className="fi fi-rr-receipt" style={{ fontSize: 18, color: '#4f772d' }} />
+              
               <Typography variant="h6" fontWeight={800} color="text.primary">
                 Payment Summary
               </Typography>
@@ -1220,21 +1258,11 @@ const OrderDetails = () => {
                 borderColor: 'divider', 
                 display: 'flex', 
                 alignItems: 'center', 
+                justifyContent: 'space-between',
                 gap: 2,
                 mb: 2.5
               }}
             >
-              <Avatar 
-                sx={{ 
-                  bgcolor: order.paymentStatus === 'paid' ? 'rgba(22, 163, 74, 0.12)' : 'rgba(217, 119, 6, 0.12)', 
-                  color: order.paymentStatus === 'paid' ? '#16a34a' : '#d97706',
-                  width: 42,
-                  height: 42
-                }}
-              >
-                <i className={order.paymentMode?.toLowerCase().includes('gcash') ? 'fi fi-rr-mobile' : 'fi fi-rr-credit-card'} style={{ fontSize: 18 }} />
-              </Avatar>
-
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={700} display="block">
                   Payment Method
@@ -1261,7 +1289,7 @@ const OrderDetails = () => {
             <Button
               variant="contained"
               fullWidth
-              startIcon={<i className="fi fi-rr-document-signed" style={{ fontSize: 15 }} />}
+              
               onClick={() => generateReceiptPDF(order)}
               sx={{
                 borderRadius: 2.5,

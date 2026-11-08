@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { CustomCustomerSupportDeskIcon } from '../icons';
 
 const SupportDockTab = ({ onOpenSupport, isOpen = false }) => {
   if (isOpen) return null;
@@ -50,7 +51,7 @@ const SupportDockTab = ({ onOpenSupport, isOpen = false }) => {
           flexShrink: 0
         }}
       />
-      <i className="fi fi-rr-comment-alt" style={{ fontSize: '15px', color: '#4f772d', flexShrink: 0 }} />
+      <CustomCustomerSupportDeskIcon size={18} />
       <Typography variant="body2" sx={{ fontWeight: 700, fontSize: { xs: '0.78rem', sm: '0.82rem' }, letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
         Live Support Desk
       </Typography>
