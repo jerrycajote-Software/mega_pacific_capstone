@@ -66,6 +66,7 @@ const createPreOrderProduct = async (req, res) => {
     maxMeters,
     imageUrl,
     imageUrls,
+    videoUrl,
     variants
   } = req.body;
 
@@ -174,6 +175,11 @@ const createPreOrderProduct = async (req, res) => {
       ? await storageService.uploadBase64Image(imageUrl, "products")
       : (finalImageUrls[0] || null);
 
+    let finalVideoUrl = null;
+    if (videoUrl && typeof videoUrl === "string" && videoUrl.trim()) {
+      finalVideoUrl = await storageService.uploadBase64Video(videoUrl.trim(), "products/videos");
+    }
+
     const product = await prisma.product.create({
       data: {
         name: normalizedName,
@@ -194,6 +200,7 @@ const createPreOrderProduct = async (req, res) => {
         maxMeters: maxMeters !== undefined && maxMeters !== "" ? parseFloat(maxMeters) : 21.0,
         imageUrl: finalImageUrl,
         imageUrls: finalImageUrls,
+        videoUrl: finalVideoUrl,
         variants: variants && variants.length > 0
           ? {
               create: variants.map((v) => {
@@ -226,7 +233,8 @@ const createPreOrderProduct = async (req, res) => {
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     console.error("Failed to create pre-order product:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to create pre-order product" });
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ success: false, error: error.message || "Failed to create pre-order product", code: error.code });
   }
 };
 
@@ -247,6 +255,7 @@ const updatePreOrderProduct = async (req, res) => {
     maxMeters,
     imageUrl,
     imageUrls,
+    videoUrl,
     variants
   } = req.body;
 
@@ -349,6 +358,15 @@ const updatePreOrderProduct = async (req, res) => {
       ? (imageUrl ? await storageService.uploadBase64Image(imageUrl, "products") : null)
       : (Array.isArray(finalImageUrls) && finalImageUrls.length > 0 ? finalImageUrls[0] : existing.imageUrl);
 
+    let finalVideoUrl = existing.videoUrl;
+    if (videoUrl !== undefined) {
+      if (videoUrl && typeof videoUrl === "string" && videoUrl.trim()) {
+        finalVideoUrl = await storageService.uploadBase64Video(videoUrl.trim(), "products/videos");
+      } else {
+        finalVideoUrl = null;
+      }
+    }
+
     const updated = await prisma.product.update({
       where: { id: productId },
       data: {
@@ -366,6 +384,7 @@ const updatePreOrderProduct = async (req, res) => {
         colors: parsedColors,
         imageUrl: finalImageUrl,
         imageUrls: finalImageUrls || [],
+        videoUrl: finalVideoUrl,
         isPreOrder: true,
         isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : existing.isActive
       },
@@ -439,7 +458,8 @@ const updatePreOrderProduct = async (req, res) => {
     res.status(200).json({ success: true, data: refreshed });
   } catch (error) {
     console.error("Failed to update pre-order product:", error);
-    res.status(500).json({ success: false, error: error.message || "Failed to update product" });
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ success: false, error: error.message || "Failed to update product", code: error.code });
   }
 };
 

@@ -324,7 +324,7 @@ const DeliveriesPage = () => {
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{order.customerName}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                        {isPickup ? '🏬 Store Pick-up — Dock 1' : (order.address || 'Jobsite Destination')}
+                        {isPickup ? '🏬 Store Pick-up' : (order.address || 'Jobsite Destination')}
                       </div>
                     </td>
                     <td style={{ padding: '1rem' }}>
@@ -605,7 +605,7 @@ const DeliveriesPage = () => {
                         <div>
                           <div>Transmit "Ready for Pick-up" Signal to Customer</div>
                           <div style={{ fontSize: '0.74rem', opacity: 0.9, fontWeight: 400, marginTop: 2 }}>
-                            Sends live web socket alert and official pick-up pass email with dock instructions.
+                            Sends live web socket alert and official pick-up pass email with pick-up instructions.
                           </div>
                         </div>
                       </button>

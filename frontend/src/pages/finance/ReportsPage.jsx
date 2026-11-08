@@ -260,7 +260,7 @@ const ReportsPage = () => {
             color="primary"
             onClick={handleExportPDF}
             disabled={loading || !reportData}
-            startIcon={<i className="fi fi-rr-file-pdf" 
+            startIcon={<i className="fi fi-rr-file-pdf"
             style={{ fontSize: 14 }} />}
             sx={{
               borderRadius: 2.5,

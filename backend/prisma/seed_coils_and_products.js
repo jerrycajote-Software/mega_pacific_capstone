@@ -208,7 +208,7 @@ async function seed() {
           color,
           coilCount: initialCount,
           minAlertCount: 1,
-          availableMeters: initialCount * 1200,
+          availableMeters: initialCount * 4100,
           minAlertMeters: 250
         }
       });

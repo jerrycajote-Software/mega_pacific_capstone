@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import SearchIcon from '@mui/icons-material/Search';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CustomMessageDialog from '../../components/CustomMessageDialog';
+import { useCustomDialog } from '../../hooks/useCustomDialog';
 
 const StatusBadge = ({ status }) => {
   const s = status ? status.toLowerCase() : '';
@@ -14,8 +14,7 @@ const StatusBadge = ({ status }) => {
   if (s === 'completed' || s === 'delivered' || s === 'shipped') { color = '#22c55e'; bg = 'rgba(34,197,94,0.1)'; }
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 99, background: bg, color, fontSize: '0.75rem', fontWeight: 600 }}>
-      <AccessTimeIcon sx={{ fontSize: 12 }} />
+    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 99, background: bg, color, fontSize: '0.75rem', fontWeight: 600 }}>
       <span style={{ textTransform: 'capitalize' }}>{status.replace(/_/g, ' ')}</span>
     </span>
   );
@@ -27,6 +26,13 @@ const PaymentsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+
+  const {
+    dialogState,
+    showSuccess,
+    showError,
+    showConfirm
+  } = useCustomDialog();
 
   const fetchOrders = async () => {
     try {
@@ -54,28 +60,55 @@ const PaymentsPage = () => {
     };
   }, []);
 
-  const handleVerify = async (id) => {
+  const handleVerifyPayment = (orderOrId) => {
     if (processingId) return;
-    setProcessingId(id);
-    try {
-      const token = localStorage.getItem('appToken');
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const res = await axios.patch(`${API_URL}/api/finance/orders/${id}/verify`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.data.success) {
-        alert(res.data.message || 'Payment verified and order forwarded to Logistics.');
-        await fetchOrders();
-        if (selectedOrder && selectedOrder.rawId === id) setSelectedOrder(null);
+    const target = typeof orderOrId === 'object' && orderOrId !== null
+      ? orderOrId 
+      : (orders.find(o => o.rawId === orderOrId) || { rawId: orderOrId, id: `#ORD-${orderOrId}` });
+    const orderId = target.id || `#ORD-${target.rawId}`;
+    const rawId = target.rawId || target.id;
+
+    showConfirm({
+      type: 'warning',
+      title: 'Confirm Payment Verification',
+      message: `Are you sure you want to verify payment for Order ${orderId}?`,
+      description: 'This will record payment validation and forward the order to Logistics for fabrication and fulfillment.',
+      confirmText: 'Verify Payment',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        setProcessingId(rawId);
+        try {
+          const token = localStorage.getItem('appToken');
+          const API_URL = import.meta.env.VITE_API_URL || '';
+          const res = await axios.patch(`${API_URL}/api/finance/orders/${rawId}/verify`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data.success) {
+            await fetchOrders();
+            if (selectedOrder && selectedOrder.rawId === rawId) setSelectedOrder(null);
+            showSuccess({
+              title: 'Payment Verified Successfully',
+              message: res.data.message || 'Payment verified and order forwarded to Logistics.',
+              confirmText: 'Acknowledge'
+            });
+          }
+        } catch (err) {
+          console.error('Failed to verify order', err);
+          const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to verify payment';
+          showError({
+            title: 'Verification Failed',
+            message: errorMessage,
+            confirmText: 'Dismiss'
+          });
+        } finally {
+          setProcessingId(null);
+        }
       }
-    } catch (err) {
-      console.error('Failed to verify order', err);
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to verify payment';
-      alert(errorMessage);
-    } finally {
-      setProcessingId(null);
-    }
+    });
   };
+
+  const handleViewOrderDetails = (order) => setSelectedOrder(order);
+  const handleCloseOrderDetailsModal = () => setSelectedOrder(null);
 
   const filteredOrders = orders.filter(o => 
     o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -120,29 +153,82 @@ const PaymentsPage = () => {
                 <td style={{ padding: '1rem' }}>{order.customerName}</td>
                 <td style={{ padding: '1rem', color: '#22c55e', fontWeight: 600 }}>₱{order.totalAmount.toLocaleString()}</td>
                 <td style={{ padding: '1rem' }}><StatusBadge status={order.orderStatus} /></td>
-                <td style={{ padding: '1rem', textAlign: 'right' }}>
-                  <button onClick={() => setSelectedOrder(order)} style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa', border: 'none', padding: '6px', borderRadius: 6, cursor: 'pointer', marginRight: 8 }}>
-                    <VisibilityIcon sx={{ fontSize: 18 }} />
-                  </button>
-                  {order.orderStatus === 'sales_approved' && (
-                    <button 
-                      onClick={() => handleVerify(order.rawId)} 
-                      disabled={Boolean(processingId)}
-                      style={{ 
-                        background: processingId === order.rawId ? 'rgba(139,92,246,0.3)' : 'rgba(139,92,246,0.1)', 
-                        color: '#a78bfa', 
-                        border: 'none', 
-                        padding: '6px 12px', 
-                        borderRadius: 6, 
-                        cursor: processingId ? 'not-allowed' : 'pointer', 
-                        fontWeight: 600, 
+                <td style={{ padding: '1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleViewOrderDetails(order)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '7px 14px',
                         fontSize: '0.8rem',
-                        opacity: processingId && processingId !== order.rawId ? 0.6 : 1
+                        fontWeight: 650,
+                        color: '#2563eb',
+                        background: 'rgba(37, 99, 235, 0.08)',
+                        border: '1px solid rgba(37, 99, 235, 0.28)',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        lineHeight: 1.2,
+                        textTransform: 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.16)';
+                        e.currentTarget.style.borderColor = '#2563eb';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.08)';
+                        e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.28)';
+                        e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
-                      {processingId === order.rawId ? 'Verifying...' : 'Verify Payment'}
+                      View Details
                     </button>
-                  )}
+                    {order.orderStatus === 'sales_approved' && (
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyPayment(order)}
+                        disabled={Boolean(processingId)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '7px 16px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          color: '#ffffff',
+                          background: processingId === order.rawId ? '#64748b' : '#16a34a',
+                          border: '1px solid transparent',
+                          borderRadius: '8px',
+                          cursor: processingId ? 'not-allowed' : 'pointer',
+                          boxShadow: processingId ? 'none' : '0 2px 8px rgba(22, 163, 74, 0.25)',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          lineHeight: 1.2,
+                          textTransform: 'none',
+                          opacity: processingId && processingId !== order.rawId ? 0.6 : 1,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!processingId) {
+                            e.currentTarget.style.background = '#15803d';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(22, 163, 74, 0.35)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!processingId) {
+                            e.currentTarget.style.background = '#16a34a';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(22, 163, 74, 0.25)';
+                          }
+                        }}
+                      >
+                        {processingId === order.rawId ? 'Verifying...' : 'Verify Payment'}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -158,7 +244,7 @@ const PaymentsPage = () => {
           <div style={{ background: 'var(--bg-secondary)', width: '100%', maxWidth: 600, borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden' }}>
             <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Payment Verification {selectedOrder.id}</h3>
-              <button onClick={() => setSelectedOrder(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><CloseIcon /></button>
+              <button onClick={handleCloseOrderDetailsModal} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><CloseIcon /></button>
             </div>
             <div style={{ padding: '1.5rem' }}>
               <p><strong>Customer:</strong> {selectedOrder.customerName}</p>
@@ -173,17 +259,35 @@ const PaymentsPage = () => {
             {selectedOrder.orderStatus === 'sales_approved' && (
               <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border)', background: 'var(--bg-primary)', textAlign: 'right' }}>
                 <button 
-                  onClick={() => handleVerify(selectedOrder.rawId)} 
+                  type="button"
+                  onClick={() => handleVerifyPayment(selectedOrder)} 
                   disabled={Boolean(processingId)}
                   style={{ 
-                    background: '#8b5cf6', 
+                    background: processingId ? '#64748b' : '#16a34a', 
                     color: 'white', 
                     border: 'none', 
-                    padding: '10px 20px', 
+                    padding: '10px 22px', 
                     borderRadius: 8, 
                     cursor: processingId ? 'not-allowed' : 'pointer', 
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    boxShadow: processingId ? 'none' : '0 2px 10px rgba(22, 163, 74, 0.3)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     opacity: processingId ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!processingId) {
+                      e.currentTarget.style.background = '#15803d';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(22, 163, 74, 0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!processingId) {
+                      e.currentTarget.style.background = '#16a34a';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 10px rgba(22, 163, 74, 0.3)';
+                    }
                   }}
                 >
                   {processingId === selectedOrder.rawId ? 'Verifying...' : 'Verify & Forward to Logistics'}
@@ -193,6 +297,9 @@ const PaymentsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Metal & Steel Message / Warning Dialog */}
+      <CustomMessageDialog {...dialogState} />
     </div>
   );
 };

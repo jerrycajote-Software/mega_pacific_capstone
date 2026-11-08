@@ -361,7 +361,7 @@ const Page = () => {
                 {/* Particulars / Description */}
                 <Box>
                   <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', mb: 1 }}>
-                    Description & Particulars
+                    Description and Particulars
                   </Typography>
                   <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="body2" color="text.primary" sx={{ lineHeight: 1.6 }}>
@@ -372,7 +372,7 @@ const Page = () => {
 
                 {/* Issuer Authority Note */}
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
-                  Issuer: Mega Pacific Metal And Steel Roofing System • Finance & Treasury Division, Imus Plant
+                  Issuer: Mega Pacific Metal And Steel Roofing System • Finance and Treasury Division, Imus Plant
                 </Typography>
               </Stack>
             </DialogContent>
@@ -384,7 +384,7 @@ const Page = () => {
               <Button
                 variant="contained"
                 color="primary"
-                startIcon={<DownloadIcon sx={{ fontSize: 18 }} />}
+                
                 onClick={() => handleDownloadVoucherPdf(selectedExpense)}
                 sx={{
                   fontWeight: 700,

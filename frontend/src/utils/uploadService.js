@@ -79,3 +79,44 @@ export const uploadBatchImagesToStorage = async (imagesArray = [], folder = 'pro
   }
 };
 
+export const uploadVideoToStorage = async (videoPayload, folder = 'products/videos') => {
+  if (!videoPayload) return '';
+
+  // Already a remote CDN or external URL (ex. YouTube, Vimeo, Supabase URL)
+  if (/^https?:\/\//i.test(videoPayload.trim())) {
+    return videoPayload.trim();
+  }
+
+  try {
+    const token = localStorage.getItem('appToken');
+    const res = await axios.post(
+      `${API_URL}/api/upload/video`,
+      { video: videoPayload, folder },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 120000,
+      }
+    );
+
+    if (res.data?.success && res.data.url) {
+      return res.data.url;
+    }
+    return videoPayload;
+  } catch (error) {
+    const errData = error?.response?.data;
+    console.error('Failed to upload video to CDN storage:', errData || error.message);
+    
+    if (error?.response?.status === 507 || errData?.code === 'STORAGE_INSUFFICIENT' || /insufficient|quota|out of space/i.test(errData?.message || errData?.error || '')) {
+      throw new Error(errData?.message || errData?.error || 'Storage is insufficient in production hosting. Please free up storage space in your Supabase project or contact support.');
+    }
+    if (error?.response?.status === 413 || /too large|exceeds/i.test(errData?.message || errData?.error || '')) {
+      throw new Error(errData?.message || errData?.error || 'Video file size exceeds the 25 MB limit. Please select a shorter or compressed video.');
+    }
+    // Graceful fallback to original payload so the product save flow is not blocked
+    return videoPayload;
+  }
+};
+

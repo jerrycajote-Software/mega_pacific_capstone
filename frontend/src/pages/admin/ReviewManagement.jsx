@@ -22,6 +22,7 @@ import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import { useAuth } from '../../context/AuthContext';
+import { CustomEmptyReviewsIcon } from '../../components/icons';
 
 const QUICK_REPLY_TEMPLATES = [
   { label: 'Gratitude', text: 'Thank you for your 5-star review! We are delighted to supply premium roofing materials for your project.' },
@@ -257,7 +258,7 @@ const ReviewManagement = () => {
               fontSize: '0.75rem', fontWeight: 700, padding: '3px 9px', borderRadius: 20,
               background: 'rgba(34,197,94,0.12)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.25)'
             }}>
-              <RateReviewIcon sx={{ fontSize: 13 }} />
+              
               {metrics.total} Submissions
             </span>
           </div>
@@ -450,8 +451,8 @@ const ReviewManagement = () => {
           borderRadius: 20, border: '1px dashed var(--border)', color: 'var(--text-muted)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12
         }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <RateReviewIcon sx={{ fontSize: 32, opacity: 0.4 }} />
+          <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CustomEmptyReviewsIcon size={64} />
           </div>
           <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             No reviews found matching your criteria
@@ -459,17 +460,6 @@ const ReviewManagement = () => {
           <div style={{ fontSize: '0.85rem', maxWidth: 400 }}>
             {searchTerm ? 'Try adjusting your search keywords or clear the filter to see more customer feedback.' : 'Customer product reviews will appear here as orders are completed.'}
           </div>
-          {(searchTerm || activeTab !== 'All') && (
-            <button
-              onClick={() => { setSearchTerm(''); setActiveTab('All'); }}
-              style={{
-                marginTop: 8, padding: '7px 16px', borderRadius: 10, background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-light)', color: 'var(--text-primary)', fontSize: '0.82rem', cursor: 'pointer', fontWeight: 600
-              }}
-            >
-              Reset Filters
-            </button>
-          )}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>

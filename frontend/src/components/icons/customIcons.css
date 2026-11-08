@@ -1,20 +1,20 @@
-/* Mega Pacific Custom Animated Colorful Navigation Icons Stylesheet */
+/* Mega Pacific Custom Clean Navigation Icons Stylesheet */
 
 .mpi-icon-base {
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
   overflow: visible;
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
 }
 
 .nav-link:hover .mpi-icon-base,
-.mpi-icon-base:hover {
-  transform: translateY(-1px) scale(1.1);
+.sidebar-toggle-btn:hover .mpi-icon-base {
+  transform: translateY(-0.5px) scale(1.05);
 }
 
 .nav-link.active .mpi-icon-base {
-  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.45));
+  transform: scale(1.02);
 }
 
 /* 1. Dashboard Icon Animations */
@@ -546,20 +546,11 @@
 .mpi-toggle-icon {
   display: inline-block;
   vertical-align: middle;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.28s ease;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .sidebar-toggle-btn:hover .mpi-toggle-icon {
-  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
-  transform: scale(1.08);
-}
-
-.mpi-toggle-arrow-expanded {
-  animation: mpiToggleChevronLeft 1.8s ease-in-out infinite;
-}
-
-.mpi-toggle-arrow-collapsed {
-  animation: mpiToggleChevronRight 1.8s ease-in-out infinite;
+  transform: scale(1.06);
 }
 
 /* Active Nav Indicator Glow Keyframes */
@@ -2065,6 +2056,260 @@
 .mpi-cust-kpi-card:hover .mpi-cust-badge {
   transform: scale(1.06);
 }
+
+/* 54. Customer Navigation Icons Animations (Home, Catalog, Profile) */
+@keyframes mpiCustHomeRoofSheen {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.8px);
+  }
+}
+
+@keyframes mpiCustHomeSmokeRise {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-2px) scale(1.3);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-3.5px) scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes mpiCustHomeSparkle {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 3px #fde047);
+  }
+}
+
+.mpi-cust-home-roof {
+  transition: transform 0.25s ease;
+}
+
+.mpi-cust-home-icon:hover .mpi-cust-home-roof,
+.mpi-icon-active.mpi-cust-home-icon .mpi-cust-home-roof {
+  animation: mpiCustHomeRoofSheen 2.4s ease-in-out infinite;
+}
+
+.mpi-cust-home-smoke {
+  animation: mpiCustHomeSmokeRise 2s ease-out infinite;
+}
+
+.mpi-cust-home-spark {
+  transform-origin: 16px 3.8px;
+  animation: mpiCustHomeSparkle 2.2s ease-in-out infinite;
+}
+
+@keyframes mpiCustCatSheetFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.2px);
+  }
+}
+
+@keyframes mpiCustCatSparkle {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #fbbf24);
+  }
+}
+
+.mpi-cust-cat-sheet-1 {
+  transition: transform 0.25s ease;
+}
+
+.mpi-cust-catalog-icon:hover .mpi-cust-cat-sheet-1,
+.mpi-icon-active.mpi-cust-catalog-icon .mpi-cust-cat-sheet-1 {
+  animation: mpiCustCatSheetFloat 2.6s ease-in-out infinite;
+}
+
+.mpi-cust-cat-spark {
+  transform-origin: 25px 5px;
+  animation: mpiCustCatSparkle 2s ease-in-out infinite;
+}
+
+@keyframes mpiCustProfAvatarBob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.8px);
+  }
+}
+
+@keyframes mpiCustProfBadgePulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.5));
+  }
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.95));
+  }
+}
+
+.mpi-cust-prof-avatar {
+  transition: transform 0.25s ease;
+}
+
+.mpi-cust-profile-icon:hover .mpi-cust-prof-avatar,
+.mpi-icon-active.mpi-cust-profile-icon .mpi-cust-prof-avatar {
+  animation: mpiCustProfAvatarBob 2.8s ease-in-out infinite;
+}
+
+.mpi-cust-prof-badge {
+  transform-origin: 23.5px 22.5px;
+  animation: mpiCustProfBadgePulse 2.4s ease-in-out infinite;
+}
+
+/* 55. Customer Live Support Desk Icon Animations */
+@keyframes mpiCustSupportBubbleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes mpiCustSupportDotBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(-2.2px) scale(1.25);
+    opacity: 1;
+    filter: drop-shadow(0 0 2px #fef08a);
+  }
+}
+
+@keyframes mpiCustSupportBeaconPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+.mpi-cust-support-bubble {
+  transition: transform 0.25s ease;
+}
+
+.mpi-cust-support-icon:hover .mpi-cust-support-bubble,
+.mpi-icon-active.mpi-cust-support-icon .mpi-cust-support-bubble {
+  animation: mpiCustSupportBubbleFloat 2.4s ease-in-out infinite;
+}
+
+.mpi-cust-support-dot-1 {
+  transform-origin: 10.5px 15px;
+  animation: mpiCustSupportDotBounce 1.4s ease-in-out infinite 0s;
+}
+
+.mpi-cust-support-dot-2 {
+  transform-origin: 16px 15px;
+  animation: mpiCustSupportDotBounce 1.4s ease-in-out infinite 0.22s;
+}
+
+.mpi-cust-support-dot-3 {
+  transform-origin: 21.5px 15px;
+  animation: mpiCustSupportDotBounce 1.4s ease-in-out infinite 0.44s;
+}
+
+.mpi-cust-support-beacon-ring {
+  transform-origin: 25.5px 6.5px;
+  animation: mpiCustSupportBeaconPulse 2s ease-out infinite;
+}
+
+.mpi-icon-active {
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.45));
+}
+
+/* 56. Empty Reviews Icon Animations */
+@keyframes mpiEmptyRevBubbleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes mpiEmptyRevStarGleam {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.4));
+  }
+  50% {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.85));
+  }
+}
+
+@keyframes mpiEmptyRevSparklePing {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #fde047);
+  }
+}
+
+.mpi-empty-reviews-icon {
+  display: inline-block;
+  overflow: visible;
+}
+
+.mpi-empty-review-bubble {
+  animation: mpiEmptyRevBubbleFloat 3s ease-in-out infinite;
+}
+
+.mpi-empty-review-star {
+  transform-origin: 31px 31px;
+  animation: mpiEmptyRevStarGleam 2.6s ease-in-out infinite;
+}
+
+.mpi-empty-review-sparkle-1 {
+  transform-origin: 48px 8.5px;
+  animation: mpiEmptyRevSparklePing 2.2s ease-in-out infinite;
+}
+
+.mpi-empty-review-sparkle-2 {
+  transform-origin: 8px 30px;
+  animation: mpiEmptyRevSparklePing 2.5s ease-in-out infinite 0.5s;
+}
+
+
+
 
 
 

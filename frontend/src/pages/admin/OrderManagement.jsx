@@ -362,7 +362,7 @@ const OrderManagement = () => {
                         onClick={() => generateReceiptPDF(order)}
                         title="Download Official Receipt (PDF)"
                       >
-                        <i className="fi fi-rr-receipt" style={{ fontSize: 14 }} />
+                        
                       </button>
 
                       {/* {order.orderStatus === 'pending' && (
@@ -470,7 +470,7 @@ const OrderManagement = () => {
                   }}
                   title="Download Official Receipt (PDF)"
                 >
-                  <i className="fi fi-rr-receipt" style={{ fontSize: 14 }} /> Official Receipt (PDF)
+                  
                 </button>
                 <button
                   onClick={() => setSelectedOrder(null)}

@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
-import ConfigurableRoofModel from '../pages/customer/roof-designer/components/ConfigurableRoofModel';
+import ConfigurableRoofModel from './ConfigurableRoofModel';
 import {
   getCompatibleRoofModel,
   getSupportedLengthRangeText,
