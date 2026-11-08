@@ -1,4 +1,5 @@
 const prisma = require("../config/db");
+const storageService = require("../services/storageService");
 
 exports.createInquiry = async (req, res) => {
   try {
@@ -7,9 +8,10 @@ exports.createInquiry = async (req, res) => {
 
     let contentToStore = initialMessage || '';
     if (image) {
+      const storedImageUrl = await storageService.uploadBase64Image(image, "chat");
       contentToStore = JSON.stringify({
         text: initialMessage || '',
-        image: image
+        image: storedImageUrl
       });
     }
 
@@ -52,9 +54,10 @@ exports.addMessage = async (req, res) => {
 
     let contentToStore = content || '';
     if (image) {
+      const storedImageUrl = await storageService.uploadBase64Image(image, "chat");
       contentToStore = JSON.stringify({
         text: content || '',
-        image: image
+        image: storedImageUrl
       });
     }
 

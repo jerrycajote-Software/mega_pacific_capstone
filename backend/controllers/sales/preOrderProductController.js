@@ -1,4 +1,5 @@
 const prisma = require("../../config/db");
+const storageService = require("../../services/storageService");
 
 const normalizeThickness = (val) => {
   if (!val) return "";
@@ -163,6 +164,16 @@ const createPreOrderProduct = async (req, res) => {
       }
     }
 
+    let finalImageUrls = Array.isArray(imageUrls) ? imageUrls : [];
+    if (finalImageUrls.length > 0) {
+      finalImageUrls = await Promise.all(
+        finalImageUrls.map((img) => storageService.uploadBase64Image(img, "products"))
+      );
+    }
+    const finalImageUrl = imageUrl
+      ? await storageService.uploadBase64Image(imageUrl, "products")
+      : (finalImageUrls[0] || null);
+
     const product = await prisma.product.create({
       data: {
         name: normalizedName,
@@ -181,8 +192,8 @@ const createPreOrderProduct = async (req, res) => {
         ribHeight: ribHeight !== undefined && ribHeight !== "" ? parseFloat(ribHeight) : null,
         colors: parsedColors,
         maxMeters: maxMeters !== undefined && maxMeters !== "" ? parseFloat(maxMeters) : 21.0,
-        imageUrl: imageUrl || (imageUrls && imageUrls[0]) || null,
-        imageUrls: imageUrls || [],
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls,
         variants: variants && variants.length > 0
           ? {
               create: variants.map((v) => {
@@ -328,6 +339,16 @@ const updatePreOrderProduct = async (req, res) => {
       }
     }
 
+    let finalImageUrls = imageUrls !== undefined ? imageUrls : existing.imageUrls;
+    if (Array.isArray(finalImageUrls) && finalImageUrls.length > 0) {
+      finalImageUrls = await Promise.all(
+        finalImageUrls.map((img) => storageService.uploadBase64Image(img, "products"))
+      );
+    }
+    let finalImageUrl = imageUrl !== undefined 
+      ? (imageUrl ? await storageService.uploadBase64Image(imageUrl, "products") : null)
+      : (Array.isArray(finalImageUrls) && finalImageUrls.length > 0 ? finalImageUrls[0] : existing.imageUrl);
+
     const updated = await prisma.product.update({
       where: { id: productId },
       data: {
@@ -343,10 +364,8 @@ const updatePreOrderProduct = async (req, res) => {
         nominalWidth: nominalWidth !== undefined && nominalWidth !== "" ? parseFloat(nominalWidth) : existing.nominalWidth,
         ribHeight: ribHeight !== undefined && ribHeight !== "" ? parseFloat(ribHeight) : existing.ribHeight,
         colors: parsedColors,
-        imageUrl: imageUrl !== undefined 
-          ? imageUrl 
-          : (Array.isArray(imageUrls) ? (imageUrls[0] || null) : existing.imageUrl),
-        imageUrls: imageUrls !== undefined ? imageUrls : existing.imageUrls,
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls || [],
         isPreOrder: true,
         isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : existing.isActive
       },
