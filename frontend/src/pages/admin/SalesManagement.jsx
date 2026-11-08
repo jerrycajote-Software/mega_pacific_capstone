@@ -70,11 +70,9 @@ const SalesManagement = () => {
 
   useEffect(() => {
     fetchSalesList();
-    const syncInterval = setInterval(fetchSalesList, 10000);
     const handleFocus = () => fetchSalesList();
     window.addEventListener('focus', handleFocus);
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

@@ -26,6 +26,7 @@ import WarehouseIcon from '@mui/icons-material/Warehouse';
 import SaveIcon from '@mui/icons-material/Save';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import { compressChatImage } from '../../utils/chatImageHelper';
 
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
@@ -251,12 +252,6 @@ const PreOrderProductsPage = () => {
       fetchProducts(false);
     });
 
-    const syncInterval = setInterval(() => {
-      fetchProducts(false);
-      fetchCoilSummary();
-      fetchCoils();
-    }, 10000);
-
     const handleFocus = () => {
       fetchProducts(false);
       fetchCoilSummary();
@@ -265,7 +260,6 @@ const PreOrderProductsPage = () => {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
       socket.disconnect();
     };
@@ -385,16 +379,17 @@ const PreOrderProductsPage = () => {
     const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (validFiles.length === 0) return;
 
-    validFiles.forEach(file => {
+    validFiles.forEach(async (file) => {
       if (formData.imageUrls.length >= 12) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      try {
+        const compressed = await compressChatImage(file, 900, 0.75);
         setFormData(prev => {
           if (prev.imageUrls.length >= 12) return prev;
-          return { ...prev, imageUrls: [...prev.imageUrls, e.target.result] };
+          return { ...prev, imageUrls: [...prev.imageUrls, compressed] };
         });
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Failed to compress image:', err);
+      }
     });
   };
 

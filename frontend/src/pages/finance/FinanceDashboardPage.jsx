@@ -156,9 +156,6 @@ const FinanceDashboardPage = () => {
   useEffect(() => {
     fetchDashboardData();
     fetchDeliverySettings();
-    const syncInterval = setInterval(() => {
-      fetchDashboardData();
-    }, 10000);
 
     const handleFocus = () => {
       fetchDashboardData();
@@ -166,7 +163,6 @@ const FinanceDashboardPage = () => {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

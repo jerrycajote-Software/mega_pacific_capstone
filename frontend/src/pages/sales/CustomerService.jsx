@@ -112,17 +112,12 @@ const CustomerService = () => {
       setInquiries(prev => prev.map(inq => inq.id === updated.id ? { ...inq, status: updated.status } : inq));
     });
 
-    const syncInterval = setInterval(() => {
-      fetchInquiries();
-    }, 10000);
-
     const handleFocus = () => {
       fetchInquiries();
     };
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
       newSocket.close();
     };

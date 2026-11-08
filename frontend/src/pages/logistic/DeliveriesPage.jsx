@@ -88,11 +88,9 @@ const DeliveriesPage = () => {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
     const handleFocus = () => fetchOrders();
     window.addEventListener('focus', handleFocus);
     return () => {
-      clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

@@ -66,9 +66,6 @@ const SalesDashboard = () => {
 
   useEffect(() => {
     fetchData();
-    const syncInterval = setInterval(() => {
-      fetchData();
-    }, 10000);
 
     const handleFocus = () => {
       fetchData();
@@ -76,7 +73,6 @@ const SalesDashboard = () => {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

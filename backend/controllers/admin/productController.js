@@ -9,11 +9,18 @@ const getProducts = async (req, res) => {
           orderBy: { price: "asc" },
         },
         orderItems: {
-          include: {
-            order: true
+          select: {
+            quantity: true,
+            order: {
+              select: { status: true }
+            }
           }
         },
-        reviews: true
+        reviews: {
+          select: {
+            rating: true
+          }
+        }
       },
       orderBy: { createdAt: "desc" },
     });

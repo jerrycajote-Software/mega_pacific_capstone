@@ -87,7 +87,7 @@ const SuperAdminDashboardPage = () => {
   const [logsPage, setLogsPage] = useState(1);
   const [logsPerPage, setLogsPerPage] = useState(10);
 
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(120);
   const [refreshing, setRefreshing] = useState(false);
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -118,10 +118,11 @@ const SuperAdminDashboardPage = () => {
     fetchAllData();
 
     const intervalId = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
       setCountdown((prev) => {
         if (prev <= 1) {
           fetchAllData(false);
-          return 10;
+          return 120;
         }
         return prev - 1;
       });

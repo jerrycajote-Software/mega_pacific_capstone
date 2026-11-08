@@ -82,11 +82,9 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-    const syncInterval = setInterval(fetchUsers, 10000);
     const handleFocus = () => fetchUsers();
     window.addEventListener('focus', handleFocus);
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

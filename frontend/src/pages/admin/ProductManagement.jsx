@@ -28,6 +28,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Trash2, Loader2, PlusCircle } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import { compressChatImage } from '../../utils/chatImageHelper';
 
 
 const S = {
@@ -221,9 +222,6 @@ const ProductManagement = () => {
   useEffect(() => {
     fetchProducts();
     fetchProductTypes();
-    const syncInterval = setInterval(() => {
-      fetchProducts();
-    }, 10000);
 
     const handleFocus = () => {
       fetchProducts();
@@ -231,7 +229,6 @@ const ProductManagement = () => {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);
@@ -292,14 +289,8 @@ const ProductManagement = () => {
   const processImageFiles = useCallback(async (files) => {
     const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (validFiles.length === 0) return;
-    const readAsDataURL = (file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
     try {
-      const newUrls = await Promise.all(validFiles.map(readAsDataURL));
+      const newUrls = await Promise.all(validFiles.map(file => compressChatImage(file, 900, 0.75)));
       setFormData(prev => {
         const currentUrls = prev.imageUrls || [];
         const remainingSlots = 12 - currentUrls.length;

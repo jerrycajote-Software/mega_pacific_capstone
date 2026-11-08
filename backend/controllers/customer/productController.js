@@ -53,7 +53,11 @@ const getProducts = async (req, res) => {
           where: { status: "available" },
           orderBy: { price: "asc" },
         },
-        reviews: true
+        reviews: {
+          select: {
+            rating: true
+          }
+        }
       },
       orderBy: { createdAt: "desc" }
     });

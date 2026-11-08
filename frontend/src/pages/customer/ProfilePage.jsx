@@ -578,7 +578,7 @@ const ProfilePage = () => {
 
             <Button
               onClick={handleOpenAddModal}
-              startIcon={<i className="fi fi-rr-plus" style={{ fontSize: 12 }} />}
+              
               variant="contained"
               sx={{
                 borderRadius: 2.5,
