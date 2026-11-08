@@ -27,6 +27,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { compressChatImage } from '../../utils/chatImageHelper';
+import { uploadBatchImagesToStorage } from '../../utils/uploadService';
 
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
@@ -589,12 +590,14 @@ const PreOrderProductsPage = () => {
     setErrorMsg('');
 
     try {
+      const storedImageUrls = await uploadBatchImagesToStorage(formData.imageUrls || [], 'products');
       const token = localStorage.getItem('appToken');
       const payload = {
         ...formData,
+        imageUrls: storedImageUrls,
+        imageUrl: storedImageUrls && storedImageUrls.length > 0 ? storedImageUrls[0] : null,
         colors: validColors,
         isActive: formData.isActive !== false,
-        imageUrl: formData.imageUrls && formData.imageUrls.length > 0 ? formData.imageUrls[0] : null,
         originalPrice: parseFloat(formData.originalPrice),
         variants: variants.filter(v => v.originalPrice !== '' && !isNaN(parseFloat(v.originalPrice))).map(v => ({
           id: v.id,

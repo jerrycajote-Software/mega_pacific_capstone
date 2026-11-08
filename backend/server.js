@@ -42,6 +42,7 @@ const systemRoutes = require("./routes/systemRoutes");
 const superadminRoutes = require("./routes/superadminRoutes");
 const financeRoutes = require("./routes/financeRoutes");
 const logisticRoutes = require("./routes/logisticRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/owner", ownerRoutes);
@@ -69,6 +70,7 @@ app.use("/api/system", systemRoutes);
 app.use("/api/superadmin", superadminRoutes);
 app.use("/api/finance", financeRoutes);
 app.use("/api/logistic", logisticRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.get("/", (req, res) => {
   res.send("Mega Pacific Backend is running!");

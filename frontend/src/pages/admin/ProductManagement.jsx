@@ -29,6 +29,7 @@ import { Trash2, Loader2, PlusCircle } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { compressChatImage } from '../../utils/chatImageHelper';
+import { uploadBatchImagesToStorage } from '../../utils/uploadService';
 
 
 const S = {
@@ -317,9 +318,16 @@ const ProductManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const storedImageUrls = await uploadBatchImagesToStorage(formData.imageUrls || [], 'products');
+      const primaryImageUrl = storedImageUrls[0] || '';
+      const updatedFormData = {
+        ...formData,
+        imageUrl: primaryImageUrl,
+        imageUrls: storedImageUrls,
+      };
+
       if (editingProduct) {
-        
-        const payload = { ...formData };
+        const payload = { ...updatedFormData };
         if (payload.price === '' || payload.price === null) payload.price = editingProduct.originalPrice || editingProduct.price;
 
         const currentStock = parseInt(editingProduct.stock, 10) || 0;
@@ -351,18 +359,16 @@ const ProductManagement = () => {
           }
         }
 
-        
         const res = await axios.put(`${API_URL}/api/admin/products/${editingProduct.id}`, payload);
         const freshlyUpdatedProduct = res.data;
 
-        
         setProducts((prev) =>
           prev.map((p) => (p.id === editingProduct.id ? freshlyUpdatedProduct : p))
         );
       } else {
         const payload = { 
-          ...formData, 
-          stock: (formData.stock !== '' && formData.stock !== null && formData.stock !== undefined) ? parseInt(formData.stock, 10) : 9999,
+          ...updatedFormData, 
+          stock: (updatedFormData.stock !== '' && updatedFormData.stock !== null && updatedFormData.stock !== undefined) ? parseInt(updatedFormData.stock, 10) : 9999,
           isPreOrder: true,
           variants: pendingVariants 
         };

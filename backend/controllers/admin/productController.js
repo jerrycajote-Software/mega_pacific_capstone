@@ -1,4 +1,5 @@
 const prisma = require("../../config/db");
+const storageService = require("../../services/storageService");
 
 
 const getProducts = async (req, res) => {
@@ -92,6 +93,16 @@ const createProduct = async (req, res) => {
       : 30;
     const sellingPrice = Math.round(origPrice * (1 - discountPct / 100) * 100) / 100;
 
+    let finalImageUrls = Array.isArray(imageUrls) ? imageUrls : [];
+    if (finalImageUrls.length > 0) {
+      finalImageUrls = await Promise.all(
+        finalImageUrls.map((img) => storageService.uploadBase64Image(img, "products"))
+      );
+    }
+    const finalImageUrl = imageUrl
+      ? await storageService.uploadBase64Image(imageUrl, "products")
+      : (finalImageUrls[0] || null);
+
     const product = await prisma.product.create({
       data: {
         name: normalizedName,
@@ -102,8 +113,8 @@ const createProduct = async (req, res) => {
         discountPercent: discountPct,
         unit: unit || "per meter",
         stock: parseInt(stock) || 0,
-        imageUrl: imageUrl || null,
-        imageUrls: imageUrls || [],
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls,
         color: color || null,
         isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : true,
         variants:
@@ -194,6 +205,19 @@ const updateProduct = async (req, res) => {
       sellingPrice = Math.round(origPrice * (1 - discountPct / 100) * 100) / 100;
     }
 
+    let finalImageUrls = imageUrls !== undefined ? imageUrls : currentProduct.imageUrls;
+    if (Array.isArray(finalImageUrls) && finalImageUrls.length > 0) {
+      finalImageUrls = await Promise.all(
+        finalImageUrls.map((img) => storageService.uploadBase64Image(img, "products"))
+      );
+    }
+    let finalImageUrl = imageUrl !== undefined ? imageUrl : currentProduct.imageUrl;
+    if (finalImageUrl) {
+      finalImageUrl = await storageService.uploadBase64Image(finalImageUrl, "products");
+    } else if (Array.isArray(finalImageUrls) && finalImageUrls.length > 0) {
+      finalImageUrl = finalImageUrls[0];
+    }
+
     const updatedProduct = await prisma.product.update({
       where: { id: parseInt(id) },
       data: {
@@ -205,8 +229,8 @@ const updateProduct = async (req, res) => {
         discountPercent: discountPct,
         unit: unit || "per meter",
         stock: isNaN(finalStock) ? 0 : finalStock,
-        imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : null),
-        imageUrls: imageUrls || [],
+        imageUrl: finalImageUrl,
+        imageUrls: finalImageUrls || [],
         color: color || null,
         isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : currentProduct.isActive,
       },
