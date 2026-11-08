@@ -215,7 +215,7 @@ const PreOrderProductsPage = () => {
       if (!vNorm) return;
 
       if (vNorm === baseNorm) {
-        conflicts[idx] = `Duplicates Base Thickness (${formData?.thickness || 'base'}). Each variant must have a unique thickness different from the base.`;
+        conflicts[idx] = `Duplicates Thickness (${formData?.thickness || 'base'}). Each variant must have a unique thickness different from the base.`;
         return;
       }
 
@@ -283,11 +283,7 @@ const PreOrderProductsPage = () => {
       thickness: initialThick,
       colors: initialColors
     });
-    setVariants([
-      { name: '0.40mm Thickness', thickness: '0.40mm', originalPrice: '', status: 'available' },
-      { name: '0.50mm Thickness', thickness: '0.50mm', originalPrice: '', status: 'available' },
-      { name: '0.60mm Thickness', thickness: '0.60mm', originalPrice: '', status: 'available' }
-    ]);
+    setVariants([]);
     setErrorMsg('');
     setIsModalOpen(true);
   };
@@ -447,7 +443,7 @@ const PreOrderProductsPage = () => {
     }
 
     if (newThicknessTarget?.type === 'variant' && isUsedInBase) {
-      setNewThicknessError(`Thickness "${formatted}" is already used as the Base Product thickness. A variant cannot duplicate the Base thickness.`);
+      setNewThicknessError(`Thickness "${formatted}" is already used as the Base Product thickness. A variant cannot duplicate the thickness.`);
       return;
     }
 
@@ -520,12 +516,10 @@ const PreOrderProductsPage = () => {
     setVariants(prev => {
       const copy = [...prev];
       if (field === 'thickness') {
-        const oldName = copy[index]?.name || '';
-        const isDefault = !oldName || oldName.endsWith('Thickness');
         copy[index] = {
           ...copy[index],
           thickness: value,
-          name: isDefault ? `${value} Thickness` : oldName
+          name: `${value} Thickness`
         };
       } else {
         copy[index] = { ...copy[index], [field]: value };
@@ -572,7 +566,7 @@ const PreOrderProductsPage = () => {
       return;
     }
     if (!hasCoilStockForThickness(coils, formData.thickness)) {
-      setErrorMsg(`Cannot save pre-order product: Base thickness "${formData.thickness}" has no raw coils in Coil Inventory. Steel coils must be stocked in inventory before products can be created.`);
+      setErrorMsg(`Cannot save pre-order product: thickness "${formData.thickness}" has no raw coils in Coil Inventory. Steel coils must be stocked in inventory before products can be created.`);
       return;
     }
     const validColors = formData.colors.filter(c => availableColorsForThickness.has(c));
@@ -903,7 +897,7 @@ const PreOrderProductsPage = () => {
                   <th style={{ padding: '1rem 1.25rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Product Profile</th>
                   <th style={{ padding: '1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Customer Status</th>
                   <th style={{ padding: '1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Dimensions</th>
-                  <th style={{ padding: '1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Base Thickness & Price</th>
+                  <th style={{ padding: '1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Thickness & Price</th>
                   <th style={{ padding: '1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Colors Offered</th>
                   <th style={{ padding: '1rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)' }}>Variants</th>
                   <th style={{ padding: '1rem 1.25rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', textAlign: 'right' }}>Actions</th>
@@ -1442,7 +1436,7 @@ const PreOrderProductsPage = () => {
                     background: 'rgba(0, 0, 0, 0.02)',
                     border: '1px solid var(--border-light)'
                   }}>
-                    {/* Left Column: Base Thickness */}
+                    {/* Left Column: Thickness */}
                     <div>
                       <div style={{
                         display: 'flex',
@@ -1459,7 +1453,7 @@ const PreOrderProductsPage = () => {
                           letterSpacing: '0.08em',
                           whiteSpace: 'nowrap'
                         }}>
-                          Base Thickness
+                          Thickness
                         </label>
                       </div>
 
@@ -1501,7 +1495,7 @@ const PreOrderProductsPage = () => {
                             const finishesSet = getAvailableColorsForThickness(coils, t);
                             return (
                               <option key={t} value={t}>
-                                {t} {!hasStock ? '(No Coil Stock in Inventory)' : `(${finishesSet.size} finishes in stock)`} {isUsedInVar >= 0 ? `(⚠️ Used in Variant #${isUsedInVar + 1})` : ''}
+                                {t} {!hasStock ? '(No Coil Stock in Inventory)' : `(${finishesSet.size} finishes in stock)`} {isUsedInVar >= 0 ? `(⚠️ Used in #${isUsedInVar + 1})` : ''}
                               </option>
                             );
                           })}
@@ -1532,7 +1526,7 @@ const PreOrderProductsPage = () => {
                         ) : baseConflictVariantIndex >= 0 ? (
                           <div style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                             <ErrorOutlineIcon sx={{ fontSize: 14, flexShrink: 0 }} />
-                            <span>Conflict: Already used in Variant #{baseConflictVariantIndex + 1}.</span>
+                            <span>Conflict: Already used in #{baseConflictVariantIndex + 1}.</span>
                           </div>
                         ) : (
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1781,25 +1775,11 @@ const PreOrderProductsPage = () => {
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>
-                  Product Description
-                </label>
-                <div style={{ background: 'var(--bg-primary)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border-light)' }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.description}
-                    onChange={(val) => setFormData({ ...formData, description: val })}
-                    style={{ minHeight: 120 }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem' }}>
+              <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div>
                     <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Product Variants (Thickness Pricing)
+                      Other Thickness Pricing
                     </h3>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
                       Configure pricing for other thickness gauges from the official price list.
@@ -1811,14 +1791,20 @@ const PreOrderProductsPage = () => {
                   <thead>
                     <tr style={{ background: 'rgba(0,0,0,0.04)', borderBottom: '1px solid var(--border-light)' }}>
                       <th style={{ padding: '0.6rem 0.8rem', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Thickness</th>
-                      <th style={{ padding: '0.6rem 0.8rem', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Variant Name</th>
                       <th style={{ padding: '0.6rem 0.8rem', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Orig. Price (₱/m)</th>
                       <th style={{ padding: '0.6rem 0.8rem', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Selling Price</th>
                       <th style={{ padding: '0.6rem 0.8rem', textAlign: 'right', color: 'var(--text-muted)', fontSize: '0.7rem' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {variants.map((v, idx) => {
+                    {variants.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: 'center', padding: '1.25rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                          No other thickness pricing added yet. Click &quot;Add Thickness Row&quot; below to add gauges.
+                        </td>
+                      </tr>
+                    ) : (
+                      variants.map((v, idx) => {
                       const vSelling = v.originalPrice ? (parseFloat(v.originalPrice) * 0.70).toFixed(2) : '0.00';
                       const rowConflict = variantThicknessConflicts[idx];
                       return (
@@ -1846,8 +1832,8 @@ const PreOrderProductsPage = () => {
                                 const isDisabled = isBase || otherVarIdx >= 0;
 
                                 let note = '';
-                                if (isBase) note = ' — (Base Thickness: Duplicate Not Allowed)';
-                                else if (otherVarIdx >= 0) note = ` — (Used in Variant #${otherVarIdx + 1}: Duplicate Not Allowed)`;
+                                if (isBase) note = ' — (Thickness: Duplicate Not Allowed)';
+                                else if (otherVarIdx >= 0) note = ` — (Used in #${otherVarIdx + 1}: Duplicate Not Allowed)`;
                                 else if (!hasStock) note = ' — (No Coil Stock in Inventory)';
 
                                 return (
@@ -1857,7 +1843,7 @@ const PreOrderProductsPage = () => {
                                 );
                               })}
                               <option value="__ADD_NEW__" style={{ color: '#2563eb', fontWeight: 700 }}>
-                                + Add New Thickness...
+                                Add New Thickness
                               </option>
                             </select>
                             {!hasCoilStockForThickness(coils, v.thickness) && (
@@ -1871,15 +1857,6 @@ const PreOrderProductsPage = () => {
                                 <span>{rowConflict}</span>
                               </div>
                             )}
-                          </td>
-                          <td style={{ padding: '0.5rem 0.8rem' }}>
-                            <input
-                              type="text"
-                              value={v.name}
-                              onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
-                              placeholder={`${v.thickness} Thickness`}
-                              style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: 6, background: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)', fontSize: '0.8rem', boxSizing: 'border-box' }}
-                            />
                           </td>
                           <td style={{ padding: '0.5rem 0.8rem' }}>
                             <input
@@ -1905,7 +1882,7 @@ const PreOrderProductsPage = () => {
                           </td>
                         </tr>
                       );
-                    })}
+                    }))}
                   </tbody>
                 </table>
 
@@ -1919,7 +1896,7 @@ const PreOrderProductsPage = () => {
                       background: 'rgba(59,130,246,0.06)', color: '#3b82f6', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer'
                     }}
                   >
-                   Add Thickness Variant Row
+                   Add Thickness Row
                   </button>
                   <button
                     type="button"
@@ -1932,6 +1909,20 @@ const PreOrderProductsPage = () => {
                   >
                    New Thickness Gauge
                   </button>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>
+                  Product Description
+                </label>
+                <div style={{ background: 'var(--bg-primary)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border-light)' }}>
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.description}
+                    onChange={(val) => setFormData({ ...formData, description: val })}
+                    style={{ minHeight: 120 }}
+                  />
                 </div>
               </div>
 

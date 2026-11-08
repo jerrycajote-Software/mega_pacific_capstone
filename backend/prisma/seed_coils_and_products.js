@@ -31,10 +31,10 @@ const SEED_PROFILES = [
     unit: "per meter",
     description: "Premium architectural roofing profile engineered for superior water run-off and durability. Features 28mm rib height with an effective coverage of 1.013m.",
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -48,10 +48,10 @@ const SEED_PROFILES = [
     unit: "per meter",
     description: "Classic sinusoidal corrugated design with 18mm depth, engineered for structural versatility and timeless aesthetics. Effective width 0.912m.",
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -65,10 +65,10 @@ const SEED_PROFILES = [
     unit: "per meter",
     description: "High-crest industrial rib roofing with an aggressive 51mm rib height designed for high rainfall volume and heavy industrial spans. Effective width 0.900m.",
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -82,10 +82,10 @@ const SEED_PROFILES = [
     unit: "per meter",
     description: "Dual-flute rib architecture offering reinforced longitudinal rigidity and seamless anti-siphon side laps. Effective width 0.945m.",
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 340.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -99,10 +99,10 @@ const SEED_PROFILES = [
     unit: "per meter",
     description: "Heavy-duty standing-seam style S-rib profile with a bold 62mm rib height for steep slopes and modern architectural accents. Effective width 0.490m.",
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 187.00, price: 187.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 203.00, price: 203.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 256.00, price: 256.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 307.00, price: 307.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 187.00, price: 187.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 203.00, price: 203.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 256.00, price: 256.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 307.00, price: 307.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -116,10 +116,10 @@ const SEED_PROFILES = [
     unit: "per meter",
     description: "Mediterranean-inspired step tile profile with elegant curves and high wind resistance, providing residential luxury roofing aesthetics. Effective width 1.005m.",
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 347.00, price: 347.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 400.00, price: 400.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 520.00, price: 520.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 645.00, price: 645.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 347.00, price: 347.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 400.00, price: 400.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 520.00, price: 520.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 645.00, price: 645.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -133,9 +133,9 @@ const SEED_PROFILES = [
     unit: "per piece",
     description: "Standard 8-foot (2.44m) pre-painted ridge roll designed to cap and protect roof apex ridges against rainwater intrusion.",
     variants: [
-      { name: "0.40mm Thickness (2.44m)", thickness: "0.40mm", originalPrice: 280.00, price: 280.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness (2.44m)", thickness: "0.50mm", originalPrice: 350.00, price: 350.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness (2.44m)", thickness: "0.60mm", originalPrice: 420.00, price: 420.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.40mm  (2.44m)", thickness: "0.40mm", originalPrice: 280.00, price: 280.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm  (2.44m)", thickness: "0.50mm", originalPrice: 350.00, price: 350.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm  (2.44m)", thickness: "0.60mm", originalPrice: 420.00, price: 420.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -149,9 +149,9 @@ const SEED_PROFILES = [
     unit: "per piece",
     description: "Precision-bent 8-foot (2.44m) wall flashing and end capping designed for watertight transitions at parapets and roof wall junctions.",
     variants: [
-      { name: "0.40mm Thickness (2.44m)", thickness: "0.40mm", originalPrice: 260.00, price: 260.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness (2.44m)", thickness: "0.50mm", originalPrice: 330.00, price: 330.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.60mm Thickness (2.44m)", thickness: "0.60mm", originalPrice: 395.00, price: 395.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.40mm  (2.44m)", thickness: "0.40mm", originalPrice: 260.00, price: 260.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm  (2.44m)", thickness: "0.50mm", originalPrice: 330.00, price: 330.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm  (2.44m)", thickness: "0.60mm", originalPrice: 395.00, price: 395.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {
@@ -165,8 +165,8 @@ const SEED_PROFILES = [
     unit: "per piece",
     description: "Durable box gutter 8-foot (2.44m) section engineered for high-volume storm water discharge and rainwater harvesting.",
     variants: [
-      { name: "0.40mm Thickness (2.44m)", thickness: "0.40mm", originalPrice: 320.00, price: 320.00 * 0.70, stock: 9999, status: "available" },
-      { name: "0.50mm Thickness (2.44m)", thickness: "0.50mm", originalPrice: 395.00, price: 395.00 * 0.70, stock: 9999, status: "available" }
+      { name: "0.40mm (2.44m)", thickness: "0.40mm", originalPrice: 320.00, price: 320.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm (2.44m)", thickness: "0.50mm", originalPrice: 395.00, price: 395.00 * 0.70, stock: 9999, status: "available" }
     ]
   },
   {

@@ -146,7 +146,7 @@ const createPreOrderProduct = async (req, res) => {
         if (seenVariantThicknesses.has(vThick)) {
           return res.status(400).json({
             success: false,
-            error: `Duplicate thickness "${v.thickness}" detected among product variants. Each variant must specify a different thickness.`
+            error: `Duplicate thickness "${v.thickness}" detected among product. Each variant must specify a different thickness.`
           });
         }
         seenVariantThicknesses.add(vThick);
@@ -321,7 +321,7 @@ const updatePreOrderProduct = async (req, res) => {
         if (seenVariantThicknesses.has(vThick)) {
           return res.status(400).json({
             success: false,
-            error: `Duplicate thickness "${v.thickness}" detected among product variants. Each variant must specify a different thickness.`
+            error: `Duplicate thickness "${v.thickness}" detected among product. Each variant must specify a different thickness.`
           });
         }
         seenVariantThicknesses.add(vThick);

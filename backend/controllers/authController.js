@@ -208,7 +208,15 @@ const login = async (req, res) => {
     }
 
     if (user.role === "customer") {
-      if (!otp) {
+      const isFirstLogin = user.otpCode === "FIRST_LOGIN";
+
+      if (isFirstLogin) {
+        // Skip redundant login OTP on the new customer's first login right after registration OTP verification
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { otpCode: null, otpExpiresAt: null }
+        });
+      } else if (!otp) {
         const newOtp = generateOtp('LOG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
@@ -649,7 +657,10 @@ const verifyOtp = async (req, res) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
+    });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -668,7 +679,7 @@ const verifyOtp = async (req, res) => {
 
     const updateData = {
       isEmailVerified: true,
-      otpCode: null,
+      otpCode: "FIRST_LOGIN",
       otpExpiresAt: null
     };
 
@@ -678,7 +689,7 @@ const verifyOtp = async (req, res) => {
     }
 
     await prisma.user.update({
-      where: { email },
+      where: { id: user.id },
       data: updateData
     });
 

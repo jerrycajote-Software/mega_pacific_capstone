@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import axios from 'axios';
-import { Avatar, CircularProgress } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import { Avatar, CircularProgress, Dialog, IconButton } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import ClearIcon from '@mui/icons-material/Clear';
 import ChatBubbleOutlinedIcon from '@mui/icons-material/ChatBubbleOutlined';
 import MailOutlinedIcon from '@mui/icons-material/MailOutlined';
 import PhoneInTalkOutlinedIcon from '@mui/icons-material/PhoneInTalkOutlined';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../../context/AuthContext';
 import { io } from 'socket.io-client';
+import { isMobileBrowser } from '../../utils/deviceDetect';
+import { parseMessageContent, formatMessagePreview, compressChatImage } from '../../utils/chatImageHelper';
 
 const QUICK_MACROS = [
   { label: '👋 Greeting', text: 'Hello! Thank you for reaching out to Mega Pacific. How may I assist you with your roofing materials today?' },
@@ -30,32 +30,43 @@ const CustomerService = () => {
   const [loading, setLoading] = useState(true);
   const [selectedInquiryId, setSelectedInquiryId] = useState(null);
   const [newMessage, setNewMessage] = useState('');
+  const [attachedImage, setAttachedImage] = useState(null);
+  const [compressing, setCompressing] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
   const [sending, setSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All'); 
   const [socket, setSocket] = useState(null);
   const [isLiveConnected, setIsLiveConnected] = useState(false);
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL || '';
 
-  const fetchInquiries = async () => {
+  const fetchInquiries = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/inquiries`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = Array.isArray(res.data) ? res.data : [];
       setInquiries(data);
-      if (!selectedInquiryId && data.length > 0) {
-        setSelectedInquiryId(data[0].id);
-      }
+      setSelectedInquiryId((prevSelectedId) => {
+        if (prevSelectedId) {
+          const stillExists = data.some((inq) => inq.id === prevSelectedId);
+          return stillExists ? prevSelectedId : (data[0]?.id || null);
+        }
+        return data.length > 0 ? data[0].id : null;
+      });
     } catch (error) {
       console.error("Error fetching inquiries", error);
     } finally {
       setLoading(false);
     }
+  }, [API_URL, token]);
+
+  const handleSelectInquiry = (inquiryId) => {
+    setSelectedInquiryId(inquiryId);
   };
 
   useEffect(() => {
@@ -115,7 +126,7 @@ const CustomerService = () => {
       window.removeEventListener('focus', handleFocus);
       newSocket.close();
     };
-  }, [API_URL, token]);
+  }, [fetchInquiries, API_URL, token, user]);
 
   const selectedInquiry = useMemo(() => {
     return inquiries.find(i => i.id === selectedInquiryId) || null;
@@ -154,23 +165,42 @@ const CustomerService = () => {
     if (selectedInquiry) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [selectedInquiry?.messages?.length]);
+  }, [selectedInquiry?.messages?.length, selectedInquiryId]);
 
 
 
-  const handleSendMessage = async (e) => {
+  const handleSendInquiryMessage = async (e) => {
     if (e) e.preventDefault();
-    if (!newMessage.trim() || !selectedInquiry || sending) return;
+    const trimmed = newMessage.trim();
+    if ((!trimmed && !attachedImage) || !selectedInquiry || sending || compressing) return;
 
     setSending(true);
     try {
-      await axios.post(`${API_URL}/api/inquiries/${selectedInquiry.id}/messages`, {
-        content: newMessage.trim()
+      const res = await axios.post(`${API_URL}/api/inquiries/${selectedInquiry.id}/messages`, {
+        content: trimmed,
+        image: attachedImage || null
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      const createdMessage = res.data;
+      if (createdMessage && createdMessage.id) {
+        setInquiries(prev => prev.map(inq => {
+          if (inq.id === selectedInquiry.id) {
+            const exists = inq.messages?.some(m => m.id === createdMessage.id);
+            if (exists) return inq;
+            return {
+              ...inq,
+              messages: [...(inq.messages || []), createdMessage],
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return inq;
+        }));
+      }
       
       setNewMessage('');
+      setAttachedImage(null);
       if (textareaRef.current) {
         textareaRef.current.focus();
       }
@@ -181,26 +211,58 @@ const CustomerService = () => {
     }
   };
 
-  const handleKeyDown = (e) => {
+  const handleComposerKeyDown = (e) => {
+    const isMobile = isMobileBrowser() || (typeof window !== 'undefined' && window.innerWidth < 768);
+    if (isMobile) {
+      // On mobile virtual keyboards, allow Enter to insert a new line naturally.
+      // Messages on mobile can only be submitted by tapping the Send button.
+      return;
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      const hasContent = Boolean(newMessage.trim()) || Boolean(attachedImage);
+      if (hasContent && !sending && !compressing) {
+        handleSendInquiryMessage();
+      }
     }
   };
 
-  const handleStatusChange = async (status) => {
-    if (!selectedInquiry) return;
-    try {
-      const res = await axios.put(`${API_URL}/api/inquiries/${selectedInquiry.id}/status`, {
-        status
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setInquiries(prev => prev.map(inq => inq.id === selectedInquiry.id ? { ...inq, status: res.data.status } : inq));
-    } catch (error) {
-      console.error("Error updating status", error);
+  const handleTriggerImageFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
+  };
+
+  const handleSelectImageAttachment = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCompressing(true);
+    try {
+      const compressedDataUrl = await compressChatImage(file, 1280, 0.82);
+      setAttachedImage(compressedDataUrl);
+    } catch (err) {
+      console.error('Image compression failed:', err);
+      alert(err.message || 'Failed to process the selected image.');
+    } finally {
+      setCompressing(false);
+      if (e.target) {
+        e.target.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImageAttachment = () => {
+    setAttachedImage(null);
+  };
+
+  const handleOpenImagePreviewModal = (imageUrl) => {
+    setPreviewImage(imageUrl);
+  };
+
+  const handleCloseImagePreviewModal = () => {
+    setPreviewImage(null);
   };
 
   const getCustomerName = (inquiry) => {
@@ -226,43 +288,21 @@ const CustomerService = () => {
     return 'Just now';
   };
 
-  const getStatusBadgeStyle = (status) => {
-    const s = (status || '').toLowerCase();
-    if (s === 'resolved') {
-      return { bg: 'rgba(34, 197, 94, 0.12)', text: '#16a34a', border: 'rgba(34, 197, 94, 0.3)', dot: '#22c55e', label: 'Resolved' };
-    }
-    if (s === 'in progress') {
-      return { bg: 'rgba(245, 158, 11, 0.12)', text: '#d97706', border: 'rgba(245, 158, 11, 0.3)', dot: '#f59e0b', label: 'In Progress' };
-    }
-    return { bg: 'rgba(239, 68, 68, 0.12)', text: '#dc2626', border: 'rgba(239, 68, 68, 0.3)', dot: '#ef4444', label: 'Open' };
-  };
-
-  const metrics = useMemo(() => {
-    const total = inquiries.length;
-    const open = inquiries.filter(i => (i.status || '').toLowerCase() === 'open').length;
-    const inProgress = inquiries.filter(i => (i.status || '').toLowerCase() === 'in progress').length;
-    const resolved = inquiries.filter(i => (i.status || '').toLowerCase() === 'resolved').length;
-    return { total, open, inProgress, resolved };
-  }, [inquiries]);
-
   const filteredInquiries = useMemo(() => {
     return inquiries.filter(inquiry => {
       const customerName = getCustomerName(inquiry).toLowerCase();
       const email = (inquiry.customer?.email || '').toLowerCase();
       const subject = (inquiry.subject || '').toLowerCase();
-      const lastMsg = inquiry.messages?.length > 0 ? (inquiry.messages[inquiry.messages.length - 1]?.content || '').toLowerCase() : '';
+      const lastMsgRaw = inquiry.messages && inquiry.messages.length > 0
+        ? inquiry.messages[inquiry.messages.length - 1]?.content
+        : '';
+      const lastMsgParsed = parseMessageContent(lastMsgRaw);
+      const lastMsgPreview = (lastMsgParsed.text || (lastMsgParsed.image ? 'photo attachment' : '')).toLowerCase();
       
       const q = searchTerm.toLowerCase();
-      const matchesSearch = customerName.includes(q) || email.includes(q) || subject.includes(q) || lastMsg.includes(q);
-
-      let matchesStatus = true;
-      if (statusFilter !== 'All') {
-        matchesStatus = (inquiry.status || '').toLowerCase() === statusFilter.toLowerCase();
-      }
-
-      return matchesSearch && matchesStatus;
+      return customerName.includes(q) || email.includes(q) || subject.includes(q) || lastMsgPreview.includes(q);
     });
-  }, [inquiries, searchTerm, statusFilter]);
+  }, [inquiries, searchTerm]);
 
   if (loading) {
     return (
@@ -297,25 +337,6 @@ const CustomerService = () => {
             Real-time direct messaging desk for resolving buyer inquiries and technical specifications.
           </p>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 6, background: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: 12, border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, padding: '3px 8px', borderRadius: 8, background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
-              Total: {metrics.total}
-            </span>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, padding: '3px 8px', borderRadius: 8, background: 'rgba(239,68,68,0.12)', color: '#dc2626' }}>
-              Open: {metrics.open}
-            </span>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, padding: '3px 8px', borderRadius: 8, background: 'rgba(245,158,11,0.12)', color: '#d97706' }}>
-              In Progress: {metrics.inProgress}
-            </span>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, padding: '3px 8px', borderRadius: 8, background: 'rgba(34,197,94,0.12)', color: 'var(--green)' }}>
-              Resolved: {metrics.resolved}
-            </span>
-          </div>
-
-
-        </div>
       </div>
 
       <div style={{
@@ -334,7 +355,7 @@ const CustomerService = () => {
               <SearchIcon sx={{ fontSize: 17, color: 'var(--text-muted)', position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 type="text"
-                placeholder="Search ticket, customer, or message..."
+                placeholder="Search customer, or message..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
@@ -355,40 +376,6 @@ const CustomerService = () => {
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 2 }}>
-              {[
-                { id: 'All', label: 'All', count: metrics.total },
-                { id: 'Open', label: 'Open', count: metrics.open, color: '#ef4444' },
-                { id: 'In Progress', label: 'Active', count: metrics.inProgress, color: '#f59e0b' },
-                { id: 'Resolved', label: 'Resolved', count: metrics.resolved, color: 'var(--green)' },
-              ].map(tab => {
-                const isActive = statusFilter.toLowerCase() === tab.id.toLowerCase();
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setStatusFilter(tab.id)}
-                    style={{
-                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                      padding: '6px 8px', borderRadius: 8, fontSize: '0.74rem', fontWeight: 700,
-                      cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s ease',
-                      background: isActive ? 'var(--green)' : 'var(--bg-tertiary)',
-                      color: isActive ? '#000000' : 'var(--text-primary)',
-                      border: isActive ? '1px solid var(--green)' : '1px solid var(--border-light)'
-                    }}
-                  >
-                    <span>{tab.label}</span>
-                    <span style={{
-                      fontSize: '0.68rem', padding: '1px 5px', borderRadius: 10,
-                      background: isActive ? 'rgba(0,0,0,0.18)' : 'var(--border)',
-                      color: isActive ? '#000000' : tab.color || 'var(--text-muted)'
-                    }}>
-                      {tab.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
           </div>
 
           <div style={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
@@ -396,13 +383,12 @@ const CustomerService = () => {
               <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                 <ChatBubbleOutlinedIcon sx={{ fontSize: 36, opacity: 0.3 }} />
                 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>No inquiries found</span>
-                <span style={{ fontSize: '0.78rem' }}>Try clearing the search or status filter.</span>
+                <span style={{ fontSize: '0.78rem' }}>Try clearing the search filter.</span>
               </div>
             ) : (
               filteredInquiries.map((inquiry) => {
                 const isSelected = selectedInquiryId === inquiry.id;
                 const customerName = getCustomerName(inquiry);
-                const statusBadge = getStatusBadgeStyle(inquiry.status);
                 const lastMsg = inquiry.messages && inquiry.messages.length > 0
                   ? inquiry.messages[inquiry.messages.length - 1]
                   : null;
@@ -411,7 +397,7 @@ const CustomerService = () => {
                 return (
                   <div
                     key={inquiry.id}
-                    onClick={() => setSelectedInquiryId(inquiry.id)}
+                    onClick={() => handleSelectInquiry(inquiry.id)}
                     style={{
                       padding: '1rem 1.15rem',
                       borderBottom: '1px solid var(--border-light)',
@@ -423,30 +409,19 @@ const CustomerService = () => {
                     onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-tertiary)'; }}
                     onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                        <Avatar 
-                          src={inquiry.user?.customerProfile?.avatarUrl || '/default-profile.png'}
-                          alt={customerName}
-                          sx={{
-                            width: 28, height: 28, fontSize: '0.75rem', fontWeight: 700,
-                            bgcolor: isSelected ? 'var(--green)' : '#4f772d',
-                            color: isSelected ? '#000000' : '#ffffff'
-                          }}
-                        />
-                        <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {customerName}
-                        </span>
-                      </div>
-
-                      <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 12,
-                        background: statusBadge.bg, color: statusBadge.text, border: `1px solid ${statusBadge.border}`,
-                        fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', flexShrink: 0
-                      }}>
-                        <FiberManualRecordIcon sx={{ fontSize: 7, color: statusBadge.dot }} />
-                        {statusBadge.label}
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <Avatar 
+                        src={inquiry.user?.customerProfile?.avatarUrl || '/default-profile.png'}
+                        alt={customerName}
+                        sx={{
+                          width: 28, height: 28, fontSize: '0.75rem', fontWeight: 700,
+                          bgcolor: isSelected ? 'var(--green)' : '#4f772d',
+                          color: isSelected ? '#000000' : '#ffffff'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {customerName}
+                      </span>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -464,7 +439,7 @@ const CustomerService = () => {
                           <span style={{ fontWeight: 600, color: isLastMsgFromStaff ? 'var(--green)' : 'var(--text-primary)' }}>
                             {isLastMsgFromStaff ? 'You: ' : `${customerName.split(' ')[0]}: `}
                           </span>
-                          {lastMsg.content}
+                          <span>{formatMessagePreview(lastMsg.content)}</span>
                         </>
                       ) : (
                         'No messages yet.'
@@ -539,50 +514,6 @@ const CustomerService = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Ticket Status:</span>
-
-                  <button
-                    onClick={() => handleStatusChange('In Progress')}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 9,
-                      fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.18s ease',
-                      background: (selectedInquiry.status || '').toLowerCase() === 'in progress' ? '#f59e0b' : 'rgba(245,158,11,0.1)',
-                      color: (selectedInquiry.status || '').toLowerCase() === 'in progress' ? '#000000' : '#d97706',
-                      border: '1px solid rgba(245,158,11,0.3)'
-                    }}
-                  >
-                    <HourglassEmptyIcon sx={{ fontSize: 13 }} />
-                    In Progress
-                  </button>
-
-                  {(selectedInquiry.status || '').toLowerCase() === 'resolved' ? (
-                    <button
-                      onClick={() => handleStatusChange('Open')}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 9,
-                        fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.18s ease',
-                        background: 'rgba(239,68,68,0.1)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.3)'
-                      }}
-                    >
-                      <LockOpenOutlinedIcon sx={{ fontSize: 13 }} />
-                      Reopen Ticket
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleStatusChange('Resolved')}
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 9,
-                        fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.18s ease',
-                        background: 'var(--green)', color: '#000000', border: 'none', boxShadow: '0 2px 8px rgba(34,197,94,0.3)'
-                      }}
-                    >
-                      <CheckCircleIcon sx={{ fontSize: 14 }} />
-                      Mark Resolved
-                    </button>
-                  )}
-                </div>
-
               </div>
 
               <div style={{
@@ -611,6 +542,7 @@ const CustomerService = () => {
                     const isStaff = msg.sender?.role === 'sales' || msg.sender?.role === 'admin';
                     const staffName = msg.sender?.salesProfile?.name || msg.sender?.adminProfile?.name || 'Sales Rep';
                     const customerSenderName = getCustomerName(selectedInquiry);
+                    const { text, image } = parseMessageContent(msg.content);
 
                     return (
                       <div
@@ -632,7 +564,7 @@ const CustomerService = () => {
 
                         <div
                           style={{
-                            padding: '12px 16px',
+                            padding: text ? '12px 16px' : '8px 8px',
                             borderRadius: 16,
                             borderTopLeftRadius: !isStaff ? 4 : 16,
                             borderTopRightRadius: isStaff ? 4 : 16,
@@ -648,7 +580,50 @@ const CustomerService = () => {
                             whiteSpace: 'pre-wrap'
                           }}
                         >
-                          {msg.content}
+                          {text && <div>{text}</div>}
+
+                          {image && (
+                            <div
+                              style={{
+                                marginTop: text ? 8 : 0,
+                                cursor: 'pointer',
+                                borderRadius: 10,
+                                overflow: 'hidden',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                maxWidth: 320,
+                                position: 'relative',
+                                transition: 'transform 0.15s ease, opacity 0.15s ease'
+                              }}
+                              onClick={() => handleOpenImagePreviewModal(image)}
+                            >
+                              <img
+                                src={image}
+                                alt="Attachment"
+                                style={{
+                                  display: 'block',
+                                  width: '100%',
+                                  maxHeight: 240,
+                                  objectFit: 'cover'
+                                }}
+                                loading="lazy"
+                              />
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  bottom: 6,
+                                  right: 6,
+                                  background: 'rgba(0,0,0,0.7)',
+                                  color: '#ffffff',
+                                  borderRadius: 4,
+                                  padding: '2px 8px',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700
+                                }}
+                              >
+                                View Full Image
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -685,14 +660,67 @@ const CustomerService = () => {
                   ))}
                 </div>
 
-                <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                {attachedImage && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                    borderRadius: 10, background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                    maxWidth: 320
+                  }}>
+                    <img
+                      src={attachedImage}
+                      alt="Attachment preview"
+                      style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border-light)' }}
+                    />
+                    <div style={{ flexGrow: 1, minWidth: 0, fontSize: '0.78rem' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Image attached</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Ready to send</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImageAttachment}
+                      style={{
+                        background: 'transparent', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-muted)', padding: 4, display: 'flex', alignItems: 'center'
+                      }}
+                      title="Remove attached image"
+                    >
+                      <CloseIcon sx={{ fontSize: 16 }} />
+                    </button>
+                  </div>
+                )}
+
+                <form onSubmit={handleSendInquiryMessage} style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleSelectImageAttachment}
+                    accept="image/png,image/jpeg,image/webp,image/jpg"
+                    style={{ display: 'none' }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleTriggerImageFileInput}
+                    disabled={sending || compressing}
+                    style={{
+                      height: 52, width: 48, borderRadius: 12, border: '1px solid var(--border-light)',
+                      background: attachedImage ? 'rgba(34,197,94,0.15)' : 'var(--bg-primary)',
+                      color: attachedImage ? 'var(--green)' : 'var(--text-muted)',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, transition: 'all 0.15s ease'
+                    }}
+                    title="Attach image or diagram"
+                  >
+                    {compressing ? <CircularProgress size={18} color="inherit" /> : <ImageOutlinedIcon sx={{ fontSize: 20 }} />}
+                  </button>
+
                   <div style={{ position: 'relative', flexGrow: 1 }}>
                     <textarea
                       ref={textareaRef}
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder={(selectedInquiry.status || '').toLowerCase() === 'resolved' ? "Ticket resolved. Type to send a message and reopen..." : "Type your response... (Press Enter to send, Shift+Enter for new line)"}
+                      onKeyDown={handleComposerKeyDown}
+                      placeholder="Type your response... (Press Enter to send, Shift+Enter for new line)"
                       rows={2}
                       style={{
                         width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
@@ -707,12 +735,12 @@ const CustomerService = () => {
 
                   <button
                     type="submit"
-                    disabled={!newMessage.trim() || sending}
+                    disabled={(!newMessage.trim() && !attachedImage) || sending || compressing}
                     style={{
                       height: 52, padding: '0 24px', borderRadius: 12, border: 'none',
                       background: 'var(--green)', color: '#000000', fontSize: '0.85rem', fontWeight: 700,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                      opacity: (!newMessage.trim() || sending) ? 0.5 : 1,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      opacity: ((!newMessage.trim() && !attachedImage) || sending || compressing) ? 0.5 : 1,
                       boxShadow: '0 4px 14px rgba(34,197,94,0.3)', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
                       flexShrink: 0
                     }}
@@ -720,10 +748,7 @@ const CustomerService = () => {
                     {sending ? (
                       <CircularProgress size={18} color="inherit" />
                     ) : (
-                      <>
-                        <span>Send</span>
-                        <SendIcon sx={{ fontSize: 15 }} />
-                      </>
+                      <span>Send Message</span>
                     )}
                   </button>
                 </form>
@@ -769,6 +794,40 @@ const CustomerService = () => {
         </div>
 
       </div>
+
+      <Dialog
+        open={Boolean(previewImage)}
+        onClose={handleCloseImagePreviewModal}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: 16,
+            background: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Image Attachment Preview</div>
+          <button
+            type="button"
+            onClick={handleCloseImagePreviewModal}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}
+            aria-label="Close image preview"
+          >
+            <CloseIcon sx={{ fontSize: 18 }} />
+          </button>
+        </div>
+        <div style={{ padding: 16, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000000', maxHeight: '75vh', overflow: 'auto' }}>
+          <img
+            src={previewImage}
+            alt="Enlarged attachment"
+            style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+          />
+        </div>
+      </Dialog>
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

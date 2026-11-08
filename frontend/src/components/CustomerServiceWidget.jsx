@@ -18,6 +18,7 @@ const CustomerServiceWidget = () => {
   const [messages, setMessages] = useState([]);
   const [inquiryId, setInquiryId] = useState(null);
   const [newMessage, setNewMessage] = useState('');
+  const [attachedImage, setAttachedImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [socket, setSocket] = useState(null);
@@ -107,7 +108,7 @@ const CustomerServiceWidget = () => {
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     const trimmed = newMessage.trim();
-    if (!trimmed || sending) return;
+    if ((!trimmed && !attachedImage) || sending) return;
 
     setSending(true);
     try {
@@ -116,7 +117,8 @@ const CustomerServiceWidget = () => {
           `${API_URL}/api/inquiries`,
           {
             subject: 'Customer Roofing Inquiry',
-            initialMessage: trimmed
+            initialMessage: trimmed || 'Image attachment',
+            image: attachedImage || null
           },
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -125,17 +127,25 @@ const CustomerServiceWidget = () => {
         setInquiryId(res.data.id);
         setMessages(res.data.messages || []);
       } else {
-        await axios.post(
+        const res = await axios.post(
           `${API_URL}/api/inquiries/${inquiryId}/messages`,
           {
-            content: trimmed
+            content: trimmed,
+            image: attachedImage || null
           },
           {
             headers: { Authorization: `Bearer ${token}` }
           }
         );
+        if (res.data && res.data.id) {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === res.data.id)) return prev;
+            return [...prev, res.data];
+          });
+        }
       }
       setNewMessage('');
+      setAttachedImage(null);
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
@@ -149,6 +159,7 @@ const CustomerServiceWidget = () => {
 
   const handleClearDraft = () => {
     setNewMessage('');
+    setAttachedImage(null);
   };
 
   const handleToggleMaximize = () => {
@@ -226,6 +237,9 @@ const CustomerServiceWidget = () => {
           onSendMessage={handleSendMessage}
           onClearMessage={handleClearDraft}
           sending={sending}
+          attachedImage={attachedImage}
+          onAttachImage={setAttachedImage}
+          onRemoveAttachedImage={() => setAttachedImage(null)}
         />
       </Drawer>
     </>

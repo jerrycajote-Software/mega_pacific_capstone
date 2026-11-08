@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
+import Product3DViewerModal from '../../components/Product3DViewerModal';
 import {
   Box,
   Container,
@@ -435,6 +436,36 @@ const ProductDetails = () => {
 
   const [additionalItems, setAdditionalItems] = useState([]);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [is3DViewerModalOpen, setIs3DViewerModalOpen] = useState(false);
+
+  const handleOpen3DViewer = () => {
+    setIs3DViewerModalOpen(true);
+  };
+
+  const handleClose3DViewer = () => {
+    setIs3DViewerModalOpen(false);
+  };
+
+  const handleApply3DChanges = ({ quantity: newQty, color: newColor, length: newLen, thickness: newThick }) => {
+    if (newQty && !isNaN(newQty)) {
+      setQuantity(Math.max(1, parseInt(newQty, 10)));
+    }
+    if (newColor) {
+      setSelectedColor(newColor);
+    }
+    if (newLen && isPerMeter && !isNaN(newLen)) {
+      setCustomLength(parseFloat(newLen));
+    }
+    if (newThick && productOptions.length > 0) {
+      const matchOpt = productOptions.find(o => 
+        (o.thickness && o.thickness.toLowerCase().trim() === newThick.toLowerCase().trim()) ||
+        (o.name && o.name.toLowerCase().includes(newThick.toLowerCase().trim()))
+      );
+      if (matchOpt) {
+        setSelectedOption(matchOpt);
+      }
+    }
+  };
 
   const handleAddAdditionalProduct = (newItem) => {
     setAdditionalItems(prev => [
@@ -993,30 +1024,55 @@ const ProductDetails = () => {
                   </Typography>
                 )}
               </Box>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                size="large"
-                onClick={handleProceedToCheckout}
-                disabled={!canBuy}
-                sx={{ 
-                  width: { xs: '100%', sm: 'auto' },
-                  minHeight: 48, 
-                  borderRadius: 2.5, 
-                  py: 1.4, 
-                  px: { xs: 3, sm: 5 }, 
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  textTransform: 'none',
-                  boxShadow: '0 8px 24px rgba(79,119,45,0.3)',
-                  '&:hover': {
-                    boxShadow: '0 12px 28px rgba(79,119,45,0.45)',
-                    transform: 'translateY(-1px)'
-                  }
-                }}
-              >
-                {additionalItems.length > 0 ? `Pre-Order All Items (${1 + additionalItems.length})` : 'Pre-Order Now'}
-              </Button>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="large"
+                  onClick={handleOpen3DViewer}
+                  sx={{
+                    width: { xs: '100%', sm: 'auto' },
+                    minHeight: 48,
+                    borderRadius: 2.5,
+                    py: 1.4,
+                    px: { xs: 2.5, sm: 3.5 },
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    textTransform: 'none',
+                    borderWidth: 2,
+                    '&:hover': {
+                      borderWidth: 2,
+                      bgcolor: 'primary.50',
+                    },
+                  }}
+                >
+                  View in 3D
+                </Button>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  size="large"
+                  onClick={handleProceedToCheckout}
+                  disabled={!canBuy}
+                  sx={{ 
+                    width: { xs: '100%', sm: 'auto' },
+                    minHeight: 48, 
+                    borderRadius: 2.5, 
+                    py: 1.4, 
+                    px: { xs: 3, sm: 5 }, 
+                    fontWeight: 800,
+                    fontSize: '1rem',
+                    textTransform: 'none',
+                    boxShadow: '0 8px 24px rgba(79,119,45,0.3)',
+                    '&:hover': {
+                      boxShadow: '0 12px 28px rgba(79,119,45,0.45)',
+                      transform: 'translateY(-1px)'
+                    }
+                  }}
+                >
+                  {additionalItems.length > 0 ? `Pre-Order All Items (${1 + additionalItems.length})` : 'Pre-Order Now'}
+                </Button>
+              </Stack>
             </Box>
           </Box>
         </Box>
@@ -1259,6 +1315,20 @@ const ProductDetails = () => {
         onAddProduct={handleAddAdditionalProduct}
         currentItems={[buildCurrentItem(), ...additionalItems]}
         initialProductId={null}
+      />
+
+      <Product3DViewerModal
+        open={is3DViewerModalOpen}
+        onClose={handleClose3DViewer}
+        product={product}
+        selectedOption={selectedOption}
+        productOptions={productOptions}
+        coilInventory={coilInventory}
+        availableColors={availableColorsList}
+        initialColor={selectedColor}
+        initialLength={isPerMeter ? customLength : 3.8}
+        initialQuantity={quantity}
+        onApplyChanges={handleApply3DChanges}
       />
     </Container>
   );

@@ -1,5 +1,17 @@
-import React from 'react';
-import { Box, Typography, Chip, CircularProgress, Paper, Avatar } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  Chip,
+  CircularProgress,
+  Paper,
+  Avatar,
+  Dialog,
+  IconButton
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+
+import { parseMessageContent } from '../../utils/chatImageHelper';
 
 const QUICK_PROMPTS = [
   '📐 I would like to request a quotation for custom-cut roofing sheets.',
@@ -26,6 +38,16 @@ const SupportMessageList = ({
   onSelectPrompt,
   messagesEndRef
 }) => {
+  const [previewImage, setPreviewImage] = useState(null);
+
+  const handleOpenImagePreview = (imageUrl) => {
+    setPreviewImage(imageUrl);
+  };
+
+  const handleCloseImagePreview = () => {
+    setPreviewImage(null);
+  };
+
   if (loading) {
     return (
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 4, gap: 1.5 }}>
@@ -149,6 +171,7 @@ const SupportMessageList = ({
         const isCustomer = msg?.senderId === currentUser?.id || msg?.sender?.role === 'customer';
         const senderName = msg?.sender?.name || (isCustomer ? 'You' : 'Sales Specialist');
         const timeFormatted = formatMessageTime(msg?.createdAt);
+        const { text, image } = parseMessageContent(msg?.content);
 
         return (
           <Box
@@ -209,15 +232,101 @@ const SupportMessageList = ({
                 fontSize: '0.88rem'
               }}
             >
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: 'inherit', color: 'inherit' }}>
-                {msg?.content}
-              </Typography>
+              {text && (
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: 'inherit', color: 'inherit' }}>
+                  {text}
+                </Typography>
+              )}
+
+              {image && (
+                <Box
+                  sx={{
+                    mt: text ? 1.25 : 0,
+                    cursor: 'pointer',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    border: '1px solid',
+                    borderColor: isCustomer ? 'rgba(255,255,255,0.25)' : 'divider',
+                    bgcolor: isCustomer ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.03)',
+                    maxWidth: 320,
+                    position: 'relative',
+                    transition: 'transform 0.15s ease, opacity 0.15s ease',
+                    '&:hover': {
+                      opacity: 0.95,
+                      transform: 'scale(1.01)'
+                    }
+                  }}
+                  onClick={() => handleOpenImagePreview(image)}
+                >
+                  <Box
+                    component="img"
+                    src={image}
+                    alt="Message attachment"
+                    sx={{
+                      display: 'block',
+                      width: '100%',
+                      maxHeight: { xs: 200, sm: 260 },
+                      objectFit: 'cover'
+                    }}
+                    loading="lazy"
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 6,
+                      right: 6,
+                      bgcolor: 'rgba(0,0,0,0.7)',
+                      color: '#ffffff',
+                      borderRadius: 1,
+                      px: 0.75,
+                      py: 0.25,
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    View Full Image
+                  </Box>
+                </Box>
+              )}
             </Paper>
           </Box>
         );
       })}
 
       <div ref={messagesEndRef} />
+
+      <Dialog
+        open={Boolean(previewImage)}
+        onClose={handleCloseImagePreview}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: 'background.paper',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            Image Attachment Preview
+          </Typography>
+          <IconButton size="small" onClick={handleCloseImagePreview} aria-label="Close attachment preview">
+            <CloseIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+        </Box>
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: '#000000', maxHeight: '75vh', overflow: 'auto' }}>
+          <Box
+            component="img"
+            src={previewImage}
+            alt="Enlarged attachment"
+            sx={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+          />
+        </Box>
+      </Dialog>
     </Box>
   );
 };
