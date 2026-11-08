@@ -90,26 +90,46 @@ const HeroSection = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => navigate('/roof-designer')}
+              onClick={() => navigate('/products')}
               sx={{
-                px: { xs: 3, sm: 3.5 },
+                px: { xs: 3, sm: 4 },
                 py: { xs: 1.25, sm: 1.5 },
                 fontSize: { xs: '0.9rem', sm: '1rem' },
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.2,
-                fontWeight: 700,
+                fontWeight: 800,
                 borderRadius: 2.5,
                 boxShadow: '0 4px 14px rgba(79,119,45,0.3)',
                 width: { xs: '100%', sm: 'auto' },
                 justifyContent: 'center',
+                textTransform: 'none',
                 '&:hover': {
                   boxShadow: '0 8px 20px rgba(79,119,45,0.45)',
-                  transform: 'translateY(-1px)'
-                }
+                  transform: 'translateY(-1px)',
+                },
               }}
             >
-              <i className="fi fi-rr-home" style={{ fontSize: '16px' }}></i>
+              Explore Roofing Products
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              onClick={() => navigate('/roof-designer')}
+              sx={{
+                px: { xs: 2.5, sm: 3 },
+                py: { xs: 1.25, sm: 1.5 },
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                fontWeight: 700,
+                borderRadius: 2.5,
+                width: { xs: '100%', sm: 'auto' },
+                justifyContent: 'center',
+                textTransform: 'none',
+                borderWidth: 2,
+                '&:hover': {
+                  borderWidth: 2,
+                  bgcolor: 'rgba(79, 119, 45, 0.05)',
+                },
+              }}
+            >
               <span>3D Roof Designer</span>
               {isMobile && (
                 <Chip 
@@ -119,10 +139,9 @@ const HeroSection = () => {
                     height: 18, 
                     fontSize: '0.62rem', 
                     fontWeight: 800, 
-                    bgcolor: 'rgba(255, 255, 255, 0.25)',
-                    color: '#ffffff',
-                    border: '1px solid rgba(255, 255, 255, 0.4)',
-                    ml: 0.5
+                    bgcolor: 'rgba(79, 119, 45, 0.1)',
+                    color: 'primary.main',
+                    ml: 1,
                   }} 
                 />
               )}

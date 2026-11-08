@@ -3,7 +3,15 @@ const prisma = require("../config/db");
 exports.createInquiry = async (req, res) => {
   try {
     const customerId = req.user.userId;
-    const { subject, initialMessage } = req.body;
+    const { subject, initialMessage, image } = req.body;
+
+    let contentToStore = initialMessage || '';
+    if (image) {
+      contentToStore = JSON.stringify({
+        text: initialMessage || '',
+        image: image
+      });
+    }
 
     const inquiry = await prisma.inquiry.create({
       data: {
@@ -12,7 +20,7 @@ exports.createInquiry = async (req, res) => {
         messages: {
           create: {
             senderId: customerId,
-            content: initialMessage,
+            content: contentToStore,
           },
         },
       },
@@ -40,13 +48,21 @@ exports.addMessage = async (req, res) => {
   try {
     const senderId = req.user.userId;
     const { id } = req.params; 
-    const { content } = req.body;
+    const { content, image } = req.body;
+
+    let contentToStore = content || '';
+    if (image) {
+      contentToStore = JSON.stringify({
+        text: content || '',
+        image: image
+      });
+    }
 
     const message = await prisma.message.create({
       data: {
         inquiryId: parseInt(id),
         senderId,
-        content,
+        content: contentToStore,
       },
       include: {
         sender: {

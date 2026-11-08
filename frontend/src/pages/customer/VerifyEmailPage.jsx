@@ -91,7 +91,7 @@ const VerifyEmailPage = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleVerifyEmailOtp = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -112,7 +112,12 @@ const VerifyEmailPage = () => {
       
       setSuccess(res.data.message || 'Verification successful!');
       setTimeout(() => {
-        navigate('/login', { state: { message: 'Email verified successfully! You can now log in.' } });
+        navigate('/login', { 
+          state: { 
+            message: 'Email verified successfully! You can now log in.',
+            email: email
+          } 
+        });
       }, 2000);
     } catch (err) {
       console.error(err);
@@ -122,7 +127,7 @@ const VerifyEmailPage = () => {
     }
   };
 
-  const handleResend = async () => {
+  const handleResendVerificationCode = async () => {
     setError('');
     setSuccess('');
     setResending(true);
@@ -235,7 +240,7 @@ const VerifyEmailPage = () => {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Box component="form" onSubmit={handleVerifyEmailOtp} noValidate>
             <Stack direction="row" spacing={{ xs: 1, sm: 1.5 }} alignItems="center" justifyContent="center" sx={{ mb: 4 }} onPaste={handlePaste}>
               {otp.map((data, index) => (
                 <Box
@@ -292,7 +297,7 @@ const VerifyEmailPage = () => {
               variant="text"
               color="primary"
               disabled={cooldown > 0 || resending}
-              onClick={handleResend}
+              onClick={handleResendVerificationCode}
               sx={{ fontWeight: 700, textTransform: 'none' }}
             >
               {resending ? (

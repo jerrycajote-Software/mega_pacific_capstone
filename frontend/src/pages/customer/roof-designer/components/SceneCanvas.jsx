@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
 import { CircularProgress } from '@mui/material';
 import FullHouseModel from './FullHouseModel';
-
+import ConfigurableRoofModel from './ConfigurableRoofModel';
 
 const Loader = () => (
   <Html center>
@@ -23,12 +23,12 @@ const Loader = () => (
 /**
  * The main Three.js canvas component for the Roof Designer.
  *
- * Loads the unified FullHouseModel and passes the visibility state.
+ * Loads either ConfigurableRoofModel or legacy FullHouseModel.
  *
  * @param {boolean} houseLoaded 
  * @param {Set} visibleIds 
  */
-const SceneCanvas = ({ houseLoaded = false, visibleIds = new Set(), tileQty = 0, tileColor }) => {
+const SceneCanvas = ({ houseLoaded = false, visibleIds = new Set(), tileQty = 0, tileColor, modelPath }) => {
   return (
     <Canvas
       shadows
@@ -58,15 +58,25 @@ const SceneCanvas = ({ houseLoaded = false, visibleIds = new Set(), tileQty = 0,
 
       <gridHelper args={[20, 20, '#c8d6e5', '#e2e8f0']} position={[0, 0, 0]} />
 
-      {}
       <Suspense fallback={<Loader />}>
-        <FullHouseModel 
-          position={[0, 0, 0]} 
-          houseLoaded={houseLoaded} 
-          visibleIds={visibleIds}
-          tileQty={tileQty}
-          tileColor={tileColor}
-        />
+        {modelPath ? (
+          <ConfigurableRoofModel
+            position={[0, 0, 0]}
+            modelPath={modelPath}
+            sheetQty={tileQty}
+            roofColorHex={tileColor}
+            showSubstructure={houseLoaded}
+            showSheets={tileQty > 0}
+          />
+        ) : (
+          <FullHouseModel 
+            position={[0, 0, 0]} 
+            houseLoaded={houseLoaded} 
+            visibleIds={visibleIds}
+            tileQty={tileQty}
+            tileColor={tileColor}
+          />
+        )}
       </Suspense>
 
       <OrbitControls

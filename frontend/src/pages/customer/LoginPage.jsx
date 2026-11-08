@@ -47,6 +47,11 @@ const CustomerLoginPage = () => {
   useEffect(() => {
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
+    }
+    if (location.state?.email) {
+      setEmail(location.state.email);
+    }
+    if (location.state?.message || location.state?.email) {
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -55,7 +60,7 @@ const CustomerLoginPage = () => {
     return null;
   }
 
-  const handleSubmit = async (e) => {
+  const handleCustomerLogin = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
@@ -185,7 +190,7 @@ const CustomerLoginPage = () => {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} noValidate>
+          <Box component="form" onSubmit={handleCustomerLogin} noValidate>
             <TextField
               fullWidth
               label="Email Address"

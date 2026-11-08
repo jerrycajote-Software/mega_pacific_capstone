@@ -1,13 +1,14 @@
 
 # MEGA PACIFIC - Root .gitignore
 # Covers: Node.js backend, React/Vite frontend, Prisma, OS/editor
-# ============================================================
 
-#  Environment Variables (NEVER commit these) 
+
+#  Environment Variables
 .env
 .env.*
 !.env.example
 *.env
+
 
 #  Node / NPM 
 node_modules/
@@ -63,5 +64,29 @@ MyLearning/
 *.tmp
 *.cache
 SKILL_DESIGN.MD
-.gitignore
-backend/.env.example
+
+# Docs & Planning Notes
+
+other/docs/
+documentation_structured.md
+flowchart.md
+plan.drawio
+implementation/
+2026-*.md
+
+
+# Agent and AI Tooling
+.agents/
+
+# Obsidian
+.obsidian/
+*.canvas
+*.base
+
+# Scripts with hardcoded credentials or admin generation (local-use only)
+backend/scripts/create*.js
+backend/scripts/clean_legacy_inventory_items.js
+
+# Destructive admin utilities (local-use only)
+backend/deleteUser.js
+

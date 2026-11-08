@@ -12,10 +12,10 @@ const OFFICIAL_PROFILES = [
     originalPrice: 340.00,
     price: 238.00,
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
     ]
   },
   {
@@ -29,10 +29,10 @@ const OFFICIAL_PROFILES = [
     originalPrice: 340.00,
     price: 238.00,
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
     ]
   },
   {
@@ -46,10 +46,10 @@ const OFFICIAL_PROFILES = [
     originalPrice: 340.00,
     price: 238.00,
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
     ]
   },
   {
@@ -63,10 +63,10 @@ const OFFICIAL_PROFILES = [
     originalPrice: 340.00,
     price: 238.00,
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 340.00, price: 238.00 },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 257.60 },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 328.30 },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 389.90 }
     ]
   },
   {
@@ -80,10 +80,10 @@ const OFFICIAL_PROFILES = [
     originalPrice: 187.00,
     price: 130.90,
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 187.00, price: 130.90 },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 203.00, price: 142.10 },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 256.00, price: 179.20 },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 307.00, price: 214.90 }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 187.00, price: 130.90 },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 203.00, price: 142.10 },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 256.00, price: 179.20 },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 307.00, price: 214.90 }
     ]
   },
   {
@@ -97,10 +97,10 @@ const OFFICIAL_PROFILES = [
     originalPrice: 347.00,
     price: 242.90,
     variants: [
-      { name: "0.35mm Thickness", thickness: "0.35mm", originalPrice: 347.00, price: 242.90 },
-      { name: "0.40mm Thickness", thickness: "0.40mm", originalPrice: 400.00, price: 280.00 },
-      { name: "0.50mm Thickness", thickness: "0.50mm", originalPrice: 520.00, price: 364.00 },
-      { name: "0.60mm Thickness", thickness: "0.60mm", originalPrice: 645.00, price: 451.50 }
+      { name: "0.35mm", thickness: "0.35mm", originalPrice: 347.00, price: 242.90 },
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 400.00, price: 280.00 },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 520.00, price: 364.00 },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 645.00, price: 451.50 }
     ]
   }
 ];

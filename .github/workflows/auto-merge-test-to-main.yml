@@ -1,0 +1,47 @@
+name: Auto Merge Test to Main
+
+on:
+  push:
+    branches:
+      - test
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge-test-to-main:
+    name: Sync test branch into main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git author identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch remote branches
+        run: |
+          git fetch origin main
+          git fetch origin test
+
+      - name: Switch to main branch
+        run: |
+          git checkout -B main origin/main
+
+      - name: Merge test into main
+        run: |
+          if ! git merge origin/test --no-edit -m "chore(sync): auto-merge test branch updates into main"; then
+            echo "::error::Merge conflict encountered between test and main. Please resolve manually."
+            exit 1
+          fi
+
+      - name: Push merged updates to main
+        run: |
+          git push origin main
+

@@ -168,7 +168,7 @@ const SupportHeader = ({
           }}
         >
           <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem' }}>
-            Ticket ID: <span style={{ fontFamily: 'monospace', color: '#4f772d', fontWeight: 700 }}>#INQ-{inquiryId}</span>
+            Message ID: <span style={{ fontFamily: 'monospace', color: '#4f772d', fontWeight: 700 }}>#INQ-{inquiryId}</span>
           </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
             ⚡ Response within 15 mins during business hours
