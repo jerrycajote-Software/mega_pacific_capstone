@@ -74,11 +74,9 @@ const DashboardPage = () => {
 
   useEffect(() => {
     fetchStats();
-    const syncInterval = setInterval(fetchStats, 10000);
     const handleFocus = () => fetchStats();
     window.addEventListener('focus', handleFocus);
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

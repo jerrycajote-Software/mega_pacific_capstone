@@ -202,11 +202,9 @@ export default function StockManagementTab({ products, onRefreshProducts }) {
   useEffect(() => {
     if (subTab === 'logs') {
       fetchLogs();
-      const interval = setInterval(fetchLogs, 10000);
       const handleFocus = () => fetchLogs();
       window.addEventListener('focus', handleFocus);
       return () => {
-        clearInterval(interval);
         window.removeEventListener('focus', handleFocus);
       };
     }

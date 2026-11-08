@@ -110,11 +110,9 @@ const RefundsPage = () => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
     const handleFocus = () => fetchData();
     window.addEventListener('focus', handleFocus);
     return () => {
-      clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

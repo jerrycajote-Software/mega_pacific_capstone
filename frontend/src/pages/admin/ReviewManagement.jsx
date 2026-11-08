@@ -72,11 +72,9 @@ const ReviewManagement = () => {
 
   useEffect(() => {
     fetchReviews();
-    const syncInterval = setInterval(fetchReviews, 10000);
     const handleFocus = () => fetchReviews();
     window.addEventListener('focus', handleFocus);
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

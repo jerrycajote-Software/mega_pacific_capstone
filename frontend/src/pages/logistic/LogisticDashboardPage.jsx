@@ -113,9 +113,6 @@ const LogisticDashboardPage = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    const syncInterval = setInterval(() => {
-      fetchDashboardData();
-    }, 10000);
 
     const handleFocus = () => {
       fetchDashboardData();
@@ -123,7 +120,6 @@ const LogisticDashboardPage = () => {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(syncInterval);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);

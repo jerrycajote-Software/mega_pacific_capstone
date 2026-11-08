@@ -107,11 +107,9 @@ const OrderManagement = () => {
 
   useEffect(() => {
     fetchOrders();
-    const autoRefresh = setInterval(() => fetchOrders(), 10000);
     const handleFocus = () => fetchOrders();
     window.addEventListener('focus', handleFocus);
     return () => {
-      clearInterval(autoRefresh);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);
