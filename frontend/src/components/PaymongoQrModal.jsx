@@ -70,11 +70,24 @@ const PaymongoQrModal = ({
         setErrorMessage('Unable to generate a GCash QR code right now. Please try again.');
       }
     } catch (err) {
-      const msg =
+      console.error('PayMongo QR generation error:', err);
+      const rawMsg =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        'Unable to connect to PayMongo payment gateway. Please check your connection and try again.';
-      setErrorMessage(msg);
+        '';
+
+      let displayMsg = rawMsg;
+      if (
+        rawMsg.toLowerCase().includes('secret key') ||
+        rawMsg.toLowerCase().includes('developers.paymongo.com') ||
+        rawMsg.toLowerCase().includes('authentication')
+      ) {
+        displayMsg = 'GCash QR payment is temporarily undergoing maintenance. Please select standard GCash or another payment option, or try again shortly.';
+      } else if (!displayMsg) {
+        displayMsg = 'Unable to connect to PayMongo payment gateway. Please check your connection and try again.';
+      }
+
+      setErrorMessage(displayMsg);
     } finally {
       setLoadingQr(false);
     }
