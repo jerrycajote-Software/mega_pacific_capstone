@@ -26,7 +26,8 @@ import {
 import {
   CustomArrowBackIcon as ArrowBackIcon,
   CustomStraightenIcon as StraightenIcon,
-  CustomPaletteIcon as PaletteIcon
+  CustomPaletteIcon as PaletteIcon,
+  CustomEmptyReviewsIcon
 } from '../../components/icons';
 import {
   ROOFING_COLORS,
@@ -1356,7 +1357,9 @@ const ProductDetails = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
         ) : reviews.length === 0 ? (
           <Paper elevation={0} sx={{ p: 6, textAlign: 'center', borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <i className="fi fi-rr-comment-alt" style={{ fontSize: '40px', color: '#cbd5e1', marginBottom: '16px', display: 'block' }}></i>
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CustomEmptyReviewsIcon size={56} />
+            </Box>
             <Typography variant="h6" fontWeight="bold" gutterBottom>No reviews yet</Typography>
             <Typography color="text.secondary">Customer reviews will appear here once this product has been purchased and rated by our community.</Typography>
           </Paper>

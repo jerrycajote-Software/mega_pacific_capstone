@@ -730,13 +730,6 @@ const Checkout = () => {
           <span>Catalog</span>
         </Box>
         <span style={{ color: '#cbd5e1' }}>/</span>
-        <Button
-          onClick={() => setShowExitConfirm(true)}
-          sx={{ p: 0, minWidth: 'auto', textTransform: 'none', color: '#64748b', fontWeight: 500, fontSize: '0.85rem', '&:hover': { color: 'primary.main', bgcolor: 'transparent' } }}
-        >
-          Product Customization
-        </Button>
-        <span style={{ color: '#cbd5e1' }}>/</span>
         <Typography variant="body2" fontWeight={700} color="primary.main">
           Secure Checkout
         </Typography>
@@ -959,7 +952,7 @@ const Checkout = () => {
                       <CustomLocationOnIcon size={22} color="#16a34a" />
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 0.5 }}>
                         <Typography variant="subtitle2" fontWeight={800} color="#166534">
                           Mega Pacific Imus Plant Warehouse
                         </Typography>
@@ -1030,13 +1023,22 @@ const Checkout = () => {
                   boxShadow: '0 4px 20px -8px rgba(0,0,0,0.04)'
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', color: '#fff', width: 34, height: 34, fontWeight: 800, fontSize: '0.9rem' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                    mb: 3
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                    <Avatar sx={{ bgcolor: 'primary.main', color: '#fff', width: 34, height: 34, fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
                       2
                     </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em' }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em', fontSize: { xs: '1.05rem', sm: '1.25rem' } }}>
                         Payment Terms & Billing
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -1048,7 +1050,7 @@ const Checkout = () => {
                     label={formData.paymentPlan === 'COD_50' ? '50/50 Payment' : '100% Upfront'}
                     size="small"
                     variant="outlined"
-                    sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                    sx={{ fontWeight: 700, fontSize: '0.7rem', alignSelf: { xs: 'flex-start', sm: 'center' } }}
                   />
                 </Box>
 
