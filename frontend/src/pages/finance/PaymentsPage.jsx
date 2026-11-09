@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import SearchIcon from '@mui/icons-material/Search';
-import CloseIcon from '@mui/icons-material/Close';
+import { CustomSearchIcon as SearchIcon } from '../../components/icons';
 import CustomMessageDialog from '../../components/CustomMessageDialog';
 import { useCustomDialog } from '../../hooks/useCustomDialog';
+import OfficialReceiptModal from '../../components/OfficialReceiptModal';
 
 const StatusBadge = ({ status }) => {
   const s = status ? status.toLowerCase() : '';
@@ -60,55 +60,45 @@ const PaymentsPage = () => {
     };
   }, []);
 
-  const handleVerifyPayment = (orderOrId) => {
+  const handleExecutePaymentVerification = async (targetOrder) => {
     if (processingId) return;
-    const target = typeof orderOrId === 'object' && orderOrId !== null
-      ? orderOrId 
-      : (orders.find(o => o.rawId === orderOrId) || { rawId: orderOrId, id: `#ORD-${orderOrId}` });
-    const orderId = target.id || `#ORD-${target.rawId}`;
+    const target = typeof targetOrder === 'object' && targetOrder !== null
+      ? targetOrder 
+      : (orders.find(o => o.rawId === targetOrder) || { rawId: targetOrder, id: `#ORD-${targetOrder}` });
     const rawId = target.rawId || target.id;
 
-    showConfirm({
-      type: 'warning',
-      title: 'Confirm Payment Verification',
-      message: `Are you sure you want to verify payment for Order ${orderId}?`,
-      description: 'This will record payment validation and forward the order to Logistics for fabrication and fulfillment.',
-      confirmText: 'Verify Payment',
-      cancelText: 'Cancel',
-      onConfirm: async () => {
-        setProcessingId(rawId);
-        try {
-          const token = localStorage.getItem('appToken');
-          const API_URL = import.meta.env.VITE_API_URL || '';
-          const res = await axios.patch(`${API_URL}/api/finance/orders/${rawId}/verify`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (res.data.success) {
-            await fetchOrders();
-            if (selectedOrder && selectedOrder.rawId === rawId) setSelectedOrder(null);
-            showSuccess({
-              title: 'Payment Verified Successfully',
-              message: res.data.message || 'Payment verified and order forwarded to Logistics.',
-              confirmText: 'Acknowledge'
-            });
-          }
-        } catch (err) {
-          console.error('Failed to verify order', err);
-          const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to verify payment';
-          showError({
-            title: 'Verification Failed',
-            message: errorMessage,
-            confirmText: 'Dismiss'
-          });
-        } finally {
-          setProcessingId(null);
-        }
+    setProcessingId(rawId);
+    try {
+      const token = localStorage.getItem('appToken');
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.patch(`${API_URL}/api/finance/orders/${rawId}/verify`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        await fetchOrders();
+        setSelectedOrder(null);
+        showSuccess({
+          title: 'Payment Verified Successfully',
+          message: res.data.message || 'Payment verified and order forwarded to Logistics.',
+          confirmText: 'Acknowledge'
+        });
       }
-    });
+    } catch (err) {
+      console.error('Failed to verify order', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to verify payment';
+      showError({
+        title: 'Verification Failed',
+        message: errorMessage,
+        confirmText: 'Dismiss'
+      });
+    } finally {
+      setProcessingId(null);
+    }
   };
 
-  const handleViewOrderDetails = (order) => setSelectedOrder(order);
-  const handleCloseOrderDetailsModal = () => setSelectedOrder(null);
+  const handleViewOfficialReceipt = (order) => setSelectedOrder(order);
+  const handleOpenVerificationModal = (order) => setSelectedOrder(order);
+  const handleCloseOfficialReceiptModal = () => setSelectedOrder(null);
 
   const filteredOrders = orders.filter(o => 
     o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -155,43 +145,12 @@ const PaymentsPage = () => {
                 <td style={{ padding: '1rem' }}><StatusBadge status={order.orderStatus} /></td>
                 <td style={{ padding: '1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleViewOrderDetails(order)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '7px 14px',
-                        fontSize: '0.8rem',
-                        fontWeight: 650,
-                        color: '#2563eb',
-                        background: 'rgba(37, 99, 235, 0.08)',
-                        border: '1px solid rgba(37, 99, 235, 0.28)',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        lineHeight: 1.2,
-                        textTransform: 'none',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.16)';
-                        e.currentTarget.style.borderColor = '#2563eb';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.08)';
-                        e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.28)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
-                      View Details
-                    </button>
-                    {order.orderStatus === 'sales_approved' && (
+                    {order.orderStatus === 'sales_approved' ? (
                       <button
                         type="button"
-                        onClick={() => handleVerifyPayment(order)}
+                        onClick={() => handleOpenVerificationModal(order)}
                         disabled={Boolean(processingId)}
+                        title="Review Official Receipt and Verify Payment"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -227,6 +186,40 @@ const PaymentsPage = () => {
                       >
                         {processingId === order.rawId ? 'Verifying...' : 'Verify Payment'}
                       </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleViewOfficialReceipt(order)}
+                        title="View Official Receipt"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '7px 14px',
+                          fontSize: '0.8rem',
+                          fontWeight: 650,
+                          color: '#2563eb',
+                          background: 'rgba(37, 99, 235, 0.08)',
+                          border: '1px solid rgba(37, 99, 235, 0.28)',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          lineHeight: 1.2,
+                          textTransform: 'none',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(37, 99, 235, 0.16)';
+                          e.currentTarget.style.borderColor = '#2563eb';
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(37, 99, 235, 0.08)';
+                          e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.28)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        View Receipt
+                      </button>
                     )}
                   </div>
                 </td>
@@ -239,64 +232,14 @@ const PaymentsPage = () => {
         </table>
       </div>
 
-      {selectedOrder && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
-          <div style={{ background: 'var(--bg-secondary)', width: '100%', maxWidth: 600, borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Payment Verification {selectedOrder.id}</h3>
-              <button onClick={handleCloseOrderDetailsModal} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><CloseIcon /></button>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              <p><strong>Customer:</strong> {selectedOrder.customerName}</p>
-              <p><strong>Email:</strong> {selectedOrder.customerEmail}</p>
-              <p><strong>Total Amount:</strong> ₱{selectedOrder.totalAmount.toLocaleString()}</p>
-              <p><strong>Payment Mode:</strong> {selectedOrder.paymentMode}</p>
-              <p><strong>Products:</strong></p>
-              <ul style={{ paddingLeft: '1.5rem', margin: '0.5rem 0', color: 'var(--text-muted)' }}>
-                {selectedOrder.items.map(i => <li key={i.productName}>{i.productName} {i.variantName ? `(${i.variantName})` : ''} x {i.quantity}</li>)}
-              </ul>
-            </div>
-            {selectedOrder.orderStatus === 'sales_approved' && (
-              <div style={{ padding: '1.5rem', borderTop: '1px solid var(--border)', background: 'var(--bg-primary)', textAlign: 'right' }}>
-                <button 
-                  type="button"
-                  onClick={() => handleVerifyPayment(selectedOrder)} 
-                  disabled={Boolean(processingId)}
-                  style={{ 
-                    background: processingId ? '#64748b' : '#16a34a', 
-                    color: 'white', 
-                    border: 'none', 
-                    padding: '10px 22px', 
-                    borderRadius: 8, 
-                    cursor: processingId ? 'not-allowed' : 'pointer', 
-                    fontWeight: 700,
-                    fontSize: '0.88rem',
-                    boxShadow: processingId ? 'none' : '0 2px 10px rgba(22, 163, 74, 0.3)',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                    opacity: processingId ? 0.6 : 1
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!processingId) {
-                      e.currentTarget.style.background = '#15803d';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(22, 163, 74, 0.4)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!processingId) {
-                      e.currentTarget.style.background = '#16a34a';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 2px 10px rgba(22, 163, 74, 0.3)';
-                    }
-                  }}
-                >
-                  {processingId === selectedOrder.rawId ? 'Verifying...' : 'Verify & Forward to Logistics'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Official Receipt & Verification Modal */}
+      <OfficialReceiptModal
+        open={Boolean(selectedOrder)}
+        onClose={handleCloseOfficialReceiptModal}
+        order={selectedOrder}
+        onVerifyPayment={handleExecutePaymentVerification}
+        isProcessing={Boolean(processingId)}
+      />
 
       {/* Custom Metal & Steel Message / Warning Dialog */}
       <CustomMessageDialog {...dialogState} />

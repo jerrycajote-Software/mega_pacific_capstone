@@ -33,13 +33,15 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { usePreventBackToLogin } from '../../hooks/usePreventBackToLogin';
 import {
   CustomLogisticReadyToShipIcon,
   CustomLogisticOutForDeliveryIcon,
   CustomLogisticCompletedTodayIcon,
-  CustomLogisticStorePickupIcon
+  CustomLogisticStorePickupIcon,
+  CustomChevronRightIcon as ChevronRightIcon,
+  CustomLocationOnIcon,
+  CustomLocalShippingIcon
 } from '../../components/icons';
 
 const DONUT_COLORS = ['#2563EB', '#8B5CF6', '#10B981', '#F59E0B'];
@@ -448,7 +450,6 @@ const LogisticDashboardPage = () => {
               <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
                 Operational Alerts
               </Typography>
-              <i className="fi fi-rr-bell-ring" style={{ color: '#2563EB', fontSize: 18 }} />
             </Box>
 
             <Stack spacing={2} sx={{ mb: 3 }}>
@@ -588,12 +589,12 @@ const LogisticDashboardPage = () => {
             <TableContainer sx={{ maxHeight: 420 }}>
               <Table stickyHeader>
                 <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Order Tracking ID</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Recipient Customer</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Destination Address</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Date Dispatched</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50', textAlign: 'center' }}>Fulfillment Status</TableCell>
+                  <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider' } }}>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Order Tracking ID</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Recipient Customer</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Destination Address</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Date Dispatched</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'center' }}>Fulfillment Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -609,7 +610,7 @@ const LogisticDashboardPage = () => {
                         </TableCell>
                         <TableCell sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
                           <Stack direction="row" spacing={0.75} alignItems="center">
-                            <i className="fi fi-rr-marker" style={{ fontSize: 12, color: '#64748B' }} />
+                            <CustomLocationOnIcon size={14} color="#64748B" />
                             <span>{row.address}</span>
                           </Stack>
                         </TableCell>
@@ -649,7 +650,9 @@ const LogisticDashboardPage = () => {
                   {filteredDeliveries.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                        <i className="fi fi-rr-truck-side" style={{ fontSize: 32, display: 'block', marginBottom: 8, opacity: 0.4 }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, opacity: 0.4 }}>
+                          <CustomLocalShippingIcon size={32} color="#94A3B8" />
+                        </Box>
                         <Typography variant="body2">No dispatches found matching this filter.</Typography>
                       </TableCell>
                     </TableRow>

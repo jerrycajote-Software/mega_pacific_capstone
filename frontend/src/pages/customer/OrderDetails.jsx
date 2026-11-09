@@ -21,8 +21,6 @@ import {
   Tooltip,
   Snackbar
 } from '@mui/material';
-import CancelIcon from '@mui/icons-material/Cancel';
-import StarIcon from '@mui/icons-material/Star';
 import { io } from 'socket.io-client';
 import {
   CustomFulfillmentPlacedIcon,
@@ -32,7 +30,9 @@ import {
   CustomFulfillmentCompleteIcon,
   CustomFulfillmentCancelledIcon,
   CustomStorePickupChipIcon,
-  CustomPendingPaymentChipIcon
+  CustomPendingPaymentChipIcon,
+  CustomCancelIcon as CancelIcon,
+  CustomStarIcon as StarIcon
 } from '../../components/icons';
 
 const deliveryStatusSteps = [

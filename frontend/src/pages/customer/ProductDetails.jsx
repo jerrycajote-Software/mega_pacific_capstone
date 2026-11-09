@@ -22,9 +22,11 @@ import {
   Stack,
   Tooltip,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import StraightenIcon from '@mui/icons-material/Straighten';
-import PaletteIcon from '@mui/icons-material/Palette';
+import {
+  CustomArrowBackIcon as ArrowBackIcon,
+  CustomStraightenIcon as StraightenIcon,
+  CustomPaletteIcon as PaletteIcon
+} from '../../components/icons';
 import {
   ROOFING_COLORS,
   getColorHex,
@@ -1344,7 +1346,7 @@ const ProductDetails = () => {
 
       <Box sx={{ mt: 8 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
-          <i className="fi fi-rr-comment-alt" style={{ fontSize: '20px', color: '#64748b' }}></i>
+          
           <Typography variant="h5" fontWeight="bold" color="text.primary">Customer Reviews</Typography>
           <Chip label={reviews.length || product.reviewCount || 0} size="small" sx={{ fontWeight: 'bold' }} />
         </Box>

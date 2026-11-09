@@ -9,8 +9,10 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import CloseIcon from '@mui/icons-material/Close';
+import {
+  CustomImageOutlinedIcon as ImageOutlinedIcon,
+  CustomCloseIcon as CloseIcon
+} from '../icons';
 
 import { isMobileBrowser } from '../../utils/deviceDetect';
 import { compressChatImage } from '../../utils/chatImageHelper';

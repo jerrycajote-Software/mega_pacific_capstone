@@ -9,7 +9,7 @@ import {
   Dialog,
   IconButton
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { CustomCloseIcon as CloseIcon } from '../icons';
 
 import { parseMessageContent } from '../../utils/chatImageHelper';
 

@@ -17,8 +17,10 @@ import {
   InputLabel,
   OutlinedInput,
 } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import {
+  CustomVisibilityIcon as Visibility,
+  CustomVisibilityOffIcon as VisibilityOff
+} from '../../components/icons';
 
 
 const CustomerLoginPage = () => {

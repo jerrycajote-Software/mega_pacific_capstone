@@ -2,26 +2,26 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import BadgeIcon from '@mui/icons-material/Badge';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import CategoryIcon from '@mui/icons-material/Category';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
-import StarIcon from '@mui/icons-material/Star';
-import SearchIcon from '@mui/icons-material/Search';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import RateReviewIcon from '@mui/icons-material/RateReview';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import ClearIcon from '@mui/icons-material/Clear';
 import {
   CustomGrossRevenueIcon,
   CustomOrderPipelineIcon,
   CustomActiveDispatchIcon,
-  CustomCustomerSentimentIcon
+  CustomCustomerSentimentIcon,
+  CustomTrendingUpIcon as TrendingUpIcon,
+  CustomShoppingCartIcon as ShoppingCartIcon,
+  CustomAccessTimeIcon as AccessTimeIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomLocalShippingIcon as LocalShippingIcon,
+  CustomBadgeIcon as BadgeIcon,
+  CustomWarningAmberIcon as WarningAmberIcon,
+  CustomCategoryIcon as CategoryIcon,
+  CustomSupportAgentIcon as SupportAgentIcon,
+  CustomStarIcon as StarIcon,
+  CustomSearchIcon as SearchIcon,
+  CustomChevronRightIcon as ChevronRightIcon,
+  CustomRateReviewIcon as RateReviewIcon,
+  CustomStorefrontIcon as StorefrontIcon,
+  CustomClearIcon as ClearIcon
 } from '../../components/icons';
 
 const SalesDashboard = () => {

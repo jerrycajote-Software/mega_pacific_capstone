@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldAlert, Lock, Mail, Eye, EyeOff, Loader2, ArrowLeft, Terminal, ShieldCheck } from 'lucide-react';
+import {
+  CustomWarningIcon as ShieldAlert,
+  CustomLockIcon as Lock,
+  CustomMailIcon as Mail,
+  CustomVisibilityIcon as Eye,
+  CustomVisibilityOffIcon as EyeOff,
+  CustomLoaderIcon as Loader2,
+  CustomArrowBackIcon as ArrowLeft,
+  CustomTerminalIcon as Terminal,
+  CustomShieldIcon as ShieldCheck
+} from '../../components/icons';
 
 const SuperAdminLoginPage = () => {
   const [email, setEmail] = useState('');

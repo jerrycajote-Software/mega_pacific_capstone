@@ -7,6 +7,22 @@ import { getZipCodeForLocation } from '../../utils/locationService';
 import ShippingInfoWidget from '../../components/ShippingInfoWidget';
 import PaymentMethodWidget from '../../components/PaymentMethodWidget';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
+import {
+  CustomOrderSuccessIcon,
+  CustomShoppingCartIcon,
+  CustomHomeIcon,
+  CustomCreditCardIcon,
+  CustomLocalShippingIcon,
+  CustomCheckIcon,
+  CustomStorefrontIcon,
+  CustomLocationOnIcon,
+  CustomDescriptionIcon,
+  CustomInventory2Icon,
+  CustomDeleteIcon,
+  CustomRemoveIcon,
+  CustomAddIcon,
+  CustomWarningIcon
+} from '../../components/icons';
 import { isCustomLengthProfile } from './buildProductOptions';
 import { getColorHex } from '../../constants/roofingSpecs';
 import {
@@ -328,7 +344,7 @@ const Checkout = () => {
       <Box sx={{ py: 10, px: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Paper elevation={0} sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center', maxWidth: 480, width: '100%', borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
           <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-            <i className="fi fi-rr-shopping-bag" style={{ fontSize: 28, color: '#94a3b8' }} />
+            <CustomShoppingCartIcon size={28} color="#94a3b8" />
           </Box>
           <Typography variant="h5" fontWeight={900} gutterBottom>Your Order is Empty</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5 }}>
@@ -339,7 +355,6 @@ const Checkout = () => {
               variant="contained"
               color="primary"
               onClick={() => navigate('/dashboard')}
-              startIcon={<i className="fi fi-rr-arrow-left" style={{ fontSize: 13 }} />}
               sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, px: 3.5, py: 1.1 }}
             >
               Return to Catalog
@@ -617,43 +632,13 @@ const Checkout = () => {
   if (success) {
     return (
       <Box sx={{ py: 10, textAlign: 'center', animation: 'fadeIn 0.5s ease-in-out' }}>
-        <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 80, height: 80, mx: 'auto', mb: 3 }}>
-          <i className="fi fi-sr-check-circle" style={{ fontSize: '40px' }}></i>
-        </Avatar>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <CustomOrderSuccessIcon size={88} />
+        </Box>
         <Typography variant="h3" fontWeight="bold" gutterBottom>Order Placed Successfully!</Typography>
-        <Typography color="text.secondary" sx={{ mb: 2.5, maxWidth: 500, mx: 'auto' }}>
+        <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
           Thank you for your purchase. We have received your order and will process it shortly.
         </Typography>
-        {formData.customerEmail && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              mb: 4,
-              maxWidth: 500,
-              mx: 'auto',
-              bgcolor: '#f0fdf4',
-              border: '1.5px solid #86efac',
-              borderRadius: 3,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              textAlign: 'left'
-            }}
-          >
-            <Avatar sx={{ bgcolor: '#dcfce7', color: '#16a34a', width: 38, height: 38, flexShrink: 0 }}>
-              <i className="fi fi-rr-envelope-check" style={{ fontSize: '18px' }}></i>
-            </Avatar>
-            <Box>
-              <Typography variant="body2" fontWeight={700} color="#166534">
-                Receipt Sent to Your Email
-              </Typography>
-              <Typography variant="caption" color="#15803d">
-                An official order receipt has been sent to <strong>{formData.customerEmail}</strong>.
-              </Typography>
-            </Box>
-          </Paper>
-        )}
         <Box 
           sx={{ 
             display: 'flex', 
@@ -714,7 +699,7 @@ const Checkout = () => {
             '&:hover': { color: 'primary.main' }
           }}
         >
-          <i className="fi fi-rr-home" style={{ fontSize: 13 }} />
+          <CustomHomeIcon size={14} color="#64748b" />
           <span>Catalog</span>
         </Box>
         <span style={{ color: '#cbd5e1' }}>/</span>
@@ -733,7 +718,7 @@ const Checkout = () => {
       <Box sx={{ mb: 3.5 }}>
         <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1.5, fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' } }}>
           <Avatar sx={{ bgcolor: 'rgba(30, 58, 138, 0.08)', color: '#1e3a8a', width: 44, height: 44, borderRadius: 2.5 }}>
-            <i className="fi fi-rr-credit-card" style={{ fontSize: 22 }} />
+            <CustomCreditCardIcon size={22} color="#1e3a8a" />
           </Avatar>
           Secure Checkout
         </Typography>
@@ -877,11 +862,11 @@ const Checkout = () => {
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Avatar sx={{ bgcolor: formData.fulfillmentType === 'Delivery' ? 'primary.main' : 'grey.100', color: formData.fulfillmentType === 'Delivery' ? '#fff' : 'text.secondary', width: 40, height: 40 }}>
-                        <i className="fi fi-rr-truck-side" style={{ fontSize: 18 }} />
+                        <CustomLocalShippingIcon size={20} color={formData.fulfillmentType === 'Delivery' ? '#ffffff' : 'inherit'} />
                       </Avatar>
                       {formData.fulfillmentType === 'Delivery' && (
                         <Box sx={{ width: 22, height: 22, borderRadius: '50%', bgcolor: 'primary.main', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <i className="fi fi-rr-check" style={{ fontSize: 11 }} />
+                          <CustomCheckIcon size={12} color="#ffffff" />
                         </Box>
                       )}
                     </Box>
@@ -917,7 +902,7 @@ const Checkout = () => {
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Avatar sx={{ bgcolor: formData.fulfillmentType === 'Pickup' ? 'primary.main' : 'grey.100', color: formData.fulfillmentType === 'Pickup' ? '#fff' : 'text.secondary', width: 40, height: 40 }}>
-                        <i className="fi fi-rr-shop" style={{ fontSize: 18 }} />
+                        <CustomStorefrontIcon size={20} color={formData.fulfillmentType === 'Pickup' ? '#ffffff' : 'inherit'} />
                       </Avatar>
                       <Chip label="FREE" size="small" sx={{ bgcolor: '#dcfce7', color: '#166534', fontWeight: 800, fontSize: '0.65rem', height: 20 }} />
                     </Box>
@@ -944,7 +929,7 @@ const Checkout = () => {
                     }}
                   >
                     <Avatar sx={{ bgcolor: '#dcfce7', color: '#16a34a', width: 44, height: 44, flexShrink: 0 }}>
-                      <i className="fi fi-rr-marker" style={{ fontSize: 20 }} />
+                      <CustomLocationOnIcon size={22} color="#16a34a" />
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
@@ -982,7 +967,7 @@ const Checkout = () => {
 
                 <Box>
                   <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <i className="fi fi-rr-document" style={{ fontSize: 14, color: '#64748b' }} />
+                    <CustomDescriptionIcon size={14} color="#64748b" />
                     Special Instructions or Delivery Notes
                   </Typography>
                   <TextField
@@ -1080,7 +1065,7 @@ const Checkout = () => {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
               <Typography variant="h6" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <i className="fi fi-rr-shopping-bag" style={{ fontSize: 18, color: '#64748b' }} />
+                <CustomShoppingCartIcon size={18} color="#64748b" />
                 Order Summary
               </Typography>
               <Chip
@@ -1116,7 +1101,7 @@ const Checkout = () => {
                       {(item.product.imageUrls?.[0] || item.product.imageUrl) ? (
                         <Box component="img" src={item.product.imageUrls?.[0] || item.product.imageUrl} alt={item.product.name} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <i className="fi fi-rr-box" style={{ fontSize: 22, color: '#94a3b8' }} />
+                        <CustomInventory2Icon size={22} color="#94a3b8" />
                       )}
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1130,7 +1115,7 @@ const Checkout = () => {
                           sx={{ p: 0.25, color: '#94a3b8', '&:hover': { color: '#ef4444' } }}
                           title="Remove from order"
                         >
-                          <i className="fi fi-rr-trash" style={{ fontSize: 13 }} />
+                          <CustomDeleteIcon size={13} />
                         </IconButton>
                       </Box>
 
@@ -1170,7 +1155,7 @@ const Checkout = () => {
                             sx={{ width: 22, height: 22, p: 0 }}
                             title="Decrease quantity"
                           >
-                            <i className="fi fi-rr-minus" style={{ fontSize: 9, color: '#64748b' }} />
+                            <CustomRemoveIcon size={9} color="#64748b" />
                           </IconButton>
                           <Typography variant="caption" fontWeight={800} sx={{ minWidth: 20, textAlign: 'center', fontSize: '0.75rem' }}>
                             {item.quantity}
@@ -1181,7 +1166,7 @@ const Checkout = () => {
                             sx={{ width: 22, height: 22, p: 0 }}
                             title="Increase quantity"
                           >
-                            <i className="fi fi-rr-plus" style={{ fontSize: 9, color: '#16a34a' }} />
+                            <CustomAddIcon size={9} color="#16a34a" />
                           </IconButton>
                         </Stack>
 
@@ -1308,7 +1293,7 @@ const Checkout = () => {
                 <Box sx={{ bgcolor: '#f8fafc', border: '1px solid #e2e8f0', p: 1.5, borderRadius: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 600 }}>
-                      <i className="fi fi-rr-truck-side" style={{ fontSize: 12 }} />
+                      <CustomLocalShippingIcon size={14} color="#64748b" />
                       {shippingCalculation.vehicleType}
                     </Typography>
                     <Chip 
@@ -1518,7 +1503,7 @@ const Checkout = () => {
               mb: 2.5
             }}
           >
-            <i className="fi fi-rr-exclamation" style={{ fontSize: 26 }} />
+            <CustomWarningIcon size={28} color="#f59e0b" />
           </Box>
           <Typography variant="h6" fontWeight={900} gutterBottom sx={{ letterSpacing: '-0.01em' }}>
             Leave Checkout?

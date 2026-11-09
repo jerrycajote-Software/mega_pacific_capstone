@@ -14,6 +14,13 @@ import {
   getAvailableProvinces,
   getLocationsForProvince,
 } from '../utils/locationService';
+import {
+  CustomLocalShippingIcon,
+  CustomAccountCircleIcon,
+  CustomMailIcon,
+  CustomPhoneIcon,
+  CustomLocationOnIcon
+} from './icons';
 
 const ShippingInfoWidget = ({
   formData,
@@ -48,7 +55,7 @@ const ShippingInfoWidget = ({
               boxShadow: '0 2px 8px rgba(79,119,45,0.25)',
             }}
           >
-            <i className="fi fi-rr-truck-side" style={{ fontSize: '18px', color: '#ffffff' }}></i>
+            <CustomLocalShippingIcon size={20} color="#ffffff" />
           </Avatar>
           <Typography variant="h6" fontWeight={700}>
             Shipping Information
@@ -75,7 +82,7 @@ const ShippingInfoWidget = ({
                   helperText={errors.customerName}
                   InputProps={{
                     startAdornment: (
-                      <i className="fi fi-rr-user" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
+                      <CustomAccountCircleIcon size={16} color="#64748b" style={{ marginRight: '8px' }} />
                     ),
                   }}
                 />
@@ -93,7 +100,7 @@ const ShippingInfoWidget = ({
                   helperText={errors.customerEmail}
                   InputProps={{
                     startAdornment: (
-                      <i className="fi fi-rr-envelope" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
+                      <CustomMailIcon size={16} color="#64748b" style={{ marginRight: '8px' }} />
                     ),
                   }}
                 />
@@ -117,7 +124,7 @@ const ShippingInfoWidget = ({
                   }}
                   InputProps={{
                     startAdornment: (
-                      <i className="fi fi-rr-phone-call" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
+                      <CustomPhoneIcon size={16} color="#64748b" style={{ marginRight: '8px' }} />
                     ),
                   }}
                 />
@@ -176,7 +183,7 @@ const ShippingInfoWidget = ({
                   InputProps={{
                     readOnly: true,
                     startAdornment: (
-                      <i className="fi fi-rr-marker" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
+                      <CustomLocationOnIcon size={16} color="#64748b" style={{ marginRight: '8px' }} />
                     ),
                   }}
                   sx={{ bgcolor: 'rgba(0,0,0,0.02)' }}
@@ -197,7 +204,7 @@ const ShippingInfoWidget = ({
                   helperText={errors.address}
                   InputProps={{
                     startAdornment: (
-                      <i className="fi fi-rr-marker" style={{ fontSize: '16px', color: '#64748b', marginRight: '8px' }}></i>
+                      <CustomLocationOnIcon size={16} color="#64748b" style={{ marginRight: '8px' }} />
                     ),
                   }}
                 />
@@ -247,7 +254,7 @@ const ShippingInfoWidget = ({
                       height: 44,
                     }}
                   >
-                    <i className="fi fi-rr-marker" style={{ fontSize: '20px', color: '#1e3a8a' }}></i>
+                    <CustomLocationOnIcon size={22} color="#1e3a8a" />
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="subtitle1" fontWeight={700} gutterBottom>
@@ -261,7 +268,7 @@ const ShippingInfoWidget = ({
                         mb: 0.5,
                       }}
                     >
-                      <i className="fi fi-rr-phone-call" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
+                      <CustomPhoneIcon size={13} color="#94a3b8" />
                       <Typography variant="body2" color="text.secondary">
                         {formData.contactNumber}
                       </Typography>
@@ -280,7 +287,7 @@ const ShippingInfoWidget = ({
                         mt: 1,
                       }}
                     >
-                      <i className="fi fi-rr-envelope" style={{ fontSize: '13px', color: '#94a3b8' }}></i>
+                      <CustomMailIcon size={13} color="#94a3b8" />
                       <Typography variant="body2" color="text.secondary">
                         {formData.customerEmail}
                       </Typography>

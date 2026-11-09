@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import SearchIcon from '@mui/icons-material/Search';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CloseIcon from '@mui/icons-material/Close';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import { CustomLogisticsDetailsIcon } from '../../components/icons';
+import {
+  CustomLogisticsDetailsIcon,
+  CustomSearchIcon as SearchIcon,
+  CustomChevronRightIcon as ChevronRightIcon,
+  CustomCloseIcon as CloseIcon,
+  CustomAccessTimeIcon as AccessTimeIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomStorefrontIcon as StorefrontIcon,
+  CustomLocalShippingIcon as LocalShippingIcon,
+  CustomNotificationsActiveIcon as NotificationsActiveIcon
+} from '../../components/icons';
 
 const StatusBadge = ({ status }) => {
   const s = status ? status.toLowerCase() : '';

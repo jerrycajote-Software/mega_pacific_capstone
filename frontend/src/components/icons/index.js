@@ -79,6 +79,8 @@ export { default as CustomStorePickupChipIcon } from './CustomStorePickupChipIco
 export { default as CustomPendingPaymentChipIcon } from './CustomPendingPaymentChipIcon';
 export { default as CustomEmptyOrdersSearchIcon } from './CustomEmptyOrdersSearchIcon';
 export { default as CustomEmptyReviewsIcon } from './CustomEmptyReviewsIcon';
+export { default as CustomOrderSuccessIcon } from './CustomOrderSuccessIcon';
+export { default as CustomRegistrationSuccessIcon } from './CustomRegistrationSuccessIcon';
 
 export {
   CustomDialogWarningIcon,
@@ -86,4 +88,10 @@ export {
   CustomDialogDangerIcon,
   CustomDialogInfoIcon
 } from './CustomDialogIcons';
+
+export * from './CustomIconBase';
+export * from './CustomActionIcons';
+export * from './CustomNavigationIcons';
+export * from './CustomDomainIcons';
+
 

@@ -1,27 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import BadgeIcon from '@mui/icons-material/Badge';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import MailIcon from '@mui/icons-material/Mail';
-import PhoneIcon from '@mui/icons-material/Phone';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import WarningIcon from '@mui/icons-material/Warning';
-import PeopleIcon from '@mui/icons-material/People';
-import BlockIcon from '@mui/icons-material/Block';
-import CheckIcon from '@mui/icons-material/Check';
 import CircularProgress from '@mui/material/CircularProgress';
 import {
   CustomAdminCustomersIcon,
   CustomAdminUserAccountIcon,
   CustomAdminStaffIcon,
-  CustomAdminSuspendedIcon
+  CustomAdminSuspendedIcon,
+  CustomSearchIcon as SearchIcon,
+  CustomFilterListIcon as FilterListIcon,
+  CustomAdminPanelSettingsIcon as AdminPanelSettingsIcon,
+  CustomAccountCircleIcon as AccountCircleIcon,
+  CustomBadgeIcon as BadgeIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomCancelIcon as CancelIcon,
+  CustomMailIcon as MailIcon,
+  CustomPhoneIcon as PhoneIcon,
+  CustomLocationOnIcon as LocationOnIcon,
+  CustomChevronLeftIcon as ChevronLeftIcon,
+  CustomChevronRightIcon as ChevronRightIcon,
+  CustomWarningIcon as WarningIcon,
+  CustomPeopleIcon as PeopleIcon,
+  CustomBlockIcon as BlockIcon,
+  CustomCheckIcon as CheckIcon
 } from '../../components/icons';
 
 

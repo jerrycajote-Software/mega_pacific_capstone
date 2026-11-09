@@ -1,5 +1,5 @@
 import React from 'react';
-import ConstructionIcon from '@mui/icons-material/Construction';
+import { CustomConstructionIcon as ConstructionIcon } from '../components/icons';
 
 const MaintenancePage = () => {
   return (

@@ -14,8 +14,8 @@ const getFinanceOrders = async (req, res) => {
         user: { select: { email: true } },
         items: {
           include: {
-            product: { select: { name: true, type: true } },
-            variant: { select: { name: true } }
+            product: { select: { name: true, type: true, thickness: true, color: true } },
+            variant: { select: { name: true, thickness: true, color: true } }
           }
         }
       }
@@ -25,8 +25,12 @@ const getFinanceOrders = async (req, res) => {
 
     const formattedOrders = updatedOrders.map(o => {
       const productsSummary = o.items.map(item => {
-        const variantLabel = item.variantName || item.variant?.name;
-        const suffix = variantLabel ? ` — ${variantLabel}` : "";
+        const spec = [
+          item.customLength ? `${item.customLength}m` : null,
+          item.thickness || item.variantName || item.variant?.name || item.product?.thickness,
+          item.color || item.variant?.color || item.product?.color
+        ].filter(Boolean).join(" · ");
+        const suffix = spec ? ` — ${spec}` : "";
         return `${item.product.name}${suffix} (x${item.quantity})`;
       }).join(", ");
 
@@ -35,22 +39,41 @@ const getFinanceOrders = async (req, res) => {
         rawId: o.id,
         customerName: o.customerName || o.shippingName || "Unknown",
         customerEmail: o.customerEmail || (o.user && o.user.email) || "Unknown",
+        shippingName: o.shippingName || o.customerName || "Unknown",
+        shippingContactNumber: o.shippingContactNumber || "N/A",
+        contactNumber: o.shippingContactNumber || "N/A",
+        shippingAddress: o.shippingAddress || "N/A",
+        address: o.shippingAddress || "N/A",
+        shippingCity: o.shippingCity || "",
+        shippingProvince: o.shippingProvince || "",
+        cityProvince: o.shippingProvince ? `${o.shippingCity || ''}, ${o.shippingProvince}` : (o.shippingCity || "N/A"),
+        shippingZipCode: o.shippingZipCode || "",
+        zipCode: o.shippingZipCode || "",
+        notes: o.notes || "",
         productsSummary,
         totalQuantity: o.items.reduce((acc, item) => acc + item.quantity, 0),
         totalAmount: o.total,
+        total: o.total,
         orderStatus: o.status,
+        status: o.status,
         paymentStatus: o.paymentStatus,
         paymentMode: o.paymentMode || 'Cash on Delivery',
-        fulfillmentType: o.fulfillmentType,
+        fulfillmentType: o.fulfillmentType || 'Delivery',
         deliveryStatus: o.status === "shipped" || o.status === "completed" || o.status === "delivered" || o.status === "out_for_delivery" ? o.status.replace(/_/g, " ") : "Pending",
         estimatedDeliveryDate: o.estimatedDeliveryDate,
         dateOrdered: new Date(o.createdAt).toISOString(),
         createdAt: o.createdAt,
         items: o.items.map(item => ({
-          productName: item.product.name,
+          id: item.id,
+          productName: item.product?.name || "Product",
+          productType: item.product?.type,
           variantName: item.variantName || item.variant?.name || null,
           quantity: item.quantity,
           price: item.price,
+          unitPrice: item.price,
+          color: item.color || item.variant?.color || item.product?.color || null,
+          customLength: item.customLength,
+          thickness: item.thickness || item.variant?.thickness || item.product?.thickness || null,
         }))
       };
     });

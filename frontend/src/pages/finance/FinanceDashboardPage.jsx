@@ -44,7 +44,14 @@ import {
   CustomFinanceRevenueIcon,
   CustomFinancePendingIcon,
   CustomFinanceExpensesIcon,
-  CustomFinanceNetIncomeIcon
+  CustomFinanceNetIncomeIcon,
+  CustomInfoIcon,
+  CustomLocalGasStationIcon,
+  CustomLocationOnIcon,
+  CustomAccountBalanceIcon,
+  CustomReceiptLongIcon,
+  CustomCashIcon,
+  CustomInventory2Icon
 } from '../../components/icons';
 
 const DONUT_COLORS = ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4'];
@@ -440,9 +447,7 @@ const FinanceDashboardPage = () => {
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2, mb: 3 }}>
           <Box>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Avatar sx={{ bgcolor: 'primary.main', width: 38, height: 38, borderRadius: 2.5 }}>
-                <i className="fi fi-rr-gas-pump" style={{ fontSize: 18, color: '#fff' }} />
-              </Avatar>
+              <CustomLocalGasStationIcon size={26} color="#16a34a" />
               <Box>
                 <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em' }}>
                   Delivery Fee & Fuel Rate Controls
@@ -459,7 +464,6 @@ const FinanceDashboardPage = () => {
               variant="outlined"
               size="small"
               onClick={() => setShowVehicleRatesModal(!showVehicleRatesModal)}
-              startIcon={<i className="fi fi-rr-truck-side" style={{ fontSize: 13 }} />}
               sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
             >
               {showVehicleRatesModal ? 'Hide Vehicle Matrix' : 'View Vehicle Matrix'}
@@ -469,7 +473,7 @@ const FinanceDashboardPage = () => {
               size="small"
               onClick={handleSaveDeliverySettings}
               disabled={savingDelivery}
-              startIcon={savingDelivery ? <CircularProgress size={14} color="inherit" /> : <i className="fi fi-rr-disk" style={{ fontSize: 13 }} />}
+              startIcon={savingDelivery ? <CircularProgress size={14} color="inherit" /> : undefined}
               sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, px: 2.5, bgcolor: 'primary.main' }}
             >
               {savingDelivery ? 'Saving...' : 'Save Settings'}
@@ -513,7 +517,7 @@ const FinanceDashboardPage = () => {
               label="Manufacturing Plant Origin"
               value={deliverySettings.plantOrigin}
               InputProps={{
-                startAdornment: <InputAdornment position="start"><i className="fi fi-rr-marker" style={{ fontSize: 13 }} /></InputAdornment>
+                startAdornment: <InputAdornment position="start"><CustomLocationOnIcon size={14} color="#64748b" /></InputAdornment>
               }}
               helperText="Origin for CALABARZON route calculations"
             />
@@ -540,13 +544,13 @@ const FinanceDashboardPage = () => {
         <Collapse in={showVehicleRatesModal} timeout="auto" unmountOnExit>
           <Divider sx={{ my: 2.5 }} />
           <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <i className="fi fi-rr-info" style={{ color: '#2563EB', fontSize: 14 }} />
+            <CustomInfoIcon size={14} color="#2563EB" />
             Delivery Fleet Rate Reference Table (from Guidelines)
           </Typography>
-          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 2 }}>
+          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
             <Table size="small">
-              <TableHead sx={{ bgcolor: 'grey.50' }}>
-                <TableRow>
+              <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>
+                <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', color: 'text.secondary' } }}>
                   <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Truck Type</TableCell>
                   <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Fuel Economy (KL)</TableCell>
                   <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Manpower (TM)</TableCell>
@@ -816,13 +820,13 @@ const FinanceDashboardPage = () => {
             <TableContainer sx={{ maxHeight: 380 }}>
               <Table stickyHeader>
                 <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Reference</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Entity / Source</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50' }}>Channel</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50', textAlign: 'right' }}>Amount</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'grey.50', textAlign: 'center' }}>Status</TableCell>
+                  <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider' } }}>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Reference</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Entity / Source</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Channel</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'right' }}>Amount</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'center' }}>Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -835,10 +839,13 @@ const FinanceDashboardPage = () => {
                       <TableCell sx={{ fontWeight: 500, fontSize: '0.85rem' }}>{row.by}</TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" spacing={1}>
-                          <i
-                            className={row.method === 'Bank Transfer' ? 'fi fi-rr-bank' : row.method === 'Expense' ? 'fi fi-rr-receipt' : 'fi fi-rr-money-bill-wave'}
-                            style={{ color: '#64748B', fontSize: 13 }}
-                          />
+                          {row.method === 'Bank Transfer' ? (
+                            <CustomAccountBalanceIcon size={14} color="#64748B" />
+                          ) : row.method === 'Expense' ? (
+                            <CustomReceiptLongIcon size={14} color="#64748B" />
+                          ) : (
+                            <CustomCashIcon size={14} color="#64748B" />
+                          )}
                           <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
                             {row.method}
                           </Typography>
@@ -871,7 +878,9 @@ const FinanceDashboardPage = () => {
                   {filteredActivity.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                        <i className="fi fi-rr-box-open" style={{ fontSize: 32, display: 'block', marginBottom: 8, opacity: 0.4 }} />
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, opacity: 0.4 }}>
+                          <CustomInventory2Icon size={32} color="#64748B" />
+                        </Box>
                         <Typography variant="body2">No matching transactions found in this period.</Typography>
                       </TableCell>
                     </TableRow>

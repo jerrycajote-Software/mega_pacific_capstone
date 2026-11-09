@@ -17,10 +17,12 @@ import {
   DialogActions,
   Paper,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import {
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomCancelIcon as CancelIcon,
+  CustomVisibilityIcon as Visibility,
+  CustomVisibilityOffIcon as VisibilityOff
+} from '../../components/icons';
 
 import { validateRealisticEmail } from '../../utils/emailValidator';
 
