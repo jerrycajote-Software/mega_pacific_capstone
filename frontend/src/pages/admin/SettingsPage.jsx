@@ -13,12 +13,17 @@ import {
   CustomCheckCircleIcon as CheckCircleIcon,
   CustomFactoryIcon as FactoryIcon,
   CustomHubIcon as HubIcon,
-  CustomKeyIcon as KeyIcon
+  CustomKeyIcon as KeyIcon,
+  CustomPaymentIcon
 } from '../../components/icons';
 
 
 const SettingsPage = () => {
   const [maxDevices, setMaxDevices] = useState('3');
+  const [paymongoEnabled, setPaymongoEnabled] = useState(true);
+  const [paymongoMode, setPaymongoMode] = useState('test');
+  const [paymongoConfigured, setPaymongoConfigured] = useState(true);
+  const [togglingPaymongo, setTogglingPaymongo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -33,13 +38,27 @@ const SettingsPage = () => {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/admin/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const settings = res.data.data;
+      const [res, gatewayRes] = await Promise.all([
+        axios.get(`${API_URL}/api/admin/settings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/api/payments/config`)
+      ]);
+      const settings = res.data.data || [];
       const deviceSetting = settings.find(s => s.key === 'max_sales_devices');
       if (deviceSetting) {
         setMaxDevices(deviceSetting.value);
+      }
+      const gcashSetting = settings.find(s => s.key === 'paymongo_gcash_qr_enabled');
+      if (gcashSetting) {
+        setPaymongoEnabled(gcashSetting.value === 'true' || gcashSetting.value === 'enabled' || gcashSetting.value === '1');
+      } else if (gatewayRes.data?.data) {
+        setPaymongoEnabled(Boolean(gatewayRes.data.data.settingEnabled));
+      }
+
+      if (gatewayRes.data?.data) {
+        setPaymongoMode(gatewayRes.data.data.mode || 'test');
+        setPaymongoConfigured(Boolean(gatewayRes.data.data.isConfigured));
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to load system settings from server.' });
@@ -48,7 +67,34 @@ const SettingsPage = () => {
     }
   };
 
-  const handleSave = async (e) => {
+  const handleTogglePaymongoGateway = async () => {
+    const nextState = !paymongoEnabled;
+    setTogglingPaymongo(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      await axios.put(`${API_URL}/api/admin/settings/paymongo_gcash_qr_enabled`, {
+        value: nextState ? 'true' : 'false',
+        description: 'Controls whether automated PayMongo GCash QR checkout is active for customer orders'
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPaymongoEnabled(nextState);
+      setMessage({
+        type: 'success',
+        text: nextState
+          ? 'Automated PayMongo GCash QR payment gateway is now enabled for customer checkout.'
+          : 'PayMongo GCash QR gateway paused. Customer checkout switched to standard GCash mobile verification.'
+      });
+      setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to update PayMongo payment gateway switch.' });
+    } finally {
+      setTogglingPaymongo(false);
+    }
+  };
+
+  const handleUpdateDeviceLimit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setMessage({ type: '', text: '' });
@@ -60,10 +106,10 @@ const SettingsPage = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMessage({ type: 'success', text: 'System settings updated successfully.' });
+      setMessage({ type: 'success', text: 'Staff device session limit updated successfully.' });
       setTimeout(() => setMessage({ type: '', text: '' }), 4000);
     } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to update system settings.' });
+      setMessage({ type: 'error', text: 'Failed to update staff device session limit.' });
     } finally {
       setSaving(false);
     }
@@ -146,7 +192,7 @@ const SettingsPage = () => {
                 <CircularProgress size={30} sx={{ color: '#4f772d' }} />
               </div>
             ) : (
-              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <form onSubmit={handleUpdateDeviceLimit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div>
                   <label style={{
                     display: 'block',
@@ -212,11 +258,127 @@ const SettingsPage = () => {
                     }}
                   >
                     {saving && <CircularProgress size={16} sx={{ color: '#fff' }} />}
-                    <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
+                    <span>{saving ? 'Updating Device Limit...' : 'Update Staff Device Limit'}</span>
                   </button>
                 </div>
               </form>
             )}
+          </div>
+
+          {/* Payment Gateway Controller Card */}
+          <div className="mpi-admin-kpi-card" style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-light)',
+            borderTop: '3px solid #005ce6',
+            borderRadius: 18,
+            padding: '1.75rem',
+            boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div className="mpi-admin-badge" style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 13,
+                  background: 'rgba(0,92,230,0.09)',
+                  border: '1px solid rgba(0,92,230,0.22)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 8px rgba(0,92,230,0.12)'
+                }}>
+                  <CustomPaymentIcon size={28} color="#005ce6" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    PayMongo Automated GCash QR Gateway
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Controls whether customer checkout generates a real-time PayMongo GCash / QR Ph payment code.
+                  </p>
+                </div>
+              </div>
+
+              <span style={{
+                padding: '4px 10px',
+                borderRadius: 8,
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                background: paymongoEnabled ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.14)',
+                color: paymongoEnabled ? '#22c55e' : '#f59e0b',
+                border: `1px solid ${paymongoEnabled ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'}`
+              }}>
+                {paymongoEnabled ? `Active (${paymongoMode.toUpperCase()} API)` : 'Manual Fallback Mode'}
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              padding: '1rem 1.25rem',
+              borderRadius: 12,
+              background: 'var(--bg-primary)',
+              border: '1px solid var(--border-light)',
+              marginBottom: '1rem'
+            }}>
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Automated GCash QR Scan at Checkout
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.45 }}>
+                  {paymongoEnabled
+                    ? 'Customers selecting GCash will scan a live PayMongo QR Ph code to automatically verify payment.'
+                    : 'Automated QR generation is turned off. Customers can enter their GCash mobile number directly without scanning a QR code.'}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={paymongoEnabled}
+                aria-label="Toggle Automated PayMongo GCash QR Payment Gateway"
+                disabled={togglingPaymongo || !paymongoConfigured}
+                onClick={handleTogglePaymongoGateway}
+                style={{
+                  position: 'relative',
+                  width: 54,
+                  height: 30,
+                  borderRadius: 999,
+                  border: 'none',
+                  background: paymongoEnabled ? '#005ce6' : '#64748b',
+                  cursor: (togglingPaymongo || !paymongoConfigured) ? 'not-allowed' : 'pointer',
+                  padding: 3,
+                  transition: 'background 0.25s ease',
+                  flexShrink: 0,
+                  opacity: togglingPaymongo ? 0.65 : 1
+                }}
+              >
+                <span style={{
+                  display: 'block',
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  background: '#ffffff',
+                  transform: paymongoEnabled ? 'translateX(24px)' : 'translateX(0px)',
+                  transition: 'transform 0.25s ease',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.25)'
+                }} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.76rem', color: 'var(--text-muted)', flexWrap: 'wrap', gap: 8 }}>
+              <span>
+                API Key Status: <strong style={{ color: paymongoConfigured ? '#22c55e' : '#ef4444' }}>
+                  {paymongoConfigured ? `Connected (${paymongoMode === 'live' ? 'Live Production Key' : 'Test Sandbox Key'})` : 'Missing PAYMONGO_SECRET_KEY in .env'}
+                </strong>
+              </span>
+              <span>Channel: <strong>QR Ph / GCash E-Wallet</strong></span>
+            </div>
           </div>
 
           {/* Password Security Standards Card */}

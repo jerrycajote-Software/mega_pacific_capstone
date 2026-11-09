@@ -7,6 +7,7 @@ import { getZipCodeForLocation } from '../../utils/locationService';
 import ShippingInfoWidget from '../../components/ShippingInfoWidget';
 import PaymentMethodWidget from '../../components/PaymentMethodWidget';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
+import PaymongoQrModal from '../../components/PaymongoQrModal';
 import {
   CustomOrderSuccessIcon,
   CustomShoppingCartIcon,
@@ -190,6 +191,8 @@ const Checkout = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [gcashQrEnabled, setGcashQrEnabled] = useState(false);
+  const [paymongoQrModalOpen, setPaymongoQrModalOpen] = useState(false);
   
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
@@ -280,9 +283,15 @@ const Checkout = () => {
     const fetchProfile = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || '';
-        const res = await axios.get(`${API_URL}/api/auth/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const [res, gatewayRes] = await Promise.all([
+          axios.get(`${API_URL}/api/auth/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_URL}/api/payments/config`).catch(() => null)
+        ]);
+        if (gatewayRes?.data?.data) {
+          setGcashQrEnabled(Boolean(gatewayRes.data.data.gcashQrEnabled));
+        }
         if (res.data.data) {
           const profile = res.data.data;
           const userAddresses = profile.addresses || [];
@@ -517,11 +526,8 @@ const Checkout = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const executeOrderCreation = async (paymongoReference = null) => {
     if (submittingRef.current || isSubmitting) return;
-    if (!validateForm()) return;
-
     submittingRef.current = true;
     setIsSubmitting(true);
 
@@ -547,6 +553,7 @@ const Checkout = () => {
           cardCvv: formData.cardCvv,
         } : undefined,
         gcashNumber: formData.paymentChannel === 'GCash' ? formData.gcashNumber : undefined,
+        paymongoReference: paymongoReference || undefined
       };
 
       let res;
@@ -603,11 +610,13 @@ const Checkout = () => {
 
       if (res.data.success) {
         isLeavingRef.current = true;
+        setPaymongoQrModalOpen(false);
         setSuccess(res.data.data.id);
         setCreatedOrder(res.data.data);
       }
     } catch (err) {
       console.error('Failed to submit order', err);
+      setPaymongoQrModalOpen(false);
       if (err.response?.status === 409 && err.response?.data?.details?.type === 'STOCK_ERROR') {
          const { itemName, available, requested } = err.response.data.details;
          if (available === 0) {
@@ -627,6 +636,24 @@ const Checkout = () => {
       submittingRef.current = false;
       setIsSubmitting(false);
     }
+  };
+
+  const handleConfirmCheckoutOrder = async (e) => {
+    e.preventDefault();
+    if (submittingRef.current || isSubmitting) return;
+    if (!validateForm()) return;
+
+    if (formData.paymentChannel === 'GCash' && gcashQrEnabled) {
+      setPaymongoQrModalOpen(true);
+      return;
+    }
+
+    await executeOrderCreation(null);
+  };
+
+  const handlePaymongoPaymentVerified = async (paymentInfo) => {
+    const refId = paymentInfo?.paymentRecordId || paymentInfo?.paymentIntentId || 'Verified';
+    await executeOrderCreation(refId);
   };
 
   if (success) {
@@ -652,7 +679,7 @@ const Checkout = () => {
           }}
         >
           <Button variant="outlined" color="inherit" onClick={() => navigate('/dashboard')}>
-            Return to Dashboard
+            Browse Other Product
           </Button>
           <Button 
             variant="outlined" 
@@ -802,7 +829,7 @@ const Checkout = () => {
 
       <Grid container spacing={{ xs: 2.5, md: 4 }}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <form id="checkout-form" onSubmit={handleSubmit}>
+          <form id="checkout-form" onSubmit={handleConfirmCheckoutOrder}>
             <Stack spacing={3.5}>
               <Paper
                 elevation={0}
@@ -1031,6 +1058,7 @@ const Checkout = () => {
                   subtotal={orderTotal}
                   shippingFee={shippingFee}
                   fulfillmentType={formData.fulfillmentType}
+                  gcashQrEnabled={gcashQrEnabled}
                   cardNumber={formData.cardNumber}
                   cardExpiry={formData.cardExpiry}
                   cardCvv={formData.cardCvv}
@@ -1473,6 +1501,18 @@ const Checkout = () => {
         onAddProduct={handleAddProductToOrder}
         currentItems={orderItems}
         initialProductId={modalInitialProductId}
+      />
+
+      <PaymongoQrModal
+        open={paymongoQrModalOpen}
+        onClose={() => setPaymongoQrModalOpen(false)}
+        token={token}
+        amountPhp={formData.paymentPlan === 'COD_50' ? grandTotal * 0.5 : grandTotal}
+        paymentPlan={formData.paymentPlan}
+        customerName={formData.customerName}
+        customerEmail={formData.customerEmail}
+        contactNumber={formData.gcashNumber || formData.contactNumber}
+        onPaymentConfirmed={handlePaymongoPaymentVerified}
       />
 
       <Dialog

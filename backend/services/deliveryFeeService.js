@@ -166,7 +166,7 @@ const PROVINCE_FALLBACK_DISTANCES = {
   'Quezon': { km: 120, toll: 350 }
 };
 
-const VEHICLE_SPECS = [
+const DEFAULT_VEHICLE_SPECS = [
   {
     type: 'Elf 6-Wheeler',
     code: 'ELF',
@@ -233,6 +233,56 @@ const VEHICLE_SPECS = [
   }
 ];
 
+const VEHICLE_SPECS = DEFAULT_VEHICLE_SPECS;
+
+function cloneDefaultVehicleSpecs() {
+  return JSON.parse(JSON.stringify(DEFAULT_VEHICLE_SPECS));
+}
+
+function sanitizeVehicleSpecs(customSpecs) {
+  const defaults = cloneDefaultVehicleSpecs();
+  if (!Array.isArray(customSpecs) || customSpecs.length === 0) {
+    return defaults;
+  }
+
+  return defaults.map((defVehicle) => {
+    const match = customSpecs.find(
+      (c) => c && (c.code === defVehicle.code || c.type === defVehicle.type)
+    );
+    if (!match) return defVehicle;
+
+    const kl = parseFloat(match.kl);
+    const manpower = parseFloat(match.manpower);
+    const depreciation = parseFloat(match.depreciation);
+    const maxBedLength = parseFloat(match.maxBedLength);
+    const maxBedWeight = parseFloat(match.maxBedWeight);
+    const maxTopLength = parseFloat(match.maxTopLength);
+    const maxTopWeight = parseFloat(match.maxTopWeight);
+
+    const sanitizedTiers = defVehicle.tlaTiers.map((defTier, idx) => {
+      const customTier = Array.isArray(match.tlaTiers) ? match.tlaTiers[idx] : null;
+      if (!customTier) return defTier;
+      const tierTla = parseFloat(customTier.tla);
+      return {
+        ...defTier,
+        tla: !Number.isNaN(tierTla) && tierTla >= 0 ? tierTla : defTier.tla
+      };
+    });
+
+    return {
+      ...defVehicle,
+      kl: !Number.isNaN(kl) && kl > 0 ? kl : defVehicle.kl,
+      manpower: !Number.isNaN(manpower) && manpower >= 0 ? manpower : defVehicle.manpower,
+      depreciation: !Number.isNaN(depreciation) && depreciation >= 0 ? depreciation : defVehicle.depreciation,
+      maxBedLength: !Number.isNaN(maxBedLength) && maxBedLength > 0 ? maxBedLength : defVehicle.maxBedLength,
+      maxBedWeight: !Number.isNaN(maxBedWeight) && maxBedWeight > 0 ? maxBedWeight : defVehicle.maxBedWeight,
+      maxTopLength: !Number.isNaN(maxTopLength) && maxTopLength > 0 ? maxTopLength : defVehicle.maxTopLength,
+      maxTopWeight: !Number.isNaN(maxTopWeight) && maxTopWeight > 0 ? maxTopWeight : defVehicle.maxTopWeight,
+      tlaTiers: sanitizedTiers
+    };
+  });
+}
+
 async function getDeliveryConfig() {
   try {
     const settings = await prisma.systemSetting.findMany({
@@ -242,7 +292,9 @@ async function getDeliveryConfig() {
             'delivery_diesel_price',
             'delivery_admin_cost_pct',
             'delivery_include_depreciation',
-            'delivery_plant_origin'
+            'delivery_plant_origin',
+            'delivery_use_default_fleet_rates',
+            'delivery_fleet_rates'
           ]
         }
       }
@@ -253,11 +305,30 @@ async function getDeliveryConfig() {
       configMap[s.key] = s.value;
     });
 
+    const useDefaultFleetRates = configMap['delivery_use_default_fleet_rates'] !== 'false';
+    let customVehicleSpecs = cloneDefaultVehicleSpecs();
+    if (configMap['delivery_fleet_rates']) {
+      try {
+        const parsed = JSON.parse(configMap['delivery_fleet_rates']);
+        customVehicleSpecs = sanitizeVehicleSpecs(parsed);
+      } catch (parseErr) {
+        console.warn('[DELIVERY SERVICE] Invalid delivery_fleet_rates JSON, using default specs:', parseErr.message);
+      }
+    }
+
+    const activeVehicleSpecs = useDefaultFleetRates
+      ? cloneDefaultVehicleSpecs()
+      : customVehicleSpecs;
+
     return {
       dieselPrice: parseFloat(configMap['delivery_diesel_price']) || 105.00,
       adminCostPct: parseFloat(configMap['delivery_admin_cost_pct']) || 20.0,
       includeDepreciation: configMap['delivery_include_depreciation'] !== 'false',
-      plantOrigin: configMap['delivery_plant_origin'] || `${PLANT_ORIGIN.name} (${PLANT_ORIGIN.address})`
+      plantOrigin: configMap['delivery_plant_origin'] || `${PLANT_ORIGIN.name} (${PLANT_ORIGIN.address})`,
+      useDefaultFleetRates,
+      vehicleSpecs: activeVehicleSpecs,
+      customVehicleSpecs,
+      defaultVehicleSpecs: cloneDefaultVehicleSpecs()
     };
   } catch (error) {
     console.warn('[DELIVERY SERVICE] Fallback to default delivery config:', error.message);
@@ -265,7 +336,11 @@ async function getDeliveryConfig() {
       dieselPrice: 105.00,
       adminCostPct: 20.0,
       includeDepreciation: true,
-      plantOrigin: `${PLANT_ORIGIN.name} (${PLANT_ORIGIN.address})`
+      plantOrigin: `${PLANT_ORIGIN.name} (${PLANT_ORIGIN.address})`,
+      useDefaultFleetRates: true,
+      vehicleSpecs: cloneDefaultVehicleSpecs(),
+      customVehicleSpecs: cloneDefaultVehicleSpecs(),
+      defaultVehicleSpecs: cloneDefaultVehicleSpecs()
     };
   }
 }
@@ -314,8 +389,10 @@ function extractDimensionsAndWeight(items = []) {
 }
 
 
-function selectVehicleAndTLA(longestPanelLength, totalWeightMt) {
-  for (const vehicle of VEHICLE_SPECS) {
+function selectVehicleAndTLA(longestPanelLength, totalWeightMt, vehicleSpecs = DEFAULT_VEHICLE_SPECS) {
+  const activeSpecs = Array.isArray(vehicleSpecs) && vehicleSpecs.length > 0 ? vehicleSpecs : DEFAULT_VEHICLE_SPECS;
+
+  for (const vehicle of activeSpecs) {
     if (longestPanelLength <= vehicle.maxBedLength && totalWeightMt <= vehicle.maxBedWeight) {
       return {
         vehicle,
@@ -339,13 +416,16 @@ function selectVehicleAndTLA(longestPanelLength, totalWeightMt) {
     }
   }
 
-  
-  const tractor = VEHICLE_SPECS[VEHICLE_SPECS.length - 1];
+  const tractor = activeSpecs[activeSpecs.length - 1];
+  const fallbackTier = tractor.tlaTiers && tractor.tlaTiers.length > 0
+    ? tractor.tlaTiers[tractor.tlaTiers.length - 1]
+    : { tla: 8000 };
+
   return {
     vehicle: tractor,
     loadType: 'Heavy Rigging / Trailer',
     isBedLoad: false,
-    tla: 8000
+    tla: fallbackTier.tla ?? 8000
   };
 }
 
@@ -384,7 +464,11 @@ async function calculateDeliveryFee({ province, city, items = [], customDieselPr
   const tollFee = destination.toll || 0;
 
   const { longestPanelLength, totalWeightMt } = extractDimensionsAndWeight(items);
-  const { vehicle, loadType, isBedLoad, tla } = selectVehicleAndTLA(longestPanelLength, totalWeightMt);
+  const { vehicle, loadType, isBedLoad, tla } = selectVehicleAndTLA(
+    longestPanelLength,
+    totalWeightMt,
+    config.vehicleSpecs
+  );
 
   // 3. Formula:
   // Fuel Cost = (KT / KL) * DP
@@ -423,7 +507,8 @@ async function calculateDeliveryFee({ province, city, items = [], customDieselPr
       totalWeightMt,
       dieselPrice,
       fuelEconomyKL: vehicle.kl,
-      adminCostPct
+      adminCostPct,
+      useDefaultFleetRates: config.useDefaultFleetRates
     },
     breakdown: {
       kilometersTravelled,
@@ -445,6 +530,8 @@ module.exports = {
   PLANT_ORIGIN,
   DISTANCE_MATRIX,
   VEHICLE_SPECS,
+  DEFAULT_VEHICLE_SPECS,
+  sanitizeVehicleSpecs,
   getDeliveryConfig,
   calculateDeliveryFee
 };

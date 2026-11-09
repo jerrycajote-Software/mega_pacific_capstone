@@ -12,7 +12,7 @@ const isCustomLengthProfile = (type) => {
   return CUSTOM_LENGTH_PROFILE_TYPES.includes(type.trim().toLowerCase());
 };
 
-const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel) => {
+const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel, paymongoReference) => {
   const mode = (paymentMode || '').trim();
   const plan = paymentPlan || (mode.toLowerCase().includes('50%') || mode.toLowerCase().includes('cash on delivery') ? 'COD_50' : 'FULL_PAYMENT');
   const channel = paymentChannel || (cardDetails && cardDetails.cardNumber ? 'Card' : gcashNumber ? 'GCash' : (mode.toLowerCase().includes('card') ? 'Card' : 'Card'));
@@ -28,9 +28,16 @@ const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, 
 
     const last4 = rawNumber.slice(-4) || '••••';
     channelDetails = `Bank Card (${brand} ending in ${last4})`;
-  } else if (channel === 'GCash' || gcashNumber) {
+  } else if (channel === 'GCash' || gcashNumber || paymongoReference) {
     const cleanGcash = (gcashNumber || '').trim();
-    channelDetails = `GCash (${cleanGcash || 'Verified'})`;
+    const cleanRef = (paymongoReference || '').trim();
+    if (cleanRef && cleanGcash) {
+      channelDetails = `GCash QR via PayMongo (${cleanGcash} • Ref: ${cleanRef})`;
+    } else if (cleanRef) {
+      channelDetails = `GCash QR via PayMongo (Ref: ${cleanRef})`;
+    } else {
+      channelDetails = `GCash (${cleanGcash || 'Verified'})`;
+    }
   } else {
     channelDetails = 'Bank Transfer';
   }
@@ -59,6 +66,7 @@ const createOrder = async (req, res) => {
     paymentChannel,
     cardDetails,
     gcashNumber,
+    paymongoReference,
     fulfillmentType,
     customerEmail,
     shippingName,
@@ -181,7 +189,8 @@ const createOrder = async (req, res) => {
       cardDetails,
       gcashNumber,
       paymentPlan,
-      paymentChannel
+      paymentChannel,
+      paymongoReference
     );
 
     
@@ -461,6 +470,7 @@ const createBulkOrder = async (req, res) => {
     paymentChannel,
     cardDetails,
     gcashNumber,
+    paymongoReference,
     fulfillmentType,
     customerEmail,
     shippingName,
@@ -503,7 +513,8 @@ const createBulkOrder = async (req, res) => {
     cardDetails,
     gcashNumber,
     paymentPlan,
-    paymentChannel
+    paymentChannel,
+    paymongoReference
   );
 
   try {

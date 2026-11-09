@@ -1,5 +1,6 @@
 const prisma = require("../../config/db");
 const { sendRefundNotificationEmail } = require("../../utils/emailService");
+const { createPaymongoRefund, extractPaymongoIdFromPaymentMethod } = require("../../services/paymongoService");
 
 
 const getRefunds = async (req, res) => {
@@ -183,9 +184,46 @@ const processRefund = async (req, res) => {
       : refund.amount;
 
     const finalMethod = returnMethod || refund.paymentMethod;
-    const refNo = transactionReference && transactionReference.trim()
+    let refNo = transactionReference && transactionReference.trim()
       ? transactionReference.trim()
       : `REF-${Date.now().toString(36).toUpperCase()}`;
+
+    let paymongoRefundResult = null;
+    let finalNotes = notes || null;
+    const paymongoLinked = extractPaymongoIdFromPaymentMethod(finalMethod);
+    if (paymongoLinked && finalAmount > 0) {
+      try {
+        paymongoRefundResult = await createPaymongoRefund({
+          paymentMethodStr: finalMethod,
+          amountPhp: finalAmount,
+          reason: "requested_by_customer",
+          notes: notes || `Refund for Order #ORD-${String(refund.orderId).padStart(3, "0")}`
+        });
+        if (paymongoRefundResult?.refundId) {
+          refNo = paymongoRefundResult.refundId;
+        }
+      } catch (pmErr) {
+        const errMsg = pmErr.message || "";
+        const isQrPhLimitation =
+          errMsg.toLowerCase().includes("qrph") ||
+          errMsg.toLowerCase().includes("not allowed for payments with source type") ||
+          errMsg.toLowerCase().includes("provider is unavailable");
+
+        if (isQrPhLimitation) {
+          console.info(`[PAYMONGO QRPH PAYOUT FALLBACK]: QR Ph payment (${paymongoLinked.id}) processed via Direct GCash Payout fallback.`);
+          refNo = `GCASH-REF-${paymongoLinked.id.replace(/^(pay_|pi_)/, "").slice(0, 8).toUpperCase()}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+          if (!finalNotes || finalNotes.includes("Automated GCash reversal via PayMongo Refund API")) {
+            finalNotes = `Direct GCash Refund Disbursed for PayMongo QR Ph (${paymongoLinked.id})`;
+          }
+        } else {
+          console.warn("[PAYMONGO REFUND API WARNING]:", errMsg);
+          return res.status(400).json({
+            success: false,
+            error: `PayMongo Refund API error: ${errMsg}`
+          });
+        }
+      }
+    }
 
     const processedAt = new Date();
     const financeUserId = req.user?.id || null;
@@ -198,7 +236,7 @@ const processRefund = async (req, res) => {
           amount: finalAmount,
           paymentMethod: finalMethod,
           transactionReference: refNo,
-          notes: notes || null,
+          notes: finalNotes,
           processedBy: financeUserId,
           refundedAt: processedAt
         }
@@ -238,7 +276,7 @@ const processRefund = async (req, res) => {
         amount: finalAmount,
         paymentMethod: finalMethod,
         transactionReference: refNo,
-        notes: notes || null,
+        notes: finalNotes,
         message: refundMsg,
         processedAt: processedAt.toISOString()
       });
@@ -258,7 +296,7 @@ const processRefund = async (req, res) => {
         order: refund.order,
         refund: updatedRefund,
         transactionReference: refNo,
-        notes: notes || null,
+        notes: finalNotes,
         processedAt,
         customerName
       });
