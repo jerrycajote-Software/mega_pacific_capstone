@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
-import Product3DViewerModal from '../../components/Product3DViewerModal';
+
+const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 import {
   Box,
   Container,
@@ -1048,7 +1049,7 @@ const ProductDetails = () => {
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {[2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 18.0, 21.0].map((len) => (
+                  {[2.0, 3.0, 3.8, 4.2, 4.8, 6.0, 8.0, 10.0, 12.0, 18.0, 21.0].map((len) => (
                     <Button
                       key={len}
                       size="small"
@@ -1061,7 +1062,7 @@ const ProductDetails = () => {
                   ))}
                 </Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  💡 Custom cut-to-length manufactured from raw coils. Roll-forming limit: 21.0m.
+                  💡 3D Visualizer House Presets: 3.8m (Starter House 6×6m • 16 sheets), 4.2m (2-Storey 8×6m • 18 sheets), 4.8m (Single-Storey 8×8m • 20 sheets), 6.0m (Larger 2-Storey 10×6m • 20 sheets).
                 </Typography>
               </Box>
             )}
@@ -1433,19 +1434,23 @@ const ProductDetails = () => {
         initialProductId={null}
       />
 
-      <Product3DViewerModal
-        open={is3DViewerModalOpen}
-        onClose={handleClose3DViewer}
-        product={product}
-        selectedOption={selectedOption}
-        productOptions={productOptions}
-        coilInventory={coilInventory}
-        availableColors={availableColorsList}
-        initialColor={selectedColor}
-        initialLength={isPerMeter ? customLength : 3.8}
-        initialQuantity={quantity}
-        onApplyChanges={handleApply3DChanges}
-      />
+      {is3DViewerModalOpen && (
+        <Suspense fallback={null}>
+          <Product3DViewerModal
+            open={is3DViewerModalOpen}
+            onClose={handleClose3DViewer}
+            product={product}
+            selectedOption={selectedOption}
+            productOptions={productOptions}
+            coilInventory={coilInventory}
+            availableColors={availableColorsList}
+            initialColor={selectedColor}
+            initialLength={isPerMeter ? customLength : 3.8}
+            initialQuantity={quantity}
+            onApplyChanges={handleApply3DChanges}
+          />
+        </Suspense>
+      )}
     </Container>
   );
 };

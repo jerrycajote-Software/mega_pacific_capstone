@@ -357,9 +357,8 @@ const DeliveriesPage = () => {
                             disabled={updating}
                             onClick={() => handleUpdateStatus(order.rawId, 'ready_for_pickup', true)}
                             title="Send Ready for Pick-up signal to customer"
+                            className="btn-table-signal-ready"
                             style={{
-                              background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                              color: '#ffffff',
                               border: 'none',
                               padding: '6px 12px',
                               borderRadius: 7,
@@ -369,8 +368,6 @@ const DeliveriesPage = () => {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 6,
-                              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.35)',
-                              transition: 'all 0.18s ease'
                             }}
                           >
                             <NotificationsActiveIcon sx={{ fontSize: 14 }} />
@@ -383,10 +380,8 @@ const DeliveriesPage = () => {
                             disabled={updating}
                             onClick={() => handleUpdateStatus(order.rawId, 'completed')}
                             title="Confirm customer retrieved items"
+                            className="btn-table-pickup-complete"
                             style={{
-                              background: 'rgba(22, 163, 74, 0.12)',
-                              color: '#16a34a',
-                              border: '1px solid rgba(22, 163, 74, 0.4)',
                               padding: '6px 12px',
                               borderRadius: 7,
                               cursor: 'pointer',
@@ -395,7 +390,6 @@ const DeliveriesPage = () => {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 6,
-                              transition: 'all 0.18s ease'
                             }}
                           >
                             <CheckCircleIcon sx={{ fontSize: 14 }} />
@@ -555,7 +549,8 @@ const DeliveriesPage = () => {
                       <button
                         disabled={updating}
                         onClick={() => handleUpdateStatus(selectedOrder.rawId, 'shipped')}
-                        style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '12px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 600 }}
+                        className="btn-dispatch-step"
+                        style={{ padding: '12px 16px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 600 }}
                       >
                         🚚 Mark as <strong>Shipped (Loaded on Delivery Truck)</strong>
                       </button>
@@ -564,7 +559,8 @@ const DeliveriesPage = () => {
                       <button
                         disabled={updating}
                         onClick={() => handleUpdateStatus(selectedOrder.rawId, 'out_for_delivery')}
-                        style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '12px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 600 }}
+                        className="btn-dispatch-step"
+                        style={{ padding: '12px 16px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 600 }}
                       >
                         🛣️ Mark as <strong>Out for Delivery (En Route to Jobsite)</strong>
                       </button>
@@ -573,7 +569,8 @@ const DeliveriesPage = () => {
                       <button
                         disabled={updating}
                         onClick={() => handleUpdateStatus(selectedOrder.rawId, 'completed')}
-                        style={{ background: '#16a34a', color: 'white', border: 'none', padding: '12px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 700 }}
+                        className="btn-dispatch-complete"
+                        style={{ padding: '12px 16px', borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontWeight: 700 }}
                       >
                         ✅ Mark as <strong>Delivered & Completed (Signed Handover)</strong>
                       </button>
@@ -588,19 +585,16 @@ const DeliveriesPage = () => {
                       <button
                         disabled={updating}
                         onClick={() => handleUpdateStatus(selectedOrder.rawId, 'ready_for_pickup', true)}
+                        className="btn-dispatch-signal"
                         style={{
-                          background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                          color: '#ffffff',
-                          border: 'none',
-                          padding: '14px',
+                          padding: '14px 18px',
                           borderRadius: 8,
                           cursor: 'pointer',
                           textAlign: 'left',
                           fontWeight: 800,
-                          boxShadow: '0 4px 12px rgba(124, 58, 237, 0.35)',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 10
+                          gap: 12
                         }}
                       >
                         <NotificationsActiveIcon sx={{ fontSize: 22 }} />
@@ -617,18 +611,16 @@ const DeliveriesPage = () => {
                       <button
                         disabled={updating}
                         onClick={() => handleUpdateStatus(selectedOrder.rawId, 'completed')}
+                        className="btn-dispatch-complete"
                         style={{
-                          background: '#16a34a',
-                          color: 'white',
-                          border: 'none',
-                          padding: '14px',
+                          padding: '14px 18px',
                           borderRadius: 8,
                           cursor: 'pointer',
                           textAlign: 'left',
                           fontWeight: 700,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 10
+                          gap: 12
                         }}
                       >
                         <CheckCircleIcon sx={{ fontSize: 22 }} />

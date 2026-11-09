@@ -15,11 +15,14 @@ import {
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
 import ConfigurableRoofModel from './ConfigurableRoofModel';
+import InternalStructureControlPanel from './InternalStructureControlPanel';
 import {
+  AVAILABLE_3D_ROOF_MODELS,
   getCompatibleRoofModel,
   getSupportedLengthRangeText,
 } from '../services/roofModelRegistry';
 import { ROOFING_COLORS, getColorHex } from '../constants/roofingSpecs';
+import { DEFAULT_LAYER_VISIBILITY } from '../constants/roofStructureSpecs';
 import { isCoilInStock, getFirstInStockColor } from '../utils/coilAvailability';
 import useIsMobileBrowser from '../hooks/useDeviceDetect';
 
@@ -62,13 +65,18 @@ const Product3DViewerModal = ({
 }) => {
   const isMobile = useIsMobileBrowser();
   const [confirmedMobileProceed, setConfirmedMobileProceed] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const [viewFullRoof, setViewFullRoof] = useState(false);
 
   const [currentColor, setCurrentColor] = useState(initialColor);
   const [currentQty, setCurrentQty] = useState(initialQuantity);
   const [currentLength, setCurrentLength] = useState(initialLength);
   const [showSubstructure, setShowSubstructure] = useState(true);
+  const [structurePanelOpen, setStructurePanelOpen] = useState(false);
+  const [layerVisibility, setLayerVisibility] = useState(DEFAULT_LAYER_VISIBILITY);
+  const [explodeFactor, setExplodeFactor] = useState(0);
+  const [xraySheets, setXraySheets] = useState(false);
+  const [selectedMeshName, setSelectedMeshName] = useState(null);
 
   const colorList = useMemo(() => {
     if (availableColors && availableColors.length > 0) {
@@ -120,7 +128,13 @@ const Product3DViewerModal = ({
       setCurrentLength(parseFloat(initialLength) || 3.8);
       setViewFullRoof(false);
       setConfirmedMobileProceed(false);
-      setIsFullscreen(false);
+      setIsFullscreen(true);
+      setStructurePanelOpen(false);
+      setLayerVisibility(DEFAULT_LAYER_VISIBILITY);
+      setExplodeFactor(0);
+      setXraySheets(false);
+      setSelectedMeshName(null);
+      setShowSubstructure(true);
     }
   }, [open, initialColor, initialQuantity, initialLength, selectedOption, coilInventory, colorList]);
 
@@ -169,6 +183,51 @@ const Product3DViewerModal = ({
     setShowSubstructure((prev) => !prev);
   };
 
+  const handleToggleStructurePanel = () => {
+    setStructurePanelOpen((prev) => !prev);
+  };
+
+  const handleToggleLayerVisibility = (layerId) => {
+    setLayerVisibility((prev) => ({
+      ...prev,
+      [layerId]: prev?.[layerId] === false,
+    }));
+  };
+
+  const handleIsolateInternalStructure = () => {
+    setShowSubstructure(true);
+    setXraySheets(false);
+    setLayerVisibility({
+      trims_flashing: false,
+      roof_sheets: false,
+      underlayment: false,
+      purlins: true,
+      trusses: true,
+      top_plate: true,
+      base_house: false,
+    });
+  };
+
+  const handleRestoreAllLayers = () => {
+    setShowSubstructure(true);
+    setXraySheets(false);
+    setExplodeFactor(0);
+    setSelectedMeshName(null);
+    setLayerVisibility(DEFAULT_LAYER_VISIBILITY);
+  };
+
+  const handleToggleXraySheets = () => {
+    setXraySheets((prev) => !prev);
+  };
+
+  const handleSelectMeshPart = (meshName) => {
+    setSelectedMeshName(meshName);
+  };
+
+  const handleClearSelectedMesh = () => {
+    setSelectedMeshName(null);
+  };
+
   const handleToggleFullscreen = () => {
     setIsFullscreen((prev) => !prev);
   };
@@ -201,17 +260,54 @@ const Product3DViewerModal = ({
     const camera = controls.object;
     if (!camera) return;
 
+    const targetY = matchedModel?.cameraTargetY ?? 2.3;
+    const [defX, defY, defZ] = matchedModel?.cameraDefaultPos ?? [5.6, 3.8, 5.6];
+
     if (viewType === 'default') {
-      camera.position.set(5.6, 3.8, 5.6);
-      controls.target.set(0, 2.3, 0);
+      camera.position.set(defX, defY, defZ);
+      controls.target.set(0, targetY, 0);
     } else if (viewType === 'top') {
-      camera.position.set(0, 8.5, 1.2);
-      controls.target.set(0, 2.3, 0);
+      camera.position.set(0, defY + 5.2, 1.4);
+      controls.target.set(0, targetY, 0);
     } else if (viewType === 'front') {
-      camera.position.set(0, 3.8, 7.2);
-      controls.target.set(0, 2.3, 0);
+      camera.position.set(0, defY, defZ + 2.2);
+      controls.target.set(0, targetY, 0);
+    } else if (viewType === 'edge') {
+      const halfSpanZ = (matchedModel?.recommendedLength || 3.8) * 0.92;
+      camera.position.set(-3.54, targetY + 0.55, halfSpanZ + 0.65);
+      controls.target.set(-3.54, targetY + 0.56, halfSpanZ);
+    } else if (viewType === 'internal') {
+      setShowSubstructure(true);
+      setLayerVisibility((prev) => ({
+        ...prev,
+        purlins: true,
+        trusses: true,
+        top_plate: true,
+        base_house: false,
+      }));
+      camera.position.set(3.2, targetY + 0.25, 2.8);
+      controls.target.set(0, targetY + 1.35, 0);
     }
     controls.update();
+  };
+
+  const handleSelectHouseModelTier = (houseModel) => {
+    if (!houseModel) return;
+    setCurrentLength(houseModel.recommendedLength);
+    setSelectedMeshName(null);
+    if (viewFullRoof) {
+      setCurrentQty(houseModel.totalSheets);
+    }
+    setTimeout(() => {
+      if (orbitControlsRef.current) {
+        const controls = orbitControlsRef.current;
+        const camera = controls.object;
+        const [dx, dy, dz] = houseModel.cameraDefaultPos || [5.6, 3.8, 5.6];
+        camera.position.set(dx, dy, dz);
+        controls.target.set(0, houseModel.cameraTargetY || 2.3, 0);
+        controls.update();
+      }
+    }, 60);
   };
 
   const handleApplyChangesToOrder = () => {
@@ -230,6 +326,13 @@ const Product3DViewerModal = ({
     onClose();
   };
 
+  const handleDialogBackdropClose = (_, reason) => {
+    if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+      return;
+    }
+    onClose();
+  };
+
   const handleAdoptRecommendedLength = (recLength) => {
     setCurrentLength(recLength);
   };
@@ -239,7 +342,8 @@ const Product3DViewerModal = ({
     return (
       <Dialog
         open={open}
-        onClose={onClose}
+        onClose={handleDialogBackdropClose}
+        disableEscapeKeyDown
         maxWidth="xs"
         fullWidth
         PaperProps={{
@@ -310,7 +414,8 @@ const Product3DViewerModal = ({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleDialogBackdropClose}
+      disableEscapeKeyDown
       maxWidth={false}
       fullScreen={isFullscreen}
       sx={{
@@ -349,7 +454,7 @@ const Product3DViewerModal = ({
           </Typography>
           {isProductSupported && matchedModel && (
             <Chip
-              label={`${matchedModel.name} • 28mm Rib Height • ${currentThickness}`}
+              label={`${matchedModel.name} • ${currentLength}m Cut • ${currentThickness}`}
               size="small"
               sx={{
                 bgcolor: 'rgba(79, 119, 45, 0.25)',
@@ -359,6 +464,43 @@ const Product3DViewerModal = ({
                 fontSize: '0.72rem',
               }}
             />
+          )}
+          {isProductSupported && (
+            <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+              {AVAILABLE_3D_ROOF_MODELS.map((hm) => {
+                const isSelectedHouse = matchedModel?.id === hm.id;
+                return (
+                  <Tooltip
+                    key={hm.id}
+                    title={`${hm.name} (${hm.floorArea}) • Roof: ${hm.roofDimensions} • Cut Length: ${hm.minRafterLength.toFixed(1)}m–${hm.maxRafterLength.toFixed(1)}m (Recommended: ${hm.recommendedLength}m • ${hm.totalSheets} Sheets)`}
+                    arrow
+                  >
+                    <Button
+                      size="small"
+                      onClick={() => handleSelectHouseModelTier(hm)}
+                      sx={{
+                        py: 0.25,
+                        px: 1.1,
+                        minWidth: 0,
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        borderRadius: 1.5,
+                        textTransform: 'none',
+                        color: isSelectedHouse ? '#ffffff' : '#cbd5e1',
+                        bgcolor: isSelectedHouse ? 'rgba(56, 189, 248, 0.25)' : 'rgba(30, 41, 59, 0.75)',
+                        border: '1px solid',
+                        borderColor: isSelectedHouse ? '#38bdf8' : 'rgba(255, 255, 255, 0.12)',
+                        '&:hover': {
+                          bgcolor: isSelectedHouse ? 'rgba(56, 189, 248, 0.35)' : 'rgba(51, 65, 85, 0.85)',
+                        },
+                      }}
+                    >
+                      {hm.shortLabel} ({hm.recommendedLength}m)
+                    </Button>
+                  </Tooltip>
+                );
+              })}
+            </Stack>
           )}
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -497,36 +639,25 @@ const Product3DViewerModal = ({
                 <i className="fi fi-rr-box" style={{ fontSize: '28px' }}></i>
               </Box>
               <Typography variant="h6" fontWeight={800} sx={{ color: '#ffffff', mb: 1 }}>
-                No 3D Model Available for {currentLength}m Length
+                No 3D House Model Available for {currentLength}m Cut Length
               </Typography>
               <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3, lineHeight: 1.6 }}>
-                Currently, the Pico Rib 1220 house model supports rafter spans from 2.5m to 4.5m.
-                <br />
-                <strong>Supported length range:</strong>
+                Our 4 interactive Pico Rib 1220 house models support custom rafter cut lengths from 2.0m to 6.5m:
                 <br />
                 {getSupportedLengthRangeText()}
               </Typography>
-              <Stack direction="row" spacing={1.5} justifyContent="center">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleAdoptRecommendedLength(3.8)}
-                  sx={{ fontWeight: 700, borderRadius: 2 }}
-                >
-                  View Pico Rib 1220 House (3.8m)
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={onClose}
-                  sx={{
-                    fontWeight: 700,
-                    borderRadius: 2,
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    color: '#e2e8f0',
-                  }}
-                >
-                  Close Visualizer
-                </Button>
+              <Stack direction="row" spacing={1} justifyContent="center" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                {AVAILABLE_3D_ROOF_MODELS.map((hm) => (
+                  <Button
+                    key={hm.id}
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleSelectHouseModelTier(hm)}
+                    sx={{ fontWeight: 700, borderRadius: 2, textTransform: 'none', fontSize: '0.8rem' }}
+                  >
+                    {hm.shortLabel} ({hm.recommendedLength}m • {hm.totalSheets} Sheets)
+                  </Button>
+                ))}
               </Stack>
             </Paper>
           </Box>
@@ -563,8 +694,14 @@ const Product3DViewerModal = ({
                   modelPath={matchedModel.modelPath}
                   sheetQty={effectiveSheetQty}
                   roofColorHex={colorHex}
+                  thickness={currentThickness}
                   showSubstructure={showSubstructure}
                   showSheets={true}
+                  layerVisibility={layerVisibility}
+                  explodeFactor={explodeFactor}
+                  xraySheets={xraySheets}
+                  selectedMeshName={selectedMeshName}
+                  onSelectMesh={handleSelectMeshPart}
                 />
               </Suspense>
 
@@ -573,10 +710,10 @@ const Product3DViewerModal = ({
                 makeDefault
                 enableDamping
                 dampingFactor={0.06}
-                target={[0, 2.3, 0]}
+                target={[0, matchedModel?.cameraTargetY ?? 2.3, 0]}
                 maxPolarAngle={Math.PI / 2 - 0.05}
-                minDistance={2.5}
-                maxDistance={18}
+                minDistance={0.35}
+                maxDistance={24}
               />
             </Canvas>
 
@@ -602,7 +739,7 @@ const Product3DViewerModal = ({
                 }}
               >
                 <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', fontWeight: 700 }}>
-                  PICO RIB 1220 ORDER COVERAGE
+                  {matchedModel.name.toUpperCase()} • {matchedModel.roofDimensions.toUpperCase()}
                 </Typography>
                 <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#4ade80' }}>
                   {effectiveSheetQty} of {matchedModel.totalSheets} sheets installed ({Math.min(100, Math.round((effectiveSheetQty / matchedModel.totalSheets) * 100))}%)
@@ -636,7 +773,7 @@ const Product3DViewerModal = ({
                       },
                     }}
                   >
-                    {viewFullRoof ? `Previewing Full Roof (16 Sheets)` : `Preview Full Roof (16 Sheets)`}
+                    {viewFullRoof ? `Previewing Full Roof (${matchedModel.totalSheets} Sheets)` : `Preview Full Roof (${matchedModel.totalSheets} Sheets)`}
                   </Button>
                 </Box>
                 <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.6, fontSize: '0.68rem' }}>
@@ -723,6 +860,40 @@ const Product3DViewerModal = ({
                 >
                   Roof Top
                 </Button>
+                <Button
+                  size="small"
+                  onClick={() => handleSetCameraView('edge')}
+                  sx={{
+                    color: '#86efac',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    px: 1.2,
+                    py: 0.4,
+                    minWidth: 0,
+                    borderRadius: 1.5,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: 'rgba(74, 222, 128, 0.15)' },
+                  }}
+                >
+                  Inspect Sheet Edge
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => handleSetCameraView('internal')}
+                  sx={{
+                    color: '#38bdf8',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    px: 1.2,
+                    py: 0.4,
+                    minWidth: 0,
+                    borderRadius: 1.5,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: 'rgba(56, 189, 248, 0.15)' },
+                  }}
+                >
+                  Internal Truss View
+                </Button>
               </Box>
 
               {/* Zoom Buttons */}
@@ -783,6 +954,27 @@ const Product3DViewerModal = ({
                 {showSubstructure ? 'Hide Timber Framing' : 'Show Timber Framing'}
               </Button>
             </Box>
+
+            {/* Interactive 3D Internal Roof Structure Control Panel & Part Inspector */}
+            <InternalStructureControlPanel
+              open={structurePanelOpen}
+              onToggleOpen={handleToggleStructurePanel}
+              layerVisibility={layerVisibility}
+              onToggleLayer={handleToggleLayerVisibility}
+              onIsolateInternalStructure={handleIsolateInternalStructure}
+              onRestoreAllLayers={handleRestoreAllLayers}
+              explodeFactor={explodeFactor}
+              onChangeExplodeFactor={setExplodeFactor}
+              xraySheets={xraySheets}
+              onToggleXraySheets={handleToggleXraySheets}
+              selectedMeshName={selectedMeshName}
+              onClearSelectedMesh={handleClearSelectedMesh}
+              currentThickness={currentThickness}
+              currentColor={currentColor}
+              sheetsPerSlope={matchedModel?.sheetsPerSlope || 8}
+              currentLength={currentLength}
+              onFocusInternalCamera={() => handleSetCameraView('internal')}
+            />
           </>
         )}
       </DialogContent>
@@ -975,24 +1167,6 @@ const Product3DViewerModal = ({
 
           {/* Action Buttons */}
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Button
-              variant="outlined"
-              onClick={handleDiscardChanges}
-              sx={{
-                color: '#cbd5e1',
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                fontWeight: 700,
-                borderRadius: 2,
-                px: 2.5,
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: 'rgba(255, 255, 255, 0.4)',
-                  bgcolor: 'rgba(255, 255, 255, 0.05)',
-                },
-              }}
-            >
-              Cancel
-            </Button>
             <Button
               variant="contained"
               color="primary"
