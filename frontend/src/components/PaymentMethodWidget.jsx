@@ -206,8 +206,17 @@ const PaymentMethodWidget = ({
             transition: 'all 0.2s ease',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: isCardChannel ? 2 : 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+              mb: isCardChannel ? 2 : 0
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
               <Radio
                 checked={isCardChannel}
                 onChange={() => selectChannel('Card')}
@@ -220,7 +229,7 @@ const PaymentMethodWidget = ({
                 Bank Card (Debit / Credit)
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
               <MastercardLogo active={!hasBrandMatch || isMastercard} />
               <VisaLogo active={!hasBrandMatch || isVisa} />
             </Box>
@@ -347,8 +356,17 @@ const PaymentMethodWidget = ({
             transition: 'all 0.2s ease',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: isGcashChannel ? 2 : 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+              mb: isGcashChannel ? 2 : 0
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
               <Radio
                 checked={isGcashChannel}
                 onChange={() => selectChannel('GCash')}
@@ -364,7 +382,14 @@ const PaymentMethodWidget = ({
             <Chip
               label={gcashQrEnabled ? 'Automated QR Ph' : 'Instant Link'}
               size="small"
-              sx={{ bgcolor: '#dbeafe', color: '#1d4ed8', fontWeight: 700, fontSize: '10.5px', height: 20 }}
+              sx={{
+                bgcolor: '#dbeafe',
+                color: '#1d4ed8',
+                fontWeight: 700,
+                fontSize: '10.5px',
+                height: 20,
+                flexShrink: 0
+              }}
             />
           </Box>
 
@@ -563,44 +588,69 @@ const PaymentMethodWidget = ({
             }
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Radio
-                checked={isCodPlan}
-                onChange={() => selectPlan('COD_50')}
-                value="COD_50"
-                name="paymentPlanRadio"
-                size="small"
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: { xs: 1.25, sm: 1.5 },
+              width: '100%'
+            }}
+          >
+            <Radio
+              checked={isCodPlan}
+              onChange={() => selectPlan('COD_50')}
+              value="COD_50"
+              name="paymentPlanRadio"
+              size="small"
+              sx={{
+                p: 0,
+                mt: 0.25,
+                '&.Mui-checked': { color: '#16a34a' }
+              }}
+            />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box
                 sx={{
-                  p: 0,
-                  mt: 0.25,
-                  '&.Mui-checked': { color: '#16a34a' }
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  justifyContent: 'space-between',
+                  gap: { xs: 0.75, sm: 1 },
+                  width: '100%'
                 }}
-              />
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                   <CustomCashIcon size={18} color="#16a34a" />
-                  <Typography variant="body1" fontWeight={800} color="#0f172a">
+                  <Typography
+                    variant="body1"
+                    fontWeight={800}
+                    color="#0f172a"
+                    sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}
+                  >
                     Cash on Delivery (50% Downpayment)
                   </Typography>
                 </Box>
-                <Typography variant="body2" color="#475569" sx={{ mt: 0.5, fontWeight: 500 }}>
-                  50% bank transfer and 50% Cash on the Item Delivered
-                </Typography>
+                <Chip
+                  label="50% Upfront + 50% COD"
+                  size="small"
+                  sx={{
+                    bgcolor: '#f0fdf4',
+                    color: '#15803d',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    height: 24,
+                    alignSelf: { xs: 'flex-start', sm: 'center' }
+                  }}
+                />
               </Box>
+              <Typography
+                variant="body2"
+                color="#475569"
+                sx={{ mt: 0.5, fontWeight: 500, fontSize: { xs: '0.85rem', sm: '0.875rem' } }}
+              >
+                50% bank transfer and 50% Cash on the Item Delivered
+              </Typography>
             </Box>
-            <Chip
-              label="50% Upfront + 50% COD"
-              size="small"
-              sx={{
-                bgcolor: '#f0fdf4',
-                color: '#15803d',
-                fontSize: '11px',
-                fontWeight: 700,
-                height: 24,
-                flexShrink: 0
-              }}
-            />
           </Box>
 
           <Box sx={{ mt: 2, p: 1.5, borderRadius: 2.5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
@@ -650,44 +700,69 @@ const PaymentMethodWidget = ({
             }
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-              <Radio
-                checked={isFullPlan}
-                onChange={() => selectPlan('FULL_PAYMENT')}
-                value="FULL_PAYMENT"
-                name="paymentPlanRadio"
-                size="small"
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: { xs: 1.25, sm: 1.5 },
+              width: '100%'
+            }}
+          >
+            <Radio
+              checked={isFullPlan}
+              onChange={() => selectPlan('FULL_PAYMENT')}
+              value="FULL_PAYMENT"
+              name="paymentPlanRadio"
+              size="small"
+              sx={{
+                p: 0,
+                mt: 0.25,
+                '&.Mui-checked': { color: '#1e3a8a' }
+              }}
+            />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box
                 sx={{
-                  p: 0,
-                  mt: 0.25,
-                  '&.Mui-checked': { color: '#1e3a8a' }
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  justifyContent: 'space-between',
+                  gap: { xs: 0.75, sm: 1 },
+                  width: '100%'
                 }}
-              />
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                   <CustomAccountBalanceIcon size={18} color="#1e3a8a" />
-                  <Typography variant="body1" fontWeight={800} color="#0f172a">
+                  <Typography
+                    variant="body1"
+                    fontWeight={800}
+                    color="#0f172a"
+                    sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}
+                  >
                     Bank transfer - Full Payment
                   </Typography>
                 </Box>
-                <Typography variant="body2" color="#475569" sx={{ mt: 0.5, fontWeight: 500 }}>
-                  Pay 100% full amount upfront via Bank Card or GCash
-                </Typography>
+                <Chip
+                  label="100% Full Payment"
+                  size="small"
+                  sx={{
+                    bgcolor: '#eff6ff',
+                    color: '#1d4ed8',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    height: 24,
+                    alignSelf: { xs: 'flex-start', sm: 'center' }
+                  }}
+                />
               </Box>
+              <Typography
+                variant="body2"
+                color="#475569"
+                sx={{ mt: 0.5, fontWeight: 500, fontSize: { xs: '0.85rem', sm: '0.875rem' } }}
+              >
+                Pay 100% full amount upfront via Bank Card or GCash
+              </Typography>
             </Box>
-            <Chip
-              label="100% Full Payment"
-              size="small"
-              sx={{
-                bgcolor: '#eff6ff',
-                color: '#1d4ed8',
-                fontSize: '11px',
-                fontWeight: 700,
-                height: 24,
-                flexShrink: 0
-              }}
-            />
           </Box>
 
           <Box sx={{ mt: 2, p: 1.5, borderRadius: 2.5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
