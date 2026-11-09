@@ -23,19 +23,20 @@ import {
   DialogActions,
   Alert,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import CloseIcon from '@mui/icons-material/Close';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import DownloadIcon from '@mui/icons-material/Download';
+import {
+  CustomSearchIcon as SearchIcon,
+  CustomCurrencyExchangeIcon as CurrencyExchangeIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomHourglassEmptyIcon as HourglassEmptyIcon,
+  CustomVisibilityIcon as VisibilityIcon,
+  CustomCloseIcon as CloseIcon,
+  CustomReceiptLongIcon as ReceiptLongIcon,
+  CustomCreditCardIcon as CreditCardIcon,
+  CustomEWalletIcon as EWalletIcon,
+  CustomCashIcon as CashIcon,
+  CustomAccountBalanceIcon as AccountBalanceIcon,
+  CustomChevronRightIcon as ChevronRightIcon
+} from '../../components/icons';
 import { toast } from 'react-hot-toast';
 import { generateRefundVoucherPDF } from '../../utils/documentGenerator';
 import {
@@ -49,10 +50,16 @@ const formatCurrency = (amt) =>
 
 const getPaymentChannelIcon = (method) => {
   const m = (method || '').toLowerCase();
-  if (m.includes('gcash')) return <PhoneAndroidIcon sx={{ fontSize: 16, color: '#007dfa' }} />;
-  if (m.includes('card') || m.includes('visa') || m.includes('mastercard'))
-    return <CreditCardIcon sx={{ fontSize: 16, color: '#8b5cf6' }} />;
-  return <AccountBalanceIcon sx={{ fontSize: 16, color: '#10b981' }} />;
+  if (m.includes('gcash') || m.includes('wallet') || m.includes('e-wallet') || m.includes('paymaya') || m.includes('maya')) {
+    return <EWalletIcon size={16} color="#007dfa" />;
+  }
+  if (m.includes('card') || m.includes('visa') || m.includes('mastercard')) {
+    return <CreditCardIcon size={16} color="#8b5cf6" />;
+  }
+  if (m.includes('cash') || m.includes('cod')) {
+    return <CashIcon size={16} color="#16a34a" />;
+  }
+  return <AccountBalanceIcon size={16} color="#10b981" />;
 };
 
 const RefundsPage = () => {
@@ -131,16 +138,6 @@ const RefundsPage = () => {
   const handleOpenReceiptModal = (refund) => {
     setSelectedRefund(refund);
     setReceiptModalOpen(true);
-  };
-
-  const handleGenerateRef = () => {
-    const isGCash = (processForm.returnMethod || '').toLowerCase().includes('gcash');
-    const prefix = isGCash ? 'GCASH-TXN' : 'BANK-REF';
-    const rand = Math.floor(10000000 + Math.random() * 90000000);
-    setProcessForm(prev => ({
-      ...prev,
-      transactionReference: `${prefix}-${rand}`
-    }));
   };
 
   const handleProcessRefund = async (e) => {
@@ -550,7 +547,7 @@ const RefundsPage = () => {
                       <TableCell>
                         {isPending ? (
                           <Chip
-                            icon={<HourglassEmptyIcon sx={{ fontSize: '14px !important', color: '#f59e0b !important' }} />}
+                            icon={<HourglassEmptyIcon size={14} color="#f59e0b" />}
                             label="Pending Return"
                             size="small"
                             sx={{
@@ -558,12 +555,19 @@ const RefundsPage = () => {
                               color: '#f59e0b',
                               border: '1px solid rgba(245, 158, 11, 0.3)',
                               fontWeight: 700,
-                              fontSize: '0.72rem'
+                              fontSize: '0.72rem',
+                              '& .MuiChip-icon': {
+                                ml: 0.75,
+                                mr: -0.25
+                              },
+                              '& .MuiChip-label': {
+                                px: 1
+                              }
                             }}
                           />
                         ) : (
                           <Chip
-                            icon={<CheckCircleIcon sx={{ fontSize: '14px !important', color: '#10b981 !important' }} />}
+                            icon={<CheckCircleIcon size={14} color="#10b981" />}
                             label="Refunded"
                             size="small"
                             sx={{
@@ -571,7 +575,14 @@ const RefundsPage = () => {
                               color: '#10b981',
                               border: '1px solid rgba(16, 185, 129, 0.3)',
                               fontWeight: 700,
-                              fontSize: '0.72rem'
+                              fontSize: '0.72rem',
+                              '& .MuiChip-icon': {
+                                ml: 0.75,
+                                mr: -0.25
+                              },
+                              '& .MuiChip-label': {
+                                px: 1
+                              }
                             }}
                           />
                         )}
@@ -634,7 +645,11 @@ const RefundsPage = () => {
 
       <Dialog
         open={processModalOpen}
-        onClose={() => !submitting && setProcessModalOpen(false)}
+        onClose={(event, reason) => {
+          if (!submitting && reason !== 'backdropClick') {
+            setProcessModalOpen(false);
+          }
+        }}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -701,48 +716,142 @@ const RefundsPage = () => {
 
               <TextField
                 label="Refund Amount (₱)"
-                type="number"
+                type="text"
                 value={processForm.amount}
-                onChange={(e) => setProcessForm({ ...processForm, amount: e.target.value })}
                 fullWidth
                 helperText="Pre-calculated from order payment status (ex. 50% downpayment or full paid total)"
                 InputProps={{
-                  startAdornment: <InputAdornment position="start">₱</InputAdornment>
+                  readOnly: true,
+                  startAdornment: <InputAdornment position="start" sx={{ userSelect: 'none', pointerEvents: 'none' }}>₱</InputAdornment>
+                }}
+                inputProps={{
+                  tabIndex: -1,
+                  readOnly: true
+                }}
+                sx={{
+                  userSelect: 'none',
+                  '& .MuiInputBase-root': {
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                    cursor: 'default',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    '& fieldset': {
+                      borderColor: 'var(--border) !important',
+                      borderWidth: '1px !important'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'var(--border) !important',
+                      borderWidth: '1px !important'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'var(--border) !important'
+                    }
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'var(--text-muted) !important',
+                    '&.Mui-focused': {
+                      color: 'var(--text-muted) !important'
+                    }
+                  },
+                  '& input': {
+                    cursor: 'default',
+                    userSelect: 'none',
+                    caretColor: 'transparent'
+                  }
                 }}
               />
 
               <TextField
                 label="Return Channel / Destination"
+                type="text"
                 value={processForm.returnMethod}
-                onChange={(e) => setProcessForm({ ...processForm, returnMethod: e.target.value })}
                 fullWidth
                 helperText="The payment channel where funds will be returned to the buyer"
+                InputProps={{
+                  readOnly: true
+                }}
+                inputProps={{
+                  tabIndex: -1,
+                  readOnly: true
+                }}
+                sx={{
+                  userSelect: 'none',
+                  '& .MuiInputBase-root': {
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                    cursor: 'default',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    '& fieldset': {
+                      borderColor: 'var(--border) !important',
+                      borderWidth: '1px !important'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'var(--border) !important',
+                      borderWidth: '1px !important'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'var(--border) !important'
+                    }
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'var(--text-muted) !important',
+                    '&.Mui-focused': {
+                      color: 'var(--text-muted) !important'
+                    }
+                  },
+                  '& input': {
+                    cursor: 'default',
+                    userSelect: 'none',
+                    caretColor: 'transparent'
+                  }
+                }}
               />
 
-              <Box>
-                <TextField
-                  label="Transaction Reference / Reversal ID"
-                  value={processForm.transactionReference}
-                  onChange={(e) => setProcessForm({ ...processForm, transactionReference: e.target.value })}
-                  fullWidth
-                  placeholder="ex. GCASH-REF-19283748 or BANK-TRX-9821"
-                  helperText="Required audit identifier shown to customer and on company records"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Button
-                          size="small"
-                          onClick={handleGenerateRef}
-                          startIcon={<AutoFixHighIcon sx={{ fontSize: 14 }} />}
-                          sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.75rem' }}
-                        >
-                          Auto Generate
-                        </Button>
-                      </InputAdornment>
-                    )
-                  }}
-                />
-              </Box>
+              <TextField
+                label="Transaction Reference / Reversal ID"
+                type="text"
+                value={processForm.transactionReference}
+                fullWidth
+                helperText="Required audit identifier shown to customer and on company records"
+                InputProps={{
+                  readOnly: true
+                }}
+                inputProps={{
+                  tabIndex: -1,
+                  readOnly: true
+                }}
+                sx={{
+                  userSelect: 'none',
+                  '& .MuiInputBase-root': {
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                    cursor: 'default',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    '& fieldset': {
+                      borderColor: 'var(--border) !important',
+                      borderWidth: '1px !important'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'var(--border) !important',
+                      borderWidth: '1px !important'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'var(--border) !important'
+                    }
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'var(--text-muted) !important',
+                    '&.Mui-focused': {
+                      color: 'var(--text-muted) !important'
+                    }
+                  },
+                  '& input': {
+                    cursor: 'default',
+                    userSelect: 'none',
+                    caretColor: 'transparent'
+                  }
+                }}
+              />
 
               <TextField
                 label="Finance Processing Notes"
@@ -791,7 +900,11 @@ const RefundsPage = () => {
 
       <Dialog
         open={receiptModalOpen}
-        onClose={() => setReceiptModalOpen(false)}
+        onClose={(event, reason) => {
+          if (reason !== 'backdropClick') {
+            setReceiptModalOpen(false);
+          }
+        }}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -871,19 +984,11 @@ const RefundsPage = () => {
           )}
         </DialogContent>
 
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={() => setReceiptModalOpen(false)}
-            color="inherit"
-            sx={{ textTransform: 'none', fontWeight: 600, color: 'var(--text-muted)' }}
-          >
-            Close
-          </Button>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             onClick={() => generateRefundVoucherPDF(selectedRefund)}
             variant="contained"
             color="primary"
-            startIcon={<DownloadIcon sx={{ fontSize: 18 }} />}
             sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5 }}
           >
             Download Voucher PDF

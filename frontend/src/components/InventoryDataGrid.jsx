@@ -18,13 +18,13 @@ import {
   Tab,
 } from '@mui/material';
 import {
-  Visibility as VisibilityIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Inventory2 as InventoryIcon,
-  ExpandMore as ExpandMoreIcon,
-  ChevronRight as ChevronRightIcon,
-} from '@mui/icons-material';
+  CustomVisibilityIcon as VisibilityIcon,
+  CustomEditIcon as EditIcon,
+  CustomDeleteIcon as DeleteIcon,
+  CustomInventory2Icon as InventoryIcon,
+  CustomExpandMoreIcon as ExpandMoreIcon,
+  CustomChevronRightIcon as ChevronRightIcon,
+} from './icons';
 import { ProductStockCalculator } from '../utils/ProductStockCalculator';
 
 const InventoryDataGrid = ({

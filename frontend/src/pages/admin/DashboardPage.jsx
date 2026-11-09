@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import PeopleIcon from '@mui/icons-material/People';
-import BadgeIcon from '@mui/icons-material/Badge';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WarningIcon from '@mui/icons-material/Warning';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ShieldIcon from '@mui/icons-material/Shield';
-import LockResetIcon from '@mui/icons-material/LockReset';
-import TuneIcon from '@mui/icons-material/Tune';
-import PhoneIcon from '@mui/icons-material/Phone';
-import MailIcon from '@mui/icons-material/Mail';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CircularProgress from '@mui/material/CircularProgress';
 import {
   CustomAdminCustomersIcon,
   CustomAdminStaffIcon,
   CustomAdminVerificationIcon,
-  CustomAdminSecurityFlagsIcon
+  CustomAdminSecurityFlagsIcon,
+  CustomPeopleIcon as PeopleIcon,
+  CustomBadgeIcon as BadgeIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomWarningIcon as WarningIcon,
+  CustomChevronRightIcon as ChevronRightIcon,
+  CustomShieldIcon as ShieldIcon,
+  CustomLockResetIcon as LockResetIcon,
+  CustomTuneIcon as TuneIcon,
+  CustomPhoneIcon as PhoneIcon,
+  CustomMailIcon as MailIcon,
+  CustomLocationOnIcon as LocationOnIcon
 } from '../../components/icons';
 
 const th = {

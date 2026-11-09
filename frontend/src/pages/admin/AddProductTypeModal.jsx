@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import CloseIcon from '@mui/icons-material/Close';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import NotesIcon from '@mui/icons-material/Notes';
 import CircularProgress from '@mui/material/CircularProgress';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import {
+  CustomCloseIcon as CloseIcon,
+  CustomLocalOfferIcon as LocalOfferIcon,
+  CustomNotesIcon as NotesIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomWarningAmberIcon as WarningAmberIcon
+} from '../../components/icons';
 
 
 const M = {

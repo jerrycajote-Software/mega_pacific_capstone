@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CircularProgress from '@mui/material/CircularProgress';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   CustomOwnerRevenueIcon,
   CustomOwnerCoilStockIcon,
   CustomOwnerInventoryValueIcon,
   CustomOwnerOrdersVolumeIcon,
-  CustomOwnerAvgOrderValueIcon
+  CustomOwnerAvgOrderValueIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomAccessTimeIcon as AccessTimeIcon
 } from '../../components/icons';
 
 const Widget = ({ title, action, children, style = {} }) => (

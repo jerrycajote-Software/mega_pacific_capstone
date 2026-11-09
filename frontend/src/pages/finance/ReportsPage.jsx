@@ -245,8 +245,18 @@ const ReportsPage = () => {
             onChange={handlePeriodChange}
             sx={{
               minWidth: 190,
-              bgcolor: 'background.paper',
-              '& .MuiOutlinedInput-root': { borderRadius: 2.5, fontWeight: 600, fontSize: '0.85rem' }
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2.5,
+                fontWeight: 600,
+                fontSize: '0.85rem',
+                bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#ffffff',
+                '& fieldset': {
+                  borderColor: (theme) => theme.palette.mode === 'dark' ? '#334155' : '#e2e8f0'
+                },
+                '&:hover fieldset': {
+                  borderColor: (theme) => theme.palette.mode === 'dark' ? '#475569' : '#cbd5e1'
+                }
+              }
             }}
           >
             <MenuItem value="month">This Month (September 2026)</MenuItem>
@@ -260,15 +270,13 @@ const ReportsPage = () => {
             color="primary"
             onClick={handleExportPDF}
             disabled={loading || !reportData}
-            startIcon={<i className="fi fi-rr-file-pdf"
-            style={{ fontSize: 14 }} />}
             sx={{
               borderRadius: 2.5,
               textTransform: 'none',
               fontWeight: 700,
               px: 2.5,
               py: 1,
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
+              boxShadow: 'none'
             }}
           >
             Export PDF
@@ -279,15 +287,13 @@ const ReportsPage = () => {
             color="success"
             onClick={handleExportExcel}
             disabled={loading || !reportData}
-            startIcon={<i className="fi fi-rr-file-excel" style={{ fontSize: 14 }} />}
             sx={{
               borderRadius: 2.5,
               textTransform: 'none',
               fontWeight: 700,
               px: 2.5,
               py: 1,
-              borderColor: 'success.main',
-              bgcolor: 'background.paper'
+              borderColor: 'success.main'
             }}
           >
             Export Excel
@@ -437,8 +443,8 @@ const ReportsPage = () => {
             {activeTab === 0 && (
               <TableContainer>
                 <Table>
-                  <TableHead sx={{ bgcolor: 'grey.50' }}>
-                    <TableRow>
+                  <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>
+                    <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', color: 'text.secondary' } }}>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem', color: 'text.secondary' }}>Classification</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem', color: 'text.secondary' }}>Account / Description</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem', color: 'text.secondary', textAlign: 'right' }}>Amount (PHP)</TableCell>
@@ -537,8 +543,8 @@ const ReportsPage = () => {
                     </Typography>
                     <TableContainer sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                       <Table size="small">
-                        <TableHead sx={{ bgcolor: 'grey.50' }}>
-                          <TableRow>
+                        <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>
+                          <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', color: 'text.secondary' } }}>
                             <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Ref</TableCell>
                             <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Category</TableCell>
                             <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', textAlign: 'right' }}>Amount</TableCell>
@@ -563,8 +569,8 @@ const ReportsPage = () => {
             {activeTab === 2 && (
               <TableContainer>
                 <Table>
-                  <TableHead sx={{ bgcolor: 'grey.50' }}>
-                    <TableRow>
+                  <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>
+                    <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', color: 'text.secondary' } }}>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>Order ID</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>Settlement Date</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.78rem' }}>Customer</TableCell>

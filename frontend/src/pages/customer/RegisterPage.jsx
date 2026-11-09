@@ -30,13 +30,16 @@ import {
   FormHelperText,
   Paper,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import {
+  CustomRegistrationSuccessIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomCancelIcon as CancelIcon,
+  CustomVisibilityIcon as Visibility,
+  CustomVisibilityOffIcon as VisibilityOff,
+  CustomPersonOutlinedIcon as PersonOutlinedIcon,
+  CustomLockOutlinedIcon as LockOutlinedIcon,
+  CustomLocationOnOutlinedIcon as LocationOnOutlinedIcon
+} from '../../components/icons';
 
 const getPasswordChecks = (password) => ({
   minLength: password.length >= 8,
@@ -929,21 +932,8 @@ const RegisterPage = () => {
         PaperProps={{ sx: { borderRadius: 3, p: { xs: 1, sm: 1.5 }, mx: 2 } }}
       >
         <DialogContent sx={{ textAlign: 'center', pt: 4, pb: 2 }}>
-          <Box
-            sx={{
-              width: 72,
-              height: 72,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #4f772d 0%, #31572c 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
-              mb: 3,
-              boxShadow: '0 8px 24px rgba(79,119,45,0.3)',
-            }}
-          >
-            <i className="fi fi-sr-check-circle" style={{ color: '#ffffff', fontSize: '36px' }}></i>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2.5 }}>
+            <CustomRegistrationSuccessIcon size={76} />
           </Box>
           <Typography variant="h5" fontWeight={700} gutterBottom>
             Registration Successful

@@ -7,22 +7,24 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import RateReviewIcon from '@mui/icons-material/RateReview';
-import ReplyIcon from '@mui/icons-material/Reply';
-import EditIcon from '@mui/icons-material/Edit';
-import SendIcon from '@mui/icons-material/Send';
-import CloseIcon from '@mui/icons-material/Close';
-import StarIcon from '@mui/icons-material/Star';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
-import VerifiedIcon from '@mui/icons-material/Verified';
-import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
-import ClearIcon from '@mui/icons-material/Clear';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import { useAuth } from '../../context/AuthContext';
-import { CustomEmptyReviewsIcon } from '../../components/icons';
+import {
+  CustomEmptyReviewsIcon,
+  CustomSearchIcon as SearchIcon,
+  CustomRateReviewIcon as RateReviewIcon,
+  CustomReplyIcon as ReplyIcon,
+  CustomEditIcon as EditIcon,
+  CustomSendIcon as SendIcon,
+  CustomCloseIcon as CloseIcon,
+  CustomStarIcon as StarIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomPendingActionsIcon as PendingActionsIcon,
+  CustomThumbUpOutlinedIcon as ThumbUpOutlinedIcon,
+  CustomVerifiedIcon as VerifiedIcon,
+  CustomPhotoLibraryOutlinedIcon as PhotoLibraryOutlinedIcon,
+  CustomClearIcon as ClearIcon,
+  CustomInventory2OutlinedIcon as Inventory2OutlinedIcon
+} from '../../components/icons';
 
 const QUICK_REPLY_TEMPLATES = [
   { label: 'Gratitude', text: 'Thank you for your 5-star review! We are delighted to supply premium roofing materials for your project.' },

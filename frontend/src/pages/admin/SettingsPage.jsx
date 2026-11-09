@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import ShieldIcon from '@mui/icons-material/Shield';
-import LockIcon from '@mui/icons-material/Lock';
-import DevicesIcon from '@mui/icons-material/Devices';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import FactoryIcon from '@mui/icons-material/Factory';
-import HubIcon from '@mui/icons-material/Hub';
-import KeyIcon from '@mui/icons-material/Key';
 import CircularProgress from '@mui/material/CircularProgress';
 import {
   CustomAdminConcurrencyIcon,
   CustomAdminFacilityIcon,
   CustomAdminPasswordGuardIcon,
-  CustomAdminPlatformGuardIcon
+  CustomAdminPlatformGuardIcon,
+  CustomShieldIcon as ShieldIcon,
+  CustomLockIcon as LockIcon,
+  CustomDevicesIcon as DevicesIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomFactoryIcon as FactoryIcon,
+  CustomHubIcon as HubIcon,
+  CustomKeyIcon as KeyIcon
 } from '../../components/icons';
 
 

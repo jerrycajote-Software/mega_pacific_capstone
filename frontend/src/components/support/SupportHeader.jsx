@@ -1,5 +1,12 @@
 import React from 'react';
 import { Box, Typography, IconButton, Tooltip, Chip } from '@mui/material';
+import {
+  CustomChatBubbleOutlinedIcon,
+  CustomRefreshCwIcon,
+  CustomOpenInFullIcon,
+  CustomCloseFullscreenIcon,
+  CustomCloseIcon
+} from '../icons';
 
 const SupportHeader = ({
   isMaximized,
@@ -42,7 +49,7 @@ const SupportHeader = ({
               flexShrink: 0
             }}
           >
-            <i className="fi fi-rr-comment-alt" style={{ fontSize: '18px' }}></i>
+            <CustomChatBubbleOutlinedIcon size={20} color="#ffffff" />
             <Box
               sx={{
                 position: 'absolute',
@@ -98,10 +105,9 @@ const SupportHeader = ({
                   '&:hover': { color: 'primary.main', borderColor: 'primary.main' }
                 }}
               >
-                <i
-                  className="fi fi-rr-refresh"
+                <CustomRefreshCwIcon
+                  size={14}
                   style={{
-                    fontSize: '13px',
                     display: 'inline-block',
                     animation: loading ? 'spin 1s linear infinite' : 'none'
                   }}
@@ -125,7 +131,7 @@ const SupportHeader = ({
                 '&:hover': { color: 'primary.main', borderColor: 'primary.main' }
               }}
             >
-              <i className={isMaximized ? 'fi fi-rr-compress' : 'fi fi-rr-expand'} style={{ fontSize: '14px' }}></i>
+              {isMaximized ? <CustomCloseFullscreenIcon size={14} /> : <CustomOpenInFullIcon size={14} />}
             </IconButton>
           </Tooltip>
 
@@ -143,7 +149,7 @@ const SupportHeader = ({
                 '&:hover': { bgcolor: 'error.light', color: 'error.main', borderColor: 'error.main' }
               }}
             >
-              <i className="fi fi-rr-cross" style={{ fontSize: '13px' }}></i>
+              <CustomCloseIcon size={14} />
             </IconButton>
           </Tooltip>
         </Box>

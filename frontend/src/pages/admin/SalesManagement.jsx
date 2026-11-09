@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import BadgeIcon from '@mui/icons-material/Badge';
 import CircularProgress from '@mui/material/CircularProgress';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import LockResetIcon from '@mui/icons-material/LockReset';
-import EditIcon from '@mui/icons-material/Edit';
-import SearchIcon from '@mui/icons-material/Search';
-import MailIcon from '@mui/icons-material/Mail';
-import PhoneIcon from '@mui/icons-material/Phone';
-import CloseIcon from '@mui/icons-material/Close';
-import WarningIcon from '@mui/icons-material/Warning';
+import {
+  CustomBadgeIcon as BadgeIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomCancelIcon as CancelIcon,
+  CustomLockResetIcon as LockResetIcon,
+  CustomEditIcon as EditIcon,
+  CustomSearchIcon as SearchIcon,
+  CustomMailIcon as MailIcon,
+  CustomPhoneIcon as PhoneIcon,
+  CustomCloseIcon as CloseIcon,
+  CustomWarningIcon as WarningIcon
+} from '../../components/icons';
 import '../../components/icons/customIcons.css';
 
 

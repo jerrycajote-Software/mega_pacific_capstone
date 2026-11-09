@@ -2308,6 +2308,22 @@
   animation: mpiEmptyRevSparklePing 2.5s ease-in-out infinite 0.5s;
 }
 
+/* Custom Loader Spinning Animation */
+@keyframes mpiRotateSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mpi-rotate-spin {
+  animation: mpiRotateSpin 0.9s linear infinite;
+  transform-origin: center;
+}
+
+
 
 
 

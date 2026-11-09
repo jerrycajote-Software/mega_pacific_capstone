@@ -10,6 +10,14 @@ import {
   Radio,
   Chip
 } from '@mui/material';
+import {
+  CustomCreditCardIcon,
+  CustomAccountBalanceIcon,
+  CustomCashIcon,
+  CustomInfoIcon,
+  CustomLocalShippingIcon,
+  CustomStorefrontIcon
+} from './icons';
 
 const MastercardLogo = ({ active = true }) => (
   <Box
@@ -206,7 +214,7 @@ const PaymentMethodWidget = ({
                 size="small"
                 sx={{ p: 0, '&.Mui-checked': { color: '#1e3a8a' } }}
               />
-              <i className="fi fi-rr-credit-card" style={{ fontSize: '18px', color: '#1e3a8a' }}></i>
+              <CustomCreditCardIcon size={18} color="#1e3a8a" />
               <Typography variant="body2" fontWeight={700} color="#0f172a">
                 Bank Card (Debit / Credit)
               </Typography>
@@ -421,7 +429,7 @@ const PaymentMethodWidget = ({
               flexShrink: 0
             }}
           >
-            <i className="fi fi-rr-info" style={{ fontSize: '16px' }}></i>
+            <CustomInfoIcon size={16} color="#ffffff" />
           </Box>
           <Box>
             <Typography variant="subtitle2" fontWeight={800} color="#0f172a" sx={{ fontSize: '15px' }}>
@@ -493,7 +501,11 @@ const PaymentMethodWidget = ({
           </Box>
 
           <Box sx={{ pt: 1, borderTop: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <i className={isPickup ? 'fi fi-rr-box-alt' : 'fi fi-rr-truck-side'} style={{ fontSize: '15px', color: '#16a34a' }}></i>
+            {isPickup ? (
+              <CustomStorefrontIcon size={16} color="#16a34a" />
+            ) : (
+              <CustomLocalShippingIcon size={16} color="#16a34a" />
+            )}
             <Typography variant="caption" fontWeight={700} color="#15803d">
               {isPickup
                 ? 'Plant Pick-up selected: No delivery logistics fee applied (FREE).'
@@ -504,7 +516,7 @@ const PaymentMethodWidget = ({
       </Paper>
 
       <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <i className="fi fi-rr-credit-card" style={{ fontSize: '18px', color: '#1e3a8a' }}></i>
+        <CustomCreditCardIcon size={18} color="#1e3a8a" />
         Select Payment Plan
       </Typography>
 
@@ -542,7 +554,7 @@ const PaymentMethodWidget = ({
               />
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <i className="fi fi-rr-money-bill-wave" style={{ fontSize: '18px', color: '#16a34a' }}></i>
+                  <CustomCashIcon size={18} color="#16a34a" />
                   <Typography variant="body1" fontWeight={800} color="#0f172a">
                     Cash on Delivery (50% Downpayment)
                   </Typography>
@@ -629,7 +641,7 @@ const PaymentMethodWidget = ({
               />
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <i className="fi fi-rr-bank" style={{ fontSize: '18px', color: '#1e3a8a' }}></i>
+                  <CustomAccountBalanceIcon size={18} color="#1e3a8a" />
                   <Typography variant="body1" fontWeight={800} color="#0f172a">
                     Bank transfer - Full Payment
                   </Typography>

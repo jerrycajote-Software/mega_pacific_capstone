@@ -24,9 +24,12 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CloseIcon from '@mui/icons-material/Close';
-import DownloadIcon from '@mui/icons-material/Download';
+import {
+  CustomChevronRightIcon as ChevronRightIcon,
+  CustomCloseIcon as CloseIcon,
+  CustomDownloadIcon as DownloadIcon,
+  CustomSearchIcon as SearchIcon
+} from '../../components/icons';
 import { generateExpenseVoucherPDF } from '../../utils/documentGenerator';
 
 const Page = () => {
@@ -156,18 +159,18 @@ const Page = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <i className="fi fi-rr-search" style={{ color: '#94a3b8' }}></i>
+                  <SearchIcon size={16} color="#94a3b8" />
                 </InputAdornment>
               ),
-              sx: { borderRadius: 2, minWidth: 300, bgcolor: 'grey.50' }
+              sx: { borderRadius: 2, minWidth: 300, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'background.paper' : '#f8fafc' }
             }}
           />
         </Box>
 
         <TableContainer>
           <Table>
-            <TableHead sx={{ bgcolor: 'grey.50' }}>
-              <TableRow>
+            <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>
+              <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', color: 'text.secondary' } }}>
                 <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
@@ -321,7 +324,7 @@ const Page = () => {
               <Stack spacing={2.5}>
                 {/* 2x2 Metadata Grid */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5 }}>
-                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Category
                     </Typography>
@@ -330,7 +333,7 @@ const Page = () => {
                     </Typography>
                   </Paper>
 
-                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Date Logged
                     </Typography>
@@ -339,7 +342,7 @@ const Page = () => {
                     </Typography>
                   </Paper>
 
-                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Amount Disbursed
                     </Typography>
@@ -348,7 +351,7 @@ const Page = () => {
                     </Typography>
                   </Paper>
 
-                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                  <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Fiscal Clearance
                     </Typography>
@@ -363,7 +366,7 @@ const Page = () => {
                   <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', mb: 1 }}>
                     Description and Particulars
                   </Typography>
-                  <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                  <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="body2" color="text.primary" sx={{ lineHeight: 1.6 }}>
                       {selectedExpense.description}
                     </Typography>

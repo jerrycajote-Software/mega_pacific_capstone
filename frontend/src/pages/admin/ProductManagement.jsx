@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import AddIcon from '@mui/icons-material/Add';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import CloseIcon from '@mui/icons-material/Close';
-import ImageIcon from '@mui/icons-material/Image';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import LayersIcon from '@mui/icons-material/Layers';
-import NotesIcon from '@mui/icons-material/Notes';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import SaveIcon from '@mui/icons-material/Save';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
+import {
+  CustomAddIcon as AddIcon,
+  CustomInventory2Icon as Inventory2Icon,
+  CustomCloseIcon as CloseIcon,
+  CustomImageIcon as ImageIcon,
+  CustomLocalOfferIcon as LocalOfferIcon,
+  CustomLayersIcon as LayersIcon,
+  CustomNotesIcon as NotesIcon,
+  CustomCloudUploadIcon as CloudUploadIcon,
+  CustomKeyboardArrowDownIcon as KeyboardArrowDownIcon,
+  CustomWarningAmberIcon as WarningAmberIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomSwapHorizIcon as SwapHorizIcon,
+  CustomSaveIcon as SaveIcon,
+  CustomAddCircleIcon as AddCircleIcon,
+  CustomTrashIcon as Trash2,
+  CustomLoaderIcon as Loader2,
+  CustomAddCircleIcon as PlusCircle
+} from '../../components/icons';
 import {
   Box,
   Typography,
@@ -25,7 +30,6 @@ import AddProductTypeModal from './AddProductTypeModal';
 import InventoryDataGrid from '../../components/InventoryDataGrid';
 import StockManagementTab from '../../components/StockManagementTab';
 import { useAuth } from '../../context/AuthContext';
-import { Trash2, Loader2, PlusCircle } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { compressChatImage } from '../../utils/chatImageHelper';

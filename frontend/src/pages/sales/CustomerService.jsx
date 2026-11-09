@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Avatar, CircularProgress, Dialog, IconButton } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
-import ClearIcon from '@mui/icons-material/Clear';
-import ChatBubbleOutlinedIcon from '@mui/icons-material/ChatBubbleOutlined';
-import MailOutlinedIcon from '@mui/icons-material/MailOutlined';
-import PhoneInTalkOutlinedIcon from '@mui/icons-material/PhoneInTalkOutlined';
-import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import CloseIcon from '@mui/icons-material/Close';
+import {
+  CustomSearchIcon as SearchIcon,
+  CustomSupportAgentIcon as SupportAgentIcon,
+  CustomClearIcon as ClearIcon,
+  CustomChatBubbleOutlinedIcon as ChatBubbleOutlinedIcon,
+  CustomMailOutlinedIcon as MailOutlinedIcon,
+  CustomPhoneInTalkOutlinedIcon as PhoneInTalkOutlinedIcon,
+  CustomPlaceOutlinedIcon as PlaceOutlinedIcon,
+  CustomAccessTimeIcon as AccessTimeIcon,
+  CustomFiberManualRecordIcon as FiberManualRecordIcon,
+  CustomImageOutlinedIcon as ImageOutlinedIcon,
+  CustomCloseIcon as CloseIcon
+} from '../../components/icons';
 import { useAuth } from '../../context/AuthContext';
 import { io } from 'socket.io-client';
 import { isMobileBrowser } from '../../utils/deviceDetect';

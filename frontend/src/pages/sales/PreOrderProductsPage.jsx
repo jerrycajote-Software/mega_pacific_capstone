@@ -13,27 +13,28 @@ import {
   Snackbar,
   IconButton,
 } from '@mui/material';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from '@mui/icons-material/Search';
-import CloseIcon from '@mui/icons-material/Close';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import LayersIcon from '@mui/icons-material/Layers';
-import StraightenIcon from '@mui/icons-material/Straighten';
-import PaletteIcon from '@mui/icons-material/Palette';
-import WarehouseIcon from '@mui/icons-material/Warehouse';
-import SaveIcon from '@mui/icons-material/Save';
-import VideocamIcon from '@mui/icons-material/Videocam';
+import {
+  CustomPreOrderIcon,
+  CustomAddCircleIcon as AddCircleIcon,
+  CustomEditIcon as EditIcon,
+  CustomDeleteIcon as DeleteIcon,
+  CustomSearchIcon as SearchIcon,
+  CustomCloseIcon as CloseIcon,
+  CustomCloudUploadIcon as CloudUploadIcon,
+  CustomLayersIcon as LayersIcon,
+  CustomStraightenIcon as StraightenIcon,
+  CustomPaletteIcon as PaletteIcon,
+  CustomWarehouseIcon as WarehouseIcon,
+  CustomSaveIcon as SaveIcon,
+  CustomVideocamIcon as VideocamIcon,
+  CustomErrorOutlineIcon as ErrorOutlineIcon,
+  CustomAddCircleOutlineIcon as AddCircleOutlineIcon,
+  CustomExpandMoreIcon as ExpandMoreIcon
+} from '../../components/icons';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { compressChatImage } from '../../utils/chatImageHelper';
 import { uploadBatchImagesToStorage, uploadVideoToStorage } from '../../utils/uploadService';
-
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { CustomPreOrderIcon } from '../../components/icons';
 
 import { ROOFING_COLORS, STANDARD_THICKNESSES, DECKING_THICKNESSES } from '../../constants/roofingSpecs';
 import { isCoilInStock, getAvailableColorsForThickness, hasCoilStockForThickness } from '../../utils/coilAvailability';

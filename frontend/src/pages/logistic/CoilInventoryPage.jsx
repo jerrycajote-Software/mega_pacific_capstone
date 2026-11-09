@@ -9,14 +9,16 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import HistoryIcon from '@mui/icons-material/History';
-import SearchIcon from '@mui/icons-material/Search';
-import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import ViewListIcon from '@mui/icons-material/ViewList';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PaletteIcon from '@mui/icons-material/Palette';
+import {
+  CustomRemoveCircleIcon as RemoveCircleIcon,
+  CustomAddCircleIcon as AddCircleIcon,
+  CustomHistoryIcon as HistoryIcon,
+  CustomSearchIcon as SearchIcon,
+  CustomViewModuleIcon as ViewModuleIcon,
+  CustomViewListIcon as ViewListIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomPaletteIcon as PaletteIcon
+} from '../../components/icons';
 
 import {
   STANDARD_THICKNESSES,

@@ -102,6 +102,30 @@ const buildTheme = (mode, isCustomerRoute) =>
       MuiAppBar: {
         styleOverrides: { root: { backgroundImage: 'none' } },
       },
+      MuiTableHead: {
+        styleOverrides: {
+          root: {
+            backgroundColor: mode === 'dark' ? '#141d2e' : '#f8fafc',
+            '& .MuiTableCell-head': {
+              backgroundColor: mode === 'dark' ? '#141d2e' : '#f8fafc',
+              color: mode === 'dark' ? '#94a3b8' : '#546e7a',
+              borderBottom: `1px solid ${mode === 'dark' ? '#334155' : '#e0e7ef'}`,
+            },
+          },
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            borderBottom: `1px solid ${mode === 'dark' ? '#334155' : '#e0e7ef'}`,
+          },
+          head: {
+            fontWeight: 700,
+            color: mode === 'dark' ? '#94a3b8' : '#546e7a',
+            backgroundColor: mode === 'dark' ? '#141d2e' : '#f8fafc',
+          },
+        },
+      },
     },
   });
 

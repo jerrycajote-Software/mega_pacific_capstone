@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import LogoutIcon from '@mui/icons-material/Logout';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
 import {
   CustomDashboardIcon,
   CustomUsersIcon,
   CustomStaffManagementIcon,
   CustomSettingsIcon,
-  CustomNavToggleIcon
+  CustomNavToggleIcon,
+  CustomLogoutIcon as LogoutIcon,
+  CustomLightModeIcon as LightModeIcon,
+  CustomDarkModeIcon as DarkModeIcon
 } from '../components/icons';
 import { Tooltip } from '@mui/material';
 import { useAuth } from '../context/AuthContext';

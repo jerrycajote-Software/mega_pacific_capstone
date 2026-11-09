@@ -9,12 +9,14 @@ import {
   Alert,
   IconButton,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
-import HistoryIcon from '@mui/icons-material/History';
-import SaveIcon from '@mui/icons-material/Save';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import {
+  CustomSearchIcon as SearchIcon,
+  CustomAddCircleOutlinedIcon as AddCircleOutlinedIcon,
+  CustomHistoryIcon as HistoryIcon,
+  CustomSaveIcon as SaveIcon,
+  CustomInventory2Icon as Inventory2Icon,
+  CustomCheckCircleOutlinedIcon as CheckCircleOutlinedIcon
+} from './icons';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 

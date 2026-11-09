@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import SearchIcon from '@mui/icons-material/Search';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CloseIcon from '@mui/icons-material/Close';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import {
+  CustomSearchIcon as SearchIcon,
+  CustomCheckCircleIcon as CheckCircleIcon,
+  CustomCloseIcon as CloseIcon,
+  CustomChevronRightIcon as ChevronRightIcon
+} from '../../components/icons';
 import { generateReceiptPDF } from '../../utils/documentGenerator';
 import CustomMessageDialog from '../../components/CustomMessageDialog';
 import { useCustomDialog } from '../../hooks/useCustomDialog';

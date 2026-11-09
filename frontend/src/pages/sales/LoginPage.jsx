@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import MailIcon from '@mui/icons-material/Mail';
-import LockIcon from '@mui/icons-material/Lock';
 import CircularProgress from '@mui/material/CircularProgress';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
+import {
+  CustomMailIcon as MailIcon,
+  CustomLockIcon as LockIcon,
+  CustomVisibilityIcon as VisibilityIcon,
+  CustomVisibilityOffIcon as VisibilityOffIcon,
+  CustomErrorOutlineIcon as ErrorOutlineIcon
+} from '../../components/icons';
 import { useTranslation } from 'react-i18next';
 
 const css = `
