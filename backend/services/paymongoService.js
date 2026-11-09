@@ -8,6 +8,9 @@ const getPaymongoAuthHeader = () => {
   if (!secretKey) {
     throw new Error("PayMongo secret key is not configured on the server. Please add PAYMONGO_SECRET_KEY to backend .env.");
   }
+  if (secretKey.startsWith("pk_")) {
+    throw new Error("PAYMONGO_SECRET_KEY is incorrectly configured with a public key (starts with 'pk_'). Please update PAYMONGO_SECRET_KEY to your secret key (starts with 'sk_test_' or 'sk_live_') from your PayMongo dashboard.");
+  }
   const encoded = Buffer.from(`${secretKey}:`).toString("base64");
   return `Basic ${encoded}`;
 };
@@ -15,7 +18,7 @@ const getPaymongoAuthHeader = () => {
 const getPaymongoEnvironmentInfo = () => {
   const secretKey = (process.env.PAYMONGO_SECRET_KEY || "").trim();
   const publicKey = (process.env.PAYMONGO_PUBLIC_KEY || "").trim();
-  const isConfigured = Boolean(secretKey);
+  const isConfigured = Boolean(secretKey && !secretKey.startsWith("pk_"));
   const mode = secretKey.startsWith("sk_live_") ? "live" : secretKey.startsWith("sk_test_") ? "test" : "unconfigured";
 
   return {
