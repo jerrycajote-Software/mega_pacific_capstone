@@ -24,14 +24,12 @@ import { openCustomerSupport } from '../utils/supportEvents';
 import {
   CustomCustomerHomeIcon,
   CustomCustomerCatalogIcon,
-  CustomCustomerProfileIcon,
   CustomCustomerSupportDeskIcon,
 } from './icons';
 
 const NAV_LINKS = [
   { to: '/dashboard', label: 'Home', icon: CustomCustomerHomeIcon },
   { to: '/products', label: 'Products', icon: CustomCustomerCatalogIcon },
-  { to: '/profile', label: 'Profile', icon: CustomCustomerProfileIcon },
 ];
 
 const CustomerHeader = () => {
@@ -302,7 +300,26 @@ const CustomerHeader = () => {
           </IconButton>
         </Box>
 
-        <Box sx={{ p: 1.5, mb: 2, borderRadius: 2.5, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          component={Link}
+          to="/profile"
+          onClick={() => setMobileDrawerOpen(false)}
+          sx={{
+            p: 1.5,
+            mb: 2,
+            borderRadius: 2.5,
+            bgcolor: 'action.hover',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            textDecoration: 'none',
+            color: 'inherit',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.12)' : '#f0fdf4',
+            },
+          }}
+        >
           <Avatar
             src={user?.avatarUrl || '/default-profile.png'}
             alt={user?.name || 'Customer'}

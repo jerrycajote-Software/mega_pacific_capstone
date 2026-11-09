@@ -73,8 +73,8 @@ const OfficialReceiptModal = ({
           backgroundColor: 'var(--bg-secondary)',
           color: 'var(--text-primary)',
           width: '100%',
-          maxWidth: '820px',
-          maxHeight: '92vh',
+          maxWidth: '840px',
+          maxHeight: '90vh',
           borderRadius: '16px',
           border: '1px solid var(--border)',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
@@ -85,12 +85,13 @@ const OfficialReceiptModal = ({
       >
         <div
           style={{
-            padding: '1.25rem 1.75rem',
+            padding: '1.1rem 1.5rem',
             borderBottom: '1px solid var(--border)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             backgroundColor: 'var(--bg-primary)',
+            flexShrink: 0,
           }}
         >
           <div>
@@ -136,17 +137,29 @@ const OfficialReceiptModal = ({
           </button>
         </div>
 
-        <div style={{ padding: '1.5rem 1.75rem', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div
+          className="official-receipt-modal-body"
+          style={{
+            padding: '1.25rem 1.5rem',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            flex: '1 1 auto',
+            minHeight: 0,
+            maxHeight: 'calc(90vh - 145px)',
+            overscrollBehavior: 'contain',
+          }}
+        >
           {isSalesApproved && (
             <div
               style={{
                 backgroundColor: 'rgba(234, 179, 8, 0.08)',
                 border: '1px solid rgba(234, 179, 8, 0.35)',
                 borderRadius: '10px',
-                padding: '0.9rem 1.1rem',
+                padding: '0.85rem 1.1rem',
                 fontSize: '0.84rem',
                 color: 'var(--text-primary)',
                 lineHeight: 1.5,
+                marginBottom: '1rem',
               }}
             >
               <strong style={{ color: '#d97706' }}>Receipt Verification Notice:</strong> Please examine the official receipt and billing specifications below. Once confirmed, payment is recorded as verified and the order is forwarded to Logistics for fabrication and fulfillment.
@@ -158,19 +171,20 @@ const OfficialReceiptModal = ({
               backgroundColor: 'var(--bg-primary)',
               borderRadius: '12px',
               border: '1px solid var(--border)',
-              overflow: 'hidden',
             }}
           >
             <div
               style={{
                 backgroundColor: '#1b4332',
                 color: '#ffffff',
-                padding: '1.25rem 1.5rem',
+                padding: '1.1rem 1.4rem',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: '1rem',
+                borderTopLeftRadius: '11px',
+                borderTopRightRadius: '11px',
               }}
             >
               <div>
@@ -261,7 +275,17 @@ const OfficialReceiptModal = ({
               </div>
             </div>
 
-            <div style={{ padding: '1.25rem 1.5rem', backgroundColor: 'rgba(0, 0, 0, 0.02)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                borderTop: '1px solid var(--border)',
+                borderBottomLeftRadius: '11px',
+                borderBottomRightRadius: '11px',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
               <div style={{ width: '100%', maxWidth: '340px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.84rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Items Subtotal:</span>
@@ -297,7 +321,7 @@ const OfficialReceiptModal = ({
 
         <div
           style={{
-            padding: '1.1rem 1.75rem',
+            padding: '1rem 1.5rem',
             borderTop: '1px solid var(--border)',
             backgroundColor: 'var(--bg-primary)',
             display: 'flex',
@@ -305,6 +329,7 @@ const OfficialReceiptModal = ({
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: '12px',
+            flexShrink: 0,
           }}
         >
           <button

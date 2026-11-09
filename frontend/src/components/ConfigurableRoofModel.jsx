@@ -1,25 +1,60 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGLTF } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import {
+  DEFAULT_LAYER_VISIBILITY,
+  getLayerIdForMesh,
+  getExplodeOffsetForMesh,
+} from '../constants/roofStructureSpecs';
+
+const BASE_MESH_THICKNESS = 0.0035;
+
+const parseThicknessMm = (thicknessStr) => {
+  if (!thicknessStr) return 0.35;
+  const num = parseFloat(String(thicknessStr).replace(/[^0-9.]/g, ''));
+  return !isNaN(num) && num > 0 ? num : 0.35;
+};
 
 /**
  * Universal Configurable Roof Model Component
- * Supports both custom modular GLB exports (ex. Starter_House_6x6.glb)
+ * Supports both custom modular GLB exports (ex. Pico_Rib_1220_House.glb, Starter_House_6x6.glb)
  * and legacy models (ex. Hermosa_Tile_build.glb).
  *
- * Accurately displays installed sheet quantity (partial coverage),
- * allowing exposed rafters/purlins to show for uncovered areas.
+ * Powers interactive 3D Internal Roof Structure Visualization:
+ * - Individual structural layer visibility & isolation
+ * - Real-time vertical exploded assembly interpolation
+ * - X-Ray translucent roof & underlayment mode
+ * - Direct 3D raycast click & hover part inspection
+ * - Real-time steel sheet gauge thickness scaling
  */
 const ConfigurableRoofModel = ({
   modelPath = '/models/house/Starter_House_6x6.glb',
   sheetQty = 0,
   roofColorHex = '#3F4349',
+  thickness = '0.35mm',
   showSubstructure = true,
   showSheets = true,
+  layerVisibility = DEFAULT_LAYER_VISIBILITY,
+  explodeFactor = 0,
+  xraySheets = false,
+  selectedMeshName = null,
+  onSelectMesh,
   ...props
 }) => {
   const { scene } = useGLTF(modelPath);
   const modelRef = useRef();
+  const [hoveredMeshName, setHoveredMeshName] = useState(null);
+
+  // Cache initial resting Y position for each mesh for smooth exploded view animation
+  useEffect(() => {
+    if (!scene) return;
+    scene.traverse((child) => {
+      if (child.isMesh && child.userData.restingY === undefined) {
+        child.userData.restingY = child.position.y;
+      }
+    });
+  }, [scene]);
 
   // Find and sort all sheet meshes
   const sheetMeshes = useMemo(() => {
@@ -35,66 +70,207 @@ const ConfigurableRoofModel = ({
     return list;
   }, [scene]);
 
-  // Handle visibility based on sheet quantity & substructure flags
+  // Handle visibility based on sheet quantity, substructure flags, and granular 7-layer visibility
   useEffect(() => {
     if (!scene) return;
 
     scene.traverse((child) => {
       if (!child.isMesh) return;
 
-      const isSheet = child.name.startsWith('RoofSheet_') || child.name.startsWith('Hermosa_Tile_');
-      const isSubstructure =
-        child.name.startsWith('Truss_') ||
-        child.name.startsWith('Purlin_') ||
-        child.name.startsWith('Underlayment_') ||
-        child.name.startsWith('Roof_Truss_') ||
-        child.name.startsWith('Battens_') ||
-        child.name.startsWith('Top_Plate');
+      const layerId = getLayerIdForMesh(child.name);
+      const isLayerEnabled = layerVisibility?.[layerId] !== false;
 
-      if (isSheet) {
-        if (!showSheets) {
+      if (layerId === 'roof_sheets') {
+        if (!showSheets || !isLayerEnabled) {
           child.visible = false;
         } else {
           const sheetIdx = sheetMeshes.indexOf(child);
           child.visible = sheetIdx >= 0 && sheetIdx < sheetQty;
         }
-      } else if (isSubstructure) {
-        child.visible = showSubstructure;
+      } else if (
+        layerId === 'underlayment' ||
+        layerId === 'purlins' ||
+        layerId === 'trusses' ||
+        layerId === 'top_plate'
+      ) {
+        child.visible = Boolean(showSubstructure && isLayerEnabled);
       } else {
-        // Base house walls, foundation, doors, windows, trims remain visible
-        child.visible = true;
+        child.visible = Boolean(isLayerEnabled);
       }
     });
-  }, [scene, sheetMeshes, sheetQty, showSubstructure, showSheets]);
+  }, [scene, sheetMeshes, sheetQty, showSubstructure, showSheets, layerVisibility]);
 
-  // Apply real-time roof color to all sheet meshes
+  // Apply real-time roof color, X-Ray translucency, and hover/selection highlights
   useEffect(() => {
-    if (!scene || !roofColorHex) return;
+    if (!scene) return;
 
-    const color = new THREE.Color(roofColorHex);
+    const roofColor = new THREE.Color(roofColorHex || '#3F4349');
+    const selectedEmissive = new THREE.Color('#22c55e');
+    const hoveredEmissive = new THREE.Color('#38bdf8');
+    const zeroEmissive = new THREE.Color('#000000');
 
     scene.traverse((child) => {
       if (!child.isMesh) return;
-      const isSheet = child.name.startsWith('RoofSheet_') || child.name.startsWith('Hermosa_Tile_');
-      if (!isSheet) return;
 
       if (!child.userData.originalMaterial) {
         child.userData.originalMaterial = child.material;
       }
 
       const cloned = child.userData.originalMaterial.clone();
-      cloned.color = color;
-      if (cloned.roughness !== undefined) cloned.roughness = 0.35;
-      if (cloned.metalness !== undefined) cloned.metalness = 0.7;
+      const layerId = getLayerIdForMesh(child.name);
+
+      if (layerId === 'roof_sheets') {
+        cloned.color = roofColor;
+        if (cloned.roughness !== undefined) cloned.roughness = 0.35;
+        if (cloned.metalness !== undefined) cloned.metalness = 0.7;
+      }
+
+      if (xraySheets && (layerId === 'roof_sheets' || layerId === 'underlayment')) {
+        cloned.transparent = true;
+        cloned.opacity = layerId === 'roof_sheets' ? 0.24 : 0.18;
+        cloned.depthWrite = false;
+      } else {
+        cloned.transparent = Boolean(child.userData.originalMaterial.transparent);
+        cloned.opacity = child.userData.originalMaterial.opacity ?? 1.0;
+        cloned.depthWrite = true;
+      }
+
+      if (cloned.emissive !== undefined) {
+        if (selectedMeshName && child.name === selectedMeshName) {
+          cloned.emissive = selectedEmissive;
+          cloned.emissiveIntensity = 0.42;
+        } else if (hoveredMeshName && child.name === hoveredMeshName) {
+          cloned.emissive = hoveredEmissive;
+          cloned.emissiveIntensity = 0.25;
+        } else {
+          cloned.emissive = zeroEmissive;
+          cloned.emissiveIntensity = 0.0;
+        }
+      }
+
       child.material = cloned;
     });
-  }, [scene, roofColorHex]);
+  }, [scene, roofColorHex, xraySheets, selectedMeshName, hoveredMeshName]);
 
-  return <primitive ref={modelRef} object={scene} {...props} />;
+  // Smoothly interpolate vertical exploded assembly offsets in 3D space
+  useFrame((_, delta) => {
+    if (!scene) return;
+    const clampedFactor = Math.max(0, Math.min(1, Number(explodeFactor) || 0));
+    const lerpSpeed = Math.min(1, delta * 10);
+
+    scene.traverse((child) => {
+      if (!child.isMesh || child.userData.restingY === undefined) return;
+      const offset = getExplodeOffsetForMesh(child.name) * clampedFactor;
+      const targetY = child.userData.restingY + offset;
+      if (Math.abs(child.position.y - targetY) > 0.0005) {
+        child.position.y = THREE.MathUtils.lerp(child.position.y, targetY, lerpSpeed);
+      } else {
+        child.position.y = targetY;
+      }
+    });
+  });
+
+  // Apply real-time steel sheet thickness scaling to the underside shell vertices
+  // while keeping the top 28mm rib profile crest locked at its exact height.
+  useEffect(() => {
+    if (!scene) return;
+
+    const targetThicknessMm = parseThicknessMm(thickness);
+    const thicknessRatio = targetThicknessMm / 0.35;
+    const targetShellThickness = BASE_MESH_THICKNESS * thicknessRatio;
+    const deltaY = BASE_MESH_THICKNESS - targetShellThickness;
+
+    scene.traverse((child) => {
+      if (!child.isMesh || !child.name.startsWith('RoofSheet_')) return;
+      const geom = child.geometry;
+      if (!geom || !geom.attributes?.position) return;
+
+      const posAttr = geom.attributes.position;
+      const count = posAttr.count;
+
+      if (!child.userData.basePositions) {
+        const baseArr = new Float32Array(posAttr.array.length);
+        baseArr.set(posAttr.array);
+        child.userData.basePositions = baseArr;
+
+        // Identify underside shell vertices by grouping vertices sharing the same (x, z)
+        // and selecting the lower y vertex in each top/bottom pair.
+        const maxYByXZ = new Map();
+        for (let i = 0; i < count; i++) {
+          const xKey = Math.round(baseArr[i * 3] * 10000);
+          const zKey = Math.round(baseArr[i * 3 + 2] * 10000);
+          const key = `${xKey}_${zKey}`;
+          const yVal = baseArr[i * 3 + 1];
+          const prevMax = maxYByXZ.get(key);
+          if (prevMax === undefined || yVal > prevMax) {
+            maxYByXZ.set(key, yVal);
+          }
+        }
+
+        const isBottomVertex = new Uint8Array(count);
+        for (let i = 0; i < count; i++) {
+          const xKey = Math.round(baseArr[i * 3] * 10000);
+          const zKey = Math.round(baseArr[i * 3 + 2] * 10000);
+          const key = `${xKey}_${zKey}`;
+          const topY = maxYByXZ.get(key);
+          const yVal = baseArr[i * 3 + 1];
+          if (topY !== undefined && topY - yVal > 0.001) {
+            isBottomVertex[i] = 1;
+          }
+        }
+        child.userData.isBottomVertex = isBottomVertex;
+      }
+
+      const baseArr = child.userData.basePositions;
+      const isBottomVertex = child.userData.isBottomVertex;
+      const liveArr = posAttr.array;
+
+      for (let i = 0; i < count; i++) {
+        const yIdx = i * 3 + 1;
+        if (isBottomVertex[i]) {
+          liveArr[yIdx] = baseArr[yIdx] + deltaY;
+        } else {
+          liveArr[yIdx] = baseArr[yIdx];
+        }
+      }
+
+      posAttr.needsUpdate = true;
+      geom.computeBoundingBox();
+      geom.computeBoundingSphere();
+    });
+  }, [scene, thickness]);
+
+  const handlePointerClickMesh = (e) => {
+    e.stopPropagation();
+    if (e.object?.isMesh && e.object.visible && onSelectMesh) {
+      onSelectMesh(e.object.name);
+    }
+  };
+
+  const handlePointerOverMesh = (e) => {
+    e.stopPropagation();
+    if (e.object?.isMesh && e.object.visible) {
+      setHoveredMeshName(e.object.name);
+      document.body.style.cursor = 'pointer';
+    }
+  };
+
+  const handlePointerOutMesh = (e) => {
+    e.stopPropagation();
+    setHoveredMeshName(null);
+    document.body.style.cursor = 'auto';
+  };
+
+  return (
+    <primitive
+      ref={modelRef}
+      object={scene}
+      onClick={handlePointerClickMesh}
+      onPointerOver={handlePointerOverMesh}
+      onPointerOut={handlePointerOutMesh}
+      {...props}
+    />
+  );
 };
-
-useGLTF.preload('/models/house/Pico_Rib_1220_House.glb');
-useGLTF.preload('/models/house/Starter_House_6x6.glb');
-useGLTF.preload('/models/model/Hermosa_Tile_build.glb');
 
 export default ConfigurableRoofModel;
