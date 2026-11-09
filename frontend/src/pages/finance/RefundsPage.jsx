@@ -126,11 +126,16 @@ const RefundsPage = () => {
 
   const handleOpenProcessModal = (refund) => {
     setSelectedRefund(refund);
+    const paymongoMatch = (refund.paymentMethod || '').match(/(pay_[A-Za-z0-9]+|pi_[A-Za-z0-9]+)/);
     setProcessForm({
       amount: refund.amount,
       returnMethod: refund.paymentMethod,
-      transactionReference: `REF-${Date.now().toString(36).toUpperCase()}`,
-      notes: `Returned via ${refund.paymentMethod} by Finance team`
+      transactionReference: paymongoMatch
+        ? `AUTO-PAYMONGO (${paymongoMatch[1]})`
+        : `REF-${Date.now().toString(36).toUpperCase()}`,
+      notes: paymongoMatch
+        ? `Automated GCash reversal via PayMongo Refund API (${paymongoMatch[1]})`
+        : `Returned via ${refund.paymentMethod} by Finance team`
     });
     setProcessModalOpen(true);
   };

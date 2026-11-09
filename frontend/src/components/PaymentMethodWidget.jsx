@@ -119,6 +119,7 @@ const PaymentMethodWidget = ({
   subtotal = 0,
   shippingFee = 0,
   fulfillmentType = 'Delivery',
+  gcashQrEnabled = false,
   onChange,
   errors = {}
 }) => {
@@ -361,7 +362,7 @@ const PaymentMethodWidget = ({
               </Typography>
             </Box>
             <Chip
-              label="Instant Link"
+              label={gcashQrEnabled ? 'Automated QR Ph' : 'Instant Link'}
               size="small"
               sx={{ bgcolor: '#dbeafe', color: '#1d4ed8', fontWeight: 700, fontSize: '10.5px', height: 20 }}
             />
@@ -369,31 +370,55 @@ const PaymentMethodWidget = ({
 
           <Collapse in={isGcashChannel} timeout={200}>
             <Box sx={{ pt: 1 }} onClick={(e) => e.stopPropagation()}>
-              <TextField
-                fullWidth
-                name="gcashNumber"
-                value={gcashNumber}
-                onChange={handleGcashInput}
-                placeholder="GCash Registered Mobile Number (ex. 09171234567)"
-                error={Boolean(errors.gcashNumber)}
-                helperText={errors.gcashNumber || 'We will link your GCash payment to your official order receipt'}
-                inputProps={{ maxLength: 11 }}
-                InputProps={{
-                  sx: {
-                    bgcolor: '#ffffff',
-                    borderRadius: 2.5,
-                    fontSize: '14.5px',
-                    '& fieldset': {
-                      borderColor: errors.gcashNumber ? '#ef4444' : '#e2e8f0',
-                      borderWidth: '1.5px'
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#005ce6',
-                      borderWidth: '1.5px'
-                    }
+              <Stack spacing={1.5}>
+                {gcashQrEnabled && (
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 2.5,
+                      bgcolor: '#eff6ff',
+                      border: '1px solid #bfdbfe'
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight={800} color="#1e40af" display="block">
+                      Automated PayMongo GCash QR Checkout Active
+                    </Typography>
+                    <Typography variant="caption" color="#334155" sx={{ lineHeight: 1.45, display: 'block', mt: 0.25 }}>
+                      When you confirm your order below, a secure GCash QR code will appear on screen for you to scan and pay ₱{amountToPayNow.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} automatically.
+                    </Typography>
+                  </Box>
+                )}
+                <TextField
+                  fullWidth
+                  name="gcashNumber"
+                  value={gcashNumber}
+                  onChange={handleGcashInput}
+                  placeholder="GCash Registered Mobile Number (ex. 09171234567)"
+                  error={Boolean(errors.gcashNumber)}
+                  helperText={
+                    errors.gcashNumber ||
+                    (gcashQrEnabled
+                      ? 'Your GCash mobile number will be attached to your PayMongo QR receipt'
+                      : 'We will link your GCash payment to your official order receipt')
                   }
-                }}
-              />
+                  inputProps={{ maxLength: 11 }}
+                  InputProps={{
+                    sx: {
+                      bgcolor: '#ffffff',
+                      borderRadius: 2.5,
+                      fontSize: '14.5px',
+                      '& fieldset': {
+                        borderColor: errors.gcashNumber ? '#ef4444' : '#e2e8f0',
+                        borderWidth: '1.5px'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#005ce6',
+                        borderWidth: '1.5px'
+                      }
+                    }
+                  }}
+                />
+              </Stack>
             </Box>
           </Collapse>
         </Paper>

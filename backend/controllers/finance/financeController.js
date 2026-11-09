@@ -282,7 +282,12 @@ const createExpense = async (req, res) => {
   }
 };
 
-const { getDeliveryConfig, PLANT_ORIGIN, VEHICLE_SPECS } = require('../../services/deliveryFeeService');
+const {
+  getDeliveryConfig,
+  PLANT_ORIGIN,
+  DEFAULT_VEHICLE_SPECS,
+  sanitizeVehicleSpecs
+} = require('../../services/deliveryFeeService');
 
 const getDeliverySettings = async (req, res) => {
   try {
@@ -292,18 +297,29 @@ const getDeliverySettings = async (req, res) => {
       data: {
         ...config,
         plantOriginDetails: PLANT_ORIGIN,
-        vehicleSpecs: VEHICLE_SPECS
+        defaultVehicleSpecs: DEFAULT_VEHICLE_SPECS
       }
     });
   } catch (error) {
     console.error('Get Delivery Settings Error:', error);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load delivery fee and fleet rate settings.'
+    });
   }
 };
 
 const updateDeliverySettings = async (req, res) => {
   try {
-    const { dieselPrice, adminCostPct, includeDepreciation, plantOrigin } = req.body;
+    const {
+      dieselPrice,
+      adminCostPct,
+      includeDepreciation,
+      plantOrigin,
+      useDefaultFleetRates,
+      vehicleSpecs,
+      customVehicleSpecs
+    } = req.body;
 
     const updates = [];
     if (dieselPrice !== undefined) {
@@ -334,6 +350,28 @@ const updateDeliverySettings = async (req, res) => {
         create: { key: 'delivery_plant_origin', value: String(plantOrigin), description: 'Manufacturing Plant Origin for delivery distance calculation' }
       }));
     }
+    if (useDefaultFleetRates !== undefined) {
+      updates.push(prisma.systemSetting.upsert({
+        where: { key: 'delivery_use_default_fleet_rates' },
+        update: { value: String(Boolean(useDefaultFleetRates)), description: 'Use official default guideline fleet rates for delivery calculations' },
+        create: { key: 'delivery_use_default_fleet_rates', value: String(Boolean(useDefaultFleetRates)), description: 'Use official default guideline fleet rates for delivery calculations' }
+      }));
+    }
+
+    const incomingSpecs = Array.isArray(customVehicleSpecs)
+      ? customVehicleSpecs
+      : Array.isArray(vehicleSpecs)
+        ? vehicleSpecs
+        : null;
+
+    if (incomingSpecs) {
+      const sanitized = sanitizeVehicleSpecs(incomingSpecs);
+      updates.push(prisma.systemSetting.upsert({
+        where: { key: 'delivery_fleet_rates' },
+        update: { value: JSON.stringify(sanitized), description: 'Custom delivery fleet rate matrix overrides (JSON)' },
+        create: { key: 'delivery_fleet_rates', value: JSON.stringify(sanitized), description: 'Custom delivery fleet rate matrix overrides (JSON)' }
+      }));
+    }
 
     if (updates.length > 0) {
       await prisma.$transaction(updates);
@@ -342,12 +380,19 @@ const updateDeliverySettings = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Delivery settings updated successfully',
-      data: updatedConfig
+      message: 'Delivery fee parameters and fleet rates updated successfully.',
+      data: {
+        ...updatedConfig,
+        plantOriginDetails: PLANT_ORIGIN,
+        defaultVehicleSpecs: DEFAULT_VEHICLE_SPECS
+      }
     });
   } catch (error) {
     console.error('Update Delivery Settings Error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update delivery settings' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save delivery fee and fleet rate settings.'
+    });
   }
 };
 

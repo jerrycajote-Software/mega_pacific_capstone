@@ -165,7 +165,7 @@ export const PROVINCE_FALLBACKS = {
   'Quezon': { km: 120, toll: 350 }
 };
 
-export const VEHICLE_RULES = [
+export const DEFAULT_VEHICLE_RULES = [
   {
     type: 'Elf 6-Wheeler',
     code: 'ELF',
@@ -232,6 +232,8 @@ export const VEHICLE_RULES = [
   }
 ];
 
+export const VEHICLE_RULES = DEFAULT_VEHICLE_RULES;
+
 export const getDistanceForCity = (province, city) => {
   if (!province || !city) return { km: 20, toll: 0 };
   const provData = CALABARZON_DISTANCES[province];
@@ -248,7 +250,8 @@ export const computeClientDeliveryFee = ({
   items = [],
   dieselPrice = 105.00,
   adminCostPct = 20.0,
-  includeDepreciation = true
+  includeDepreciation = true,
+  vehicleRules = DEFAULT_VEHICLE_RULES
 }) => {
   const dest = getDistanceForCity(province, city);
   const oneWayKm = dest.km;
@@ -283,12 +286,13 @@ export const computeClientDeliveryFee = ({
 
   const totalWeightMt = Math.max(0.1, totalWeightKg / 1000);
 
-  let chosenVehicle = VEHICLE_RULES[0];
+  const activeRules = Array.isArray(vehicleRules) && vehicleRules.length > 0 ? vehicleRules : DEFAULT_VEHICLE_RULES;
+  let chosenVehicle = activeRules[0];
   let loadType = 'Bed Load';
   let isBedLoad = true;
   let tla = 0;
 
-  for (const v of VEHICLE_RULES) {
+  for (const v of activeRules) {
     if (longestPanelLength <= v.maxBedLength && totalWeightMt <= v.maxBedWeight) {
       chosenVehicle = v;
       loadType = 'Bed Load';

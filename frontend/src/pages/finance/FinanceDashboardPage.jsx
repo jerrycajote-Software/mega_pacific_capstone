@@ -45,14 +45,13 @@ import {
   CustomFinancePendingIcon,
   CustomFinanceExpensesIcon,
   CustomFinanceNetIncomeIcon,
-  CustomInfoIcon,
-  CustomLocalGasStationIcon,
-  CustomLocationOnIcon,
   CustomAccountBalanceIcon,
   CustomReceiptLongIcon,
   CustomCashIcon,
   CustomInventory2Icon
 } from '../../components/icons';
+import DeliveryFleetRateControls from '../../components/finance/DeliveryFleetRateControls';
+import { DEFAULT_VEHICLE_RULES } from '../../utils/deliveryFeeCalculator';
 
 const DONUT_COLORS = ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4'];
 
@@ -104,7 +103,11 @@ const FinanceDashboardPage = () => {
     dieselPrice: 105.00,
     adminCostPct: 20.0,
     includeDepreciation: true,
-    plantOrigin: 'Mega Pacific Imus Plant (Imus, Cavite)'
+    plantOrigin: 'Mega Pacific Imus Plant (Imus, Cavite)',
+    useDefaultFleetRates: true,
+    vehicleSpecs: JSON.parse(JSON.stringify(DEFAULT_VEHICLE_RULES)),
+    customVehicleSpecs: JSON.parse(JSON.stringify(DEFAULT_VEHICLE_RULES)),
+    defaultVehicleSpecs: JSON.parse(JSON.stringify(DEFAULT_VEHICLE_RULES))
   });
   const [savingDelivery, setSavingDelivery] = useState(false);
   const [showVehicleRatesModal, setShowVehicleRatesModal] = useState(false);
@@ -117,11 +120,78 @@ const FinanceDashboardPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success && res.data.data) {
-        setDeliverySettings(res.data.data);
+        const incoming = res.data.data;
+        const defaultSpecs = incoming.defaultVehicleSpecs || JSON.parse(JSON.stringify(DEFAULT_VEHICLE_RULES));
+        const customSpecs = incoming.customVehicleSpecs || incoming.vehicleSpecs || JSON.parse(JSON.stringify(defaultSpecs));
+        setDeliverySettings({
+          ...incoming,
+          useDefaultFleetRates: incoming.useDefaultFleetRates !== false,
+          defaultVehicleSpecs: defaultSpecs,
+          customVehicleSpecs: customSpecs
+        });
       }
     } catch (err) {
       console.warn('Failed to load delivery settings:', err.message);
     }
+  };
+
+  const handleToggleVehicleMatrix = () => {
+    setShowVehicleRatesModal((prev) => !prev);
+  };
+
+  const handleToggleDefaultFleetRates = (checked) => {
+    setDeliverySettings((prev) => ({
+      ...prev,
+      useDefaultFleetRates: checked
+    }));
+    if (checked) {
+      toast('Switched to Default Guideline Fleet Rates. Click "Save Delivery Settings" to apply.', { icon: 'ℹ️' });
+    } else {
+      toast('Custom Fleet Rate editing enabled. Adjust truck rates below and save.', { icon: '✏️' });
+    }
+  };
+
+  const handleRestoreDefaultFleetRates = () => {
+    const cleanDefaults = JSON.parse(JSON.stringify(deliverySettings.defaultVehicleSpecs || DEFAULT_VEHICLE_RULES));
+    setDeliverySettings((prev) => ({
+      ...prev,
+      customVehicleSpecs: cleanDefaults
+    }));
+    toast.success('Fleet rate inputs restored to official guideline values.');
+  };
+
+  const handleUpdateVehicleField = (vehicleCode, field, rawValue) => {
+    setDeliverySettings((prev) => {
+      const currentCustom = Array.isArray(prev.customVehicleSpecs)
+        ? prev.customVehicleSpecs
+        : JSON.parse(JSON.stringify(DEFAULT_VEHICLE_RULES));
+      const updatedCustom = currentCustom.map((v) =>
+        v.code === vehicleCode ? { ...v, [field]: rawValue } : v
+      );
+      return {
+        ...prev,
+        customVehicleSpecs: updatedCustom
+      };
+    });
+  };
+
+  const handleUpdateVehicleTierFee = (vehicleCode, tierIndex, rawValue) => {
+    setDeliverySettings((prev) => {
+      const currentCustom = Array.isArray(prev.customVehicleSpecs)
+        ? prev.customVehicleSpecs
+        : JSON.parse(JSON.stringify(DEFAULT_VEHICLE_RULES));
+      const updatedCustom = currentCustom.map((v) => {
+        if (v.code !== vehicleCode) return v;
+        const updatedTiers = (v.tlaTiers || []).map((t, idx) =>
+          idx === tierIndex ? { ...t, tla: rawValue } : t
+        );
+        return { ...v, tlaTiers: updatedTiers };
+      });
+      return {
+        ...prev,
+        customVehicleSpecs: updatedCustom
+      };
+    });
   };
 
   const handleSaveDeliverySettings = async () => {
@@ -133,11 +203,21 @@ const FinanceDashboardPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
-        toast.success('Delivery and fuel rates updated successfully!');
+        if (res.data.data) {
+          setDeliverySettings((prev) => ({
+            ...prev,
+            ...res.data.data
+          }));
+        }
+        toast.success(
+          deliverySettings.useDefaultFleetRates
+            ? 'Delivery settings saved with Default Guideline Fleet Rates!'
+            : 'Delivery settings and custom Fleet Rates saved successfully!'
+        );
       }
     } catch (err) {
       console.error('Failed to update delivery settings:', err);
-      toast.error('Failed to save delivery settings');
+      toast.error('Failed to save delivery fee and fleet rate settings.');
     } finally {
       setSavingDelivery(false);
     }
@@ -432,171 +512,18 @@ const FinanceDashboardPage = () => {
         })}
       </Grid>
 
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          mb: 4,
-          borderRadius: 3.5,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          boxShadow: '0 4px 20px -8px rgba(0,0,0,0.05)'
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2, mb: 3 }}>
-          <Box>
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <CustomLocalGasStationIcon size={26} color="#16a34a" />
-              <Box>
-                <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em' }}>
-                  Delivery Fee & Fuel Rate Controls
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Origin: <strong>Mega Pacific Imus Plant</strong> • Live formula parameters for all customer orders
-                </Typography>
-              </Box>
-            </Stack>
-          </Box>
-
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setShowVehicleRatesModal(!showVehicleRatesModal)}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
-            >
-              {showVehicleRatesModal ? 'Hide Vehicle Matrix' : 'View Vehicle Matrix'}
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleSaveDeliverySettings}
-              disabled={savingDelivery}
-              startIcon={savingDelivery ? <CircularProgress size={14} color="inherit" /> : undefined}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, px: 2.5, bgcolor: 'primary.main' }}
-            >
-              {savingDelivery ? 'Saving...' : 'Save Settings'}
-            </Button>
-          </Stack>
-        </Box>
-
-        <Grid container spacing={2.5} alignItems="center">
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Current Diesel Price (DP)"
-              value={deliverySettings.dieselPrice}
-              onChange={(e) => setDeliverySettings(prev => ({ ...prev, dieselPrice: e.target.value }))}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">₱</InputAdornment>,
-                endAdornment: <InputAdornment position="end">/ Liter</InputAdornment>
-              }}
-              helperText="Gas station unit price (Guidelines: ₱105.00)"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Admin Cost / PMS Rate"
-              value={deliverySettings.adminCostPct}
-              onChange={(e) => setDeliverySettings(prev => ({ ...prev, adminCostPct: e.target.value }))}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">%</InputAdornment>
-              }}
-              helperText="Operation cost & PMS (Guidelines: 20%)"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <TextField
-              fullWidth
-              size="small"
-              disabled
-              label="Manufacturing Plant Origin"
-              value={deliverySettings.plantOrigin}
-              InputProps={{
-                startAdornment: <InputAdornment position="start"><CustomLocationOnIcon size={14} color="#64748b" /></InputAdornment>
-              }}
-              helperText="Origin for CALABARZON route calculations"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={deliverySettings.includeDepreciation}
-                  onChange={(e) => setDeliverySettings(prev => ({ ...prev, includeDepreciation: e.target.checked }))}
-                  color="primary"
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>Vehicle Depreciation</Typography>
-                  <Typography variant="caption" color="text.secondary">Include in base subtotal</Typography>
-                </Box>
-              }
-            />
-          </Grid>
-        </Grid>
-
-        <Collapse in={showVehicleRatesModal} timeout="auto" unmountOnExit>
-          <Divider sx={{ my: 2.5 }} />
-          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CustomInfoIcon size={14} color="#2563EB" />
-            Delivery Fleet Rate Reference Table (from Guidelines)
-          </Typography>
-          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-            <Table size="small">
-              <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>
-                <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider', color: 'text.secondary' } }}>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Truck Type</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Fuel Economy (KL)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Manpower (TM)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Bed Load Capacity</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Top Load Capacity & Surcharge (TLA)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Depreciation (VD)</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody sx={{ fontSize: '0.75rem' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Elf 6-Wheeler</TableCell>
-                  <TableCell>7 km/L</TableCell>
-                  <TableCell>₱1,900.00</TableCell>
-                  <TableCell>Up to 6m, 5 mt</TableCell>
-                  <TableCell>7–9m: ₱1,000 | 9.01–12m: ₱2,000 (Max 4 mt)</TableCell>
-                  <TableCell>₱2,000.00</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Forward 6-Wheeler</TableCell>
-                  <TableCell>5 km/L</TableCell>
-                  <TableCell>₱2,100.00</TableCell>
-                  <TableCell>Up to 8m, 8 mt</TableCell>
-                  <TableCell>9.01–13m: ₱2,000 | 13.1–16m: ₱3,000 (Max 4 mt)</TableCell>
-                  <TableCell>₱3,000.00</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>10-Wheeler Drop-side</TableCell>
-                  <TableCell>3 km/L</TableCell>
-                  <TableCell>₱2,200.00</TableCell>
-                  <TableCell>Up to 9m, 25 mt</TableCell>
-                  <TableCell>10–15m: ₱4,000 | 16–21m: ₱6,000 (Max 2.5 mt)</TableCell>
-                  <TableCell>₱6,000.00</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Tractor Head w/ Trailer</TableCell>
-                  <TableCell>2 km/L</TableCell>
-                  <TableCell>₱3,600.00</TableCell>
-                  <TableCell>Up to 12m, 40 mt</TableCell>
-                  <TableCell>Case-to-case / Heavy Rigging: ₱8,000</TableCell>
-                  <TableCell>₱12,000.00</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Collapse>
-      </Paper>
+      <DeliveryFleetRateControls
+        deliverySettings={deliverySettings}
+        setDeliverySettings={setDeliverySettings}
+        savingDelivery={savingDelivery}
+        showVehicleRatesModal={showVehicleRatesModal}
+        handleToggleVehicleMatrix={handleToggleVehicleMatrix}
+        handleSaveDeliverySettings={handleSaveDeliverySettings}
+        handleToggleDefaultFleetRates={handleToggleDefaultFleetRates}
+        handleRestoreDefaultFleetRates={handleRestoreDefaultFleetRates}
+        handleUpdateVehicleField={handleUpdateVehicleField}
+        handleUpdateVehicleTierFee={handleUpdateVehicleTierFee}
+      />
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, lg: 8 }}>
