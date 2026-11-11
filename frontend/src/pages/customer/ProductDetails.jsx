@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
@@ -394,7 +394,7 @@ const ImageGallery = ({ images, productName, videoUrl }) => {
   );
 };
 
-const VariantSelector = ({ options, selectedOption, onSelect, selectedColor, coilInventory }) => {
+const VariantSelector = ({ options, selectedOption, onSelect, selectedColor, coilInventory, numLength = 1, isPerMeter = false }) => {
   if (!options || options.length === 0) return null;
 
   return (
@@ -409,6 +409,7 @@ const VariantSelector = ({ options, selectedOption, onSelect, selectedColor, coi
           const optThickness = opt.thickness || opt.name;
           const isCoilStockOut = !isCoilInStock(coilInventory, optThickness, selectedColor);
           const isOutOfStock = opt.status === 'out_of_stock' || opt.stock === 0 || isCoilStockOut;
+          const optPriceForLength = Number(opt.price || 0) * (isPerMeter ? numLength : 1);
 
           return (
             <Tooltip
@@ -438,8 +439,13 @@ const VariantSelector = ({ options, selectedOption, onSelect, selectedColor, coi
                     {opt.name}
                   </Typography>
                   <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                    ₱{Number(opt.price).toLocaleString()}
+                    ₱{optPriceForLength.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </Typography>
+                  {isPerMeter && numLength !== 1 && (
+                    <Typography variant="caption" sx={{ color: isSelected ? 'rgba(255,255,255,0.85)' : 'text.secondary', fontSize: '0.65rem' }}>
+                      (₱{Number(opt.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/m)
+                    </Typography>
+                  )}
                   {isCoilStockOut ? (
                     <Typography variant="caption" color="error" sx={{ fontWeight: 700, fontSize: '0.68rem' }}>
                       Out of Stock ({selectedColor})
@@ -460,6 +466,7 @@ const VariantSelector = ({ options, selectedOption, onSelect, selectedColor, coi
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, token } = useAuth();
 
   const [product, setProduct] = useState(null);
@@ -513,15 +520,40 @@ const ProductDetails = () => {
               .catch(err => console.warn('Coil availability fallback warning:', err));
           }
 
-          if (productData.colors && productData.colors.length > 0) {
+          // Adopt 3D configuration if passed via location.state
+          const stateColor = location.state?.selectedColor || location.state?.color;
+          if (stateColor) {
+            setSelectedColor(stateColor);
+          } else if (productData.colors && productData.colors.length > 0) {
             setSelectedColor(productData.colors[0]);
           } else if (productData.color) {
             setSelectedColor(productData.color);
           }
+
+          const stateQty = location.state?.selectedQuantity || location.state?.quantity;
+          if (stateQty && !isNaN(stateQty)) {
+            setQuantity(Math.max(1, parseInt(stateQty, 10)));
+          }
+
+          const stateLen = location.state?.selectedLength || location.state?.length;
+          if (stateLen && !isNaN(stateLen)) {
+            setCustomLength(parseFloat(stateLen));
+          }
         
           const options = buildProductOptions(productData);
           const defaultOpt = getDefaultOption(options);
-          if (defaultOpt) {
+          const stateThick = (location.state?.selectedThickness || location.state?.thickness || '').toLowerCase().trim();
+          if (stateThick && options.length > 0) {
+            const matchedOpt = options.find((opt) =>
+              (opt.thickness && opt.thickness.toLowerCase().trim() === stateThick) ||
+              (opt.name && opt.name.toLowerCase().includes(stateThick))
+            );
+            if (matchedOpt) {
+              setSelectedOption(matchedOpt);
+            } else if (defaultOpt) {
+              setSelectedOption(defaultOpt);
+            }
+          } else if (defaultOpt) {
             setSelectedOption(defaultOpt);
           }
         }
@@ -551,6 +583,38 @@ const ProductDetails = () => {
     };
     fetchCoilAvailability();
   }, []);
+
+  // Synchronize 3D customized parameters when location state updates
+  useEffect(() => {
+    if (!product || !location.state) return;
+
+    const stateColor = location.state.selectedColor || location.state.color;
+    if (stateColor) {
+      setSelectedColor(stateColor);
+    }
+
+    const stateQty = location.state.selectedQuantity || location.state.quantity;
+    if (stateQty && !isNaN(stateQty)) {
+      setQuantity(Math.max(1, parseInt(stateQty, 10)));
+    }
+
+    const stateLen = location.state.selectedLength || location.state.length;
+    if (stateLen && !isNaN(stateLen)) {
+      setCustomLength(parseFloat(stateLen));
+    }
+
+    const stateThick = (location.state.selectedThickness || location.state.thickness || '').toLowerCase().trim();
+    if (stateThick) {
+      const options = buildProductOptions(product);
+      const matchedOpt = options.find((opt) =>
+        (opt.thickness && opt.thickness.toLowerCase().trim() === stateThick) ||
+        (opt.name && opt.name.toLowerCase().includes(stateThick))
+      );
+      if (matchedOpt) {
+        setSelectedOption(matchedOpt);
+      }
+    }
+  }, [location.state, product]);
 
   const [additionalItems, setAdditionalItems] = useState([]);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
@@ -583,6 +647,43 @@ const ProductDetails = () => {
         setSelectedOption(matchOpt);
       }
     }
+  };
+
+  const handleProceedToOrderFrom3D = ({ quantity: newQty, color: newColor, length: newLen, thickness: newThick }) => {
+    handleApply3DChanges({ quantity: newQty, color: newColor, length: newLen, thickness: newThick });
+    const isPerM = product?.unit?.toLowerCase().includes('meter') || false;
+    const finalQty = Math.max(1, parseInt(newQty, 10) || 1);
+    const finalLen = isPerM ? (parseFloat(newLen) || 1) : 1;
+    const matchedOpt = productOptions.find(o => 
+      (o.thickness && o.thickness.toLowerCase().trim() === (newThick || '').toLowerCase().trim()) ||
+      (o.name && o.name.toLowerCase().includes((newThick || '').toLowerCase().trim()))
+    ) || selectedOption;
+
+    const unitPrice = matchedOpt ? matchedOpt.price : (product?.price || 0);
+    const origPrice = matchedOpt ? (matchedOpt.originalPrice || Math.round((unitPrice / 0.7) * 100) / 100) : (product?.originalPrice || Math.round((unitPrice / 0.7) * 100) / 100);
+    const itemTotal = unitPrice * (isPerM ? finalLen : 1) * finalQty;
+
+    const variantForCheckout = (matchedOpt && !matchedOpt.isBaseProduct)
+      ? (product?.variants?.find(v => v.id === matchedOpt.id) || null)
+      : null;
+
+    const orderItem = {
+      orderItemId: `prod-${product?.id}-${variantForCheckout?.id || 'base'}-${isPerM ? finalLen : '1'}-${newColor || 'def'}-${Date.now()}`,
+      name: product?.name,
+      type: product?.type,
+      product,
+      variant: variantForCheckout,
+      variantId: variantForCheckout?.id || null,
+      quantity: finalQty,
+      customLength: isPerM ? finalLen : null,
+      thickness: matchedOpt?.thickness || newThick || product?.thickness || '0.35mm',
+      color: newColor || product?.color || null,
+      total: itemTotal,
+      price: unitPrice,
+      originalPrice: origPrice
+    };
+
+    navigate('/checkout', { state: orderItem });
   };
 
   const handleAddAdditionalProduct = (newItem) => {
@@ -634,6 +735,10 @@ const ProductDetails = () => {
   const activeDiscountPct = selectedOption?.discountPercent ?? product?.discountPercent ?? 30;
   const hasDiscount = activeOrigPrice > activePrice;
   const unitSavings = Math.max(0, activeOrigPrice - activePrice);
+
+  const displayedUnitPrice = isPerMeter ? activePrice * numLength : activePrice;
+  const displayedOrigUnitPrice = isPerMeter ? activeOrigPrice * numLength : activeOrigPrice;
+  const displayedUnitSavings = isPerMeter ? unitSavings * numLength : unitSavings;
 
   const totalCalculatedPrice = activePrice * numLength * (parseInt(quantity, 10) || 1);
   const totalOrigCalculatedPrice = activeOrigPrice * numLength * (parseInt(quantity, 10) || 1);
@@ -842,11 +947,11 @@ const ProductDetails = () => {
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, flexWrap: 'wrap' }}>
               <Typography variant="h4" fontWeight="900" sx={{ color: '#16a34a' }}>
-                ₱{activePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₱{displayedUnitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Typography>
               {hasDiscount && (
                 <Typography variant="h6" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontWeight: 500 }}>
-                  ₱{activeOrigPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₱{displayedOrigUnitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               )}
               {hasDiscount && (
@@ -868,14 +973,20 @@ const ProductDetails = () => {
               {selectedOption && (
                 <Typography variant="subtitle1" color="text.secondary">
                   — {selectedOption.name}
+                  {isPerMeter && ` (${numLength}m cut)`}
                   {selectedOption.color && ` (${selectedOption.color})`}
                 </Typography>
               )}
-              {!hasOptions && <Typography variant="subtitle1" color="text.secondary">/ {product.unit}</Typography>}
+              {!hasOptions && <Typography variant="subtitle1" color="text.secondary">/ {isPerMeter ? `${numLength}m sheet` : product.unit}</Typography>}
+              {isPerMeter && numLength !== 1 && (
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.75rem' }}>
+                  (₱{activePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/m)
+                </Typography>
+              )}
             </Box>
             {hasDiscount && (
               <Typography variant="caption" sx={{ color: '#16a34a', fontWeight: 700, mt: 0.5, display: 'block' }}>
-                ✨ Save ₱{unitSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per unit with automatic 30% discount on every quantity!
+                ✨ Save ₱{displayedUnitSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per {isPerMeter ? `${numLength}m sheet` : 'unit'} with automatic 30% discount on every quantity!
               </Typography>
             )}
           </Box>
@@ -922,6 +1033,8 @@ const ProductDetails = () => {
               onSelect={handleOptionSelect}
               selectedColor={selectedColor}
               coilInventory={coilInventory}
+              numLength={numLength}
+              isPerMeter={isPerMeter}
             />
 
             <Box sx={{ mb: 3 }}>
@@ -1451,6 +1564,7 @@ const ProductDetails = () => {
             initialLength={isPerMeter ? customLength : 3.8}
             initialQuantity={quantity}
             onApplyChanges={handleApply3DChanges}
+            onProceedToOrder={handleProceedToOrderFrom3D}
           />
         </Suspense>
       )}

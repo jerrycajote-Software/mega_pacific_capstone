@@ -44,6 +44,8 @@ const getProductById = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
+    const { bestSellersOnly } = req.query;
+
     const products = await prisma.product.findMany({
       where: {
         isActive: true
@@ -52,6 +54,17 @@ const getProducts = async (req, res) => {
         variants: {
           where: { status: "available" },
           orderBy: { price: "asc" },
+        },
+        orderItems: {
+          where: {
+            order: {
+              status: { notIn: ["cancelled", "rejected"] },
+              paymentStatus: { not: "refunded" }
+            }
+          },
+          select: {
+            quantity: true
+          }
         },
         reviews: {
           select: {
@@ -62,7 +75,59 @@ const getProducts = async (req, res) => {
       orderBy: { createdAt: "desc" }
     });
 
-    res.status(200).json({ success: true, data: products });
+    // Compute sales volume and review statistics
+    const productsWithStats = products.map((product) => {
+      const totalSales = Array.isArray(product.orderItems)
+        ? product.orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0)
+        : 0;
+
+      let calculatedRating = product.averageRating || 0;
+      if (product.reviews && product.reviews.length > 0) {
+        const totalRating = product.reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+        calculatedRating = Number((totalRating / product.reviews.length).toFixed(1));
+      }
+
+      // Exclude raw order items from client payload
+      const { orderItems, ...cleanedProduct } = product;
+      return {
+        ...cleanedProduct,
+        totalSales,
+        averageRating: calculatedRating,
+        isBestSeller: false,
+      };
+    });
+
+    // Determine top best sellers by sales volume (or rating fallback)
+    const sortedBySales = [...productsWithStats].sort((a, b) => {
+      if (b.totalSales !== a.totalSales) {
+        return b.totalSales - a.totalSales;
+      }
+      return (b.averageRating || 0) - (a.averageRating || 0);
+    });
+
+    // Tag the top 6 products as best sellers
+    const topCount = Math.min(6, sortedBySales.length);
+    const bestSellerIds = new Set(
+      sortedBySales
+        .slice(0, topCount)
+        .filter((p) => p.totalSales > 0 || sortedBySales.every((item) => item.totalSales === 0))
+        .map((p) => p.id)
+    );
+
+    const finalProducts = productsWithStats.map((p) => ({
+      ...p,
+      isBestSeller: bestSellerIds.has(p.id),
+      salesRank: sortedBySales.findIndex((s) => s.id === p.id) + 1,
+    }));
+
+    if (bestSellersOnly === "true") {
+      const bestSellersList = finalProducts
+        .filter((p) => p.isBestSeller)
+        .sort((a, b) => (a.salesRank || 99) - (b.salesRank || 99));
+      return res.status(200).json({ success: true, data: bestSellersList });
+    }
+
+    res.status(200).json({ success: true, data: finalProducts });
   } catch (error) {
     console.error("Failed to fetch customer products:", error);
     res.status(500).json({ success: false, error: "Failed to fetch products" });

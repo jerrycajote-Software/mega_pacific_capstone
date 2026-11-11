@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
   DEFAULT_LAYER_VISIBILITY,
@@ -240,34 +240,86 @@ const ConfigurableRoofModel = ({
     });
   }, [scene, thickness]);
 
-  const handlePointerClickMesh = (e) => {
-    e.stopPropagation();
-    if (e.object?.isMesh && e.object.visible && onSelectMesh) {
-      onSelectMesh(e.object.name);
-    }
-  };
+  const { camera, gl } = useThree();
 
-  const handlePointerOverMesh = (e) => {
-    e.stopPropagation();
-    if (e.object?.isMesh && e.object.visible) {
-      setHoveredMeshName(e.object.name);
-      document.body.style.cursor = 'pointer';
-    }
-  };
+  useEffect(() => {
+    const domElement = gl?.domElement;
+    if (!domElement || !scene) return;
 
-  const handlePointerOutMesh = (e) => {
-    e.stopPropagation();
-    setHoveredMeshName(null);
-    document.body.style.cursor = 'auto';
-  };
+    let pointerDownPos = null;
+    let pointerDownTime = 0;
+
+    const handlePointerDown = (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+      pointerDownTime = Date.now();
+    };
+
+    const handlePointerUp = (e) => {
+      if (!pointerDownPos) return;
+      const dx = Math.abs(e.clientX - pointerDownPos.x);
+      const dy = Math.abs(e.clientY - pointerDownPos.y);
+      const elapsed = Date.now() - pointerDownTime;
+      pointerDownPos = null;
+
+      if (dx < 8 && dy < 8 && elapsed < 600) {
+        const rect = domElement.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+
+        const clickRaycaster = new THREE.Raycaster();
+        clickRaycaster.setFromCamera(mouse, camera);
+
+        const intersects = clickRaycaster.intersectObjects(scene.children, true);
+        const hit = intersects.find((item) => item.object?.isMesh && item.object.visible);
+
+        if (hit && hit.object && onSelectMesh) {
+          onSelectMesh(hit.object.name);
+        }
+      }
+    };
+
+    const handlePointerMove = (e) => {
+      const rect = domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+
+      const hoverRaycaster = new THREE.Raycaster();
+      hoverRaycaster.setFromCamera(mouse, camera);
+
+      const intersects = hoverRaycaster.intersectObjects(scene.children, true);
+      const hit = intersects.find((item) => item.object?.isMesh && item.object.visible);
+
+      if (hit && hit.object) {
+        domElement.style.cursor = 'pointer';
+        setHoveredMeshName(hit.object.name);
+      } else {
+        domElement.style.cursor = 'default';
+        setHoveredMeshName(null);
+      }
+    };
+
+    domElement.addEventListener('pointerdown', handlePointerDown);
+    domElement.addEventListener('pointerup', handlePointerUp);
+    domElement.addEventListener('pointermove', handlePointerMove);
+
+    return () => {
+      domElement.removeEventListener('pointerdown', handlePointerDown);
+      domElement.removeEventListener('pointerup', handlePointerUp);
+      domElement.removeEventListener('pointermove', handlePointerMove);
+      if (domElement) {
+        domElement.style.cursor = 'default';
+      }
+    };
+  }, [gl, scene, camera, onSelectMesh]);
 
   return (
     <primitive
       ref={modelRef}
       object={scene}
-      onClick={handlePointerClickMesh}
-      onPointerOver={handlePointerOverMesh}
-      onPointerOut={handlePointerOutMesh}
       {...props}
     />
   );
