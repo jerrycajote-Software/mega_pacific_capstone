@@ -137,7 +137,13 @@ const CustomerServiceWidget = () => {
             headers: { Authorization: `Bearer ${token}` }
           }
         );
-        if (res.data && res.data.id) {
+        if (Array.isArray(res.data)) {
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const newOnes = res.data.filter((m) => m?.id && !existingIds.has(m.id));
+            return [...prev, ...newOnes];
+          });
+        } else if (res.data && res.data.id) {
           setMessages((prev) => {
             if (prev.some((m) => m.id === res.data.id)) return prev;
             return [...prev, res.data];
@@ -148,6 +154,56 @@ const CustomerServiceWidget = () => {
       setAttachedImage(null);
     } catch (error) {
       console.error('Error sending message:', error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendFaqToConversation = async ({ question, answer }) => {
+    if (sending) return;
+
+    setSending(true);
+    try {
+      if (!inquiryId) {
+        const res = await axios.post(
+          `${API_URL}/api/inquiries`,
+          {
+            subject: 'Customer Roofing Inquiry',
+            initialMessage: question,
+            automatedAnswer: answer
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        setInquiryId(res.data.id);
+        setMessages(res.data.messages || []);
+      } else {
+        const res = await axios.post(
+          `${API_URL}/api/inquiries/${inquiryId}/messages`,
+          {
+            content: question,
+            automatedAnswer: answer
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        if (Array.isArray(res.data)) {
+          setMessages((prev) => {
+            const existingIds = new Set(prev.map((m) => m.id));
+            const newOnes = res.data.filter((m) => m?.id && !existingIds.has(m.id));
+            return [...prev, ...newOnes];
+          });
+        } else if (res.data && res.data.id) {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === res.data.id)) return prev;
+            return [...prev, res.data];
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error sending FAQ to conversation:', error);
     } finally {
       setSending(false);
     }
@@ -227,7 +283,6 @@ const CustomerServiceWidget = () => {
           messages={messages}
           loading={loading}
           currentUser={user}
-          onSelectPrompt={handleSelectQuickPrompt}
           messagesEndRef={messagesEndRef}
         />
 
@@ -236,6 +291,7 @@ const CustomerServiceWidget = () => {
           onChangeMessage={setNewMessage}
           onSendMessage={handleSendMessage}
           onClearMessage={handleClearDraft}
+          onSendFaq={handleSendFaqToConversation}
           sending={sending}
           attachedImage={attachedImage}
           onAttachImage={setAttachedImage}

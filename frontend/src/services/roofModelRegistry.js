@@ -13,7 +13,16 @@
 
 export const isPicoRib1220 = (productName) => {
   if (!productName || typeof productName !== 'string') return false;
-  return /pico\s*rib(\s*1220)?/i.test(productName.trim());
+  const normalized = productName.trim().replace(/\s+/g, ' ').toLowerCase();
+  return normalized === 'pico rib 1220';
+};
+
+export const has3DModel = (productName) => {
+  return isPicoRib1220(productName);
+};
+
+export const isProduct3DSupported = (productName) => {
+  return isPicoRib1220(productName);
 };
 
 export const AVAILABLE_3D_ROOF_MODELS = [

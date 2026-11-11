@@ -1,10 +1,34 @@
 const prisma = require("../config/db");
 const storageService = require("../services/storageService");
 
+const FAQ_KNOWLEDGE_BASE = {
+  "can i preview my roof design before purchasing":
+    "Yes! Our website has a 3D roofing design feature that allows you to preview your chosen roofing material, change its color, and view the roof from different angles.",
+  "what roofing material is best for residential houses":
+    "The best roofing material depends on your house design, budget, and personal preference. Mega S-Rib and Mega HI-Rib are good options for modern residential houses, while Hermosa Tile is suitable for homeowners who prefer a tile-style appearance.",
+  "are your roofing materials durable and weather-resistant":
+    "Yes. Our metal roofing materials are designed to provide durability and protection against different weather conditions, including rain and sunlight. However, their performance depends on the material specifications, coating, proper installation, and maintenance.",
+  "which thickness of roofing is best for a normal house":
+    "The recommended thickness depends on your roof design, location, and structural requirements. For residential houses, you can consider common roofing thicknesses such as 0.40 mm and 0.50 mm. We recommend consulting our sales staff to choose the appropriate thickness for your project.",
+  "what is the standard size of your roofing sheets":
+    "Roofing sheets can be customized based on the required length of your roof. The width depends on the roofing profile, while the length is usually determined by your roof measurements. You may contact our sales staff to confirm the available dimensions."
+};
+
+const getAutomatedAnswer = (text) => {
+  if (!text || typeof text !== "string") return null;
+  const normalized = text.trim().toLowerCase().replace(/[?!.,]/g, "");
+  for (const [question, answer] of Object.entries(FAQ_KNOWLEDGE_BASE)) {
+    if (normalized === question) {
+      return answer;
+    }
+  }
+  return null;
+};
+
 exports.createInquiry = async (req, res) => {
   try {
     const customerId = req.user.userId;
-    const { subject, initialMessage, image } = req.body;
+    const { subject, initialMessage, image, automatedAnswer } = req.body;
 
     let contentToStore = initialMessage || '';
     if (image) {
@@ -15,20 +39,49 @@ exports.createInquiry = async (req, res) => {
       });
     }
 
+    const matchedAnswer = automatedAnswer || getAutomatedAnswer(initialMessage);
+
+    const messagesToCreate = [
+      {
+        senderId: customerId,
+        content: contentToStore,
+      }
+    ];
+
+    if (matchedAnswer) {
+      const staffUser = await prisma.user.findFirst({
+        where: { role: { in: ["sales", "admin", "super_admin", "superadmin"] } },
+        select: { id: true }
+      });
+      if (staffUser) {
+        messagesToCreate.push({
+          senderId: staffUser.id,
+          content: matchedAnswer
+        });
+      }
+    }
+
     const inquiry = await prisma.inquiry.create({
       data: {
         customerId,
         subject,
         messages: {
-          create: {
-            senderId: customerId,
-            content: contentToStore,
-          },
+          create: messagesToCreate,
         },
       },
       include: {
         messages: {
-          include: { sender: { select: { id: true, role: true } } }
+          include: {
+            sender: {
+              select: {
+                id: true,
+                role: true,
+                customerProfile: { select: { name: true, avatarUrl: true } },
+                salesProfile: { select: { name: true } },
+                adminProfile: { select: { name: true } }
+              }
+            }
+          }
         },
         customer: { select: { id: true, email: true } }
       },
@@ -50,7 +103,7 @@ exports.addMessage = async (req, res) => {
   try {
     const senderId = req.user.userId;
     const { id } = req.params; 
-    const { content, image } = req.body;
+    const { content, image, automatedAnswer } = req.body;
 
     let contentToStore = content || '';
     if (image) {
@@ -84,6 +137,41 @@ exports.addMessage = async (req, res) => {
     if (io) {
       io.to(`inquiry_${id}`).emit("new_message", message);
       io.to("sales").to("saless").emit("inquiry_updated", { inquiryId: id, message });
+    }
+
+    const matchedAnswer = automatedAnswer || getAutomatedAnswer(content);
+    if (matchedAnswer) {
+      const staffUser = await prisma.user.findFirst({
+        where: { role: { in: ["sales", "admin", "super_admin", "superadmin"] } },
+        select: { id: true }
+      });
+      if (staffUser) {
+        const botMessage = await prisma.message.create({
+          data: {
+            inquiryId: parseInt(id),
+            senderId: staffUser.id,
+            content: matchedAnswer,
+          },
+          include: {
+            sender: {
+              select: {
+                id: true,
+                role: true,
+                customerProfile: { select: { name: true, avatarUrl: true } },
+                salesProfile: { select: { name: true } },
+                adminProfile: { select: { name: true } }
+              }
+            },
+          },
+        });
+
+        if (io) {
+          io.to(`inquiry_${id}`).emit("new_message", botMessage);
+          io.to("sales").to("saless").emit("inquiry_updated", { inquiryId: id, message: botMessage });
+        }
+
+        return res.status(201).json([message, botMessage]);
+      }
     }
 
     res.status(201).json(message);

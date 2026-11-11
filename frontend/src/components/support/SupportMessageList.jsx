@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Chip,
   CircularProgress,
   Paper,
   Avatar,
@@ -12,13 +11,6 @@ import {
 import { CustomCloseIcon as CloseIcon } from '../icons';
 
 import { parseMessageContent } from '../../utils/chatImageHelper';
-
-const QUICK_PROMPTS = [
-  '📐 I would like to request a quotation for custom-cut roofing sheets.',
-  '🎨 Are all pre-painted coil colors and gauges currently in stock?',
-  '🚚 How does delivery scheduling and site drop-off work?',
-  '📋 I need assistance with my order checkout and payment options.'
-];
 
 const formatMessageTime = (dateString) => {
   if (!dateString) return '';
@@ -35,7 +27,6 @@ const SupportMessageList = ({
   messages = [],
   loading = false,
   currentUser = null,
-  onSelectPrompt,
   messagesEndRef
 }) => {
   const [previewImage, setPreviewImage] = useState(null);
@@ -77,14 +68,14 @@ const SupportMessageList = ({
       <Paper
         elevation={0}
         sx={{
-          p: 2,
+          p: { xs: 2, sm: 2.25 },
           borderRadius: 2.5,
           bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#ffffff',
           border: '1px solid',
           borderColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
-          gap: 1.5
+          gap: 1.25
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -114,38 +105,8 @@ const SupportMessageList = ({
         </Box>
 
         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem', lineHeight: 1.5 }}>
-          Need assistance with custom roof corrugation, bended trims, coil gauge choices, or delivery tracking? Send us a message below or select a quick inquiry topic:
+          Need assistance with custom roof corrugation, bended trims, coil gauge choices, or delivery tracking? Send us a message below.
         </Typography>
-
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, pt: 0.5 }}>
-          {QUICK_PROMPTS.map((prompt, idx) => (
-            <Chip
-              key={idx}
-              label={prompt}
-              onClick={() => onSelectPrompt && onSelectPrompt(prompt)}
-              clickable
-              size="small"
-              sx={{
-                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
-                border: '1px solid',
-                borderColor: 'divider',
-                fontSize: '0.74rem',
-                fontWeight: 600,
-                borderRadius: 2,
-                py: 1.5,
-                height: 'auto',
-                whiteSpace: 'normal',
-                textAlign: 'left',
-                '& .MuiChip-label': { px: 1.25, py: 0.5 },
-                '&:hover': {
-                  bgcolor: 'rgba(79, 119, 45, 0.1)',
-                  borderColor: 'primary.main',
-                  color: 'primary.main'
-                }
-              }}
-            />
-          ))}
-        </Box>
       </Paper>
 
       {messages.length > 0 && (

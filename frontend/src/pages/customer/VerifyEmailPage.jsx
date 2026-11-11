@@ -205,7 +205,7 @@ const VerifyEmailPage = () => {
                 : '0 12px 36px rgba(15,23,42,0.06)',
           }}
         >
-          <Box
+          {/* <Box
             sx={{
               width: 52,
               height: 52,
@@ -219,7 +219,7 @@ const VerifyEmailPage = () => {
             }}
           >
            
-          </Box>
+          </Box> */}
 
           <Typography variant="h5" component="h1" fontWeight={700} color="text.primary" gutterBottom>
             Verify email
