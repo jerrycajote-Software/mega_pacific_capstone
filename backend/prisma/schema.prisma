@@ -159,6 +159,9 @@ model Product {
   effectiveWidth   Float?
   nominalWidth     Float?
   ribHeight        Float?
+  effectiveWidthDesc String?
+  nominalWidthDesc   String?
+  ribHeightDesc      String?
   thickness        String?          @default("0.35mm")
   colors           String[]         @default([])
   maxMeters        Float?           @default(21.0)

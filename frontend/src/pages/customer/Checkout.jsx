@@ -706,7 +706,7 @@ const Checkout = () => {
   }
 
   return (
-    <Box sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: 10 }}>
+    <Box sx={{ pb: 10 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap', fontSize: '0.85rem' }}>
         <Box
           component="button"
@@ -782,10 +782,10 @@ const Checkout = () => {
           </Box>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="caption" fontWeight={800} sx={{ color: 'text.primary', display: 'block', fontSize: { xs: '0.75rem', sm: '0.85rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Fulfillment
+              Delivery Method
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' }, fontSize: '0.7rem' }}>
-              {formData.fulfillmentType === 'Delivery' ? 'Fleet Transport' : 'Plant Pick-up'}
+              {formData.fulfillmentType === 'Delivery' ? 'Truck Delivery' : 'Factory Pick-up'}
             </Typography>
           </Box>
         </Box>
@@ -820,7 +820,7 @@ const Checkout = () => {
         </Box>
       </Paper>
 
-      <Grid container spacing={{ xs: 2.5, md: 4 }}>
+      <Grid container spacing={{ xs: 2.5, md: 4 }} alignItems="flex-start">
         <Grid size={{ xs: 12, lg: 8 }}>
           <form id="checkout-form" onSubmit={handleConfirmCheckoutOrder}>
             <Stack spacing={3.5}>
@@ -842,15 +842,15 @@ const Checkout = () => {
                     </Avatar>
                     <Box>
                       <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.01em' }}>
-                        Fulfillment & Delivery Destination
+                        Delivery or Pick-up
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Choose jobsite fleet delivery or factory direct pick-up
+                        Choose between truck delivery to your address or picking up your order at our factory
                       </Typography>
                     </Box>
                   </Box>
                   <Chip
-                    label={formData.fulfillmentType === 'Delivery' ? 'Jobsite Fleet' : 'Self Pick-up'}
+                    label={formData.fulfillmentType === 'Delivery' ? 'Truck Delivery' : 'Factory Pick-up'}
                     size="small"
                     color={formData.fulfillmentType === 'Delivery' ? 'primary' : 'success'}
                     sx={{ fontWeight: 700, fontSize: '0.7rem' }}
@@ -891,10 +891,10 @@ const Checkout = () => {
                       )}
                     </Box>
                     <Typography variant="subtitle2" fontWeight={800} sx={{ mt: 0.5 }}>
-                      Jobsite Fleet Delivery
+                      Delivery to Your Location
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Dedicated boom truck or flatbed dispatch directly to your project location in CALABARZON.
+                      Direct delivery by truck to your home or construction site in CALABARZON.
                     </Typography>
                   </Paper>
 
@@ -927,10 +927,10 @@ const Checkout = () => {
                       <Chip label="FREE" size="small" sx={{ bgcolor: '#dcfce7', color: '#166534', fontWeight: 800, fontSize: '0.65rem', height: 20 }} />
                     </Box>
                     <Typography variant="subtitle2" fontWeight={800} sx={{ mt: 0.5 }}>
-                      Imus Plant Pick-up
+                      Pick-up at Factory (Imus)
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Collect directly at Mega Pacific Imus Manufacturing Plant once fabrication is completed.
+                      Pick up your items directly at our factory in Imus, Cavite once your order is ready.
                     </Typography>
                   </Paper>
                 </Box>
@@ -954,15 +954,15 @@ const Checkout = () => {
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 0.5 }}>
                         <Typography variant="subtitle2" fontWeight={800} color="#166534">
-                          Mega Pacific Imus Plant Warehouse
+                          Mega Pacific Factory Warehouse
                         </Typography>
                         <Chip label="Zero Delivery Fee" size="small" sx={{ bgcolor: '#bbf7d0', color: '#14532d', fontWeight: 700, fontSize: '0.65rem' }} />
                       </Box>
                       <Typography variant="body2" color="#166534" sx={{ mb: 1, fontSize: '0.85rem' }}>
-                        Origin: <strong>Imus, Cavite, Region IV-A</strong> • Operational Hours: Mon–Sat, 8:00 AM – 5:00 PM
+                        Location: <strong>Imus, Cavite</strong> • Store Hours: Monday to Saturday, 8:00 AM – 5:00 PM
                       </Typography>
                       <Typography variant="caption" color="#15803d" sx={{ display: 'block', lineHeight: 1.5 }}>
-                        Our logistics coordinator will send Email when roll-forming is done and your materials ready to pickup.
+                        We will email you as soon as your roofing materials are ready for pick-up.
                       </Typography>
                     </Box>
                   </Box>
@@ -1079,7 +1079,15 @@ const Checkout = () => {
           </form>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid
+          size={{ xs: 12, lg: 4 }}
+          sx={{
+            position: { xs: 'static', lg: 'sticky' },
+            top: { xs: 'auto', lg: 88 },
+            alignSelf: 'flex-start',
+            zIndex: 10,
+          }}
+        >
           <Paper
             elevation={0}
             sx={{
@@ -1089,8 +1097,16 @@ const Checkout = () => {
               borderColor: 'divider',
               bgcolor: 'background.paper',
               position: { xs: 'static', lg: 'sticky' },
-              top: 96,
-              boxShadow: '0 6px 24px -10px rgba(0,0,0,0.06)'
+              top: { xs: 'auto', lg: 88 },
+              boxShadow: '0 6px 24px -10px rgba(0,0,0,0.06)',
+              maxHeight: { xs: 'none', lg: 'calc(100vh - 105px)' },
+              overflowY: { xs: 'visible', lg: 'auto' },
+              scrollbarWidth: 'thin',
+              '&::-webkit-scrollbar': { width: 6 },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: 'rgba(100, 116, 139, 0.25)',
+                borderRadius: 3,
+              },
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>

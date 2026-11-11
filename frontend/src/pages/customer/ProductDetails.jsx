@@ -27,7 +27,8 @@ import {
   CustomArrowBackIcon as ArrowBackIcon,
   CustomStraightenIcon as StraightenIcon,
   CustomPaletteIcon as PaletteIcon,
-  CustomEmptyReviewsIcon
+  CustomEmptyReviewsIcon,
+  CustomInfoIcon
 } from '../../components/icons';
 import {
   ROOFING_COLORS,
@@ -36,6 +37,12 @@ import {
   MIN_PREORDER_LENGTH_METERS
 } from '../../constants/roofingSpecs';
 import { isCoilInStock, getFirstInStockColor } from '../../utils/coilAvailability';
+
+const DEFAULT_SPEC_EXPLANATIONS = {
+  effectiveWidth: 'The actual width covered on your roof after overlapping adjacent sheets.',
+  nominalWidth: 'The full edge-to-edge width of the metal sheet before overlapping.',
+  ribHeight: 'The height of the raised waves or ribs on the sheet, which strengthens the roof and directs rainwater flow.'
+};
 
 const extractShortDesc = (htmlStr) => {
   if (!htmlStr) return 'Premium quality material designed for long-lasting durability.';
@@ -997,31 +1004,159 @@ const ProductDetails = () => {
 
             {(product.effectiveWidth || product.nominalWidth || product.ribHeight) && (
               <Box sx={{ mb: 3, p: 2, borderRadius: 3, bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
                   <StraightenIcon sx={{ fontSize: 15 }} /> Profile Dimensions & Specifications
                 </Typography>
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
                   {product.effectiveWidth && (
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" display="block">Effective Width</Typography>
-                      <Typography variant="body2" fontWeight="bold">
-                        {parseFloat(product.effectiveWidth) > 10 ? `${product.effectiveWidth} mm` : `${product.effectiveWidth} m`}
-                      </Typography>
-                    </Box>
+                    <Tooltip
+                      arrow
+                      placement="top"
+                      title={
+                        <Box sx={{ p: 0.5, maxWidth: 260 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', mb: 0.5 }}>
+                            Effective Width
+                          </Typography>
+                          <Typography variant="caption" sx={{ fontSize: '0.75rem', lineHeight: 1.45, color: 'rgba(255,255,255,0.92)', display: 'block' }}>
+                            {product.effectiveWidthDesc || DEFAULT_SPEC_EXPLANATIONS.effectiveWidth}
+                          </Typography>
+                        </Box>
+                      }
+                    >
+                      <Box
+                        sx={{
+                          p: 1.25,
+                          borderRadius: 2,
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                          }
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            fontWeight: 600,
+                            lineHeight: 1.2
+                          }}
+                        >
+                          Effective Width
+                          <CustomInfoIcon size={13} color="var(--primary-color, #16a34a)" style={{ opacity: 0.8 }} />
+                        </Typography>
+                        <Typography variant="body2" fontWeight="bold" sx={{ mt: 0.5 }}>
+                          {parseFloat(product.effectiveWidth) > 10 ? `${product.effectiveWidth} mm` : `${product.effectiveWidth} m`}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
                   )}
                   {product.nominalWidth && (
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" display="block">Nominal Width</Typography>
-                      <Typography variant="body2" fontWeight="bold">
-                        {parseFloat(product.nominalWidth) > 10 ? `${product.nominalWidth} mm` : `${product.nominalWidth} m`}
-                      </Typography>
-                    </Box>
+                    <Tooltip
+                      arrow
+                      placement="top"
+                      title={
+                        <Box sx={{ p: 0.5, maxWidth: 260 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', mb: 0.5 }}>
+                            Nominal Width
+                          </Typography>
+                          <Typography variant="caption" sx={{ fontSize: '0.75rem', lineHeight: 1.45, color: 'rgba(255,255,255,0.92)', display: 'block' }}>
+                            {product.nominalWidthDesc || DEFAULT_SPEC_EXPLANATIONS.nominalWidth}
+                          </Typography>
+                        </Box>
+                      }
+                    >
+                      <Box
+                        sx={{
+                          p: 1.25,
+                          borderRadius: 2,
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                          }
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            fontWeight: 600,
+                            lineHeight: 1.2
+                          }}
+                        >
+                          Nominal Width
+                          <CustomInfoIcon size={13} color="var(--primary-color, #16a34a)" style={{ opacity: 0.8 }} />
+                        </Typography>
+                        <Typography variant="body2" fontWeight="bold" sx={{ mt: 0.5 }}>
+                          {parseFloat(product.nominalWidth) > 10 ? `${product.nominalWidth} mm` : `${product.nominalWidth} m`}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
                   )}
                   {product.ribHeight && (
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" display="block">Rib Height</Typography>
-                      <Typography variant="body2" fontWeight="bold">{product.ribHeight} mm</Typography>
-                    </Box>
+                    <Tooltip
+                      arrow
+                      placement="top"
+                      title={
+                        <Box sx={{ p: 0.5, maxWidth: 260 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', mb: 0.5 }}>
+                            Rib Height
+                          </Typography>
+                          <Typography variant="caption" sx={{ fontSize: '0.75rem', lineHeight: 1.45, color: 'rgba(255,255,255,0.92)', display: 'block' }}>
+                            {product.ribHeightDesc || DEFAULT_SPEC_EXPLANATIONS.ribHeight}
+                          </Typography>
+                        </Box>
+                      }
+                    >
+                      <Box
+                        sx={{
+                          p: 1.25,
+                          borderRadius: 2,
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                          }
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            fontWeight: 600,
+                            lineHeight: 1.2
+                          }}
+                        >
+                          Rib Height
+                          <CustomInfoIcon size={13} color="var(--primary-color, #16a34a)" style={{ opacity: 0.8 }} />
+                        </Typography>
+                        <Typography variant="body2" fontWeight="bold" sx={{ mt: 0.5 }}>
+                          {product.ribHeight} mm
+                        </Typography>
+                      </Box>
+                    </Tooltip>
                   )}
                 </Box>
               </Box>
