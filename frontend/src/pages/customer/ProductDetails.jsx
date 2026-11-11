@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
+import { has3DModel } from '../../services/roofModelRegistry';
 
 const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 import {
@@ -22,6 +23,10 @@ import {
   Modal,
   Stack,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   CustomArrowBackIcon as ArrowBackIcon,
@@ -626,13 +631,49 @@ const ProductDetails = () => {
   const [additionalItems, setAdditionalItems] = useState([]);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [is3DViewerModalOpen, setIs3DViewerModalOpen] = useState(false);
+  const [is3DUnavailableDialogOpen, setIs3DUnavailableDialogOpen] = useState(false);
+
+  const is3DSupported = useMemo(() => {
+    return Boolean(product?.name && has3DModel(product.name));
+  }, [product?.name]);
+
+  useEffect(() => {
+    if (location.state?.autoOpen3D && is3DSupported) {
+      setIs3DViewerModalOpen(true);
+    }
+  }, [location.state?.autoOpen3D, is3DSupported]);
 
   const handleOpen3DViewer = () => {
+    if (!is3DSupported) {
+      setIs3DUnavailableDialogOpen(true);
+      return;
+    }
     setIs3DViewerModalOpen(true);
   };
 
   const handleClose3DViewer = () => {
     setIs3DViewerModalOpen(false);
+  };
+
+  const handleClose3DUnavailableDialog = () => {
+    setIs3DUnavailableDialogOpen(false);
+  };
+
+  const handleNavigateToPicoRibIn3D = async () => {
+    setIs3DUnavailableDialogOpen(false);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.get(`${API_URL}/api/customer/products`);
+      const allProducts = Array.isArray(res.data) ? res.data : (res.data?.products || []);
+      const pico = allProducts.find(p => p.name && has3DModel(p.name));
+      if (pico?.id) {
+        navigate(`/product/${pico.id}`, { state: { autoOpen3D: true } });
+      } else {
+        navigate('/products');
+      }
+    } catch {
+      navigate('/products');
+    }
   };
 
   const handleApply3DChanges = ({ quantity: newQty, color: newColor, length: newLen, thickness: newThick }) => {
@@ -1391,29 +1432,40 @@ const ProductDetails = () => {
                 )}
               </Box>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  size="large"
-                  onClick={handleOpen3DViewer}
-                  sx={{
-                    width: { xs: '100%', sm: 'auto' },
-                    minHeight: 48,
-                    borderRadius: 2.5,
-                    py: 1.4,
-                    px: { xs: 2.5, sm: 3.5 },
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    textTransform: 'none',
-                    borderWidth: 2,
-                    '&:hover': {
-                      borderWidth: 2,
-                      bgcolor: 'primary.50',
-                    },
-                  }}
+                <Tooltip
+                  title={
+                    !is3DSupported
+                      ? `3D model is not available for ${product?.name || 'this product'} (Available for Pico Rib 1220)`
+                      : 'Preview and customize this roofing profile on a 3D house model'
+                  }
                 >
-                  View in 3D
-                </Button>
+                  <span>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="large"
+                      onClick={handleOpen3DViewer}
+                      sx={{
+                        width: { xs: '100%', sm: 'auto' },
+                        minHeight: 48,
+                        borderRadius: 2.5,
+                        py: 1.4,
+                        px: { xs: 2.5, sm: 3.5 },
+                        fontWeight: 800,
+                        fontSize: '0.95rem',
+                        textTransform: 'none',
+                        borderWidth: 2,
+                        opacity: !is3DSupported ? 0.85 : 1,
+                        '&:hover': {
+                          borderWidth: 2,
+                          bgcolor: 'primary.50',
+                        },
+                      }}
+                    >
+                      View in 3D
+                    </Button>
+                  </span>
+                </Tooltip>
                 <Button 
                   variant="contained" 
                   color="primary" 
@@ -1684,6 +1736,106 @@ const ProductDetails = () => {
         currentItems={[buildCurrentItem(), ...additionalItems]}
         initialProductId={null}
       />
+
+      <Dialog
+        open={is3DUnavailableDialogOpen}
+        onClose={handleClose3DUnavailableDialog}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3.5,
+            p: 1.5,
+            bgcolor: 'background.paper',
+            boxShadow: '0 20px 48px rgba(0, 0, 0, 0.22)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', pt: 2, pb: 1 }}>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(234, 179, 8, 0.12)',
+              color: '#d97706',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 1.5
+            }}
+          >
+            <i className="fi fi-rr-box" style={{ fontSize: '26px' }}></i>
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+            3D Model Not Available
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center', pb: 2 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6, mb: 1.5 }}>
+            There is currently no 3D model available for{' '}
+            <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              {product?.name || 'this product'}
+            </Box>.
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              display: 'block',
+              bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+              p: 1.25,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              lineHeight: 1.5
+            }}
+          >
+            Our interactive 3D roof viewer is currently designed only for <strong>Pico Rib 1220</strong>.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            onClick={handleNavigateToPicoRibIn3D}
+            sx={{
+              borderRadius: 2,
+              py: 1,
+              fontWeight: 700,
+              textTransform: 'none',
+              boxShadow: 'none',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+                boxShadow: 'none'
+              }
+            }}
+          >
+            View Pico Rib 1220 in 3D
+          </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={handleClose3DUnavailableDialog}
+            sx={{
+              borderRadius: 2,
+              py: 0.8,
+              fontWeight: 600,
+              textTransform: 'none',
+              borderColor: 'divider',
+              color: 'text.secondary',
+              '&:hover': {
+                borderColor: 'text.secondary',
+                bgcolor: 'rgba(0, 0, 0, 0.04)'
+              }
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {is3DViewerModalOpen && (
         <Suspense fallback={null}>

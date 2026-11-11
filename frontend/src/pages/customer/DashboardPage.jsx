@@ -9,8 +9,6 @@ import {
   CardMedia,
   CardContent,
   Typography,
-  TextField,
-  InputAdornment,
   Button,
   Chip,
   CircularProgress,
@@ -21,6 +19,7 @@ import HeroSection from '../../components/HeroSection';
 import Home3DModelsShowcase from '../../components/Home3DModelsShowcase';
 import { buildProductOptions, getDefaultOption } from './buildProductOptions';
 import { io } from 'socket.io-client';
+import { isPicoRib1220 } from '../../services/roofModelRegistry';
 
 const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 
@@ -31,7 +30,6 @@ const DashboardPage = ({ showHero = true }) => {
   const [coilInventory, setCoilInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selected3DModel, setSelected3DModel] = useState(null);
   const [is3DViewerModalOpen, setIs3DViewerModalOpen] = useState(false);
@@ -79,7 +77,7 @@ const DashboardPage = ({ showHero = true }) => {
     : [];
 
   const picoRibProduct =
-    safeProducts.find((p) => /pico\s*rib(\s*1220)?/i.test(p.name)) || safeProducts[0] || null;
+    safeProducts.find((p) => isPicoRib1220(p.name)) || safeProducts[0] || null;
 
   const handleCustomizeIn3D = (houseModel) => {
     setSelected3DModel(houseModel);
@@ -153,13 +151,8 @@ const DashboardPage = ({ showHero = true }) => {
   const categories = ['All', ...new Set(safeProducts.map((p) => p.type).filter(Boolean))];
 
   const filteredProducts = displayedProducts.filter((product) => {
-    const matchesSearch =
-      (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.type || '').toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesCategory = selectedCategory === 'All' || product.type === selectedCategory;
-
-    return matchesSearch && matchesCategory;
+    return matchesCategory;
   });
 
   return (
@@ -259,83 +252,50 @@ const DashboardPage = ({ showHero = true }) => {
           </Box>
         )}
 
-        {/* Filter & Search Bar */}
-        <Box
-          sx={{
-            mb: 3.5,
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-            alignItems: { xs: 'stretch', sm: 'center' },
-          }}
-        >
-          <TextField
-            placeholder={showHero ? t('Search best sellers...') : t('Search products...')}
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+        {/* Category Filters (Product Catalog View) */}
+        {!showHero && (
+          <Box
             sx={{
-              width: { xs: '100%', sm: 300 },
-              flexShrink: 0,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
-                bgcolor: 'background.paper',
-              },
+              mb: 3.5,
+              display: 'flex',
+              gap: 1,
+              overflowX: 'auto',
+              pb: 0.5,
+              maxWidth: '100%',
+              WebkitOverflowScrolling: 'touch',
+              '&::-webkit-scrollbar': { display: 'none' },
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <i className="fi fi-rr-search" style={{ fontSize: '18px', color: '#94a3b8' }}></i>
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          {!showHero && (
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 1,
-                overflowX: 'auto',
-                pb: 0.5,
-                maxWidth: '100%',
-                WebkitOverflowScrolling: 'touch',
-                '&::-webkit-scrollbar': { display: 'none' },
-                msOverflowStyle: 'none',
-                scrollbarWidth: 'none',
-              }}
-            >
-              {categories.map((category) => {
-                const isSelected = selectedCategory === category;
-                return (
-                  <Button
-                    key={category}
-                    variant={isSelected ? 'contained' : 'outlined'}
-                    color="primary"
-                    size="small"
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      setSearchTerm('');
-                    }}
-                    sx={{
-                      borderRadius: 3,
-                      px: 2,
-                      py: 0.6,
-                      fontWeight: 700,
-                      flexShrink: 0,
-                      whiteSpace: 'nowrap',
-                      fontSize: '0.8rem',
-                      textTransform: 'none',
-                    }}
-                  >
-                    {category === 'All' ? t('All Products') : category}
-                  </Button>
-                );
-              })}
-            </Box>
-          )}
-        </Box>
+          >
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category;
+              return (
+                <Button
+                  key={category}
+                  variant={isSelected ? 'contained' : 'outlined'}
+                  color="primary"
+                  size="small"
+                  onClick={() => {
+                    setSelectedCategory(category);
+                  }}
+                  sx={{
+                    borderRadius: 3,
+                    px: 2,
+                    py: 0.6,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.8rem',
+                    textTransform: 'none',
+                  }}
+                >
+                  {category === 'All' ? t('All Products') : category}
+                </Button>
+              );
+            })}
+          </Box>
+        )}
 
         {/* Product Cards Grid / States */}
         {loading ? (
@@ -367,7 +327,7 @@ const DashboardPage = ({ showHero = true }) => {
               {showHero ? t('No best sellers found') : t('No products found')}
             </Typography>
             <Typography color="text.secondary" sx={{ mb: showHero ? 2 : 0 }}>
-              {searchTerm ? t('Try adjusting your search criteria.') : t('Check back later for new inventory.')}
+              {selectedCategory !== 'All' ? t('Try selecting another category.') : t('Check back later for new inventory.')}
             </Typography>
             {showHero && (
               <Button
