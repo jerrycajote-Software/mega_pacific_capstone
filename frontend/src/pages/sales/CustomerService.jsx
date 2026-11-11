@@ -327,7 +327,7 @@ const CustomerService = () => {
               fontSize: '0.74rem', fontWeight: 700
             }}>
               <FiberManualRecordIcon sx={{ fontSize: 9, animation: isLiveConnected ? 'pulse 2s infinite' : 'none' }} />
-              {isLiveConnected ? 'Live Socket Stream Active' : 'Connecting Stream...'}
+              {isLiveConnected ? 'Live Updates' : 'Connecting...'}
             </div>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>

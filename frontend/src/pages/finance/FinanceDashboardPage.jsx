@@ -293,7 +293,7 @@ const FinanceDashboardPage = () => {
       label: 'Pending Payments',
       value: `${data.kpi.pendingPayments || 0}`,
       badge: 'Action Required',
-      trend: 'Bank verification queue',
+      trend: 'Awaiting bank verification',
       color: '#F59E0B',
       bg: 'rgba(245, 158, 11, 0.08)',
       borderColor: 'rgba(245, 158, 11, 0.25)',
@@ -309,7 +309,7 @@ const FinanceDashboardPage = () => {
       label: 'Total Expenses',
       value: `₱${(data.kpi.totalExpenses || 0).toLocaleString()}`,
       badge: `${data.expenseCategoryBreakdown?.length || 0} Categories`,
-      trend: 'Approved disbursals',
+      trend: 'Approved expenses',
       color: '#EF4444',
       bg: 'rgba(239, 68, 68, 0.08)',
       borderColor: 'rgba(239, 68, 68, 0.25)',
@@ -325,7 +325,7 @@ const FinanceDashboardPage = () => {
       label: 'Net Operating Income',
       value: `₱${(data.kpi.netProfit || 0).toLocaleString()}`,
       badge: `${data.kpi.profitMargin || 0}% Margin`,
-      trend: 'Net EBITDA',
+      trend: 'Operating profit',
       color: '#2563EB',
       bg: 'rgba(37, 99, 235, 0.08)',
       borderColor: 'rgba(37, 99, 235, 0.25)',
@@ -350,7 +350,7 @@ const FinanceDashboardPage = () => {
             <Chip label="Live Analytics" size="small" sx={{ bgcolor: 'rgba(16, 185, 129, 0.12)', color: '#047857', fontWeight: 700, fontSize: '0.7rem' }} />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            Consolidated fiscal statements, cash-flow velocity, and expense allocations.
+            Summary of company revenue, expenses, and cash flow.
           </Typography>
         </Box>
 
@@ -545,7 +545,7 @@ const FinanceDashboardPage = () => {
                   Revenue & Expenses Trend
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Monthly performance comparison (Trailing 6 Months)
+                  Monthly performance comparison (Past 6 Months)
                 </Typography>
               </Box>
               <Stack direction="row" spacing={1} alignItems="center">

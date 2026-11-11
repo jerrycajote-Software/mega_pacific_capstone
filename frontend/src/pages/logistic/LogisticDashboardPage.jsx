@@ -151,7 +151,7 @@ const LogisticDashboardPage = () => {
       label: 'Orders Ready to Ship',
       value: data.kpi.readyToShip || 0,
       badge: 'Action Required',
-      sub: 'Awaiting courier dispatch',
+      sub: 'Awaiting delivery pickup',
       color: '#F59E0B',
       bg: 'rgba(245, 158, 11, 0.08)',
       borderColor: 'rgba(245, 158, 11, 0.25)',
@@ -167,7 +167,7 @@ const LogisticDashboardPage = () => {
       label: 'Out for Delivery',
       value: data.kpi.outForDelivery || 0,
       badge: 'In Transit',
-      sub: 'En-route to customer',
+      sub: 'On the way to customer',
       color: '#2563EB',
       bg: 'rgba(37, 99, 235, 0.08)',
       borderColor: 'rgba(37, 99, 235, 0.25)',
@@ -199,7 +199,7 @@ const LogisticDashboardPage = () => {
       label: 'Store Counter Pickups',
       value: data.kpi.pendingPickups || 0,
       badge: 'Warehouse Dock',
-      sub: 'Ready for customer retrieval',
+      sub: 'Ready for customer pickup',
       color: '#8B5CF6',
       bg: 'rgba(139, 92, 246, 0.08)',
       borderColor: 'rgba(139, 92, 246, 0.25)',
@@ -228,7 +228,7 @@ const LogisticDashboardPage = () => {
             />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            Real-time fulfillment metrics, route dispatch velocities, and store pickup management.
+            Track deliveries, delivery routes, and store pickups in real time.
           </Typography>
         </Box>
 
@@ -381,7 +381,7 @@ const LogisticDashboardPage = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
               <Box>
                 <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
-                  Fulfillment Volume (Trailing 7 Days)
+                  Delivery Volume (Past 7 Days)
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Daily distribution between direct deliveries and counter pickups
@@ -506,7 +506,7 @@ const LogisticDashboardPage = () => {
 
             <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
               <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1 }}>
-                Fulfillment Type Share
+                Delivery Method Share
               </Typography>
               <Box sx={{ width: '100%', height: 130, position: 'relative' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -556,10 +556,10 @@ const LogisticDashboardPage = () => {
             >
               <Box>
                 <Typography variant="h6" fontWeight={700}>
-                  Recent Dispatches & Pickups
+                  Recent Deliveries & Pickups
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Active delivery waybills, destination addresses, and current transit milestones
+                  Active delivery orders, destination addresses, and current delivery status
                 </Typography>
               </Box>
 
@@ -578,7 +578,7 @@ const LogisticDashboardPage = () => {
                   }
                 }}
               >
-                <Tab label="All Dispatches" value="all" />
+                <Tab label="All Deliveries" value="all" />
                 <Tab label="In Transit" value="transit" />
                 <Tab label="Processing" value="processing" />
                 <Tab label="Store Pick-ups" value="pickups" />
@@ -593,8 +593,8 @@ const LogisticDashboardPage = () => {
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Order Tracking ID</TableCell>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Recipient Customer</TableCell>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Destination Address</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Date Dispatched</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'center' }}>Fulfillment Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Date Processed</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'center' }}>Delivery Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -653,7 +653,7 @@ const LogisticDashboardPage = () => {
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1, opacity: 0.4 }}>
                           <CustomLocalShippingIcon size={32} color="#94A3B8" />
                         </Box>
-                        <Typography variant="body2">No dispatches found matching this filter.</Typography>
+                        <Typography variant="body2">No deliveries or pickups found matching this filter.</Typography>
                       </TableCell>
                     </TableRow>
                   )}

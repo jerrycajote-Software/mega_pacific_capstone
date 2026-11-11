@@ -4,6 +4,7 @@ import {
   CustomDashboardIcon,
   CustomPreOrderIcon,
   CustomOrdersIcon,
+  CustomRecentOrdersIcon,
   CustomReviewsIcon,
   CustomSupportIcon,
   CustomNavToggleIcon,
@@ -23,6 +24,7 @@ const navItems = [
   { name: 'Dashboard',           path: '/sales/dashboard',          icon: <CustomDashboardIcon size={20} /> },
   { name: 'Pre-Order Products',  path: '/sales/pre-order-products', icon: <CustomPreOrderIcon size={20} /> },
   { name: 'Orders',              path: '/sales/orders',             icon: <CustomOrdersIcon size={20} /> },
+  { name: 'Recent Orders',       path: '/sales/recent-orders',      icon: <CustomRecentOrdersIcon size={20} /> },
   { name: 'Reviews',             path: '/sales/reviews',            icon: <CustomReviewsIcon size={20} /> },
   { name: 'Support',             path: '/sales/customer-service',   icon: <CustomSupportIcon size={20} /> },
 ];

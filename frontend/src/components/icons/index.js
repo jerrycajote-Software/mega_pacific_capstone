@@ -6,6 +6,7 @@
 export { default as CustomDashboardIcon } from './CustomDashboardIcon';
 export { default as CustomPreOrderIcon } from './CustomPreOrderIcon';
 export { default as CustomOrdersIcon } from './CustomOrdersIcon';
+export { default as CustomRecentOrdersIcon } from './CustomRecentOrdersIcon';
 export { default as CustomReviewsIcon } from './CustomReviewsIcon';
 export { default as CustomSupportIcon } from './CustomSupportIcon';
 
