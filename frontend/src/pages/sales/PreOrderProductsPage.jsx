@@ -73,6 +73,9 @@ const EMPTY_FORM = {
   effectiveWidth: '',
   nominalWidth: '',
   ribHeight: '',
+  effectiveWidthDesc: '',
+  nominalWidthDesc: '',
+  ribHeightDesc: '',
   description: '',
   colors: ROOFING_COLORS.map(c => c.name),
   maxMeters: 21.0,
@@ -311,6 +314,9 @@ const PreOrderProductsPage = () => {
       effectiveWidth: p.effectiveWidth ?? '',
       nominalWidth: p.nominalWidth ?? '',
       ribHeight: p.ribHeight ?? '',
+      effectiveWidthDesc: p.effectiveWidthDesc || '',
+      nominalWidthDesc: p.nominalWidthDesc || '',
+      ribHeightDesc: p.ribHeightDesc || '',
       description: p.description || '',
       colors: validColors,
       maxMeters: p.maxMeters ?? 21.0,
@@ -1701,6 +1707,78 @@ const PreOrderProductsPage = () => {
                           color: 'var(--text-primary)', fontSize: '0.82rem', outline: 'none', boxSizing: 'border-box'
                         }}
                       />
+                    </div>
+                  </div>
+
+                  <div style={{
+                    padding: '0.9rem',
+                    borderRadius: 12,
+                    background: 'var(--bg-secondary, rgba(0, 0, 0, 0.02))',
+                    border: '1px solid var(--border-light)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 750, color: 'var(--text-primary)' }}>
+                        Customer Hover Explanations
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                        These explanations appear in a pop-up when customers hover over the dimensions on the product page. Leave blank to use standard default descriptions.
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.65rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
+                          Effective Width Explanation
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="ex. The actual width covered on your roof after overlapping adjacent sheets."
+                          value={formData.effectiveWidthDesc}
+                          onChange={(e) => setFormData({ ...formData, effectiveWidthDesc: e.target.value })}
+                          style={{
+                            width: '100%', padding: '0.55rem 0.75rem', borderRadius: 8,
+                            background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                            color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
+                          Nominal Width Explanation
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="ex. The full edge-to-edge width of the metal sheet before overlapping."
+                          value={formData.nominalWidthDesc}
+                          onChange={(e) => setFormData({ ...formData, nominalWidthDesc: e.target.value })}
+                          style={{
+                            width: '100%', padding: '0.55rem 0.75rem', borderRadius: 8,
+                            background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                            color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
+                          Rib Height Explanation
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="ex. The height of the raised waves or ribs on the sheet, which strengthens the roof and directs rainwater flow."
+                          value={formData.ribHeightDesc}
+                          onChange={(e) => setFormData({ ...formData, ribHeightDesc: e.target.value })}
+                          style={{
+                            width: '100%', padding: '0.55rem 0.75rem', borderRadius: 8,
+                            background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                            color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
 
