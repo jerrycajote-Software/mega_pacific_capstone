@@ -379,7 +379,7 @@ const RefundsPage = () => {
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
             <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#3b82f6' }}>
-              Disbursed Today
+              Refunded Today
             </Typography>
             <Box
               className="mpi-ref-card-icon"

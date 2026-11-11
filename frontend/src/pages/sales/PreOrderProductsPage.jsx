@@ -1850,7 +1850,7 @@ const PreOrderProductsPage = () => {
                             const finishesSet = getAvailableColorsForThickness(coils, t);
                             return (
                               <option key={t} value={t}>
-                                {t} {!hasStock ? '(No Coil Stock in Inventory)' : `(${finishesSet.size} finishes in stock)`} {isUsedInVar >= 0 ? `(⚠️ Used in #${isUsedInVar + 1})` : ''}
+                                {t} {!hasStock ? '(No Coil Stock in Inventory)' : `(${finishesSet.size} finishes in stock)`} {isUsedInVar >= 0 ? `(⚠️ Already exist in #${isUsedInVar + 1})` : ''}
                               </option>
                             );
                           })}

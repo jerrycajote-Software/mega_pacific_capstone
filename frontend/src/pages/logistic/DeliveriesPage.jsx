@@ -169,7 +169,7 @@ const DeliveriesPage = () => {
             Deliveries & Plant Pick-ups
           </h2>
           <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Coordinate jobsite fleet transport and transmit customer ready-for-pickup signals.
+            Coordinate jobsite delivery trucks and notify customers when orders are ready for pickup.
           </p>
         </div>
       </div>
@@ -248,7 +248,7 @@ const DeliveriesPage = () => {
                 cursor: 'pointer'
               }}
             >
-              Fleet Delivery ({deliveryOrdersCount})
+              Truck Delivery ({deliveryOrdersCount})
             </button>
             <button
               onClick={() => setFulfillmentFilter('pickup')}
@@ -307,7 +307,7 @@ const DeliveriesPage = () => {
               <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 <th style={{ padding: '0.85rem 1rem' }}>Order ID</th>
                 <th style={{ padding: '0.85rem 1rem' }}>Customer & Contact</th>
-                <th style={{ padding: '0.85rem 1rem' }}>Fulfillment Method</th>
+                <th style={{ padding: '0.85rem 1rem' }}>Delivery Method</th>
                 <th style={{ padding: '0.85rem 1rem' }}>Status</th>
                 <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Quick Logistics Actions</th>
               </tr>
@@ -344,7 +344,7 @@ const DeliveriesPage = () => {
                         }}
                       >
                         {isPickup ? <StorefrontIcon sx={{ fontSize: 14 }} /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
-                        {isPickup ? 'Store Pick-up' : 'Fleet Delivery'}
+                        {isPickup ? 'Store Pick-up' : 'Truck Delivery'}
                       </span>
                     </td>
                     <td style={{ padding: '1rem' }}>
@@ -400,7 +400,7 @@ const DeliveriesPage = () => {
                         <button
                           onClick={() => setSelectedOrder(order)}
                           className="mpi-logistics-action-btn"
-                          title={`Inspect dispatch control for ${order.id}`}
+                          title={`View delivery details for ${order.id}`}
                           style={{
                             background: 'rgba(34, 197, 94, 0.08)',
                             color: '#15803d',
@@ -442,7 +442,7 @@ const DeliveriesPage = () => {
           <div style={{ background: 'var(--bg-secondary)', width: '100%', maxWidth: 620, borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Dispatch Control — {selectedOrder.id}</h3>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Delivery Details — {selectedOrder.id}</h3>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Ordered: {new Date(selectedOrder.dateOrdered).toLocaleString()}</span>
               </div>
               <button onClick={() => setSelectedOrder(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -469,13 +469,13 @@ const DeliveriesPage = () => {
                   <div>
                     <div style={{ fontWeight: 800, fontSize: '0.88rem', color: selectedOrder.orderStatus === 'ready_for_pickup' ? '#15803d' : '#6d28d9' }}>
                       {selectedOrder.orderStatus === 'ready_for_pickup'
-                        ? 'SIGNAL TRANSMITTED: READY FOR CUSTOMER PICK-UP'
+                        ? 'CUSTOMER NOTIFIED: READY FOR STORE PICK-UP'
                         : 'CUSTOMER CHOSE STORE / PLANT PICK-UP'}
                     </div>
                     <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: 2 }}>
                       {selectedOrder.orderStatus === 'ready_for_pickup'
-                        ? 'Customer has been notified to retrieve sheets at Plant.'
-                        : 'Once cutting and staging are complete, transmit the signal below to alert the customer.'}
+                        ? 'Customer has been notified to pick up sheets at Plant.'
+                        : 'Once cutting and preparation are complete, click below to notify the customer.'}
                     </div>
                   </div>
                 </div>
@@ -488,12 +488,12 @@ const DeliveriesPage = () => {
                   <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{selectedOrder.customerEmail}</p>
                 </div>
                 <div style={{ flex: 1, background: 'var(--bg-primary)', padding: '1rem', borderRadius: 8, border: '1px solid var(--border)' }}>
-                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Fulfillment Type</p>
+                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Delivery Method</p>
                   <p style={{ margin: 0, fontWeight: 800, color: selectedOrder.fulfillmentType === 'Pickup' ? '#8b5cf6' : '#3b82f6' }}>
                     {selectedOrder.fulfillmentType || 'Delivery'}
                   </p>
                   <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {selectedOrder.fulfillmentType === 'Pickup' ? 'Free Plant Pickup (No Shipping Fee)' : 'Fleet Transport'}
+                    {selectedOrder.fulfillmentType === 'Pickup' ? 'Free Plant Pickup (No Shipping Fee)' : 'Truck Delivery'}
                   </p>
                 </div>
               </div>
@@ -517,7 +517,7 @@ const DeliveriesPage = () => {
               {selectedOrder.items && selectedOrder.items.length > 0 && (
                 <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: 8, border: '1px solid var(--border)', marginBottom: '1.25rem' }}>
                   <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
-                    Sheet Specifications to Stage & Release:
+                    Sheet Specifications to Prepare & Release:
                   </p>
                   <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                     {selectedOrder.items.map((i, idx) => {
@@ -530,7 +530,9 @@ const DeliveriesPage = () => {
                         <li key={idx} style={{ marginBottom: 6 }}>
                           <strong>{i.productName}</strong>
                           {spec && <span style={{ marginLeft: 6, color: '#0284c7' }}>({spec})</span>}
-                          <span style={{ marginLeft: 8, fontWeight: 700, color: '#16a34a' }}>× {i.quantity} {i.customLength ? 'sheets' : 'pcs'}</span>
+                          <span style={{ marginLeft: 8, fontWeight: 700, color: '#16a34a' }}>
+                            × {i.quantity} {i.customLength ? (i.quantity === 1 ? 'sheet' : 'sheets') : (i.quantity === 1 ? 'pc' : 'pcs')}
+                          </span>
                         </li>
                       );
                     })}
@@ -540,7 +542,7 @@ const DeliveriesPage = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <p style={{ margin: 0, fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
-                  Logistics Actions & Signal Controls:
+                  Logistics Actions:
                 </p>
 
                 {(selectedOrder.fulfillmentType === 'Delivery' || !selectedOrder.fulfillmentType) ? (
@@ -599,9 +601,9 @@ const DeliveriesPage = () => {
                       >
                         <NotificationsActiveIcon sx={{ fontSize: 22 }} />
                         <div>
-                          <div>Transmit "Ready for Pick-up" Signal to Customer</div>
+                          <div>Notify Customer: Order Ready for Pick-up</div>
                           <div style={{ fontSize: '0.74rem', opacity: 0.9, fontWeight: 400, marginTop: 2 }}>
-                            Sends live web socket alert and official pick-up pass email with pick-up instructions.
+                            Sends live alert and official pick-up pass email with instructions.
                           </div>
                         </div>
                       </button>

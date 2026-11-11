@@ -93,7 +93,7 @@ const DeliveryFleetRateControls = ({
             onClick={handleToggleVehicleMatrix}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
           >
-            {showVehicleRatesModal ? 'Hide Vehicle Matrix' : 'View Vehicle Matrix'}
+            {showVehicleRatesModal ? 'Hide Vehicle Rates' : 'View Vehicle Rates'}
           </Button>
           <Button
             variant="contained"
@@ -160,7 +160,7 @@ const DeliveryFleetRateControls = ({
             }
             label={
               <Box>
-                <Typography variant="body2" fontWeight={600}>Vehicle Depreciation</Typography>
+                <Typography variant="body2" fontWeight={600}>Vehicle Wear & Tear</Typography>
                 <Typography variant="caption" color="text.secondary">Include in base subtotal</Typography>
               </Box>
             }

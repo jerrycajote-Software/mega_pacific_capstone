@@ -91,7 +91,7 @@ const ReportsPage = () => {
         body: [
           ['Gross Operating Revenue', `PHP ${(summary.grossRevenue || 0).toLocaleString()}`],
           ['Total Operating Expenses', `PHP ${(summary.totalExpenses || 0).toLocaleString()}`],
-          ['Net Operating Profit (EBITDA)', `PHP ${(summary.netIncome || 0).toLocaleString()}`],
+          ['Net Operating Profit', `PHP ${(summary.netIncome || 0).toLocaleString()}`],
           ['Estimated 12% Value Added Tax (VAT)', `PHP ${(summary.vat12 || 0).toLocaleString()}`],
           ['Net Sales (Net of VAT)', `PHP ${(summary.netSales || 0).toLocaleString()}`],
           ['Net Operating Margin', `${summary.profitMargin || 0}%`]
@@ -233,7 +233,7 @@ const ReportsPage = () => {
             />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            Statutory income statements, tax calculations, and exportable ledgers.
+            Official income statements, tax calculations, and exportable records.
           </Typography>
         </Box>
 
@@ -305,7 +305,7 @@ const ReportsPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', gap: 2 }}>
           <CircularProgress size={44} thickness={4} />
           <Typography variant="body2" color="text.secondary">
-            Compiling ledger entries and fiscal summary...
+            Compiling financial entries and summary...
           </Typography>
         </Box>
       ) : (
@@ -356,7 +356,7 @@ const ReportsPage = () => {
                   ₱{(summary.totalExpenses || 0).toLocaleString()}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Across {summary.expensesCount || 0} approved disbursals
+                  Across {summary.expensesCount || 0} approved {summary.expensesCount === 1 ? 'expense' : 'expenses'}
                 </Typography>
               </Paper>
             </Grid>
@@ -381,7 +381,7 @@ const ReportsPage = () => {
                   ₱{(summary.netIncome || 0).toLocaleString()}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  EBITDA Margin: <strong style={{ color: '#2563EB' }}>{summary.profitMargin || 0}%</strong>
+                  Profit Margin: <strong style={{ color: '#2563EB' }}>{summary.profitMargin || 0}%</strong>
                 </Typography>
               </Paper>
             </Grid>
@@ -436,7 +436,7 @@ const ReportsPage = () => {
               >
                 <Tab label="Income Statement (P&L)" />
                 <Tab label="Expenses by Category" />
-                <Tab label="Order Settlement Ledger" />
+                <Tab label="Order Settlement Records" />
               </Tabs>
             </Box>
 

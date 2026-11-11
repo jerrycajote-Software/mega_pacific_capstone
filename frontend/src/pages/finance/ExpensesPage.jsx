@@ -344,7 +344,7 @@ const Page = () => {
 
                   <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      Amount Disbursed
+                      Amount Paid
                     </Typography>
                     <Typography variant="h6" fontWeight={800} color="success.main" sx={{ mt: 0.25 }}>
                       ₱{Number(selectedExpense.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
@@ -353,7 +353,7 @@ const Page = () => {
 
                   <Paper elevation={0} sx={{ p: 1.5, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      Fiscal Clearance
+                      Approval Status
                     </Typography>
                     <Typography variant="body2" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
                       Certified & Audited
@@ -364,7 +364,7 @@ const Page = () => {
                 {/* Particulars / Description */}
                 <Box>
                   <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', mb: 1 }}>
-                    Description and Particulars
+                    Description & Details
                   </Typography>
                   <Paper elevation={0} sx={{ p: 2, borderRadius: 2, bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="body2" color="text.primary" sx={{ lineHeight: 1.6 }}>

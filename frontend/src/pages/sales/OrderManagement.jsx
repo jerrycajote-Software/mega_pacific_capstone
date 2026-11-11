@@ -343,7 +343,7 @@ const OrderManagement = () => {
                   <div style={{ fontWeight: 700, marginTop: 3, color: '#16a34a', fontSize: '1.1rem' }}>₱{selectedOrder.totalAmount.toLocaleString()}</div>
                 </div>
                 <div style={{ background: 'var(--bg-primary)', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Fulfillment Type</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Delivery Method</div>
                   <div style={{ fontWeight: 600, marginTop: 3, color: 'var(--text-primary)' }}>{selectedOrder.fulfillmentType || 'Delivery'}</div>
                 </div>
               </div>
@@ -364,7 +364,7 @@ const OrderManagement = () => {
                           {spec && <span style={{ display: 'block', color: '#0284c7', fontSize: '0.8rem', marginTop: 2 }}>{spec}</span>}
                         </div>
                         <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', marginLeft: 12 }}>
-                          × {i.quantity} {i.customLength ? 'sheets' : 'units'}
+                          × {i.quantity} {i.customLength ? (i.quantity === 1 ? 'sheet' : 'sheets') : (i.quantity === 1 ? 'unit' : 'units')}
                         </span>
                       </li>
                     );

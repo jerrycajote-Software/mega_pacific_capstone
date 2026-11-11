@@ -261,7 +261,7 @@ const ReviewManagement = () => {
               background: 'rgba(34,197,94,0.12)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.25)'
             }}>
               
-              {metrics.total} Submissions
+              {metrics.total} {metrics.total === 1 ? 'Review' : 'Reviews'}
             </span>
           </div>
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
@@ -339,7 +339,7 @@ const ReviewManagement = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Sales Resolution Rate
+              Reply Rate
             </span>
             <CheckCircleIcon sx={{ fontSize: 18, color: 'var(--green)' }} />
           </div>
@@ -347,7 +347,7 @@ const ReviewManagement = () => {
             <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
               {metrics.total > 0 ? Math.round((metrics.replied / metrics.total) * 100) : 0}%
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{metrics.replied} of {metrics.total} resolved</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{metrics.replied} of {metrics.total} replied</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             Official representative replies

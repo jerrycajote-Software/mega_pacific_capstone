@@ -30,8 +30,6 @@ const SalesDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [orderFilter, setOrderFilter] = useState('ALL');
-  const [searchOrder, setSearchOrder] = useState('');
   const [hoveredBarIndex, setHoveredBarIndex] = useState(null);
   const [coilSummary, setCoilSummary] = useState(null);
 
@@ -84,36 +82,6 @@ const SalesDashboard = () => {
     return 'Good evening';
   };
 
-  const statusConfig = {
-    pending: { label: 'Pending Approval', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.25)' },
-    sales_approved: { label: 'Sales Approved', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.25)' },
-    processing: { label: 'In Processing', color: '#6366f1', bg: 'rgba(99, 102, 241, 0.1)', border: 'rgba(99, 102, 241, 0.25)' },
-    shipped: { label: 'Shipped', color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)', border: 'rgba(6, 182, 212, 0.25)' },
-    out_for_delivery: { label: 'Out for Delivery', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.1)', border: 'rgba(14, 165, 233, 0.25)' },
-    delivered: { label: 'Delivered', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.25)' },
-    completed: { label: 'Completed', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.25)' },
-    cancelled: { label: 'Cancelled', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.25)' },
-    rejected: { label: 'Rejected', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.25)' }
-  };
-
-  const filteredOrders = useMemo(() => {
-    if (!data?.recentOrders) return [];
-    return data.recentOrders.filter(order => {
-      const matchFilter =
-        orderFilter === 'ALL' ||
-        (orderFilter === 'PENDING' && order.status.toLowerCase().includes('pending')) ||
-        (orderFilter === 'APPROVED' && (order.status.toLowerCase().includes('approved') || order.status.toLowerCase().includes('processing'))) ||
-        (orderFilter === 'COMPLETED' && (order.status.toLowerCase().includes('completed') || order.status.toLowerCase().includes('delivered')));
-
-      const matchSearch =
-        searchOrder.trim() === '' ||
-        order.id.toLowerCase().includes(searchOrder.toLowerCase()) ||
-        order.customer.toLowerCase().includes(searchOrder.toLowerCase());
-
-      return matchFilter && matchSearch;
-    });
-  }, [data?.recentOrders, orderFilter, searchOrder]);
-
   if (loading || !data) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '65vh', gap: 16 }}>
@@ -126,7 +94,7 @@ const SalesDashboard = () => {
           animation: 'spin 0.8s linear infinite'
         }} />
         <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-          Loading Sales Operations Telemetry...
+          Loading Sales Dashboard...
         </span>
         <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -191,7 +159,7 @@ const SalesDashboard = () => {
               fontWeight: 500
             }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-              Live Telemetry Stream
+              Live Updates
             </span>
           </div>
 
@@ -423,7 +391,7 @@ const SalesDashboard = () => {
               }}>
                 {totals?.orders || 0} orders
               </span>
-              <span>across catalog</span>
+              <span>across all products</span>
             </div>
           </div>
         </div>
@@ -446,7 +414,7 @@ const SalesDashboard = () => {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Order Pipeline
+              Orders in Progress
             </span>
             <div style={{
               width: 38,
@@ -507,7 +475,7 @@ const SalesDashboard = () => {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Active Dispatch
+              Out for Delivery
             </span>
             <div style={{
               width: 38,
@@ -537,7 +505,7 @@ const SalesDashboard = () => {
               }}>
                 {dailyActivity.delivered || 0} delivered today
               </span>
-              <span>via freight</span>
+              <span>by delivery truck</span>
             </div>
           </div>
         </div>
@@ -560,7 +528,7 @@ const SalesDashboard = () => {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Customer Sentiment
+              Customer Feedback
             </span>
             <div style={{
               width: 38,
@@ -621,7 +589,7 @@ const SalesDashboard = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)' }} />
               <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Today's Daily Pulse
+                Today's Overview
               </h3>
             </div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
@@ -649,7 +617,7 @@ const SalesDashboard = () => {
               <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
                 {dailyActivity.placed || 0}
               </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>logged today</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>received today</span>
             </div>
 
             <div style={{
@@ -698,7 +666,7 @@ const SalesDashboard = () => {
               gap: 4
             }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Today's Bookings
+                Today's Sales
               </span>
               <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--green)', fontVariantNumeric: 'tabular-nums' }}>
                 {dailyActivity.todayRevenue || '₱0'}
@@ -720,7 +688,7 @@ const SalesDashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                7-Day Order Velocity
+                7-Day Order Trends
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Daily order volume distribution over the past week
@@ -734,7 +702,7 @@ const SalesDashboard = () => {
               padding: '3px 8px',
               borderRadius: 6
             }}>
-              Peak: {maxWeeklyOrders} orders
+              Highest: {maxWeeklyOrders} {maxWeeklyOrders === 1 ? 'order' : 'orders'}
             </span>
           </div>
 
@@ -829,316 +797,11 @@ const SalesDashboard = () => {
       {}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
+        gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)',
         gap: '1.5rem',
         alignItems: 'start'
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          <div style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-light)',
-            borderRadius: 16,
-            padding: '1.25rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 12,
-              marginBottom: '1rem'
-            }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '0.975rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Recent Customer Orders
-                </h3>
-                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  Latest orders placed by homeowners and contractors
-                </p>
-              </div>
-
-              <button
-                onClick={() => navigate('/sales/orders')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 14px',
-                  borderRadius: 10,
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  color: 'var(--green)',
-                  background: 'rgba(34, 197, 94, 0.08)',
-                  border: '1.5px solid rgba(34, 197, 94, 0.28)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 2px 6px rgba(34, 197, 94, 0.08)'
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(34, 197, 94, 0.16)';
-                  e.currentTarget.style.borderColor = 'var(--green)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.18)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(34, 197, 94, 0.08)';
-                  e.currentTarget.style.borderColor = 'rgba(34, 197, 94, 0.28)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(34, 197, 94, 0.08)';
-                }}
-              >
-                <span>Full Orders Hub</span>
-                <ChevronRightIcon sx={{ fontSize: 16 }} />
-              </button>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-              flexWrap: 'wrap',
-              marginBottom: '1rem'
-            }}>
-              <div style={{
-                display: 'inline-flex',
-                background: 'var(--bg-primary)',
-                padding: 3,
-                borderRadius: 10,
-                border: '1px solid var(--border-light)'
-              }}>
-                {[
-                  { key: 'ALL', label: 'All' },
-                  { key: 'PENDING', label: 'Pending' },
-                  { key: 'APPROVED', label: 'Approved' },
-                  { key: 'COMPLETED', label: 'Completed' }
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setOrderFilter(tab.key)}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 8,
-                      border: 'none',
-                      background: orderFilter === tab.key ? 'var(--green)' : 'transparent',
-                      color: orderFilter === tab.key ? '#fff' : 'var(--text-muted)',
-                      fontSize: '0.75rem',
-                      fontWeight: orderFilter === tab.key ? 700 : 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-light)',
-                borderRadius: 10,
-                padding: '4px 10px',
-                width: 200
-              }}>
-                <SearchIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
-                <input
-                  type="text"
-                  placeholder="Filter customer or ID..."
-                  value={searchOrder}
-                  onChange={e => setSearchOrder(e.target.value)}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    outline: 'none',
-                    fontSize: '0.78rem',
-                    color: 'var(--text-primary)',
-                    width: '100%'
-                  }}
-                />
-                {searchOrder && (
-                  <ClearIcon
-                    onClick={() => setSearchOrder('')}
-                    sx={{ fontSize: 14, color: 'var(--text-muted)', cursor: 'pointer' }}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border-light)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 620 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-light)', background: 'rgba(0,0,0,0.02)' }}>
-                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', width: '36%' }}>Customer</th>
-                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', width: '16%', whiteSpace: 'nowrap' }}>Order ID</th>
-                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', width: '18%', whiteSpace: 'nowrap' }}>Status</th>
-                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right', width: '16%', whiteSpace: 'nowrap' }}>Total</th>
-                    <th style={{ padding: '10px 14px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'right', width: '14%', whiteSpace: 'nowrap' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.825rem' }}>
-                        No orders matching current filter criteria.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredOrders.map(order => {
-                      const cfg = statusConfig[order.status.toLowerCase()] || {
-                        label: order.status,
-                        color: '#64748b',
-                        bg: 'rgba(100, 116, 139, 0.1)',
-                        border: 'rgba(100, 116, 139, 0.25)'
-                      };
-
-                      return (
-                        <tr
-                          key={order.id}
-                          style={{
-                            borderBottom: '1px solid var(--border-light)',
-                            transition: 'all 0.15s ease'
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = 'rgba(34, 197, 94, 0.03)';
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <img
-                                src={order.avatarUrl || '/default-profile.png'}
-                                alt={order.customer}
-                                style={{
-                                  width: 34,
-                                  height: 34,
-                                  borderRadius: '50%',
-                                  objectFit: 'cover',
-                                  flexShrink: 0,
-                                  border: '1.5px solid var(--border-light)'
-                                }}
-                              />
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  {order.customer}
-                                </div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                  <span>{order.date}</span>
-                                  <span style={{ opacity: 0.35 }}>•</span>
-                                  <span style={{
-                                    fontSize: '0.68rem',
-                                    padding: '1px 6px',
-                                    borderRadius: 4,
-                                    background: 'var(--bg-primary)',
-                                    border: '1px solid var(--border-light)',
-                                    color: 'var(--text-muted)'
-                                  }}>
-                                    {order.paymentMode || 'COD'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                              fontWeight: 700,
-                              fontSize: '0.78rem',
-                              color: 'var(--green)',
-                              background: 'rgba(34, 197, 94, 0.09)',
-                              border: '1px solid rgba(34, 197, 94, 0.25)',
-                              padding: '3px 8px',
-                              borderRadius: 6,
-                              letterSpacing: '0.03em',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {order.id}
-                            </span>
-                          </td>
-
-                          <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              padding: '3px 10px',
-                              borderRadius: 9999,
-                              fontSize: '0.72rem',
-                              fontWeight: 700,
-                              background: cfg.bg,
-                              color: cfg.color,
-                              border: `1px solid ${cfg.border}`,
-                              whiteSpace: 'nowrap'
-                            }}>
-                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, boxShadow: `0 0 6px ${cfg.color}` }} />
-                              {cfg.label}
-                            </span>
-                          </td>
-
-                          <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                            <span style={{
-                              fontSize: '0.875rem',
-                              fontWeight: 800,
-                              color: 'var(--text-primary)',
-                              fontVariantNumeric: 'tabular-nums',
-                              letterSpacing: '-0.01em'
-                            }}>
-                              {order.total}
-                            </span>
-                          </td>
-
-                          <td style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                            <button
-                              onClick={() => navigate('/sales/orders')}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 4,
-                                padding: '5px 12px',
-                                borderRadius: 8,
-                                background: 'var(--bg-primary)',
-                                border: '1px solid var(--border-light)',
-                                color: 'var(--text-primary)',
-                                fontSize: '0.74rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.18s ease'
-                              }}
-                              onMouseEnter={e => {
-                                e.currentTarget.style.borderColor = 'var(--green)';
-                                e.currentTarget.style.color = 'var(--green)';
-                                e.currentTarget.style.background = 'rgba(34, 197, 94, 0.06)';
-                                e.currentTarget.style.transform = 'translateX(2px)';
-                              }}
-                              onMouseLeave={e => {
-                                e.currentTarget.style.borderColor = 'var(--border-light)';
-                                e.currentTarget.style.color = 'var(--text-primary)';
-                                e.currentTarget.style.background = 'var(--bg-primary)';
-                                e.currentTarget.style.transform = 'translateX(0)';
-                              }}
-                            >
-                              <span>Manage</span>
-                              
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           <div style={{
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-light)',
@@ -1306,6 +969,35 @@ const SalesDashboard = () => {
                 ) : (
                   <ChevronRightIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
                 )}
+              </div>
+
+              <div
+                onClick={() => navigate('/sales/recent-orders')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-light)',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s ease'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Recent Customer Orders
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      View real-time customer orders & statuses
+                    </div>
+                  </div>
+                </div>
+                <ChevronRightIcon sx={{ fontSize: 16, color: 'var(--text-muted)' }} />
               </div>
 
               <div

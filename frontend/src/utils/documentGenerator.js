@@ -96,7 +96,7 @@ export const generateReceiptPDF = (order) => {
   doc.text(formatDate(order.createdAt || order.dateOrdered || order.orderDate || order.date), 52, currentY + 19);
 
   doc.setTextColor(71, 85, 105);
-  doc.text('Fulfillment Type:', 18, currentY + 25);
+  doc.text('Delivery Method:', 18, currentY + 25);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(isPickup ? 124 : 30, isPickup ? 58 : 58, isPickup ? 237 : 138);
   doc.text(isPickup ? 'Store / Plant Pick-up' : 'Jobsite Fleet Delivery', 52, currentY + 25);
@@ -698,7 +698,7 @@ export const generateExpenseVoucherPDF = (expense) => {
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(71, 85, 105);
-  doc.text('DISBURSEMENT DATE:', col2X, infoY + 7);
+  doc.text('PAYMENT DATE:', col2X, infoY + 7);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(15, 23, 42);
@@ -707,7 +707,7 @@ export const generateExpenseVoucherPDF = (expense) => {
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(71, 85, 105);
-  doc.text('FISCAL STATUS:', col2X, infoY + 19);
+  doc.text('APPROVAL STATUS:', col2X, infoY + 19);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(22, 163, 74);
@@ -719,14 +719,14 @@ export const generateExpenseVoucherPDF = (expense) => {
       '1',
       voucherRef,
       expense.category || 'Operational',
-      expense.description || 'Disbursed company expense',
+      expense.description || 'Approved company expense',
       formatPHP(expenseAmount)
     ]
   ];
 
   autoTable(doc, {
     startY: 68,
-    head: [['#', 'Reference', 'Category', 'Description / Particulars', 'Amount (PHP)']],
+    head: [['#', 'Reference', 'Category', 'Description / Details', 'Amount (PHP)']],
     body: tableData,
     theme: 'grid',
     headStyles: {

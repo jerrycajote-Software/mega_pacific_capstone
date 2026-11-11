@@ -29,6 +29,7 @@ import AdminSettingsPage from './pages/admin/SettingsPage';
 import SalesLoginPage from './pages/sales/LoginPage';
 import SalesDashboard from './pages/sales/DashboardPage';
 import SalesOrders from './pages/sales/OrderManagement';
+import SalesRecentOrders from './pages/sales/RecentOrdersPage';
 import SalesPreOrderProducts from './pages/sales/PreOrderProductsPage';
 import SalesCustomerService from './pages/sales/CustomerService';
 import SalesReviews from './pages/sales/ReviewManagement';
@@ -290,6 +291,7 @@ const App = () => {
           <Route path="dashboard" element={<SalesDashboard />} />
           <Route path="pre-order-products" element={<SalesPreOrderProducts />} />
           <Route path="orders" element={<SalesOrders />} />
+          <Route path="recent-orders" element={<SalesRecentOrders />} />
           <Route path="inventory" element={<Navigate to="/sales/pre-order-products" replace />} />
           <Route path="reviews" element={<SalesReviews />} />
           <Route path="customer-service" element={<SalesCustomerService />} />
