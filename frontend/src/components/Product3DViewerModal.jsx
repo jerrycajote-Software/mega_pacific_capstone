@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -12,10 +13,13 @@ import {
   CircularProgress,
   Stack,
 } from '@mui/material';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
+import * as THREE from 'three';
 import ConfigurableRoofModel from './ConfigurableRoofModel';
 import InternalStructureControlPanel from './InternalStructureControlPanel';
+import FloatingStructuralMemberInspector from './FloatingStructuralMemberInspector';
+import GuideHiddenObjectsAssistant from './GuideHiddenObjectsAssistant';
 import {
   AVAILABLE_3D_ROOF_MODELS,
   getCompatibleRoofModel,
@@ -50,6 +54,67 @@ const CanvasLoader = () => (
   </Html>
 );
 
+const TouchpadControlsHandler = ({ orbitControlsRef, enabled = true }) => {
+  const { gl, camera } = useThree();
+
+  useEffect(() => {
+    const domElement = gl?.domElement;
+    if (!domElement || !enabled) return;
+
+    const handleWheel = (e) => {
+      const controls = orbitControlsRef?.current;
+      if (!controls) return;
+
+      // Intercept wheel on canvas so it does not trigger full-browser page zoom or scrolling
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Case 1: Touchpad pinch-to-zoom (ctrlKey is true for trackpad pinches on Windows & macOS)
+      if (e.ctrlKey) {
+        const zoomDelta = e.deltaY * 0.005;
+        const factor = Math.max(0.85, Math.min(1.15, 1 + zoomDelta));
+        const target = controls.target;
+        const offset = camera.position.clone().sub(target);
+
+        const newDist = offset.length() * factor;
+        const minDist = controls.minDistance || 0.35;
+        const maxDist = controls.maxDistance || 24;
+
+        if (newDist >= minDist && newDist <= maxDist) {
+          offset.multiplyScalar(factor);
+          camera.position.copy(target).add(offset);
+          controls.update();
+        }
+        return;
+      }
+
+      // Case 2: Touchpad two-finger swipe to rotate 3D view (ctrlKey is false)
+      const rotSpeedX = 0.0035;
+      const rotSpeedY = 0.0035;
+
+      const currentAzimuth = controls.getAzimuthalAngle();
+      const currentPolar = controls.getPolarAngle();
+
+      const newAzimuth = currentAzimuth - e.deltaX * rotSpeedX;
+      const maxPolar = controls.maxPolarAngle || Math.PI / 2 - 0.05;
+      const minPolar = controls.minPolarAngle || 0.05;
+      const newPolar = Math.max(minPolar, Math.min(maxPolar, currentPolar + e.deltaY * rotSpeedY));
+
+      controls.setAzimuthalAngle(newAzimuth);
+      controls.setPolarAngle(newPolar);
+      controls.update();
+    };
+
+    domElement.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      domElement.removeEventListener('wheel', handleWheel);
+    };
+  }, [gl, camera, orbitControlsRef, enabled]);
+
+  return null;
+};
+
 const Product3DViewerModal = ({
   open,
   onClose,
@@ -61,8 +126,12 @@ const Product3DViewerModal = ({
   initialColor = 'Marshall Dark Gray',
   initialLength = 3.8,
   initialQuantity = 10,
+  initialHouseModelId = null,
   onApplyChanges,
+  onProceedToOrder,
+  onNavigateToProduct,
 }) => {
+  const navigate = useNavigate();
   const isMobile = useIsMobileBrowser();
   const [confirmedMobileProceed, setConfirmedMobileProceed] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(true);
@@ -77,6 +146,9 @@ const Product3DViewerModal = ({
   const [explodeFactor, setExplodeFactor] = useState(0);
   const [xraySheets, setXraySheets] = useState(false);
   const [selectedMeshName, setSelectedMeshName] = useState(null);
+  const [touchpadControlsEnabled, setTouchpadControlsEnabled] = useState(true);
+  const [isInspectEdgeActive, setIsInspectEdgeActive] = useState(false);
+  const [inspectEdgeTrigger, setInspectEdgeTrigger] = useState(0);
 
   const colorList = useMemo(() => {
     if (availableColors && availableColors.length > 0) {
@@ -123,9 +195,18 @@ const Product3DViewerModal = ({
           );
         }
       }
+      let targetLength = parseFloat(initialLength) || 3.8;
+      let targetQty = Math.max(1, parseInt(initialQuantity, 10) || 1);
+      if (initialHouseModelId) {
+        const modelPreset = AVAILABLE_3D_ROOF_MODELS.find((m) => m.id === initialHouseModelId);
+        if (modelPreset) {
+          targetLength = modelPreset.recommendedLength;
+          targetQty = modelPreset.totalSheets;
+        }
+      }
       setCurrentColor(targetColor);
-      setCurrentQty(Math.max(1, parseInt(initialQuantity, 10) || 1));
-      setCurrentLength(parseFloat(initialLength) || 3.8);
+      setCurrentQty(targetQty);
+      setCurrentLength(targetLength);
       setViewFullRoof(false);
       setConfirmedMobileProceed(false);
       setIsFullscreen(true);
@@ -135,8 +216,10 @@ const Product3DViewerModal = ({
       setXraySheets(false);
       setSelectedMeshName(null);
       setShowSubstructure(true);
+      setIsInspectEdgeActive(false);
+      setInspectEdgeTrigger(0);
     }
-  }, [open, initialColor, initialQuantity, initialLength, selectedOption, coilInventory, colorList]);
+  }, [open, initialColor, initialQuantity, initialLength, initialHouseModelId, selectedOption, coilInventory, colorList]);
 
   const compatibility = getCompatibleRoofModel(currentLength, product?.name);
   const isProductSupported = compatibility.isProfileSupported;
@@ -254,6 +337,14 @@ const Product3DViewerModal = ({
     }
   };
 
+  const handleRotateCameraStep = (deltaDegrees) => {
+    if (!orbitControlsRef.current) return;
+    const controls = orbitControlsRef.current;
+    const rad = (deltaDegrees * Math.PI) / 180;
+    controls.setAzimuthalAngle(controls.getAzimuthalAngle() + rad);
+    controls.update();
+  };
+
   const handleSetCameraView = (viewType) => {
     if (!orbitControlsRef.current) return;
     const controls = orbitControlsRef.current;
@@ -264,19 +355,53 @@ const Product3DViewerModal = ({
     const [defX, defY, defZ] = matchedModel?.cameraDefaultPos ?? [5.6, 3.8, 5.6];
 
     if (viewType === 'default') {
+      setIsInspectEdgeActive(false);
       camera.position.set(defX, defY, defZ);
       controls.target.set(0, targetY, 0);
     } else if (viewType === 'top') {
-      camera.position.set(0, defY + 5.2, 1.4);
-      controls.target.set(0, targetY, 0);
+      setIsInspectEdgeActive(false);
+      if (matchedModel?.roofTopCameraPos && matchedModel?.roofTopTarget) {
+        camera.position.set(...matchedModel.roofTopCameraPos);
+        controls.target.set(...matchedModel.roofTopTarget);
+      } else {
+        camera.position.set(0, defY + 5.2, 1.4);
+        controls.target.set(0, targetY, 0);
+      }
     } else if (viewType === 'front') {
+      setIsInspectEdgeActive(false);
       camera.position.set(0, defY, defZ + 2.2);
       controls.target.set(0, targetY, 0);
     } else if (viewType === 'edge') {
-      const halfSpanZ = (matchedModel?.recommendedLength || 3.8) * 0.92;
-      camera.position.set(-3.54, targetY + 0.55, halfSpanZ + 0.65);
-      controls.target.set(-3.54, targetY + 0.56, halfSpanZ);
+      setIsInspectEdgeActive(true);
+      setInspectEdgeTrigger((prev) => prev + 1);
+      let targetPos = matchedModel?.sheetEdgeTarget;
+      let cameraPos = matchedModel?.sheetEdgeCameraPos;
+
+      // Dynamic fallback via Three.js scene object bounding box if not explicitly in registry
+      if (!targetPos && controls.object?.parent) {
+        let sceneRoot = controls.object.parent;
+        while (sceneRoot.parent) sceneRoot = sceneRoot.parent;
+        const sheetMesh = sceneRoot.getObjectByName('RoofSheet_01') || sceneRoot.getObjectByName('Hermosa_Tile_01');
+        if (sheetMesh) {
+          const box = new THREE.Box3().setFromObject(sheetMesh);
+          const midX = (box.min.x + box.max.x) / 2;
+          const eaveY = box.min.y;
+          const eaveZ = box.max.z;
+          targetPos = [midX, eaveY + 0.01, eaveZ];
+          cameraPos = [midX, eaveY - 0.02, eaveZ + 0.72];
+        }
+      }
+
+      if (targetPos && cameraPos) {
+        camera.position.set(cameraPos[0], cameraPos[1], cameraPos[2]);
+        controls.target.set(targetPos[0], targetPos[1], targetPos[2]);
+      } else {
+        const halfSpanZ = (matchedModel?.recommendedLength || 3.8) * 0.92;
+        camera.position.set(-3.54, targetY + 0.55, halfSpanZ + 0.65);
+        controls.target.set(-3.54, targetY + 0.56, halfSpanZ);
+      }
     } else if (viewType === 'internal') {
+      setIsInspectEdgeActive(false);
       setShowSubstructure(true);
       setLayerVisibility((prev) => ({
         ...prev,
@@ -285,14 +410,20 @@ const Product3DViewerModal = ({
         top_plate: true,
         base_house: false,
       }));
-      camera.position.set(3.2, targetY + 0.25, 2.8);
-      controls.target.set(0, targetY + 1.35, 0);
+      if (matchedModel?.internalTrussCameraPos && matchedModel?.internalTrussTarget) {
+        camera.position.set(...matchedModel.internalTrussCameraPos);
+        controls.target.set(...matchedModel.internalTrussTarget);
+      } else {
+        camera.position.set(3.2, targetY + 0.25, 2.8);
+        controls.target.set(0, targetY + 1.35, 0);
+      }
     }
     controls.update();
   };
 
   const handleSelectHouseModelTier = (houseModel) => {
     if (!houseModel) return;
+    setIsInspectEdgeActive(false);
     setCurrentLength(houseModel.recommendedLength);
     setSelectedMeshName(null);
     if (viewFullRoof) {
@@ -317,6 +448,46 @@ const Product3DViewerModal = ({
         color: currentColor,
         length: currentLength,
         thickness: currentThickness,
+      });
+    }
+    onClose();
+  };
+
+  const handleNavigateToProductPage = () => {
+    const customizedConfig = {
+      selectedColor: currentColor,
+      selectedThickness: currentThickness,
+      selectedLength: currentLength,
+      selectedQuantity: effectiveSheetQty,
+      quantity: effectiveSheetQty,
+      color: currentColor,
+      thickness: currentThickness,
+      length: currentLength,
+    };
+
+    if (onNavigateToProduct) {
+      onNavigateToProduct(product, customizedConfig);
+    } else if (product?.id) {
+      navigate(`/product/${product.id}`, {
+        state: customizedConfig,
+      });
+    } else {
+      navigate('/products');
+    }
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleProceedToOrderNow = () => {
+    if (onProceedToOrder) {
+      onProceedToOrder({
+        product,
+        quantity: currentQty,
+        color: currentColor,
+        length: currentLength,
+        thickness: currentThickness,
+        houseModel: matchedModel,
       });
     }
     onClose();
@@ -715,6 +886,11 @@ const Product3DViewerModal = ({
                 minDistance={0.35}
                 maxDistance={24}
               />
+
+              <TouchpadControlsHandler
+                orbitControlsRef={orbitControlsRef}
+                enabled={touchpadControlsEnabled}
+              />
             </Canvas>
 
             {/* In-Canvas Floating Order Coverage HUD */}
@@ -777,7 +953,7 @@ const Product3DViewerModal = ({
                   </Button>
                 </Box>
                 <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.6, fontSize: '0.68rem' }}>
-                  Rotate: Left-click drag • Zoom: Scroll wheel
+                  Rotate: Drag or 2-finger touchpad swipe • Zoom: Scroll wheel or pinch
                 </Typography>
               </Paper>
             </Box>
@@ -896,7 +1072,7 @@ const Product3DViewerModal = ({
                 </Button>
               </Box>
 
-              {/* Zoom Buttons */}
+              {/* Camera Rotation & Zoom Controls (Optimized for Touchpad & Mouse) */}
               <Box
                 sx={{
                   display: 'flex',
@@ -907,6 +1083,26 @@ const Product3DViewerModal = ({
                   backdropFilter: 'blur(8px)',
                 }}
               >
+                <Tooltip title="Rotate Left 30°" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRotateCameraStep(-30)}
+                    aria-label="Rotate camera left"
+                    sx={{ color: '#e2e8f0', p: 0.6 }}
+                  >
+                    <i className="fi fi-rr-undo" style={{ fontSize: '12px' }}></i>
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Rotate Right 30°" arrow>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRotateCameraStep(30)}
+                    aria-label="Rotate camera right"
+                    sx={{ color: '#e2e8f0', p: 0.6 }}
+                  >
+                    <i className="fi fi-rr-redo" style={{ fontSize: '12px' }}></i>
+                  </IconButton>
+                </Tooltip>
                 <Tooltip title="Zoom In" arrow>
                   <IconButton
                     size="small"
@@ -928,6 +1124,40 @@ const Product3DViewerModal = ({
                   </IconButton>
                 </Tooltip>
               </Box>
+
+              {/* Laptop Touchpad Controls Toggle */}
+              <Tooltip
+                title={
+                  touchpadControlsEnabled
+                    ? "Laptop Touchpad Mode is ON: Swipe 2 fingers to rotate • Pinch to zoom (Click to switch to Mouse Wheel)"
+                    : "Mouse Wheel Zoom is ON (Click to switch to Laptop Touchpad Mode)"
+                }
+                arrow
+              >
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setTouchpadControlsEnabled((prev) => !prev)}
+                  sx={{
+                    bgcolor: touchpadControlsEnabled ? 'rgba(56, 189, 248, 0.2)' : 'rgba(15, 23, 42, 0.85)',
+                    borderColor: touchpadControlsEnabled ? '#38bdf8' : 'rgba(255, 255, 255, 0.15)',
+                    color: touchpadControlsEnabled ? '#38bdf8' : '#e2e8f0',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    borderRadius: 2,
+                    px: 1.2,
+                    py: 0.5,
+                    textTransform: 'none',
+                    backdropFilter: 'blur(8px)',
+                    '&:hover': {
+                      bgcolor: touchpadControlsEnabled ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.98)',
+                      borderColor: '#38bdf8',
+                    },
+                  }}
+                >
+                  {touchpadControlsEnabled ? 'Touchpad: On' : 'Touchpad: Off'}
+                </Button>
+              </Tooltip>
 
               {/* Framing Toggle */}
               <Button
@@ -974,6 +1204,27 @@ const Product3DViewerModal = ({
               sheetsPerSlope={matchedModel?.sheetsPerSlope || 8}
               currentLength={currentLength}
               onFocusInternalCamera={() => handleSetCameraView('internal')}
+            />
+
+            {/* Interactive 3D Guide for Hidden Objects */}
+            <GuideHiddenObjectsAssistant
+              layerVisibility={layerVisibility}
+              showSubstructure={showSubstructure}
+              onToggleLayer={handleToggleLayerVisibility}
+              onRestoreAllLayers={handleRestoreAllLayers}
+              onToggleSubstructure={() => setShowSubstructure((prev) => !prev)}
+              isInspectEdgeActive={isInspectEdgeActive}
+              inspectEdgeTrigger={inspectEdgeTrigger}
+            />
+
+            {/* Floating 3D Structural Member Inspector with 10s Timer & Hover-to-Hold */}
+            <FloatingStructuralMemberInspector
+              selectedMeshName={selectedMeshName}
+              onClear={handleClearSelectedMesh}
+              currentThickness={currentThickness}
+              currentColor={currentColor}
+              sheetsPerSlope={matchedModel?.sheetsPerSlope || 8}
+              currentLength={currentLength}
             />
           </>
         )}
@@ -1167,20 +1418,85 @@ const Product3DViewerModal = ({
 
           {/* Action Buttons */}
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleApplyChangesToOrder}
-              sx={{
-                fontWeight: 800,
-                borderRadius: 2,
-                px: 3,
-                textTransform: 'none',
-                boxShadow: '0 4px 16px rgba(79, 119, 45, 0.4)',
-              }}
-            >
-              Apply Changes to Order
-            </Button>
+            {onApplyChanges && onProceedToOrder && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={handleApplyChangesToOrder}
+                sx={{
+                  fontWeight: 700,
+                  borderRadius: 2,
+                  px: 2.5,
+                  textTransform: 'none',
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  color: '#ffffff',
+                  '&:hover': {
+                    borderColor: 'rgba(255,255,255,0.4)',
+                    bgcolor: 'rgba(255,255,255,0.06)',
+                  },
+                }}
+              >
+                Apply Changes
+              </Button>
+            )}
+            {onApplyChanges && !onProceedToOrder && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleApplyChangesToOrder}
+                sx={{
+                  fontWeight: 800,
+                  borderRadius: 2,
+                  px: 3,
+                  textTransform: 'none',
+                  boxShadow: '0 4px 16px rgba(79, 119, 45, 0.4)',
+                }}
+              >
+                Apply Changes to Order
+              </Button>
+            )}
+            {/* Link to Product Page Button (Placed before Proceed to Order) */}
+            {product?.id && !onApplyChanges && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={handleNavigateToProductPage}
+                sx={{
+                  fontWeight: 700,
+                  borderRadius: 2,
+                  px: 2.5,
+                  py: 0.85,
+                  textTransform: 'none',
+                  borderColor: 'rgba(255, 255, 255, 0.25)',
+                  color: '#ffffff',
+                  fontSize: '0.85rem',
+                  whiteSpace: 'nowrap',
+                  '&:hover': {
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    bgcolor: 'rgba(255, 255, 255, 0.08)',
+                  },
+                }}
+              >
+                View Product Page
+              </Button>
+            )}
+            {onProceedToOrder && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleProceedToOrderNow}
+                sx={{
+                  fontWeight: 800,
+                  borderRadius: 2,
+                  px: 3,
+                  py: 0.85,
+                  textTransform: 'none',
+                  boxShadow: '0 4px 16px rgba(79, 119, 45, 0.4)',
+                }}
+              >
+                Proceed to Order
+              </Button>
+            )}
           </Stack>
         </Box>
       )}

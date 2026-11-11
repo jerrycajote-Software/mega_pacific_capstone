@@ -70,57 +70,6 @@ const InternalStructureControlPanel = ({
           maxWidth: 340,
         }}
       >
-        {inspectedPart && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 1.5,
-              borderRadius: 2.5,
-              bgcolor: 'rgba(15, 23, 42, 0.92)',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              backdropFilter: 'blur(10px)',
-              color: '#f8fafc',
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-              <Chip
-                label={inspectedPart.layerLabel}
-                size="small"
-                sx={{
-                  height: 20,
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  bgcolor: 'rgba(56, 189, 248, 0.16)',
-                  color: inspectedPart.badgeColor || '#38bdf8',
-                }}
-              />
-              <Button
-                size="small"
-                onClick={onClearSelectedMesh}
-                sx={{
-                  minWidth: 0,
-                  px: 0.8,
-                  py: 0.1,
-                  fontSize: '0.68rem',
-                  color: '#94a3b8',
-                  textTransform: 'none',
-                }}
-              >
-                Clear Selection
-              </Button>
-            </Box>
-            <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#ffffff', lineHeight: 1.3 }}>
-              {inspectedPart.title}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#4ade80', display: 'block', fontWeight: 700, mt: 0.3 }}>
-              {inspectedPart.dimensions}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#cbd5e1', display: 'block', mt: 0.5, lineHeight: 1.4 }}>
-              {inspectedPart.role}
-            </Typography>
-          </Paper>
-        )}
-
         <Button
           variant="contained"
           onClick={onToggleOpen}
@@ -138,11 +87,11 @@ const InternalStructureControlPanel = ({
             boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
             '&:hover': {
               bgcolor: 'rgba(30, 41, 59, 0.98)',
-              borderColor: '#38bdf8',
+              borderColor: 'rgba(56, 189, 248, 0.7)',
             },
           }}
         >
-          Open Internal Roof Structure Explorer
+          Explore Internal Roof Structure
         </Button>
       </Box>
     );
@@ -376,55 +325,18 @@ const InternalStructureControlPanel = ({
         })}
       </Stack>
 
-      {/* Direct 3D Click Part Inspector */}
+      {/* 3D Part Inspector Hint */}
       <Box
         sx={{
           p: 1.25,
           borderRadius: 2,
-          bgcolor: inspectedPart ? 'rgba(22, 101, 52, 0.22)' : 'rgba(30, 41, 59, 0.55)',
-          border: '1px solid',
-          borderColor: inspectedPart ? 'rgba(74, 222, 128, 0.4)' : 'rgba(255, 255, 255, 0.08)',
+          bgcolor: 'rgba(30, 41, 59, 0.55)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
         }}
       >
-        {inspectedPart ? (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.4 }}>
-              <Typography variant="caption" sx={{ color: '#4ade80', fontWeight: 800, fontSize: '0.66rem' }}>
-                SELECTED 3D STRUCTURAL MEMBER
-              </Typography>
-              <Button
-                size="small"
-                onClick={onClearSelectedMesh}
-                sx={{
-                  minWidth: 0,
-                  px: 0.6,
-                  py: 0,
-                  fontSize: '0.66rem',
-                  color: '#94a3b8',
-                  textTransform: 'none',
-                }}
-              >
-                Clear
-              </Button>
-            </Box>
-            <Typography variant="body2" fontWeight={800} sx={{ color: '#ffffff', lineHeight: 1.3 }}>
-              {inspectedPart.title}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#86efac', display: 'block', fontWeight: 700, mt: 0.3 }}>
-              Specs: {inspectedPart.dimensions}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#38bdf8', display: 'block', fontWeight: 600 }}>
-              Material: {inspectedPart.material}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#cbd5e1', display: 'block', mt: 0.5, lineHeight: 1.4 }}>
-              {inspectedPart.role}
-            </Typography>
-          </>
-        ) : (
-          <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', lineHeight: 1.45 }}>
-            Tip: Click directly on any 3D truss rafter, king post, purlin, underlayment, top plate, or roof sheet in the 3D viewport to inspect its structural specifications.
-          </Typography>
-        )}
+        <Typography variant="caption" sx={{ color: '#94a3b8', display: 'block', lineHeight: 1.45 }}>
+          Tip: Click directly on any 3D truss rafter, king post, purlin, underlayment, or roof sheet in the 3D viewport to inspect its floating specifications.
+        </Typography>
       </Box>
     </Paper>
   );
