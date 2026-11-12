@@ -34,12 +34,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { usePreventBackToLogin } from '../../hooks/usePreventBackToLogin';
+import { getStoredAuthToken } from '../../context/AuthContext';
 import {
   CustomLogisticReadyToShipIcon,
   CustomLogisticOutForDeliveryIcon,
   CustomLogisticCompletedTodayIcon,
   CustomLogisticStorePickupIcon,
-  CustomChevronRightIcon as ChevronRightIcon,
   CustomLocationOnIcon,
   CustomLocalShippingIcon
 } from '../../components/icons';
@@ -94,7 +94,8 @@ const LogisticDashboardPage = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('appToken');
+      const token = getStoredAuthToken();
+      if (!token) return;
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/logistic/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -148,67 +149,55 @@ const LogisticDashboardPage = () => {
 
   const kpis = [
     {
-      label: 'Orders Ready to Ship',
       value: data.kpi.readyToShip || 0,
-      badge: 'Action Required',
-      sub: 'Awaiting delivery pickup',
+      badge: 'Action Needed',
+      sub: 'Waiting for driver pickup',
       color: '#F59E0B',
-      bg: 'rgba(245, 158, 11, 0.08)',
+      bg: 'rgba(245, 158, 11, 0.1)',
       borderColor: 'rgba(245, 158, 11, 0.25)',
-      badgeBg: 'rgba(245, 158, 11, 0.1)',
-      badgeColor: '#d97706',
-      badgeBorder: 'rgba(245, 158, 11, 0.25)',
-      glowShadow: 'rgba(245, 158, 11, 0.22)',
-      lightGlow: 'rgba(245, 158, 11, 0.04)',
-      darkGlow: 'rgba(245, 158, 11, 0.08)',
+      badgeBg: 'rgba(245, 158, 11, 0.12)',
+      badgeColor: '#b45309',
+      darkBadgeColor: '#fbbf24',
+      badgeBorder: 'rgba(245, 158, 11, 0.28)',
       IconComponent: CustomLogisticReadyToShipIcon
     },
     {
-      label: 'Out for Delivery',
       value: data.kpi.outForDelivery || 0,
-      badge: 'In Transit',
-      sub: 'On the way to customer',
+      badge: 'On the Way',
+      sub: 'Delivering to the customer',
       color: '#2563EB',
-      bg: 'rgba(37, 99, 235, 0.08)',
+      bg: 'rgba(37, 99, 235, 0.1)',
       borderColor: 'rgba(37, 99, 235, 0.25)',
-      badgeBg: 'rgba(37, 99, 235, 0.1)',
-      badgeColor: '#2563eb',
-      badgeBorder: 'rgba(37, 99, 235, 0.25)',
-      glowShadow: 'rgba(37, 99, 235, 0.22)',
-      lightGlow: 'rgba(37, 99, 235, 0.04)',
-      darkGlow: 'rgba(37, 99, 235, 0.08)',
+      badgeBg: 'rgba(37, 99, 235, 0.12)',
+      badgeColor: '#1d4ed8',
+      darkBadgeColor: '#60a5fa',
+      badgeBorder: 'rgba(37, 99, 235, 0.28)',
       IconComponent: CustomLogisticOutForDeliveryIcon
     },
     {
-      label: 'Completed Today',
       value: data.kpi.completedToday || 0,
-      badge: 'Fulfillment Goal',
-      sub: 'Successfully received',
+      badge: 'Daily Goal',
+      sub: 'Received by customers today',
       color: '#10B981',
-      bg: 'rgba(16, 185, 129, 0.08)',
+      bg: 'rgba(16, 185, 129, 0.1)',
       borderColor: 'rgba(16, 185, 129, 0.25)',
-      badgeBg: 'rgba(16, 185, 129, 0.1)',
-      badgeColor: '#059669',
-      badgeBorder: 'rgba(16, 185, 129, 0.25)',
-      glowShadow: 'rgba(16, 185, 129, 0.22)',
-      lightGlow: 'rgba(16, 185, 129, 0.04)',
-      darkGlow: 'rgba(16, 185, 129, 0.08)',
+      badgeBg: 'rgba(16, 185, 129, 0.12)',
+      badgeColor: '#047857',
+      darkBadgeColor: '#34d399',
+      badgeBorder: 'rgba(16, 185, 129, 0.28)',
       IconComponent: CustomLogisticCompletedTodayIcon
     },
     {
-      label: 'Store Counter Pickups',
       value: data.kpi.pendingPickups || 0,
-      badge: 'Warehouse Dock',
-      sub: 'Ready for customer pickup',
+      badge: 'Pickup Counter',
+      sub: 'Waiting at the store counter',
       color: '#8B5CF6',
-      bg: 'rgba(139, 92, 246, 0.08)',
+      bg: 'rgba(139, 92, 246, 0.1)',
       borderColor: 'rgba(139, 92, 246, 0.25)',
-      badgeBg: 'rgba(139, 92, 246, 0.1)',
-      badgeColor: '#7c3aed',
-      badgeBorder: 'rgba(139, 92, 246, 0.25)',
-      glowShadow: 'rgba(139, 92, 246, 0.22)',
-      lightGlow: 'rgba(139, 92, 246, 0.04)',
-      darkGlow: 'rgba(139, 92, 246, 0.08)',
+      badgeBg: 'rgba(139, 92, 246, 0.12)',
+      badgeColor: '#6d28d9',
+      darkBadgeColor: '#a78bfa',
+      badgeBorder: 'rgba(139, 92, 246, 0.28)',
       IconComponent: CustomLogisticStorePickupIcon
     }
   ];
@@ -217,18 +206,24 @@ const LogisticDashboardPage = () => {
     <Box sx={{ p: { xs: 2.5, md: 4 }, animation: 'fadeIn 0.4s ease-in-out' }}>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 4 }}>
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em' }}>
               Logistics Overview
             </Typography>
             <Chip
-              label="Fleet Active • On-Time: 98.8%"
+              label={`Deliveries Active • ${data.kpi.onTimeRate || '98.8%'} On Time`}
               size="small"
-              sx={{ bgcolor: 'rgba(16, 185, 129, 0.12)', color: '#047857', fontWeight: 700, fontSize: '0.7rem' }}
+              sx={{
+                bgcolor: 'rgba(16, 185, 129, 0.12)',
+                color: (theme) => theme.palette.mode === 'dark' ? '#34d399' : '#047857',
+                fontWeight: 700,
+                fontSize: '0.72rem',
+                borderRadius: '8px'
+              }}
             />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            Track deliveries, delivery routes, and store pickups in real time.
+            Track customer deliveries, active routes, and store pickups.
           </Typography>
         </Box>
 
@@ -238,8 +233,7 @@ const LogisticDashboardPage = () => {
             color="primary"
             size="small"
             onClick={() => navigate('/logistic/deliveries')}
-            endIcon={<ChevronRightIcon sx={{ fontSize: 16 }} />}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, px: 2.5 }}
+            sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 700, px: 2.5, py: 0.9 }}
           >
             Manage Deliveries
           </Button>
@@ -254,22 +248,20 @@ const LogisticDashboardPage = () => {
               <Paper
                 elevation={0}
                 sx={{
-                  p: { xs: 2.5, md: 3 },
-                  borderRadius: 4,
+                  p: 2.5,
+                  borderRadius: '16px',
                   border: '1px solid',
                   borderColor: 'divider',
                   bgcolor: 'background.paper',
-                  background: theme => theme.palette.mode === 'dark'
-                    ? `linear-gradient(145deg, ${kpi.darkGlow} 0%, rgba(15, 23, 42, 0.85) 100%)`
-                    : `linear-gradient(145deg, ${kpi.lightGlow} 0%, #ffffff 100%)`,
                   position: 'relative',
                   overflow: 'hidden',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 4px 20px -8px rgba(0,0,0,0.05)',
+                  gap: 1.75,
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                  boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
                   '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -277,87 +269,86 @@ const LogisticDashboardPage = () => {
                     left: 0,
                     right: 0,
                     height: '3px',
-                    background: `linear-gradient(90deg, ${kpi.color} 0%, transparent 100%)`,
-                    opacity: 0.9
+                    bgcolor: kpi.color
                   },
                   '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: `0 16px 32px -10px ${kpi.glowShadow}, 0 4px 12px rgba(0,0,0,0.04)`,
-                    borderColor: kpi.color,
-                    '& .mpi-log-icon-wrap': {
-                      transform: 'scale(1.08) rotate(3deg)',
-                      borderColor: kpi.color,
-                      boxShadow: `0 8px 18px -4px ${kpi.glowShadow}`
-                    }
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 10px 24px -8px rgba(15, 23, 42, 0.12)',
+                    borderColor: kpi.color
                   }
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5 }}>
                   <Box
-                    className="mpi-log-icon-wrap"
                     sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 3,
+                      width: 44,
+                      height: 44,
+                      borderRadius: '12px',
                       bgcolor: kpi.bg,
-                      border: '1.5px solid',
+                      border: '1px solid',
                       borderColor: kpi.borderColor,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      transition: 'all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      boxShadow: `0 4px 12px ${kpi.glowShadow}`
+                      flexShrink: 0
                     }}
                   >
-                    <IconComponent size={28} />
+                    <IconComponent size={24} />
                   </Box>
                   <Chip
                     label={kpi.badge}
                     size="small"
                     sx={{
                       bgcolor: kpi.badgeBg,
-                      color: kpi.badgeColor,
+                      color: (theme) => theme.palette.mode === 'dark' ? kpi.darkBadgeColor : kpi.badgeColor,
                       border: '1px solid',
                       borderColor: kpi.badgeBorder,
-                      fontWeight: 800,
-                      fontSize: '0.68rem',
-                      borderRadius: 2
+                      fontWeight: 700,
+                      fontSize: '0.7rem',
+                      height: 24,
+                      borderRadius: '8px'
                     }}
                   />
                 </Box>
 
-                <div>
-                  <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ mb: 0.5 }}>
-                    {kpi.label}
-                  </Typography>
-                  <Typography
-                    variant="h3"
-                    fontWeight={900}
+                <Typography
+                  variant="h3"
+                  fontWeight={800}
+                  sx={{
+                    color: 'text.primary',
+                    fontSize: { xs: '2rem', md: '2.25rem' },
+                    letterSpacing: '-0.025em',
+                    fontVariantNumeric: 'tabular-nums',
+                    lineHeight: 1.1
+                  }}
+                >
+                  {kpi.value}
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    pt: 1.5,
+                    mt: 'auto',
+                    borderTop: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                >
+                  <Box
                     sx={{
-                      color: 'text.primary',
-                      letterSpacing: '-0.03em',
-                      fontVariantNumeric: 'tabular-nums',
-                      lineHeight: 1.1,
-                      mb: 1
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      bgcolor: kpi.color,
+                      flexShrink: 0
                     }}
-                  >
-                    {kpi.value}
+                  />
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: '0.76rem' }}>
+                    {kpi.sub}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        bgcolor: kpi.color,
-                        boxShadow: `0 0 6px ${kpi.color}`
-                      }}
-                    />
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                      {kpi.sub}
-                    </Typography>
-                  </Box>
-                </div>
+                </Box>
               </Paper>
             </Grid>
           );
@@ -579,7 +570,7 @@ const LogisticDashboardPage = () => {
                 }}
               >
                 <Tab label="All Deliveries" value="all" />
-                <Tab label="In Transit" value="transit" />
+                <Tab label="On the Way" value="transit" />
                 <Tab label="Processing" value="processing" />
                 <Tab label="Store Pick-ups" value="pickups" />
                 <Tab label="Completed" value="completed" />

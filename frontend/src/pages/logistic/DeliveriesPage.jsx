@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getStoredAuthToken } from '../../context/AuthContext';
 import {
   CustomLogisticsDetailsIcon,
   CustomSearchIcon as SearchIcon,
@@ -69,7 +70,8 @@ const DeliveriesPage = () => {
 
   const fetchOrders = async () => {
     try {
-      const token = localStorage.getItem('appToken');
+      const token = getStoredAuthToken();
+      if (!token) return;
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/logistic/orders`, {
         headers: { Authorization: `Bearer ${token}` }
