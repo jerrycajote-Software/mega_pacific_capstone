@@ -161,7 +161,9 @@ const RegisterPage = () => {
   const isFormValid = useMemo(() => {
     return (
       Boolean(firstName.trim()) &&
+      !/[0-9]/.test(firstName) &&
       Boolean(lastName.trim()) &&
+      !/[0-9]/.test(lastName) &&
       Boolean(email.trim()) &&
       Boolean(password) &&
       Boolean(confirmPassword) &&
@@ -188,6 +190,30 @@ const RegisterPage = () => {
     zipCode,
     allPasswordChecksPassed,
   ]);
+
+  const handleFirstNameChange = (e) => {
+    const sanitizedValue = e.target.value.replace(/[0-9]/g, '');
+    setFirstName(sanitizedValue);
+    clearFieldError('firstName');
+  };
+
+  const handleLastNameChange = (e) => {
+    const sanitizedValue = e.target.value.replace(/[0-9]/g, '');
+    setLastName(sanitizedValue);
+    clearFieldError('lastName');
+  };
+
+  const handleNameKeyDown = (e) => {
+    if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleNameBeforeInput = (e) => {
+    if (e.data && /[0-9]/.test(e.data)) {
+      e.preventDefault();
+    }
+  };
 
   const handleProvinceChange = (e) => {
     const selectedProvince = e.target.value;
@@ -216,8 +242,18 @@ const RegisterPage = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!firstName.trim()) errors.firstName = 'First name is required.';
-    if (!lastName.trim()) errors.lastName = 'Last name is required.';
+    if (!firstName.trim()) {
+      errors.firstName = 'First name is required.';
+    } else if (/[0-9]/.test(firstName)) {
+      errors.firstName = 'First name cannot contain numbers.';
+    }
+
+    if (!lastName.trim()) {
+      errors.lastName = 'Last name is required.';
+    } else if (/[0-9]/.test(lastName)) {
+      errors.lastName = 'Last name cannot contain numbers.';
+    }
+
     if (!email.trim()) {
       errors.email = 'Email address is required.';
     } else {
@@ -406,16 +442,15 @@ const RegisterPage = () => {
                   required
                   size="small"
                   value={firstName}
-                  onChange={(e) => {
-                    setFirstName(e.target.value);
-                    clearFieldError('firstName');
-                  }}
+                  onChange={handleFirstNameChange}
+                  onKeyDown={handleNameKeyDown}
                   error={!!fieldErrors.firstName}
                   helperText={fieldErrors.firstName}
                   slotProps={{
                     htmlInput: {
                       autoComplete: 'given-name',
                       autoCapitalize: 'words',
+                      onBeforeInput: handleNameBeforeInput,
                     },
                   }}
                   sx={fieldSx}
@@ -429,16 +464,15 @@ const RegisterPage = () => {
                   required
                   size="small"
                   value={lastName}
-                  onChange={(e) => {
-                    setLastName(e.target.value);
-                    clearFieldError('lastName');
-                  }}
+                  onChange={handleLastNameChange}
+                  onKeyDown={handleNameKeyDown}
                   error={!!fieldErrors.lastName}
                   helperText={fieldErrors.lastName}
                   slotProps={{
                     htmlInput: {
                       autoComplete: 'family-name',
                       autoCapitalize: 'words',
+                      onBeforeInput: handleNameBeforeInput,
                     },
                   }}
                   sx={fieldSx}

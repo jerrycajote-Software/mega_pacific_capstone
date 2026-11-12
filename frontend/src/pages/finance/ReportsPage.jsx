@@ -509,7 +509,7 @@ const ReportsPage = () => {
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2 }}>
-                      Category Disbursements Summary
+                      Category Expenses Summary
                     </Typography>
                     <Stack spacing={2}>
                       {reportData?.expensesByCategory?.map((cat, i) => (

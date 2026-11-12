@@ -28,7 +28,13 @@ const validateRegister = (req, res, next) => {
     });
   }
 
-  const { password, contactNumber } = body;
+  const { name, password, contactNumber } = body;
+  if (name && /[0-9]/.test(String(name))) {
+    return res.status(400).json({
+      error: 'Name cannot contain numbers.',
+    });
+  }
+
   const cleanContact = String(contactNumber || '').trim();
   if (!/^09[0-9]{9}$/.test(cleanContact)) {
     return res.status(400).json({

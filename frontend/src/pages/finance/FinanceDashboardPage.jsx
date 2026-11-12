@@ -719,7 +719,7 @@ const FinanceDashboardPage = () => {
                   Recent Financial Activity
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Audited record of latest disbursements and incoming orders
+                  Record of latest company expenses and customer orders
                 </Typography>
               </Box>
 
@@ -836,7 +836,7 @@ const FinanceDashboardPage = () => {
                 Expense Allocations
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Disbursements by functional department
+                Expenses by department
               </Typography>
             </Box>
 

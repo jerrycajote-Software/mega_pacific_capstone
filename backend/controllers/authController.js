@@ -8,6 +8,10 @@ const { generateOtp, verifyOtpMatch } = require("../utils/otpHelper");
 const register = async (req, res) => {
   const { name, email, password, contactNumber, address, city, province, zipCode } = req.body;
 
+  if (name && /[0-9]/.test(String(name))) {
+    return res.status(400).json({ error: 'Name cannot contain numbers.' });
+  }
+
   const emailCheck = validateRealisticEmail(email);
   if (!emailCheck.isValid) {
     return res.status(400).json({ error: emailCheck.error });

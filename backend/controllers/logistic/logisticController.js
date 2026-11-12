@@ -122,7 +122,7 @@ const getDashboardData = async (req, res) => {
       alerts.push({
         id: 'out-for-delivery',
         type: 'info',
-        title: 'Active In-Transit Fleet',
+        title: 'Active Deliveries',
         message: `${outForDelivery} order(s) currently with drivers on delivery routes.`,
         action: 'Monitor Live'
       });
@@ -132,7 +132,7 @@ const getDashboardData = async (req, res) => {
         id: 'pending-pickups',
         type: 'primary',
         title: 'Customer Store Pickups',
-        message: `${pendingPickups} order(s) staged at the pickup dock awaiting customer retrieval.`,
+        message: `${pendingPickups} order(s) ready at the pickup area awaiting customer pickup.`,
         action: 'Pickup Counter'
       });
     }
@@ -140,9 +140,9 @@ const getDashboardData = async (req, res) => {
       alerts.push({
         id: 'all-clear',
         type: 'success',
-        title: 'Dispatch Fleet On Schedule',
-        message: 'All scheduled shipments and store counter handoffs are up to date.',
-        action: 'Operations Nominal'
+        title: 'Deliveries On Schedule',
+        message: 'All scheduled deliveries and customer pickups are up to date.',
+        action: 'All On Track'
       });
     }
 
