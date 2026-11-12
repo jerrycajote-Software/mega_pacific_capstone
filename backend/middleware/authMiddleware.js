@@ -8,7 +8,13 @@ const verifyToken = async (req, res, next) => {
     return res.status(401).json({ error: "Access denied. No token provided." });
   }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader.split(" ")[1]?.trim();
+  if (!token || token === "null" || token === "undefined") {
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  }
+  if (token.split(".").length !== 3) {
+    return res.status(401).json({ error: "Invalid token format." });
+  }
   try {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {

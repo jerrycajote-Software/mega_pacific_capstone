@@ -11,6 +11,14 @@ export const parseJwt = (token) => {
   }
 };
 
+export const getStoredAuthToken = () => {
+  const stored = localStorage.getItem('appToken');
+  if (!stored || stored === 'null' || stored === 'undefined' || stored.split('.').length !== 3) {
+    return null;
+  }
+  return stored;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
@@ -25,13 +33,13 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   });
-  const [token, setToken] = useState(() => localStorage.getItem('appToken'));
+  const [token, setToken] = useState(() => getStoredAuthToken());
   const [loading, setLoading] = useState(false);
   const [suspendedModal, setSuspendedModal] = useState(false);
 
   const logout = useCallback(async () => {
     try {
-      const currentToken = localStorage.getItem('appToken');
+      const currentToken = getStoredAuthToken();
       if (currentToken) {
         const API_URL = import.meta.env.VITE_API_URL || '';
         await axios.post(`${API_URL}/api/auth/logout`, {}, {
@@ -41,6 +49,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error("Logout API failed", err);
     } finally {
+      delete axios.defaults.headers.common['Authorization'];
       localStorage.removeItem('appToken');
       localStorage.removeItem('appUser');
       localStorage.removeItem('mega_pacific_cart');

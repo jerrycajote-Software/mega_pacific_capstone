@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { getStoredAuthToken } from '../../context/AuthContext';
 import {
   CircularProgress,
   Dialog,
@@ -34,8 +35,8 @@ const CoilInventoryPage = () => {
   const [summary, setSummary] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('inventory'); 
-  const [viewMode, setViewMode] = useState('grouped'); 
+  const [activeTab, setActiveTab] = useState('inventory');
+  const [viewMode, setViewMode] = useState('grouped');
   const [selectedThickness, setSelectedThickness] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [searchColor, setSearchColor] = useState('');
@@ -69,7 +70,8 @@ const CoilInventoryPage = () => {
     isFetchingRef.current = true;
     try {
       if (showLoadingSpinner) setLoading(true);
-      const token = localStorage.getItem('appToken');
+      const token = getStoredAuthToken();
+      if (!token) return;
       const [coilsRes, summaryRes, logsRes] = await Promise.all([
         axios.get(`${API_URL}/api/logistic/coils`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_URL}/api/logistic/coils/summary`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -398,7 +400,7 @@ const CoilInventoryPage = () => {
             {/* <AddCircleIcon sx={{ fontSize: 18 }} /> */}
             <span>Add Coil / Thickness</span>
           </button>
-          </div>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
@@ -596,7 +598,7 @@ const CoilInventoryPage = () => {
               No coils matched the selected filter criteria.
             </div>
           ) : viewMode === 'grouped' ? (
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               {(selectedThickness === 'ALL' ? allThicknesses : [selectedThickness]).map(th => {
                 const groupCoils = filteredCoils.filter(c => c.thickness === th);
@@ -1115,7 +1117,7 @@ const CoilInventoryPage = () => {
         </Dialog>
       )}
 
-      {}
+      { }
       {addModalOpen && (
         <Dialog
           open={true}
@@ -1140,7 +1142,7 @@ const CoilInventoryPage = () => {
                 </div>
               )}
 
-              {}
+              { }
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>
                   Coil Thickness / Gauge *
@@ -1174,8 +1176,8 @@ const CoilInventoryPage = () => {
                     </div>
                   )}
                 </div>
-                
-                {}
+
+                { }
                 <div style={{ marginTop: 8 }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: 4, fontWeight: 600 }}>
                     Standard & Heavy Decking Presets:
@@ -1220,7 +1222,7 @@ const CoilInventoryPage = () => {
                 </div>
               </div>
 
-              {}
+              { }
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
                   <div>
@@ -1271,7 +1273,7 @@ const CoilInventoryPage = () => {
                   </div>
                 </div>
 
-                {}
+                { }
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
@@ -1346,7 +1348,7 @@ const CoilInventoryPage = () => {
                 </div>
               </div>
 
-              {}
+              { }
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
