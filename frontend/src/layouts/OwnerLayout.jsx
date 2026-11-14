@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomDashboardIcon,
+  CustomSalesTargetIcon,
   CustomNavToggleIcon,
   CustomLogoutIcon as LogoutIcon,
   CustomLightModeIcon as LightModeIcon,
@@ -13,8 +14,10 @@ import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
+// Primary sidebar tabs for the Owner overview and business sales quota management
 const navItems = [
-  { name: 'Dashboard',  path: '/owner/dashboard',  icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Dashboard',            path: '/owner/dashboard',   icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Business Sales Quota', path: '/owner/sales-quota', icon: <CustomSalesTargetIcon size={20} /> },
 ];
 
 const OwnerLayout = () => {

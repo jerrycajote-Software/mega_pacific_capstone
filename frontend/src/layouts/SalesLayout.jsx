@@ -7,6 +7,7 @@ import {
   CustomRecentOrdersIcon,
   CustomReviewsIcon,
   CustomSupportIcon,
+  CustomSalesTargetIcon,
   CustomNavToggleIcon,
   CustomLogoutIcon as LogoutIcon,
   CustomLightModeIcon as LightModeIcon,
@@ -20,13 +21,15 @@ import { Snackbar, Alert, Tooltip } from '@mui/material';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 import ErrorBoundary from '../components/ErrorBoundary';
 
+// Sales portal sidebar navigation items including the dedicated Business Sales Target view
 const navItems = [
-  { name: 'Dashboard',           path: '/sales/dashboard',          icon: <CustomDashboardIcon size={20} /> },
-  { name: 'Pre-Order Products',  path: '/sales/pre-order-products', icon: <CustomPreOrderIcon size={20} /> },
-  { name: 'Orders',              path: '/sales/orders',             icon: <CustomOrdersIcon size={20} /> },
-  { name: 'Recent Orders',       path: '/sales/recent-orders',      icon: <CustomRecentOrdersIcon size={20} /> },
-  { name: 'Reviews',             path: '/sales/reviews',            icon: <CustomReviewsIcon size={20} /> },
-  { name: 'Support',             path: '/sales/customer-service',   icon: <CustomSupportIcon size={20} /> },
+  { name: 'Dashboard',             path: '/sales/dashboard',          icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Pre-Order Products',    path: '/sales/pre-order-products', icon: <CustomPreOrderIcon size={20} /> },
+  { name: 'Orders',                path: '/sales/orders',             icon: <CustomOrdersIcon size={20} /> },
+  { name: 'Recent Orders',         path: '/sales/recent-orders',      icon: <CustomRecentOrdersIcon size={20} /> },
+  { name: 'Reviews',               path: '/sales/reviews',            icon: <CustomReviewsIcon size={20} /> },
+  { name: 'Support',               path: '/sales/customer-service',   icon: <CustomSupportIcon size={20} /> },
+  { name: 'Business Sales Target', path: '/sales/sales-target',       icon: <CustomSalesTargetIcon size={20} /> },
 ];
 
 const SalesLayout = () => {
@@ -38,6 +41,7 @@ const SalesLayout = () => {
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [notificationSeverity, setNotificationSeverity] = useState('warning');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
   });
@@ -61,7 +65,14 @@ const SalesLayout = () => {
     socket.emit('join_room', `user_${user.id}`);
 
     socket.on('new_device_login', (data) => {
+      setNotificationSeverity('warning');
       setNotification(data.message);
+    });
+
+    // Show a toast notification when the Owner updates and sends a new sales quota target
+    socket.on('sales_quota_updated', (payload) => {
+      setNotificationSeverity('success');
+      setNotification(payload?.message || 'The Business Owner has updated the Sales Quota Target.');
     });
 
     return () => socket.close();
@@ -120,9 +131,6 @@ const SalesLayout = () => {
 
         <div className="sidebar-header-box">
           <div className="sidebar-header-content">
-            {/* <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontWeight: 600 }}>
-              Sales
-            </div> */}
             <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user?.name || 'Sales'}
             </div>
@@ -244,7 +252,7 @@ const SalesLayout = () => {
         onClose={handleCloseNotification}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseNotification} severity="warning" sx={{ width: '100%', borderRadius: 2 }}>
+        <Alert onClose={handleCloseNotification} severity={notificationSeverity} sx={{ width: '100%', borderRadius: 2 }}>
           {notification}
         </Alert>
       </Snackbar>

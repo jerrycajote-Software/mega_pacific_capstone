@@ -794,7 +794,6 @@ const SalesDashboard = () => {
         </div>
       </div>
 
-      {}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)',
@@ -826,10 +825,14 @@ const SalesDashboard = () => {
                   color: 'var(--green)',
                   fontSize: '0.8rem',
                   fontWeight: 700,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 2
                 }}
               >
-                Catalog →
+                Catalog
+                <ChevronRightIcon sx={{ fontSize: 16 }} />
               </button>
             </div>
 
@@ -1103,7 +1106,6 @@ const SalesDashboard = () => {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {/* <StorefrontIcon sx={{ fontSize: 18, color: 'var(--green)' }} /> */}
                   <div>
                     <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Pre-Order Products

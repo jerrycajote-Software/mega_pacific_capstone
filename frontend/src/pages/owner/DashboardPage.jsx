@@ -13,7 +13,7 @@ import {
 } from '../../components/icons';
 
 const Widget = ({ title, action, children, style = {} }) => (
-  <div className="widget" style={{ ...style, borderTop: '3px solid #f59e0b', background: 'var(--bg-card)', borderColor: 'var(--border-light)' }}>
+  <div className="widget" style={{ ...style, borderTop: '3px solid #f59e0b', background: 'var(--bg-secondary)', borderColor: 'var(--border-light)' }}>
     <div className="widget-header">
       <h3 className="widget-title" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       {action && (
@@ -29,6 +29,7 @@ const Widget = ({ title, action, children, style = {} }) => (
   </div>
 );
 
+// Card displaying each key business metric with an accent-colored hover effect
 const StatCard = ({ label, value, sub, icon, accentColor, bgGradient, badgeColor, badgeBg, badgeBorder }) => {
   const isLongVal = typeof value === 'string' && value.length > 12;
   return (
@@ -39,31 +40,18 @@ const StatCard = ({ label, value, sub, icon, accentColor, bgGradient, badgeColor
         cursor: 'default',
         borderRadius: 16,
         border: '1px solid var(--border-light)',
-        background: 'var(--bg-card)',
+        background: 'var(--bg-secondary)',
         boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        '--kpi-accent': accentColor,
+        '--kpi-border': `${accentColor}88`,
+        '--kpi-glow': `${accentColor}2e`,
       }}
     >
+      {/* Place the status pill on the left and the icon badge on the right of each KPI card */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-        <div
-          className="mpi-owner-badge"
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 13,
-            background: bgGradient,
-            border: `1px solid ${accentColor}33`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            boxShadow: `0 2px 10px ${accentColor}22`
-          }}
-        >
-          {icon}
-        </div>
         <span
           style={{
             fontSize: '0.72rem',
@@ -79,6 +67,24 @@ const StatCard = ({ label, value, sub, icon, accentColor, bgGradient, badgeColor
         >
           {sub}
         </span>
+        <div
+          className="mpi-owner-badge"
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 13,
+            background: bgGradient,
+            border: `1px solid ${accentColor}33`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            boxShadow: `0 2px 10px ${accentColor}22`,
+            transition: 'transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, border-color 0.24s ease',
+          }}
+        >
+          {icon}
+        </div>
       </div>
       <div>
         <div
@@ -140,6 +146,7 @@ const OwnerDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch all business metrics and chart data for the Owner dashboard
   const fetchDashboardData = async () => {
     try {
       setError(null);
@@ -222,7 +229,7 @@ const OwnerDashboardPage = () => {
         <StatCard
           label="Total Inventory Value"
           value={totals.inventoryValue}
-          sub="Capital"
+          sub="Estimated Capital"
           icon={<CustomOwnerInventoryValueIcon size={30} />}
           accentColor="#10b981"
           bgGradient="rgba(16, 185, 129, 0.1)"
@@ -269,7 +276,7 @@ const OwnerDashboardPage = () => {
                 <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₱${value.toLocaleString()}`} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-light)', borderRadius: 8, color: 'var(--text-primary)' }}
+                  contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-light)', borderRadius: 8, color: 'var(--text-primary)' }}
                   itemStyle={{ color: '#fbbf24' }}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
@@ -379,7 +386,22 @@ const OwnerDashboardPage = () => {
         </Widget>
       </div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      {/* Spinner animation and accent-colored hover transitions for Owner KPI cards */}
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .mpi-owner-kpi-card {
+          transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.24s ease, box-shadow 0.24s ease;
+        }
+        .mpi-owner-kpi-card:hover {
+          transform: translateY(-4px);
+          border-color: var(--kpi-border) !important;
+          box-shadow: 0 14px 28px -8px var(--kpi-glow), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        }
+        .mpi-owner-kpi-card:hover .mpi-owner-badge {
+          transform: scale(1.08);
+          box-shadow: 0 6px 16px var(--kpi-glow) !important;
+        }
+      `}</style>
     </div>
   );
 };

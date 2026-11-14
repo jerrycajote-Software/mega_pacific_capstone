@@ -1,7 +1,4 @@
-/**
- * Mega Pacific Custom Animated Colorful Navigation Icons
- * High-performance, full-color vector SVG icons with micro-animations.
- */
+/* Custom colored SVG icons for Mega Pacific navigation menus and dashboards */
 
 export { default as CustomDashboardIcon } from './CustomDashboardIcon';
 export { default as CustomPreOrderIcon } from './CustomPreOrderIcon';
@@ -9,6 +6,7 @@ export { default as CustomOrdersIcon } from './CustomOrdersIcon';
 export { default as CustomRecentOrdersIcon } from './CustomRecentOrdersIcon';
 export { default as CustomReviewsIcon } from './CustomReviewsIcon';
 export { default as CustomSupportIcon } from './CustomSupportIcon';
+export { default as CustomSalesTargetIcon } from './CustomSalesTargetIcon';
 
 export { default as CustomExpensesIcon } from './CustomExpensesIcon';
 export { default as CustomPaymentIcon } from './CustomPaymentIcon';

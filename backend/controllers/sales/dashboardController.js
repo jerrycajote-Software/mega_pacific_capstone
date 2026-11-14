@@ -1,5 +1,7 @@
 const prisma = require("../../config/db");
+const { getBusinessSalesQuotaSummary } = require("../../services/salesQuotaService");
 
+// Fetch all metrics and KPIs for the Sales dashboard, including the Owner's quota target
 const getSalesDashboardStats = async (req, res) => {
   try {
     const pendingOrdersCount = await prisma.order.count({ where: { status: "pending" } });
@@ -276,6 +278,9 @@ const getSalesDashboardStats = async (req, res) => {
       console.warn("Could not compute review stats:", e.message);
     }
 
+    // Fetch the Owner's active sales quota and current progress
+    const salesQuota = await getBusinessSalesQuotaSummary();
+
     res.status(200).json({
       success: true,
       data: {
@@ -285,6 +290,7 @@ const getSalesDashboardStats = async (req, res) => {
           products: totalProducts,
           orders: validOrdersCount
         },
+        salesQuota,
         topProducts,
         counts: {
           pending: pendingOrdersCount,
@@ -326,6 +332,24 @@ const getSalesDashboardStats = async (req, res) => {
   }
 };
 
+// Fetch the latest target sales quota for Sales staff
+const getSalesQuotaForStaff = async (req, res) => {
+  try {
+    const salesQuota = await getBusinessSalesQuotaSummary();
+    res.status(200).json({
+      success: true,
+      data: salesQuota
+    });
+  } catch (error) {
+    console.error("Sales get quota error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load the current sales quota target."
+    });
+  }
+};
+
 module.exports = {
-  getSalesDashboardStats
+  getSalesDashboardStats,
+  getSalesQuotaForStaff
 };
