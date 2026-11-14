@@ -99,7 +99,7 @@ export const generateReceiptPDF = (order) => {
   doc.text('Delivery Method:', 18, currentY + 25);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(isPickup ? 124 : 30, isPickup ? 58 : 58, isPickup ? 237 : 138);
-  doc.text(isPickup ? 'Store / Plant Pick-up' : 'Jobsite Fleet Delivery', 52, currentY + 25);
+  doc.text(isPickup ? 'Store / Plant Pick-up' : 'Truck Delivery', 52, currentY + 25);
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
@@ -117,7 +117,7 @@ export const generateReceiptPDF = (order) => {
 
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(79, 119, 45);
-  doc.text(isPickup ? 'PICK-UP & CLIENT INFO' : 'DELIVER TO (JOBSITE)', 112, currentY + 6);
+  doc.text(isPickup ? 'PICK-UP & CUSTOMER INFO' : 'DELIVER TO', 112, currentY + 6);
 
   const customerName = order.shippingName || order.customerName || order.user?.name || 'Valued Customer';
   const customerEmail = order.customerEmail || order.shippingEmail || order.user?.email || 'N/A';
@@ -247,7 +247,7 @@ export const generateReceiptPDF = (order) => {
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
-  doc.text(isPickup ? 'Pick-up Handling:' : 'Fleet Logistics Fee:', summaryBoxX + 4, finalTableY + 23);
+  doc.text(isPickup ? 'Store Pick-up Fee:' : 'Truck Delivery Fee:', summaryBoxX + 4, finalTableY + 23);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(isPickup ? 22 : 15, isPickup ? 101 : 23, isPickup ? 52 : 42);
   doc.text(isPickup ? 'FREE (PHP 0.00)' : formatPHP(actualShippingFee), summaryBoxX + summaryBoxW - 4, finalTableY + 23, { align: 'right' });
@@ -266,7 +266,7 @@ export const generateReceiptPDF = (order) => {
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
-  doc.text(isCOD50 ? '50% Downpayment (Paid):' : 'Settled Amount (Paid):', summaryBoxX + 4, finalTableY + 42);
+  doc.text(isCOD50 ? '50% Downpayment (Paid):' : 'Amount Paid:', summaryBoxX + 4, finalTableY + 42);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(22, 101, 52);
   doc.text(formatPHP(downpayment), summaryBoxX + summaryBoxW - 4, finalTableY + 42, { align: 'right' });
@@ -276,7 +276,7 @@ export const generateReceiptPDF = (order) => {
   doc.text(isCOD50 ? 'Remaining Balance (Delivery):' : 'Balance Remaining:', summaryBoxX + 4, finalTableY + 49);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(isCOD50 ? 180 : 22, isCOD50 ? 83 : 101, isCOD50 ? 9 : 52);
-  doc.text(isCOD50 ? formatPHP(balanceRemaining) : 'PHP 0.00 (Settled)', summaryBoxX + summaryBoxW - 4, finalTableY + 49, { align: 'right' });
+  doc.text(isCOD50 ? formatPHP(balanceRemaining) : 'PHP 0.00 (Paid)', summaryBoxX + summaryBoxW - 4, finalTableY + 49, { align: 'right' });
 
   // 5. Pick-up / Delivery Guidance Note (Left side)
   const noticeBoxX = 14;
@@ -289,14 +289,14 @@ export const generateReceiptPDF = (order) => {
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(133, 77, 14);
   doc.setFontSize(8);
-  doc.text('MANUFACTURER RELEASE NOTICE', 18, finalTableY + 6.5);
+  doc.text(isPickup ? 'PICK-UP NOTICE' : 'DELIVERY NOTICE', 18, finalTableY + 6.5);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(113, 63, 18);
   const releaseNote = isPickup
-    ? 'Custom pre-order roll-formed roofing sheets are inspected, banded. Please present this official receipt reference.'
-    : 'All roll-formed products are dispatched strapped on fleet transit directly from our manufacturing site. Please ensure a representative is available on site to sign the delivery handover sheet.';
+    ? 'Your custom-cut roofing sheets have been inspected and prepared for pick-up. Please show this receipt or your order number when claiming your order at our factory.'
+    : 'All roofing products are securely loaded and delivered by our company truck straight from our factory. Please make sure someone is available on site to receive the order and sign the delivery receipt.';
   const splitRelease = doc.splitTextToSize(releaseNote, noticeBoxW - 8);
   doc.text(splitRelease, 18, finalTableY + 13);
 

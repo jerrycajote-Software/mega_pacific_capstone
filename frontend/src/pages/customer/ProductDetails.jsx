@@ -1514,7 +1514,7 @@ const ProductDetails = () => {
                 Need to add another product to this order?
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                You can combine other roofing profiles, flashings, gutters, or trims into a single manufacturing order.
+                You can combine other roofing profiles into a single manufacturing order.
               </Typography>
             </Box>
 
