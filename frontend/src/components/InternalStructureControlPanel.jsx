@@ -11,7 +11,7 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  ROOF_STRUCTURAL_LAYERS,
+  getRoofStructuralLayers,
   getStructuralMeshMetadata,
 } from '../constants/roofStructureSpecs';
 
@@ -40,13 +40,16 @@ const InternalStructureControlPanel = ({
   currentColor,
   sheetsPerSlope = 8,
   currentLength = 3.8,
+  productName = '',
   onFocusInternalCamera,
 }) => {
+  const structuralLayers = getRoofStructuralLayers(productName);
   const inspectedPart = getStructuralMeshMetadata(selectedMeshName, {
     thickness: currentThickness,
     color: currentColor,
     sheetsPerSlope,
     length: currentLength,
+    productName,
   });
 
   const explodePercent = Math.round((Number(explodeFactor) || 0) * 100);
@@ -271,7 +274,7 @@ const InternalStructureControlPanel = ({
         ROOF ASSEMBLY LAYERS (TOP TO BOTTOM)
       </Typography>
       <Stack spacing={0.5} sx={{ mb: 1.5 }}>
-        {ROOF_STRUCTURAL_LAYERS.map((layer) => {
+        {structuralLayers.map((layer) => {
           const isVisible = layerVisibility?.[layer.id] !== false;
           return (
             <Box

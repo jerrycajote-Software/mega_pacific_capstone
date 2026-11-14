@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
-import { has3DModel } from '../../services/roofModelRegistry';
+import { has3DModel, isMegaCurvedRoof } from '../../services/roofModelRegistry';
 
 const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 import {
@@ -550,6 +550,8 @@ const ProductDetails = () => {
           const stateLen = location.state?.selectedLength || location.state?.length;
           if (stateLen && !isNaN(stateLen)) {
             setCustomLength(parseFloat(stateLen));
+          } else if (isMegaCurvedRoof(productData?.name)) {
+            setCustomLength(8.5);
           }
         
           const options = buildProductOptions(productData);
@@ -1435,8 +1437,8 @@ const ProductDetails = () => {
                 <Tooltip
                   title={
                     !is3DSupported
-                      ? `3D model is not available for ${product?.name || 'this product'} (Available for Pico Rib 1220)`
-                      : 'Preview and customize this roofing profile on a 3D house model'
+                      ? `3D model is not available for ${product?.name || 'this product'} (Available for Pico Rib 1220 and Mega Curved Roof)`
+                      : 'Preview and customize this roofing profile in 3D'
                   }
                 >
                   <span>
@@ -1792,7 +1794,7 @@ const ProductDetails = () => {
               lineHeight: 1.5
             }}
           >
-            Our interactive 3D roof viewer is currently designed only for <strong>Pico Rib 1220</strong>.
+            Our interactive 3D roof viewer is currently designed only for <strong>Pico Rib 1220</strong> and <strong>Mega Curved Roof</strong>.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>

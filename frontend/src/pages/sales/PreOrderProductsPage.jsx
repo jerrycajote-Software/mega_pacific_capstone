@@ -40,6 +40,8 @@ import { ROOFING_COLORS, STANDARD_THICKNESSES, DECKING_THICKNESSES } from '../..
 import { isCoilInStock, getAvailableColorsForThickness, hasCoilStockForThickness } from '../../utils/coilAvailability';
 import { isCustomLengthProfile } from '../customer/buildProductOptions';
 import { io } from 'socket.io-client';
+import CustomMessageDialog from '../../components/CustomMessageDialog';
+import { useCustomDialog } from '../../hooks/useCustomDialog';
 
 const normalizeThickness = (val) => {
   if (!val) return '';
@@ -99,11 +101,11 @@ const PreOrderProductsPage = () => {
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
   const [variants, setVariants] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
+  const { dialogState, showWarning } = useCustomDialog();
   const [isDragging, setIsDragging] = useState(false);
 
   const [customThicknesses, setCustomThicknesses] = useState(() => {
@@ -291,7 +293,6 @@ const PreOrderProductsPage = () => {
       videoUrl: ''
     });
     setVariants([]);
-    setErrorMsg('');
     setVideoError('');
     setShowVideoUrlInput(false);
     setVideoUrlInput('');
@@ -331,7 +332,6 @@ const PreOrderProductsPage = () => {
       originalPrice: v.originalPrice ?? v.price ?? '',
       status: v.status || 'available'
     })) : []);
-    setErrorMsg('');
     setVideoError('');
     setShowVideoUrlInput(false);
     setVideoUrlInput('');
@@ -633,43 +633,50 @@ const PreOrderProductsPage = () => {
     setVariants(prev => prev.filter((_, i) => i !== index));
   };
 
+  const showProductWarning = (message, title = 'Unable to Save Product') => {
+    showWarning({
+      title,
+      message,
+      confirmText: 'I Understand'
+    });
+  };
+
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      setErrorMsg('Product Name is required.');
+      showProductWarning('Product Name is required.');
       return;
     }
     if (!formData.originalPrice || parseFloat(formData.originalPrice) <= 0) {
-      setErrorMsg('Please provide a valid price per meter.');
+      showProductWarning('Please provide a valid price per meter.');
       return;
     }
     if (!hasCoilStockForThickness(coils, formData.thickness)) {
-      setErrorMsg(`Cannot save pre-order product: thickness "${formData.thickness}" has no raw coils in Coil Inventory. Steel coils must be stocked in inventory before products can be created.`);
+      showProductWarning(`Cannot save pre-order product: thickness "${formData.thickness}" has no raw coils in Coil Inventory. Steel coils must be stocked in inventory before products can be created.`);
       return;
     }
     const validColors = formData.colors.filter(c => availableColorsForThickness.has(c));
     if (validColors.length === 0) {
-      setErrorMsg(`Please select at least one available color with physical coil stock in inventory for ${formData.thickness}.`);
+      showProductWarning(`Please select at least one available color with physical coil stock in inventory for ${formData.thickness}.`);
       return;
     }
     if (formData.colors.some(c => !availableColorsForThickness.has(c))) {
-      setErrorMsg(`One or more selected colors are not available in Coil Inventory for ${formData.thickness}.`);
+      showProductWarning(`One or more selected colors are not available in Coil Inventory for ${formData.thickness}.`);
       return;
     }
 
     if (baseConflictVariantIndex >= 0) {
-      setErrorMsg(`Variant #${baseConflictVariantIndex + 1} uses the same thickness (${formData.thickness}) as the Base Product. Each variant must have a unique thickness different from the base.`);
+      showProductWarning(`Variant #${baseConflictVariantIndex + 1} uses the same thickness (${formData.thickness}) as the Base Product. Each variant must have a unique thickness different from the base.`);
       return;
     }
 
     const firstConflictRow = Object.keys(variantThicknessConflicts)[0];
     if (firstConflictRow !== undefined) {
-      setErrorMsg(variantThicknessConflicts[firstConflictRow]);
+      showProductWarning(variantThicknessConflicts[firstConflictRow]);
       return;
     }
 
     setSubmitting(true);
-    setErrorMsg('');
 
     try {
       const storedImageUrls = await uploadBatchImagesToStorage(formData.imageUrls || [], 'products');
@@ -720,9 +727,9 @@ const PreOrderProductsPage = () => {
         /insufficient|storage_limit|quota|out of space/i.test(serverErr || '');
 
       if (isInsufficient) {
-        setErrorMsg('Storage is insufficient in production hosting. Please free up storage space in your Supabase project or contact support.');
+        showProductWarning('Storage is insufficient in production hosting. Please free up storage space in your Supabase project or contact support.');
       } else {
-        setErrorMsg(serverErr || 'Failed to save pre-order product.');
+        showProductWarning(serverErr || 'Failed to save pre-order product.');
       }
     } finally {
       setSubmitting(false);
@@ -1295,12 +1302,6 @@ const PreOrderProductsPage = () => {
             </div>
 
             <form onSubmit={handleSaveProduct} style={{ padding: '1.75rem' }}>
-              {errorMsg && (
-                <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', fontSize: '0.82rem', marginBottom: '1.25rem' }}>
-                  {errorMsg}
-                </div>
-              )}
-
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -2539,6 +2540,8 @@ const PreOrderProductsPage = () => {
           {toast.message}
         </Alert>
       </Snackbar>
+
+      <CustomMessageDialog {...dialogState} />
 
     </div>
   );

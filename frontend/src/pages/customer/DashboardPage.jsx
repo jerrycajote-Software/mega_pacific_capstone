@@ -19,7 +19,7 @@ import HeroSection from '../../components/HeroSection';
 import Home3DModelsShowcase from '../../components/Home3DModelsShowcase';
 import { buildProductOptions, getDefaultOption } from './buildProductOptions';
 import { io } from 'socket.io-client';
-import { isPicoRib1220 } from '../../services/roofModelRegistry';
+import { isPicoRib1220, isMegaCurvedRoof } from '../../services/roofModelRegistry';
 
 const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 
@@ -78,6 +78,12 @@ const DashboardPage = ({ showHero = true }) => {
 
   const picoRibProduct =
     safeProducts.find((p) => isPicoRib1220(p.name)) || safeProducts[0] || null;
+  const megaCurvedProduct =
+    safeProducts.find((p) => isMegaCurvedRoof(p.name)) || null;
+  const active3DProduct =
+    selected3DModel && isMegaCurvedRoof(selected3DModel.profileName)
+      ? megaCurvedProduct || { name: 'Mega Curved Roof', colors: picoRibProduct?.colors || [] }
+      : picoRibProduct;
 
   const handleCustomizeIn3D = (houseModel) => {
     setSelected3DModel(houseModel);
@@ -163,7 +169,6 @@ const DashboardPage = ({ showHero = true }) => {
         {/* Available 3D Models Showcase on Home Page */}
         {showHero && (
           <Home3DModelsShowcase
-            product={picoRibProduct}
             onCustomizeIn3D={handleCustomizeIn3D}
           />
         )}
@@ -679,16 +684,16 @@ const DashboardPage = ({ showHero = true }) => {
         )}
 
         {/* 3D Visualizer Modal (Embedded Standalone for Direct 3D Customization) */}
-        {is3DViewerModalOpen && picoRibProduct && (
+        {is3DViewerModalOpen && active3DProduct && (
           <Suspense fallback={null}>
             <Product3DViewerModal
               open={is3DViewerModalOpen}
               onClose={handleClose3DViewer}
-              product={picoRibProduct}
-              productOptions={buildProductOptions(picoRibProduct)}
+              product={active3DProduct}
+              productOptions={buildProductOptions(active3DProduct)}
               coilInventory={coilInventory}
-              availableColors={picoRibProduct.colors || []}
-              initialColor={picoRibProduct.colors?.[0] || 'Marshall Dark Gray'}
+              availableColors={active3DProduct.colors || []}
+              initialColor={active3DProduct.colors?.[0] || 'Marshall Dark Gray'}
               initialLength={selected3DModel?.recommendedLength || 3.8}
               initialQuantity={selected3DModel?.totalSheets || 16}
               initialHouseModelId={selected3DModel?.id}

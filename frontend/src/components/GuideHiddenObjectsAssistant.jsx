@@ -7,7 +7,7 @@ import {
   Chip,
   Collapse,
 } from '@mui/material';
-import { ROOF_STRUCTURAL_LAYERS } from '../constants/roofStructureSpecs';
+import { getRoofStructuralLayers } from '../constants/roofStructureSpecs';
 
 const GuideHiddenObjectsAssistant = ({
   layerVisibility = {},
@@ -17,11 +17,13 @@ const GuideHiddenObjectsAssistant = ({
   onToggleSubstructure,
   isInspectEdgeActive = false,
   inspectEdgeTrigger = 0,
+  productName = '',
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Identify all layers currently toggled off
-  const hiddenLayers = ROOF_STRUCTURAL_LAYERS.filter((layer) => {
+  const structuralLayers = getRoofStructuralLayers(productName);
+  const hiddenLayers = structuralLayers.filter((layer) => {
     return layerVisibility[layer.id] === false;
   });
 

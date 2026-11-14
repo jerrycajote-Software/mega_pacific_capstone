@@ -178,7 +178,7 @@ const ConfigurableRoofModel = ({
     const targetThicknessMm = parseThicknessMm(thickness);
     const thicknessRatio = targetThicknessMm / 0.35;
     const targetShellThickness = BASE_MESH_THICKNESS * thicknessRatio;
-    const deltaY = BASE_MESH_THICKNESS - targetShellThickness;
+    const deltaOffset = BASE_MESH_THICKNESS - targetShellThickness;
 
     scene.traverse((child) => {
       if (!child.isMesh || !child.name.startsWith('RoofSheet_')) return;
@@ -187,35 +187,76 @@ const ConfigurableRoofModel = ({
 
       const posAttr = geom.attributes.position;
       const count = posAttr.count;
+      const isCurvedSheet =
+        Boolean(child.userData?.is_curved_roof) ||
+        typeof child.userData?.arch_center_y === 'number';
+      const archCenterY = Number(child.userData?.arch_center_y) || 0;
 
       if (!child.userData.basePositions) {
         const baseArr = new Float32Array(posAttr.array.length);
         baseArr.set(posAttr.array);
         child.userData.basePositions = baseArr;
 
-        // Identify underside shell vertices by grouping vertices sharing the same (x, z)
-        // and selecting the lower y vertex in each top/bottom pair.
-        const maxYByXZ = new Map();
-        for (let i = 0; i < count; i++) {
-          const xKey = Math.round(baseArr[i * 3] * 10000);
-          const zKey = Math.round(baseArr[i * 3 + 2] * 10000);
-          const key = `${xKey}_${zKey}`;
-          const yVal = baseArr[i * 3 + 1];
-          const prevMax = maxYByXZ.get(key);
-          if (prevMax === undefined || yVal > prevMax) {
-            maxYByXZ.set(key, yVal);
-          }
-        }
-
         const isBottomVertex = new Uint8Array(count);
-        for (let i = 0; i < count; i++) {
-          const xKey = Math.round(baseArr[i * 3] * 10000);
-          const zKey = Math.round(baseArr[i * 3 + 2] * 10000);
-          const key = `${xKey}_${zKey}`;
-          const topY = maxYByXZ.get(key);
-          const yVal = baseArr[i * 3 + 1];
-          if (topY !== undefined && topY - yVal > 0.001) {
-            isBottomVertex[i] = 1;
+
+        if (isCurvedSheet) {
+          // Group vertices along radial rays (x, archAngle) and mark the inner radial shell
+          const maxRByAngle = new Map();
+          const radialNorms = new Float32Array(count * 2);
+
+          for (let i = 0; i < count; i++) {
+            const xVal = baseArr[i * 3];
+            const dy = baseArr[i * 3 + 1] - archCenterY;
+            const zVal = baseArr[i * 3 + 2];
+            const rVal = Math.hypot(dy, zVal) || 1e-6;
+            radialNorms[i * 2] = dy / rVal;
+            radialNorms[i * 2 + 1] = zVal / rVal;
+
+            const xKey = Math.round(xVal * 10000);
+            const angKey = Math.round(Math.atan2(zVal, dy) * 10000);
+            const key = `${xKey}_${angKey}`;
+            const prevMax = maxRByAngle.get(key);
+            if (prevMax === undefined || rVal > prevMax) {
+              maxRByAngle.set(key, rVal);
+            }
+          }
+
+          for (let i = 0; i < count; i++) {
+            const xVal = baseArr[i * 3];
+            const dy = baseArr[i * 3 + 1] - archCenterY;
+            const zVal = baseArr[i * 3 + 2];
+            const rVal = Math.hypot(dy, zVal);
+            const xKey = Math.round(xVal * 10000);
+            const angKey = Math.round(Math.atan2(zVal, dy) * 10000);
+            const topR = maxRByAngle.get(`${xKey}_${angKey}`);
+            if (topR !== undefined && topR - rVal > 0.001) {
+              isBottomVertex[i] = 1;
+            }
+          }
+          child.userData.radialNorms = radialNorms;
+        } else {
+          // Flat sloped sheet: group vertices sharing (x, z) and mark lower y vertex
+          const maxYByXZ = new Map();
+          for (let i = 0; i < count; i++) {
+            const xKey = Math.round(baseArr[i * 3] * 10000);
+            const zKey = Math.round(baseArr[i * 3 + 2] * 10000);
+            const key = `${xKey}_${zKey}`;
+            const yVal = baseArr[i * 3 + 1];
+            const prevMax = maxYByXZ.get(key);
+            if (prevMax === undefined || yVal > prevMax) {
+              maxYByXZ.set(key, yVal);
+            }
+          }
+
+          for (let i = 0; i < count; i++) {
+            const xKey = Math.round(baseArr[i * 3] * 10000);
+            const zKey = Math.round(baseArr[i * 3 + 2] * 10000);
+            const key = `${xKey}_${zKey}`;
+            const topY = maxYByXZ.get(key);
+            const yVal = baseArr[i * 3 + 1];
+            if (topY !== undefined && topY - yVal > 0.001) {
+              isBottomVertex[i] = 1;
+            }
           }
         }
         child.userData.isBottomVertex = isBottomVertex;
@@ -223,14 +264,22 @@ const ConfigurableRoofModel = ({
 
       const baseArr = child.userData.basePositions;
       const isBottomVertex = child.userData.isBottomVertex;
+      const radialNorms = child.userData.radialNorms;
       const liveArr = posAttr.array;
 
       for (let i = 0; i < count; i++) {
         const yIdx = i * 3 + 1;
+        const zIdx = i * 3 + 2;
         if (isBottomVertex[i]) {
-          liveArr[yIdx] = baseArr[yIdx] + deltaY;
+          if (isCurvedSheet && radialNorms) {
+            liveArr[yIdx] = baseArr[yIdx] + radialNorms[i * 2] * deltaOffset;
+            liveArr[zIdx] = baseArr[zIdx] + radialNorms[i * 2 + 1] * deltaOffset;
+          } else {
+            liveArr[yIdx] = baseArr[yIdx] + deltaOffset;
+          }
         } else {
           liveArr[yIdx] = baseArr[yIdx];
+          liveArr[zIdx] = baseArr[zIdx];
         }
       }
 

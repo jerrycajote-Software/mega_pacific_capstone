@@ -19,6 +19,7 @@ const FloatingStructuralMemberInspector = ({
   currentColor = 'Marshall Dark Gray',
   sheetsPerSlope = 8,
   currentLength = 3.8,
+  productName = '',
 }) => {
   const [remainingMs, setRemainingMs] = useState(TOTAL_DURATION_MS);
   const [isHovered, setIsHovered] = useState(false);
@@ -35,6 +36,7 @@ const FloatingStructuralMemberInspector = ({
         color: currentColor,
         sheetsPerSlope,
         length: currentLength,
+        productName,
       })
     : null;
 

@@ -106,6 +106,23 @@ const SEED_PROFILES = [
     ]
   },
   {
+    name: "Mega Curved Roof",
+    type: "Rib Type",
+    effectiveWidth: 1.013,
+    nominalWidth: 1.080,
+    ribHeight: 28,
+    thickness: "0.35mm",
+    originalPrice: 340.00,
+    unit: "per meter",
+    description: "Crimped arch-curved metal roofing profile often used in gymnasiums, covered courts, domes, and curved canopies for its sleek aesthetics and clear-span strength. Features 1013mm effective coverage, 1080mm nominal width, and 28mm rib height.",
+    variants: [
+      
+      { name: "0.40mm", thickness: "0.40mm", originalPrice: 368.00, price: 368.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.50mm", thickness: "0.50mm", originalPrice: 469.00, price: 469.00 * 0.70, stock: 9999, status: "available" },
+      { name: "0.60mm", thickness: "0.60mm", originalPrice: 557.00, price: 557.00 * 0.70, stock: 9999, status: "available" }
+    ]
+  },
+  {
     name: "Hermosa Tile",
     type: "Tile Profile",
     effectiveWidth: 1.005,
