@@ -223,7 +223,7 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
             </Typography>
 
             <Chip
-              label={isPickup ? 'Store Pick-up' : 'Fleet Delivery'}
+              label={isPickup ? 'Store Pick-up' : 'Truck Delivery'}
               size="small"
               icon={<i className={isPickup ? 'fi fi-rr-shop' : 'fi fi-rr-truck-side'} style={{ fontSize: 11, marginLeft: 6 }} />}
               sx={{
@@ -616,7 +616,7 @@ const OrdersPage = () => {
               My Orders
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Track real-time fabrication, and dispatch progress for your roofing materials.
+              Track production and delivery updates for your roofing orders.
             </Typography>
           </Box>
         </Box>
@@ -717,7 +717,7 @@ const OrdersPage = () => {
                 <CustomCustomerTotalOrdersIcon size={28} />
               </Box>
               <Chip
-                label="All-Time"
+                label="All Orders"
                 size="small"
                 sx={{
                   fontSize: '0.68rem',
@@ -739,14 +739,6 @@ const OrdersPage = () => {
                 sx={{ fontSize: { xs: '1.45rem', sm: '1.75rem' }, lineHeight: 1.15 }}
               >
                 {stats.total}
-              </Typography>
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
-                fontWeight={700} 
-                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
-              >
-                Total Orders
               </Typography>
             </Box>
           </Paper>
@@ -789,7 +781,7 @@ const OrdersPage = () => {
                 <CustomCustomerInProgressIcon size={28} />
               </Box>
               <Chip
-                label="Active Queue"
+                label="In Progress"
                 size="small"
                 sx={{
                   fontSize: '0.68rem',
@@ -810,14 +802,6 @@ const OrdersPage = () => {
                 sx={{ color: '#d97706', fontSize: { xs: '1.45rem', sm: '1.75rem' }, lineHeight: 1.15 }}
               >
                 {stats.inProgress}
-              </Typography>
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
-                fontWeight={700} 
-                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
-              >
-                In Progress
               </Typography>
             </Box>
           </Paper>
@@ -860,7 +844,7 @@ const OrdersPage = () => {
                 <CustomCustomerCompletedIcon size={28} />
               </Box>
               <Chip
-                label="Fulfilled"
+                label="Done"
                 size="small"
                 sx={{
                   fontSize: '0.68rem',
@@ -881,14 +865,6 @@ const OrdersPage = () => {
                 sx={{ color: '#16a34a', fontSize: { xs: '1.45rem', sm: '1.75rem' }, lineHeight: 1.15 }}
               >
                 {stats.completed}
-              </Typography>
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
-                fontWeight={700} 
-                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
-              >
-                Completed
               </Typography>
             </Box>
           </Paper>
@@ -929,7 +905,7 @@ const OrdersPage = () => {
                 <CustomCustomerTotalSpentIcon size={28} />
               </Box>
               <Chip
-                label="Investment"
+                label="Total Paid"
                 size="small"
                 sx={{
                   fontSize: '0.68rem',
@@ -953,14 +929,6 @@ const OrdersPage = () => {
                 title={formatCurrency(stats.totalSpent)}
               >
                 {formatCurrency(stats.totalSpent)}
-              </Typography>
-              <Typography 
-                variant="caption" 
-                color="text.secondary" 
-                fontWeight={700} 
-                sx={{ textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: 0.6, mt: 0.5, display: 'block' }}
-              >
-                Total Spent
               </Typography>
             </Box>
           </Paper>
