@@ -664,7 +664,7 @@ const Checkout = () => {
         </Box>
         <Typography variant="h3" fontWeight="bold" gutterBottom>Order Placed Successfully!</Typography>
         <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
-          Thank you for your purchase. We have received your order and will process it shortly.
+          Thank you for your purchase. We have received your order and will process it.
         </Typography>
         <Box 
           sx={{ 

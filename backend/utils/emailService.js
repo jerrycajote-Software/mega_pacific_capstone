@@ -487,8 +487,8 @@ const sendOrderReceiptEmail = async (email, order) => {
               </tr>
               <tr>
                 <td style="padding: 12px 16px; width: 50%;">
-                  <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">Fulfillment</span>
-                  <div style="font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 2px;">${isPickup ? 'Plant Pick-up' : 'Jobsite Fleet Delivery'}</div>
+                  <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">Delivery Method</span>
+                  <div style="font-size: 13px; font-weight: 600; color: #0f172a; margin-top: 2px;">${isPickup ? 'Store / Plant Pick-up' : 'Truck Delivery'}</div>
                 </td>
                 <td style="padding: 12px 16px; width: 50%;">
                   <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">Contact Number</span>
@@ -500,7 +500,7 @@ const sendOrderReceiptEmail = async (email, order) => {
             <!-- Address Block -->
             <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 24px;">
               <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">
-                ${isPickup ? 'Pick-up Plant Location' : 'Jobsite Delivery Address'}
+                ${isPickup ? 'Pick-up Location' : 'Delivery Address'}
               </span>
               <div style="font-size: 13px; color: #1e293b; margin-top: 4px; line-height: 1.4;">
                 ${deliveryAddress}
@@ -530,7 +530,7 @@ const sendOrderReceiptEmail = async (email, order) => {
                 <span style="font-weight: 600; color: #0f172a;">₱${itemsSubtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; color: #64748b;">
-                <span>${isPickup ? 'Plant Pick-up Handling:' : 'Fleet Delivery Logistics:'}</span>
+                <span>${isPickup ? 'Store Pick-up Fee:' : 'Truck Delivery Fee:'}</span>
                 <span style="font-weight: 600; color: ${isPickup ? '#16a34a' : '#0f172a'};">${isPickup ? 'FREE (₱0.00)' : `₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>
               </div>
               <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-bottom: 10px; font-size: 14px; font-weight: 700; color: #0f172a;">
@@ -558,15 +558,15 @@ const sendOrderReceiptEmail = async (email, order) => {
             <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 4px; margin-bottom: 24px;">
               ${isCOD50 ? `
                 <p style="margin: 0 0 6px 0; font-size: 12px; color: #1e40af; line-height: 1.5;">
-                  <strong>Cash on Delivery (50% Downpayment):</strong> 50% downpayment via bank transfer and 50% balance on delivery. Your 50% downpayment of ₱${downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been received. Please prepare the remaining 50% cash balance of <strong>₱${balanceOnDelivery.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> upon arrival of your delivery.
+                  <strong>Cash on Delivery (50% Downpayment):</strong> Your 50% downpayment of ₱${downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been received. Please prepare the remaining 50% cash balance of <strong>₱${balanceOnDelivery.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> when your delivery arrives.
                 </p>
               ` : `
                 <p style="margin: 0 0 6px 0; font-size: 12px; color: #1e40af; line-height: 1.5;">
-                  <strong>Full Payment Settled:</strong> Your payment of ₱${totalAmount} ${isPickup ? '(Free Plant Pick-up)' : `(including ₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} delivery logistics)`} has been fully settled. No further payment is needed upon ${isPickup ? 'pick-up' : 'delivery'}.
+                  <strong>Full Payment Completed:</strong> Your full payment of ₱${totalAmount} ${isPickup ? '(with free store pick-up)' : `(including the ₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} truck delivery fee)`} has been received. No further payment is needed upon ${isPickup ? 'pick-up' : 'delivery'}.
                 </p>
               `}
               <p style="margin: 0; font-size: 11px; color: #3b82f6;">
-                Track your order fulfillment journey anytime via <a href="${frontendUrl}/order/${order.id}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Order Tracking #${String(order.id).padStart(4, '0')}</a> or in your <a href="${frontendUrl}/profile" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Customer Profile</a>.
+                Track your order status anytime via <a href="${frontendUrl}/order/${order.id}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Order Tracking #${String(order.id).padStart(4, '0')}</a> or in your <a href="${frontendUrl}/profile" style="color: #2563eb; text-decoration: underline; font-weight: 600;">Customer Profile</a>.
               </p>
             </div>
 

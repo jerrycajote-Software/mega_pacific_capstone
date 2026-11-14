@@ -217,13 +217,15 @@ const OfficialReceiptModal = ({
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transaction Details</span>
                 <div><strong>Order Reference:</strong> <span style={{ color: '#16a34a', fontWeight: 700 }}>{orderNum}</span></div>
                 <div><strong>Date Placed:</strong> {formatDate(order.createdAt || order.dateOrdered)}</div>
-                <div><strong>Fulfillment:</strong> {isPickup ? 'Store / Plant Pick-up' : 'Jobsite Fleet Delivery'}</div>
+                <div><strong>Delivery Method:</strong> {isPickup ? 'Store / Plant Pick-up' : 'Truck Delivery'}</div>
                 <div><strong>Payment Method:</strong> {order.paymentMode || 'Cash on Delivery'}</div>
                 <div><strong>Payment Status:</strong> <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{order.paymentStatus || 'Pending'}</span></div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.83rem' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Client & Jobsite Destination</span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {isPickup ? 'Pick-up & Customer Details' : 'Customer & Delivery Details'}
+                </span>
                 <div><strong>Client Name:</strong> {order.shippingName || order.customerName || 'Valued Customer'}</div>
                 <div><strong>Contact Number:</strong> {order.shippingContactNumber || order.contactNumber || 'N/A'}</div>
                 <div><strong>Email Address:</strong> {order.customerEmail || 'N/A'}</div>
@@ -292,7 +294,7 @@ const OfficialReceiptModal = ({
                   <span style={{ fontWeight: 600 }}>{formatCurrency(itemsSubtotal)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>{isPickup ? 'Pick-up Handling:' : 'Fleet Logistics Fee:'}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>{isPickup ? 'Store Pick-up Fee:' : 'Truck Delivery Fee:'}</span>
                   <span style={{ fontWeight: 600, color: isPickup ? '#16a34a' : 'inherit' }}>
                     {isPickup ? 'FREE (₱0.00)' : formatCurrency(deliveryFee)}
                   </span>
