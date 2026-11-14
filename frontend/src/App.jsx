@@ -15,6 +15,7 @@ import OwnerLayout from './layouts/OwnerLayout';
 
 import OwnerLoginPage from './pages/owner/LoginPage';
 import OwnerDashboardPage from './pages/owner/DashboardPage';
+import OwnerSalesQuotaPage from './pages/owner/SalesQuotaPage';
 
 import AdminLoginPage from './pages/admin/LoginPage';
 import AdminDashboardPage from './pages/admin/DashboardPage';
@@ -33,6 +34,7 @@ import SalesRecentOrders from './pages/sales/RecentOrdersPage';
 import SalesPreOrderProducts from './pages/sales/PreOrderProductsPage';
 import SalesCustomerService from './pages/sales/CustomerService';
 import SalesReviews from './pages/sales/ReviewManagement';
+import SalesTargetPage from './pages/sales/SalesTargetPage';
 
 import FinanceLoginPage from './pages/finance/LoginPage';
 import FinanceDashboardPage from './pages/finance/FinanceDashboardPage';
@@ -254,6 +256,7 @@ const App = () => {
         }>
           <Route index element={<Navigate to="/owner/dashboard" replace />} />
           <Route path="dashboard" element={<OwnerDashboardPage />} />
+          <Route path="sales-quota" element={<OwnerSalesQuotaPage />} />
         </Route>
 
         <Route path="/admin" element={
@@ -273,7 +276,7 @@ const App = () => {
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
 
-        {/* Legacy / Alias routes for Employee */}
+        {/* Legacy route alias redirecting employee URLs to the Sales portal */}
         <Route path="/employee/login" element={<Navigate to="/sales-1megapacific/login" replace />} />
         <Route path="/employee/*" element={<Navigate to="/sales" replace />} />
 
@@ -295,6 +298,7 @@ const App = () => {
           <Route path="inventory" element={<Navigate to="/sales/pre-order-products" replace />} />
           <Route path="reviews" element={<SalesReviews />} />
           <Route path="customer-service" element={<SalesCustomerService />} />
+          <Route path="sales-target" element={<SalesTargetPage />} />
         </Route>
 
         <Route path="/finance-1megapacific/login" element={<GuestRoute><FinanceLoginPage /></GuestRoute>} />

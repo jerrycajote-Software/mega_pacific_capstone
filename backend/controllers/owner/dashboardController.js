@@ -1,5 +1,7 @@
 const prisma = require("../../config/db");
+const { getBusinessSalesQuotaSummary } = require("../../services/salesQuotaService");
 
+// Fetch all business summary statistics for the Owner dashboard, including the sales quota
 const getOwnerDashboardStats = async (req, res) => {
   try {
     const totalUsers = await prisma.user.count({ where: { role: "customer" } });
@@ -148,6 +150,9 @@ const getOwnerDashboardStats = async (req, res) => {
 
     const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
+    // Fetch the current sales quota target and progress for the Sales team
+    const salesQuota = await getBusinessSalesQuotaSummary();
+
     res.status(200).json({
       success: true,
       data: {
@@ -173,6 +178,7 @@ const getOwnerDashboardStats = async (req, res) => {
             minAlertMeters: c.minAlertCount || 1
           }))
         },
+        salesQuota,
         revenueChartData,
         recentOrders,
         stockAlerts,
