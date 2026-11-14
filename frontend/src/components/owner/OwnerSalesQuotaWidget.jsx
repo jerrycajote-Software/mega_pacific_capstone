@@ -27,7 +27,7 @@ const OwnerSalesQuotaWidget = ({ salesQuota, onQuotaUpdated }) => {
   const statusStyle = getQuotaStatusStyle(salesQuota?.statusLabel);
   const progressPercent = Math.min(Math.max(Number(salesQuota?.progressPercent ?? 0), 0), 100);
   const updatedTimeLabel = salesQuota?.updatedAt
-    ? `Sent to Sales Staff • Updated ${new Date(salesQuota.updatedAt).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+    ? `Sent to Sales • Updated ${new Date(salesQuota.updatedAt).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
     : 'Active Default Sales Target';
 
   return (
