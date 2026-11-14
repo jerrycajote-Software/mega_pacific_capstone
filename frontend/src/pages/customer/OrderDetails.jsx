@@ -124,7 +124,7 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
       statusKey: 'out_for_delivery',
       label: 'Out for Delivery',
       shortLabel: 'In Transit',
-      description: 'Your materials are currently loaded and in transit with Mega Pacific Logistics.',
+      description: 'Your order is loaded and on the way with our delivery team.',
       badgeColor: '#2563eb',
       badgeBg: 'rgba(37, 99, 235, 0.08)',
       badgeBorder: 'rgba(37, 99, 235, 0.25)',
@@ -157,7 +157,7 @@ const getOrderStatusMeta = (status, fulfillmentType) => {
     statusKey: 'pending',
     label: 'Order Placed & Awaiting Confirmation',
     shortLabel: 'Order Placed',
-    description: 'Your order details have been received and logged in our production queue.',
+    description: 'We have received your order and it is waiting for confirmation.',
     badgeColor: '#0284c7',
     badgeBg: 'rgba(2, 132, 199, 0.08)',
     badgeBorder: 'rgba(2, 132, 199, 0.25)',
@@ -454,7 +454,7 @@ const OrderDetails = () => {
             </Tooltip>
 
             <Chip
-              label={isPickup ? 'Store Pick-up' : 'Fleet Delivery'}
+              label={isPickup ? 'Store Pick-up' : 'Truck Delivery'}
               size="small"
               icon={isPickup ? <CustomStorePickupChipIcon size={16} /> : <CustomFulfillmentDeliveryIcon size={16} />}
               sx={{
@@ -532,7 +532,7 @@ const OrderDetails = () => {
           </Box>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 800, letterSpacing: 0.5, color: statusMeta.badgeColor, display: 'block' }}>
-              Fulfillment Status
+              Order Status
             </Typography>
             <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1.25 }}>
               {statusMeta.label}
@@ -557,7 +557,7 @@ const OrderDetails = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <i className="fi fi-rr-route" style={{ fontSize: 18, color: '#4f772d' }} />
             <Typography variant="subtitle1" fontWeight={800} color="text.primary">
-              Order Fulfillment Journey
+              Order Progress
             </Typography>
           </Box>
 
@@ -1219,7 +1219,7 @@ const OrderDetails = () => {
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2" color="text.secondary">
-                  {isPickup ? 'Plant Pick-up Handling' : 'Fleet Delivery Logistics'}
+                  {isPickup ? 'Store Pick-up Fee' : 'Truck Delivery Fee'}
                 </Typography>
                 <Typography variant="body2" color={isPickup ? 'success.main' : 'text.primary'} fontWeight={700}>
                   {isPickup ? 'FREE (₱0.00)' : `₱${calculatedShippingFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}

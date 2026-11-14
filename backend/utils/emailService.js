@@ -218,11 +218,14 @@ const testEmailDispatch = async (targetEmail) => {
 };
 
 
+const formatEmailOtpCode = (otp) => String(otp ?? '').replace(/^(REG|LOG)-/i, '');
+
 const sendOtpEmail = async (email, otp) => {
-  console.log(`[OTP DISPATCH] [REGISTRATION] Recipient: ${email} | OTP Code: ${otp}`);
+  const displayOtp = formatEmailOtpCode(otp);
+  console.log(`[OTP DISPATCH] [REGISTRATION] Recipient: ${email} | OTP Code: ${displayOtp}`);
 
   if (!isEmailConfigured()) {
-    console.log(`[EMAIL FALLBACK] Registration OTP for ${email}: ${otp} (valid 10m)`);
+    console.log(`[EMAIL FALLBACK] Registration OTP for ${email}: ${displayOtp} (valid 10m)`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
   }
 
@@ -230,14 +233,14 @@ const sendOtpEmail = async (email, otp) => {
     from: `"Mega Pacific Metal and Steel Corp" <${process.env.SMTP_FROM || 'noreply@megapacific.com'}>`,
     to: email,
     subject: "Registration Verification OTP - Mega Pacific",
-    text: `Your Registration One-Time Password (OTP) is: ${otp}. This code expires in 10 minutes.`,
+    text: `Your Registration One-Time Password (OTP) is: ${displayOtp}. This code expires in 10 minutes.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
         <h2 style="color: #4f772d; text-align: center; margin-top: 0;">Mega Pacific Metal and Steel Corp</h2>
         <p style="color: #333333; font-size: 16px;">Dear Customer,</p>
         <p style="color: #555555; font-size: 14px; line-height: 1.5;">Thank you for registering on our platform. To complete your registration and activate your account, please enter the Registration One-Time Password (OTP) below:</p>
         <div style="font-size: 26px; font-weight: bold; color: #3d5c22; text-align: center; margin: 30px 0; letter-spacing: 4px; padding: 15px; background-color: #f7f9f6; border-radius: 8px; border: 1px solid #e2ebd5; font-family: monospace;">
-          ${otp}
+          ${displayOtp}
         </div>
         <p style="color: #666666; font-size: 13px; line-height: 1.5;">This Registration OTP is valid for <strong>10 minutes</strong>. Please do not share this code with anyone for security purposes.</p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
@@ -256,10 +259,11 @@ const sendOtpEmail = async (email, otp) => {
 };
 
 const sendLoginOtpEmail = async (email, otp) => {
-  console.log(`[OTP DISPATCH] [LOGIN] Recipient: ${email} | OTP Code: ${otp}`);
+  const displayOtp = formatEmailOtpCode(otp);
+  console.log(`[OTP DISPATCH] [LOGIN] Recipient: ${email} | OTP Code: ${displayOtp}`);
 
   if (!isEmailConfigured()) {
-    console.log(`[EMAIL FALLBACK] Login OTP for ${email}: ${otp} (valid 10m)`);
+    console.log(`[EMAIL FALLBACK] Login OTP for ${email}: ${displayOtp} (valid 10m)`);
     return { success: true, message: "Logged to console (SMTP not configured)" };
   }
 
@@ -267,14 +271,14 @@ const sendLoginOtpEmail = async (email, otp) => {
     from: `"Mega Pacific Metal and Steel Corp" <${process.env.SMTP_FROM || 'noreply@megapacific.com'}>`,
     to: email,
     subject: "Login Verification OTP - Mega Pacific",
-    text: `Your Login Verification One-Time Password (OTP) is: ${otp}. This code expires in 10 minutes.`,
+    text: `Your Login Verification One-Time Password (OTP) is: ${displayOtp}. This code expires in 10 minutes.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
         <h2 style="color: #4f772d; text-align: center; margin-top: 0;">Mega Pacific Metal and Steel Corp</h2>
         <p style="color: #333333; font-size: 16px;">Dear User,</p>
         <p style="color: #555555; font-size: 14px; line-height: 1.5;">We received a sign-in attempt for your Mega Pacific account. To verify your identity and complete your login, please enter the Login One-Time Password (OTP) below:</p>
         <div style="font-size: 26px; font-weight: bold; color: #1e3a8a; text-align: center; margin: 30px 0; letter-spacing: 4px; padding: 15px; background-color: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe; font-family: monospace;">
-          ${otp}
+          ${displayOtp}
         </div>
         <p style="color: #666666; font-size: 13px; line-height: 1.5;">This Login OTP is valid for <strong>10 minutes</strong>. If you did not attempt to log in, please secure your password immediately.</p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
