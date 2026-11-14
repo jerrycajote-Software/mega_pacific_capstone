@@ -39,7 +39,6 @@ const StatCard = ({ label, value, sub, icon, accentColor, bgGradient, badgeColor
         cursor: 'default',
         borderRadius: 16,
         border: '1px solid var(--border-light)',
-        borderTop: `3px solid ${accentColor}`,
         background: 'var(--bg-card)',
         boxShadow: '0 4px 20px -8px rgba(0,0,0,0.1)',
         display: 'flex',
@@ -184,7 +183,7 @@ const OwnerDashboardPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>Executive Overview</h2>
+          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>Business Overview</h2>
           <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
             {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
@@ -234,7 +233,7 @@ const OwnerDashboardPage = () => {
         <StatCard
           label="Total Orders"
           value={totals.orders}
-          sub="Volume"
+          sub="Orders"
           icon={<CustomOwnerOrdersVolumeIcon size={30} />}
           accentColor="#f43f5e"
           bgGradient="rgba(244, 63, 94, 0.1)"
@@ -245,7 +244,7 @@ const OwnerDashboardPage = () => {
         <StatCard
           label="Avg Order Value"
           value={totals.avgOrderValue}
-          sub="AOV"
+          sub="Per Order"
           icon={<CustomOwnerAvgOrderValueIcon size={30} />}
           accentColor="#8b5cf6"
           bgGradient="rgba(139, 92, 246, 0.1)"
@@ -256,7 +255,7 @@ const OwnerDashboardPage = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem' }}>
-        <Widget title="30-Day Revenue Trend">
+        <Widget title="30-Day Revenue History">
           <div style={{ width: '100%', height: 300, padding: '1rem' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -279,11 +278,11 @@ const OwnerDashboardPage = () => {
           </div>
         </Widget>
 
-        <Widget title="Raw Material Coil Health">
+        <Widget title="Raw Material Coil Stock">
           <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                 Steel coils across 14 official colors
+                 Steel coils across 14 colors
                </span>
                <span className="badge-green" style={{ fontSize: '0.7rem' }}>
                  {(data.coilHealth?.totalCoils || 0).toLocaleString()} rolls in stock
@@ -325,7 +324,7 @@ const OwnerDashboardPage = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-        <Widget title="Top Performing Products">
+        <Widget title="Top Selling Products">
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>

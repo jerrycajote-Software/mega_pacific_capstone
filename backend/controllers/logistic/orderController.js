@@ -13,7 +13,12 @@ const getLogisticOrders = async (req, res) => {
       },
       orderBy: { createdAt: "desc" },
       include: {
-        user: { select: { email: true } },
+        user: {
+          select: {
+            email: true,
+            customerProfile: { select: { contactNumber: true } }
+          }
+        },
         items: {
           include: {
             product: { select: { name: true, type: true } },
@@ -41,6 +46,7 @@ const getLogisticOrders = async (req, res) => {
         rawId: o.id,
         customerName: o.customerName || o.shippingName || "Unknown",
         customerEmail: o.customerEmail || (o.user && o.user.email) || "Unknown",
+        contactNumber: o.shippingContactNumber || o.user?.customerProfile?.contactNumber || null,
         productsSummary,
         totalQuantity: o.items.reduce((acc, item) => acc + item.quantity, 0),
         totalAmount: o.total,

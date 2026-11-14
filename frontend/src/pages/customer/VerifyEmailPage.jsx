@@ -51,8 +51,8 @@ const VerifyEmailPage = () => {
   }, [cooldown]);
 
   const handleChange = (element, index) => {
-    const val = element.value;
-    if (isNaN(val)) return;
+    const val = element.value.replace(/\D/g, '');
+    if (element.value !== '' && !val) return;
 
     const newOtp = [...otp];
     newOtp[index] = val.substring(val.length - 1);

@@ -73,8 +73,8 @@ const ResetPasswordPage = () => {
   const canSubmit               = otpComplete && allPasswordChecksPassed && newPassword === confirmPassword;
 
   const handleOtpChange = (element, index) => {
-    const val = element.value;
-    if (isNaN(val)) return;
+    const val = element.value.replace(/\D/g, '');
+    if (element.value !== '' && !val) return;
     const newOtp = [...otp];
     newOtp[index] = val.substring(val.length - 1);
     setOtp(newOtp);
@@ -228,6 +228,9 @@ const ResetPasswordPage = () => {
                   key={index}
                   component="input"
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="one-time-code"
                   maxLength="1"
                   ref={(el) => (inputRefs.current[index] = el)}
                   value={data}
