@@ -324,7 +324,7 @@ const FinanceDashboardPage = () => {
     {
       label: 'Net Operating Income',
       value: `₱${(data.kpi.netProfit || 0).toLocaleString()}`,
-      badge: `${data.kpi.profitMargin || 0}% Margin`,
+      badge: `${data.kpi.profitMargin || 0}% Profit`,
       trend: 'Operating profit',
       color: '#2563EB',
       bg: 'rgba(37, 99, 235, 0.08)',
@@ -381,16 +381,6 @@ const FinanceDashboardPage = () => {
                   justifyContent: 'space-between',
                   transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxShadow: '0 4px 20px -8px rgba(0,0,0,0.05)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '3px',
-                    background: `linear-gradient(90deg, ${kpi.color} 0%, transparent 100%)`,
-                    opacity: 0.9
-                  },
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: `0 16px 32px -10px ${kpi.glowShadow}, 0 4px 12px rgba(0,0,0,0.04)`,
@@ -440,21 +430,7 @@ const FinanceDashboardPage = () => {
                   />
                 </Box>
 
-                <Box sx={{ my: 0.5 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.secondary',
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      display: 'block',
-                      mb: 0.75
-                    }}
-                  >
-                    {kpi.label}
-                  </Typography>
+                <Box sx={{ my: 0.5, flexGrow: 1, display: 'flex', alignItems: 'center' }}>
                   <Typography
                     variant="h4"
                     sx={{
@@ -472,11 +448,12 @@ const FinanceDashboardPage = () => {
 
                 <Box
                   sx={{
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
                     gap: 0.75,
                     mt: 2,
                     pt: 1.5,
+                    minHeight: { md: 44 },
                     borderTop: '1px solid',
                     borderColor: 'divider',
                     width: '100%'
@@ -497,13 +474,11 @@ const FinanceDashboardPage = () => {
                     sx={{
                       color: 'text.secondary',
                       fontWeight: 600,
-                      fontSize: '0.74rem',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      fontSize: '0.73rem',
+                      lineHeight: 1.35
                     }}
                   >
-                    {kpi.trend}
+                    {kpi.trend} / {kpi.label}
                   </Typography>
                 </Box>
               </Paper>
@@ -549,7 +524,7 @@ const FinanceDashboardPage = () => {
                 </Typography>
               </Box>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Chip label="Net P&L" size="small" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.7rem' }} />
+                <Chip label="Profit & Loss" size="small" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.7rem' }} />
               </Stack>
             </Box>
 

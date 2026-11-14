@@ -123,7 +123,7 @@ const SettingsPage = () => {
           System & Security Settings
         </h1>
         <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          Configure security protocols, session concurrency controls, and operational platform safeguards.
+          Manage security settings, device login limits, and system protections.
         </p>
       </div>
 
@@ -179,10 +179,10 @@ const SettingsPage = () => {
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Device Concurrency & Login Limits
+                  Device & Login Limits
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  Controls how many browser sessions or devices each operational staff member can maintain concurrently.
+                  Controls how many devices or browsers each staff member can use at the same time.
                 </p>
               </div>
             </div>
@@ -232,7 +232,7 @@ const SettingsPage = () => {
                     </span>
                   </div>
                   <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                    When a staff member attempts to sign into a new device beyond this threshold, an OTP verification challenge is triggered and past dormant sessions are reviewed.
+                    When a staff member signs in on a new device beyond this limit, an OTP verification check is required and inactive sessions are reviewed.
                   </p>
                 </div>
 
@@ -407,10 +407,10 @@ const SettingsPage = () => {
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Password Complexity & Reset Guard
+                  Password Rules & Reset Protection
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  Enforced cryptographic password requirements across all user tiers.
+                  Strong password requirements enforced for all user accounts.
                 </p>
               </div>
             </div>
@@ -464,10 +464,10 @@ const SettingsPage = () => {
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Manufacturing & Operating Facility
+                  Company & Plant Details
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  Enterprise facility parameters and fulfillment center coverage.
+                  Company branch, plant location, and operating schedule.
                 </p>
               </div>
             </div>
@@ -478,11 +478,11 @@ const SettingsPage = () => {
                 <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Mega Pacific Metal and Steel Corp</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-light)' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Fulfillment Center:</span>
+                <span style={{ color: 'var(--text-muted)' }}>Service Area:</span>
                 <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Region IV-A (CALABARZON)</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-light)' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Production Facility:</span>
+                <span style={{ color: 'var(--text-muted)' }}>Plant Location:</span>
                 <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Imus, Cavite Manufacturing Plant</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
@@ -518,10 +518,10 @@ const SettingsPage = () => {
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Platform Guard Status
+                  System Security Status
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  Real-time backoffice security & infrastructure monitors.
+                  Real-time admin security and system health checks.
                 </p>
               </div>
             </div>
@@ -534,9 +534,9 @@ const SettingsPage = () => {
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Singleton Role Guard:</span>
+                <span style={{ color: 'var(--text-muted)' }}>One Account per Role:</span>
                 <span style={{ color: '#22c55e', fontWeight: 700, background: 'rgba(34,197,94,0.12)', padding: '2px 8px', borderRadius: 6 }}>
-                  1:1 Account Policy
+                  Enforced (1:1)
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -547,8 +547,8 @@ const SettingsPage = () => {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Live Gateway Channel:</span>
-                <span style={{ color: '#3b82f6', fontWeight: 700, fontFamily: 'monospace' }}>
-                  ws://admin
+                <span style={{ color: '#3b82f6', fontWeight: 700 }}>
+                  Connected (Admin)
                 </span>
               </div>
             </div>

@@ -84,13 +84,16 @@ const CustomerLoginPage = () => {
       setError('Please type your correct password');
       return;
     }
+    if (requiresOtp && otp.replace(/\D/g, '').length !== 6) {
+      setError('Please enter the full 6-digit login OTP code.');
+      return;
+    }
 
     setLoading(true);
 
     let cleanOtp = null;
     if (requiresOtp && otp) {
-      const trimmed = otp.trim().toUpperCase();
-      cleanOtp = trimmed.startsWith('LOG-') ? trimmed : (/^\d{6}$/.test(trimmed) ? `LOG-${trimmed}` : trimmed);
+      cleanOtp = `LOG-${otp.replace(/\D/g, '')}`;
     }
 
     const result = await login(email, password, cleanOtp, ['customer']);
@@ -257,11 +260,15 @@ const CustomerLoginPage = () => {
                 margin="normal"
                 required
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.toUpperCase())}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="123456"
                 helperText="Enter the 6-digit login code from your email."
                 sx={{ mb: 1 }}
                 inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]{6}',
+                  maxLength: 6,
+                  autoComplete: 'one-time-code',
                   style: { letterSpacing: '0.15em', textAlign: 'center', fontWeight: 'bold' },
                 }}
               />

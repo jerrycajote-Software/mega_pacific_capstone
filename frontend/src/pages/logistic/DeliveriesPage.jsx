@@ -142,9 +142,12 @@ const DeliveriesPage = () => {
   ).length;
 
   const filteredOrders = orders.filter((o) => {
+    const query = searchTerm.toLowerCase();
     const matchesSearch =
-      o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+      o.id.toLowerCase().includes(query) ||
+      o.customerName.toLowerCase().includes(query) ||
+      (o.contactNumber || '').toLowerCase().includes(query) ||
+      (o.customerEmail || '').toLowerCase().includes(query);
 
     if (!matchesSearch) return false;
 
@@ -328,7 +331,7 @@ const DeliveriesPage = () => {
                     <td style={{ padding: '1rem' }}>
                       <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{order.customerName}</div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                        {isPickup ? '🏬 Store Pick-up' : (order.address || 'Jobsite Destination')}
+                        {order.contactNumber || (order.customerEmail && order.customerEmail !== 'Unknown' ? order.customerEmail : 'No contact provided')}
                       </div>
                     </td>
                     <td style={{ padding: '1rem' }}>
@@ -487,6 +490,9 @@ const DeliveriesPage = () => {
                 <div style={{ flex: 1, background: 'var(--bg-primary)', padding: '1rem', borderRadius: 8, border: '1px solid var(--border)' }}>
                   <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Customer Info</p>
                   <p style={{ margin: 0, fontWeight: 700 }}>{selectedOrder.customerName}</p>
+                  {selectedOrder.contactNumber && (
+                    <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{selectedOrder.contactNumber}</p>
+                  )}
                   <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{selectedOrder.customerEmail}</p>
                 </div>
                 <div style={{ flex: 1, background: 'var(--bg-primary)', padding: '1rem', borderRadius: 8, border: '1px solid var(--border)' }}>

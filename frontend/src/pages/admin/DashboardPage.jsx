@@ -133,7 +133,7 @@ const DashboardPage = () => {
             </span>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
-            Real-time customer directory oversight, departmental staff clearance, and system security controls.
+            Manage customer accounts, staff roles, and system security settings.
           </p>
         </div>
 
@@ -155,7 +155,6 @@ const DashboardPage = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: '3px solid #2563eb',
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -193,7 +192,6 @@ const DashboardPage = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: '3px solid #4f772d',
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -202,7 +200,7 @@ const DashboardPage = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-              Operational Staff
+              Staff Accounts
             </span>
             <div className="mpi-admin-badge" style={{
               width: 46,
@@ -222,8 +220,8 @@ const DashboardPage = () => {
             {kpi.activeStaff} / {kpi.totalStaff}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: '0.75rem' }}>
-            <span style={{ color: '#22c55e', fontWeight: 700 }}>Singleton 1:1 Policy</span>
-            <span style={{ color: 'var(--text-muted)' }}>• All roles staffed</span>
+            <span style={{ color: '#22c55e', fontWeight: 700 }}>One account per role</span>
+            <span style={{ color: 'var(--text-muted)' }}>• All roles filled</span>
           </div>
         </div>
 
@@ -231,7 +229,6 @@ const DashboardPage = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: '3px solid #10b981',
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -240,7 +237,7 @@ const DashboardPage = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-              Verification Health
+              Verified Accounts
             </span>
             <div className="mpi-admin-badge" style={{
               width: 46,
@@ -269,7 +266,6 @@ const DashboardPage = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: `3px solid ${kpi.flagsCount > 0 ? '#f59e0b' : '#22c55e'}`,
           borderRadius: 16,
           padding: '1.35rem',
           position: 'relative',
@@ -278,7 +274,7 @@ const DashboardPage = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-              Security Flags
+              Account Alerts
             </span>
             <div className="mpi-admin-badge" style={{
               width: 46,
@@ -324,10 +320,10 @@ const DashboardPage = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Departmental Staff Clearance Directory
+                Staff Accounts & Roles
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Active administrative & operational staff credentials.
+                Active admin and department staff accounts.
               </p>
             </div>
             <button
@@ -353,7 +349,7 @@ const DashboardPage = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr>
-                  <th style={{ ...th, minWidth: 160, whiteSpace: 'nowrap' }}>Role Clearance</th>
+                  <th style={{ ...th, minWidth: 160, whiteSpace: 'nowrap' }}>Staff Role</th>
                   <th style={{ ...th, minWidth: 120, whiteSpace: 'nowrap' }}>Account Name</th>
                   <th style={{ ...th, minWidth: 180, whiteSpace: 'nowrap' }}>Official Email</th>
                   <th style={{ ...th, minWidth: 130, whiteSpace: 'nowrap' }}>Contact Number</th>
@@ -458,8 +454,8 @@ const DashboardPage = () => {
                     <PeopleIcon sx={{ fontSize: 18 }} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)' }}>Customer Directory</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Inspect profiles, addresses & status</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)' }}>Customer Accounts</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>View profiles, addresses, and status</div>
                   </div>
                 </div>
                 <ChevronRightIcon sx={{ fontSize: 18, color: 'var(--text-muted)' }} />
@@ -492,7 +488,7 @@ const DashboardPage = () => {
                     <LockResetIcon sx={{ fontSize: 18 }} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)' }}>Staff Clearance & Reset</div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)' }}>Staff Accounts & Passwords</div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Update contact numbers or passwords</div>
                   </div>
                 </div>

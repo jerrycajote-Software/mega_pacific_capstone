@@ -120,15 +120,18 @@ const StaffPortalLogin = ({
   const handlePortalLogin = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     let cleanOtp = null;
-    if (requiresOtp && otp) {
-      const trimmed = otp.trim().toUpperCase();
-      cleanOtp = trimmed.startsWith('LOG-')
-        ? trimmed
-        : (/^\d{6}$/.test(trimmed) ? `LOG-${trimmed}` : trimmed);
+    if (requiresOtp) {
+      const digitsOnly = otp.replace(/\D/g, '');
+      if (digitsOnly.length !== 6) {
+        setError('Please enter the full 6-digit login OTP code.');
+        return;
+      }
+      cleanOtp = `LOG-${digitsOnly}`;
     }
+
+    setLoading(true);
 
     const result = await login(email, password, cleanOtp, allowedRoles);
     if (result.requiresOtp) {
@@ -445,8 +448,12 @@ const StaffPortalLogin = ({
                       id={otpInputId}
                       className="spl-input"
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]{6}"
+                      maxLength={6}
+                      autoComplete="one-time-code"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value.toUpperCase())}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="ex. 123456"
                       required
                       style={{

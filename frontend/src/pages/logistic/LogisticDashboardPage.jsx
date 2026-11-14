@@ -176,7 +176,7 @@ const LogisticDashboardPage = () => {
     },
     {
       value: data.kpi.completedToday || 0,
-      badge: 'Daily Goal',
+      badge: 'Completed Today',
       sub: 'Received by customers today',
       color: '#10B981',
       bg: 'rgba(16, 185, 129, 0.1)',
@@ -189,8 +189,8 @@ const LogisticDashboardPage = () => {
     },
     {
       value: data.kpi.pendingPickups || 0,
-      badge: 'Pickup Counter',
-      sub: 'Waiting at the store counter',
+      badge: 'Store Pickup',
+      sub: 'Pending store pickup',
       color: '#8B5CF6',
       bg: 'rgba(139, 92, 246, 0.1)',
       borderColor: 'rgba(139, 92, 246, 0.25)',
@@ -223,7 +223,7 @@ const LogisticDashboardPage = () => {
             />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            Track customer deliveries, active routes, and store pickups.
+            Track ready orders, ongoing deliveries, and store pickups.
           </Typography>
         </Box>
 
@@ -262,15 +262,6 @@ const LogisticDashboardPage = () => {
                   gap: 1.75,
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                   boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '3px',
-                    bgcolor: kpi.color
-                  },
                   '&:hover': {
                     transform: 'translateY(-2px)',
                     boxShadow: '0 10px 24px -8px rgba(15, 23, 42, 0.12)',
@@ -375,7 +366,7 @@ const LogisticDashboardPage = () => {
                   Delivery Volume (Past 7 Days)
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Daily distribution between direct deliveries and counter pickups
+                  Daily count of direct deliveries and store pickups
                 </Typography>
               </Box>
               <Chip label="Real-Time" size="small" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.7rem' }} />
@@ -497,7 +488,7 @@ const LogisticDashboardPage = () => {
 
             <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
               <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1 }}>
-                Delivery Method Share
+                Delivery Method Breakdown
               </Typography>
               <Box sx={{ width: '100%', height: 130, position: 'relative' }}>
                 <ResponsiveContainer width="100%" height="100%">

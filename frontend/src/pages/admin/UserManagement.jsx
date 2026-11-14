@@ -183,7 +183,6 @@ const UserManagement = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: '3px solid #2563eb',
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
@@ -215,7 +214,6 @@ const UserManagement = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: '3px solid #10b981',
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
@@ -247,7 +245,6 @@ const UserManagement = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: '3px solid #4f772d',
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
@@ -279,7 +276,6 @@ const UserManagement = () => {
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
-          borderTop: `3px solid ${metrics.suspended > 0 ? '#ef4444' : '#10b981'}`,
           borderRadius: 14,
           padding: '1.15rem',
           display: 'flex',
