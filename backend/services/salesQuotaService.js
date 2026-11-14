@@ -7,7 +7,7 @@ const getDefaultQuotaConfig = () => ({
   targetAmount: 500000,
   periodType: "monthly",
   targetOrders: 25,
-  noteToSales: "Prioritize pending roofing pre-orders and respond to customer inquiries promptly to reach our monthly target.",
+  noteToSales: "Prioritize pending roofing pre-orders and respond to customer inquiries promptly to reach our target.",
   updatedBy: "Business Owner",
   updatedAt: null
 });
