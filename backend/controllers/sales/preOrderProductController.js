@@ -89,7 +89,7 @@ const createPreOrderProduct = async (req, res) => {
     });
 
     if (existingProduct) {
-      return res.status(400).json({ success: false, error: "A product with this name already exists. Please choose a different name." });
+      return res.status(400).json({ success: false, error: "A product with this name already exists." });
     }
 
     const rawOrigPrice = originalPrice !== undefined && originalPrice !== "" ? parseFloat(originalPrice) : parseFloat(price) || 0;

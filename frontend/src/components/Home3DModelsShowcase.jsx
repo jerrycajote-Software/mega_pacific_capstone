@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -7,10 +7,29 @@ import {
   Button,
   Chip,
   Grid,
+  Stack,
 } from '@mui/material';
-import { AVAILABLE_3D_ROOF_MODELS } from '../services/roofModelRegistry';
+import {
+  AVAILABLE_3D_ROOF_MODELS,
+  AVAILABLE_CURVED_ROOF_MODELS,
+  isMegaCurvedRoof,
+} from '../services/roofModelRegistry';
 
-const Home3DModelsShowcase = ({ product, onCustomizeIn3D }) => {
+const ALL_SHOWCASE_MODELS = [
+  ...AVAILABLE_3D_ROOF_MODELS,
+  ...AVAILABLE_CURVED_ROOF_MODELS,
+];
+
+const Home3DModelsShowcase = ({ onCustomizeIn3D }) => {
+  const [selectedProfileFilter, setSelectedProfileFilter] = useState('all');
+
+  const displayedModels =
+    selectedProfileFilter === 'pico'
+      ? AVAILABLE_3D_ROOF_MODELS
+      : selectedProfileFilter === 'curved'
+      ? AVAILABLE_CURVED_ROOF_MODELS
+      : ALL_SHOWCASE_MODELS;
+
   return (
     <Box sx={{ mb: 6 }}>
       <Box
@@ -48,16 +67,46 @@ const Home3DModelsShowcase = ({ product, onCustomizeIn3D }) => {
               color: 'text.primary',
             }}
           >
-            Available 3D Roof House Models
+            Available 3D Roof Models
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Select a house design to explore in 360°, inspect roof trusses and purlins, and customize colors.
+            Select a house, gymnasium, or canopy structure to explore in 360°, inspect trusses and purlins, and customize colors.
           </Typography>
         </Box>
+
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+          {[
+            { id: 'all', label: `All (${ALL_SHOWCASE_MODELS.length})` },
+            { id: 'pico', label: `Pico Rib 1220 (${AVAILABLE_3D_ROOF_MODELS.length})` },
+            { id: 'curved', label: `Mega Curved Roof (${AVAILABLE_CURVED_ROOF_MODELS.length})` },
+          ].map((tab) => {
+            const active = selectedProfileFilter === tab.id;
+            return (
+              <Button
+                key={tab.id}
+                size="small"
+                variant={active ? 'contained' : 'outlined'}
+                color="primary"
+                onClick={() => setSelectedProfileFilter(tab.id)}
+                sx={{
+                  borderRadius: 2,
+                  px: 1.5,
+                  py: 0.5,
+                  fontWeight: 700,
+                  fontSize: '0.76rem',
+                  textTransform: 'none',
+                }}
+              >
+                {tab.label}
+              </Button>
+            );
+          })}
+        </Stack>
       </Box>
 
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-        {AVAILABLE_3D_ROOF_MODELS.map((model, index) => {
+        {displayedModels.map((model, index) => {
+          const isCurved = isMegaCurvedRoof(model.profileName);
           const handleCustomizeIn3D = () => {
             if (onCustomizeIn3D) {
               onCustomizeIn3D(model);
@@ -136,7 +185,7 @@ const Home3DModelsShowcase = ({ product, onCustomizeIn3D }) => {
                     }}
                   />
 
-                  {/* House Visual Silhouette Icon */}
+                  {/* House / Structure Visual Silhouette Icon */}
                   <Box
                     sx={{
                       width: 56,
@@ -151,8 +200,8 @@ const Home3DModelsShowcase = ({ product, onCustomizeIn3D }) => {
                     }}
                   >
                     <i
-                      className="fi fi-rr-home-location-alt"
-                      style={{ fontSize: '26px', color: '#16a34a' }}
+                      className={isCurved ? 'fi fi-rr-building' : 'fi fi-rr-home-location-alt'}
+                      style={{ fontSize: '26px', color: isCurved ? '#0284c7' : '#16a34a' }}
                     ></i>
                   </Box>
 
@@ -183,18 +232,30 @@ const Home3DModelsShowcase = ({ product, onCustomizeIn3D }) => {
                   {/* Product Name Badge */}
                   <Box sx={{ mb: 1.2 }}>
                     <Chip
-                      label={`Product: ${product?.name || model.profileName || 'Pico Rib 1220'}`}
+                      label={`Product: ${model.profileName || 'Pico Rib 1220'}`}
                       size="small"
                       sx={{
                         bgcolor: (theme) =>
-                          theme.palette.mode === 'dark' ? 'rgba(74, 222, 128, 0.15)' : 'rgba(79, 119, 45, 0.1)',
-                        color: 'primary.main',
+                          isCurved
+                            ? theme.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.16)'
+                              : 'rgba(2, 132, 199, 0.1)'
+                            : theme.palette.mode === 'dark'
+                            ? 'rgba(74, 222, 128, 0.15)'
+                            : 'rgba(79, 119, 45, 0.1)',
+                        color: isCurved ? '#0284c7' : 'primary.main',
                         fontWeight: 800,
                         fontSize: '0.72rem',
                         height: 24,
                         border: '1px solid',
                         borderColor: (theme) =>
-                          theme.palette.mode === 'dark' ? 'rgba(74, 222, 128, 0.3)' : 'rgba(79, 119, 45, 0.25)',
+                          isCurved
+                            ? theme.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.35)'
+                              : 'rgba(2, 132, 199, 0.25)'
+                            : theme.palette.mode === 'dark'
+                            ? 'rgba(74, 222, 128, 0.3)'
+                            : 'rgba(79, 119, 45, 0.25)',
                         borderRadius: 1.5,
                         '& .MuiChip-label': { px: 1 },
                       }}

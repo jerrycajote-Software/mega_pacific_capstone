@@ -1,28 +1,34 @@
 /**
  * 3D Roof House Model Registry & Product Profile Compatibility Service
  *
- * Specific validation rules:
- * 1. Pico Rib 1220: Dedicated 3D modular models mapped across 4 house tiers:
- *    - Starter House (6m x 6m footprint, 8m x 6m roof, 16 sheets): 2.0m – 3.9m cut length
- *    - Typical 2-Storey House (8m x 6m footprint/flr, 9m x 7m roof, 18 sheets): 4.0m – 4.5m cut length
- *    - Single-Storey House (8m x 8m footprint, 10m x 8m roof, 20 sheets): 4.6m – 5.4m cut length
- *    - Larger 2-Storey House (10m x 6m footprint/flr, 10m x 8m roof, 20 sheets): 5.5m – 6.5m cut length
- * 2. Other products (ex. Mega Twin Rib): No 3D model currently available, returns
- *    clear status: "Nothing available model for this product".
+ * Specific validation rules (strict exact product name matching):
+ * 1. Pico Rib 1220: Dedicated 3D modular models mapped across 4 house tiers (2.0m - 6.5m).
+ * 2. Mega Curved Roof: Dedicated 3D barrel-vault models mapped across 3 structural tiers (4.0m - 14.0m):
+ *    - Curved Canopy / Walkway (4.45m x 8.1m, 8 sheets): 4.0m - 5.9m arc cut length
+ *    - Covered Court / Mini Gymnasium (7.6m x 12.2m, 12 sheets): 6.0m - 8.9m arc cut length
+ *    - Full Sports Gymnasium & Dome (9.6m x 16.2m, 16 sheets): 9.0m - 14.0m arc cut length
+ * 3. All other products return status: "Nothing available model for this product".
  */
 
+const normalizeProductName = (productName) => {
+  if (!productName || typeof productName !== 'string') return '';
+  return productName.trim().replace(/\s+/g, ' ').toLowerCase();
+};
+
 export const isPicoRib1220 = (productName) => {
-  if (!productName || typeof productName !== 'string') return false;
-  const normalized = productName.trim().replace(/\s+/g, ' ').toLowerCase();
-  return normalized === 'pico rib 1220';
+  return normalizeProductName(productName) === 'pico rib 1220';
+};
+
+export const isMegaCurvedRoof = (productName) => {
+  return normalizeProductName(productName) === 'mega curved roof';
 };
 
 export const has3DModel = (productName) => {
-  return isPicoRib1220(productName);
+  return isPicoRib1220(productName) || isMegaCurvedRoof(productName);
 };
 
 export const isProduct3DSupported = (productName) => {
-  return isPicoRib1220(productName);
+  return has3DModel(productName);
 };
 
 export const AVAILABLE_3D_ROOF_MODELS = [
@@ -140,15 +146,116 @@ export const AVAILABLE_3D_ROOF_MODELS = [
   },
 ];
 
+export const AVAILABLE_CURVED_ROOF_MODELS = [
+  {
+    id: 'mega_curved_canopy',
+    name: 'Curved Canopy / Covered Walkway',
+    shortLabel: 'Curved Canopy',
+    profileName: 'Mega Curved Roof',
+    modelPath: '/models/curved/Mega_Curved_Canopy.glb',
+    blendFileName: 'Mega_Curved_Roof_Canopy.blend',
+    floorArea: '36 sqm (8.1m × 4.45m bay)',
+    roofDimensions: '8.1m × 5.0m arched roof (40.5 sqm)',
+    effectiveWidthMm: 1013,
+    nominalWidthMm: 1080,
+    ribHeightMm: 28,
+    minRafterLength: 4.0,
+    maxRafterLength: 5.9,
+    recommendedLength: 5.0,
+    totalSheets: 8,
+    sheetsPerSlope: 8,
+    sheetWidthMeters: 1.013,
+    cameraTargetY: 2.3,
+    cameraDefaultPos: [6.8, 4.6, 6.8],
+    sheetEdgeTarget: [-3.545, 3.050, 2.225],
+    sheetEdgeCameraPos: [-3.545, 2.98, 2.98],
+    internalTrussTarget: [0, 3.55, 0],
+    internalTrussCameraPos: [3.8, 2.9, 2.8],
+    roofTopTarget: [0, 3.6, 0],
+    roofTopCameraPos: [0, 10.5, 1.5],
+    maxCameraDistance: 30,
+    description: 'Open-sided arched walkway and carport canopy supported by steel columns and curved trusses using 8 Mega Curved Roof sheets at 5.0m arc length.',
+  },
+  {
+    id: 'mega_curved_mini_gym',
+    name: 'Covered Court / Mini Gymnasium',
+    shortLabel: 'Covered Court',
+    profileName: 'Mega Curved Roof',
+    modelPath: '/models/curved/Mega_Curved_Mini_Gym.glb',
+    blendFileName: 'Mega_Curved_Roof_Mini_Gym.blend',
+    floorArea: '92 sqm (12.2m × 7.6m court)',
+    roofDimensions: '12.2m × 8.5m barrel arch (103 sqm)',
+    effectiveWidthMm: 1013,
+    nominalWidthMm: 1080,
+    ribHeightMm: 28,
+    minRafterLength: 6.0,
+    maxRafterLength: 8.9,
+    recommendedLength: 8.5,
+    totalSheets: 12,
+    sheetsPerSlope: 12,
+    sheetWidthMeters: 1.013,
+    cameraTargetY: 3.4,
+    cameraDefaultPos: [10.5, 6.8, 10.5],
+    sheetEdgeTarget: [-5.571, 4.750, 3.800],
+    sheetEdgeCameraPos: [-5.571, 4.68, 4.55],
+    internalTrussTarget: [0, 5.5, 0],
+    internalTrussCameraPos: [5.0, 4.4, 3.6],
+    roofTopTarget: [0, 5.6, 0],
+    roofTopCameraPos: [0, 15.0, 2.0],
+    maxCameraDistance: 36,
+    description: 'Community covered sports court and mini gymnasium with curved steel lattice trusses and 12 Mega Curved Roof sheets at 8.5m arc length.',
+  },
+  {
+    id: 'mega_curved_gym_dome',
+    name: 'Sports Gymnasium & Barrel Dome',
+    shortLabel: 'Gym & Dome',
+    profileName: 'Mega Curved Roof',
+    modelPath: '/models/curved/Mega_Curved_Gym_Dome.glb',
+    blendFileName: 'Mega_Curved_Roof_Gym_Dome.blend',
+    floorArea: '155 sqm (16.2m × 9.6m arena)',
+    roofDimensions: '16.2m × 11.0m barrel dome (178 sqm)',
+    effectiveWidthMm: 1013,
+    nominalWidthMm: 1080,
+    ribHeightMm: 28,
+    minRafterLength: 9.0,
+    maxRafterLength: 14.0,
+    recommendedLength: 11.0,
+    totalSheets: 16,
+    sheetsPerSlope: 16,
+    sheetWidthMeters: 1.013,
+    cameraTargetY: 4.2,
+    cameraDefaultPos: [14.0, 9.2, 14.0],
+    sheetEdgeTarget: [-7.597, 5.750, 4.800],
+    sheetEdgeCameraPos: [-7.597, 5.68, 5.55],
+    internalTrussTarget: [0, 6.8, 0],
+    internalTrussCameraPos: [6.2, 5.2, 4.2],
+    roofTopTarget: [0, 7.0, 0],
+    roofTopCameraPos: [0, 19.5, 2.5],
+    maxCameraDistance: 44,
+    description: 'Full enclosed sports gymnasium and dome structure with clerestory windows, curved lattice trusses, and 16 Mega Curved Roof sheets at 11.0m arc length.',
+  },
+];
+
 /**
- * Validates product profile name and cut length compatibility.
+ * Returns the dedicated 3D structure models strictly matching the exact product name.
+ * @param {string} [productName]
+ * @returns {Array}
+ */
+export const getAvailable3DModelsForProduct = (productName = '') => {
+  if (!productName) return AVAILABLE_3D_ROOF_MODELS;
+  if (isMegaCurvedRoof(productName)) return AVAILABLE_CURVED_ROOF_MODELS;
+  if (isPicoRib1220(productName)) return AVAILABLE_3D_ROOF_MODELS;
+  return [];
+};
+
+/**
+ * Validates exact product profile name and cut length compatibility.
  * @param {number|string} lengthMeters
  * @param {string} [productName]
  * @returns {object} { isProfileSupported: boolean, model: object|null, message?: string }
  */
 export const getCompatibleRoofModel = (lengthMeters, productName = '') => {
-  // 1. Profile Name Validation (Dedicated Pico Rib 1220 models)
-  if (productName && !isPicoRib1220(productName)) {
+  if (productName && !isProduct3DSupported(productName)) {
     return {
       isProfileSupported: false,
       model: null,
@@ -157,7 +264,7 @@ export const getCompatibleRoofModel = (lengthMeters, productName = '') => {
     };
   }
 
-  // 2. Dimensional validation
+  const modelsForProfile = getAvailable3DModelsForProduct(productName);
   const numLength = parseFloat(lengthMeters);
   if (isNaN(numLength) || numLength <= 0) {
     return {
@@ -168,7 +275,7 @@ export const getCompatibleRoofModel = (lengthMeters, productName = '') => {
     };
   }
 
-  const matched = AVAILABLE_3D_ROOF_MODELS.find(
+  const matched = modelsForProfile.find(
     (m) => numLength >= m.minRafterLength - 1e-6 && numLength <= m.maxRafterLength + 1e-6
   );
 
@@ -176,7 +283,7 @@ export const getCompatibleRoofModel = (lengthMeters, productName = '') => {
     return {
       isProfileSupported: true,
       model: null,
-      message: `No 3D house model available for ${lengthMeters}m rafter length`,
+      message: `No 3D structure model available for ${lengthMeters}m cut length`,
       productName,
     };
   }
@@ -190,10 +297,14 @@ export const getCompatibleRoofModel = (lengthMeters, productName = '') => {
 
 /**
  * Returns human-readable supported length ranges for unavailable model fallback dialogs.
+ * @param {string} [productName]
  * @returns {string}
  */
-export const getSupportedLengthRangeText = () => {
-  return AVAILABLE_3D_ROOF_MODELS.map(
-    (m) => `${m.name}: ${m.minRafterLength.toFixed(1)}m – ${m.maxRafterLength.toFixed(1)}m (ex. ${m.recommendedLength}m • ${m.totalSheets} sheets)`
-  ).join(' | ');
+export const getSupportedLengthRangeText = (productName = '') => {
+  const models = getAvailable3DModelsForProduct(productName);
+  return models
+    .map(
+      (m) => `${m.name}: ${m.minRafterLength.toFixed(1)}m – ${m.maxRafterLength.toFixed(1)}m (ex. ${m.recommendedLength}m • ${m.totalSheets} sheets)`
+    )
+    .join(' | ');
 };

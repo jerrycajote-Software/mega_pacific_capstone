@@ -22,15 +22,17 @@ import FloatingStructuralMemberInspector from './FloatingStructuralMemberInspect
 import GuideHiddenObjectsAssistant from './GuideHiddenObjectsAssistant';
 import {
   AVAILABLE_3D_ROOF_MODELS,
+  getAvailable3DModelsForProduct,
   getCompatibleRoofModel,
   getSupportedLengthRangeText,
+  isMegaCurvedRoof,
 } from '../services/roofModelRegistry';
 import { ROOFING_COLORS, getColorHex } from '../constants/roofingSpecs';
 import { DEFAULT_LAYER_VISIBILITY } from '../constants/roofStructureSpecs';
 import { isCoilInStock, getFirstInStockColor } from '../utils/coilAvailability';
 import useIsMobileBrowser from '../hooks/useDeviceDetect';
 
-const CanvasLoader = () => (
+const CanvasLoader = ({ productName = '' }) => (
   <Html center>
     <Box
       sx={{
@@ -48,7 +50,7 @@ const CanvasLoader = () => (
     >
       <CircularProgress size={32} sx={{ color: '#4ade80' }} />
       <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: '0.04em' }}>
-        Loading Pico Rib 1220 Model…
+        Loading {productName || '3D'} Model…
       </Typography>
     </Box>
   </Html>
@@ -178,6 +180,12 @@ const Product3DViewerModal = ({
 
   const orbitControlsRef = useRef(null);
 
+  const modelsForProduct = useMemo(
+    () => getAvailable3DModelsForProduct(product?.name),
+    [product?.name]
+  );
+  const isCurvedProfile = isMegaCurvedRoof(product?.name);
+
   // Sync state when opening with fresh product props
   useEffect(() => {
     if (open) {
@@ -195,10 +203,12 @@ const Product3DViewerModal = ({
           );
         }
       }
-      let targetLength = parseFloat(initialLength) || 3.8;
+      let targetLength = parseFloat(initialLength) || (isCurvedProfile ? 8.5 : 3.8);
       let targetQty = Math.max(1, parseInt(initialQuantity, 10) || 1);
       if (initialHouseModelId) {
-        const modelPreset = AVAILABLE_3D_ROOF_MODELS.find((m) => m.id === initialHouseModelId);
+        const modelPreset =
+          modelsForProduct.find((m) => m.id === initialHouseModelId) ||
+          AVAILABLE_3D_ROOF_MODELS.find((m) => m.id === initialHouseModelId);
         if (modelPreset) {
           targetLength = modelPreset.recommendedLength;
           targetQty = modelPreset.totalSheets;
@@ -219,12 +229,26 @@ const Product3DViewerModal = ({
       setIsInspectEdgeActive(false);
       setInspectEdgeTrigger(0);
     }
-  }, [open, initialColor, initialQuantity, initialLength, initialHouseModelId, selectedOption, coilInventory, colorList]);
+  }, [open, initialColor, initialQuantity, initialLength, initialHouseModelId, selectedOption, coilInventory, colorList, modelsForProduct, isCurvedProfile]);
 
   const compatibility = getCompatibleRoofModel(currentLength, product?.name);
   const isProductSupported = compatibility.isProfileSupported;
   const matchedModel = compatibility.model;
   const colorHex = getColorHex(currentColor);
+
+  // Frame camera to matched model preset when opening or switching models
+  useEffect(() => {
+    if (!open || !matchedModel) return;
+    const timer = setTimeout(() => {
+      const controls = orbitControlsRef.current;
+      if (!controls || !controls.object) return;
+      const [dx, dy, dz] = matchedModel.cameraDefaultPos || [5.6, 3.8, 5.6];
+      controls.object.position.set(dx, dy, dz);
+      controls.target.set(0, matchedModel.cameraTargetY ?? 2.3, 0);
+      controls.update();
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [open, matchedModel?.id]);
 
   const effectiveSheetQty = viewFullRoof ? (matchedModel?.totalSheets || 16) : currentQty;
 
@@ -638,7 +662,7 @@ const Product3DViewerModal = ({
           )}
           {isProductSupported && (
             <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
-              {AVAILABLE_3D_ROOF_MODELS.map((hm) => {
+              {modelsForProduct.map((hm) => {
                 const isSelectedHouse = matchedModel?.id === hm.id;
                 return (
                   <Tooltip
@@ -750,10 +774,11 @@ const Product3DViewerModal = ({
                 Nothing available model for this product
               </Typography>
               <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3.5, lineHeight: 1.65 }}>
-                Our interactive 3D model visualization is currently built and tailored specifically for{' '}
-                <strong style={{ color: '#4ade80' }}>Pico Rib 1220</strong> roofing sheets.
+                Our interactive 3D model visualization is currently built specifically for{' '}
+                <strong style={{ color: '#4ade80' }}>Pico Rib 1220</strong> and{' '}
+                <strong style={{ color: '#4ade80' }}>Mega Curved Roof</strong> panels.
                 <br />
-                A dedicated 3D profile model for <strong>{product?.name || 'this product'}</strong> is currently in development.
+                A dedicated 3D profile model for <strong>{product?.name || 'this product'}</strong> is not yet available.
               </Typography>
               <Stack direction="row" spacing={1.5} justifyContent="center">
                 <Button
@@ -810,15 +835,17 @@ const Product3DViewerModal = ({
                 <i className="fi fi-rr-box" style={{ fontSize: '28px' }}></i>
               </Box>
               <Typography variant="h6" fontWeight={800} sx={{ color: '#ffffff', mb: 1 }}>
-                No 3D House Model Available for {currentLength}m Cut Length
+                No 3D {isCurvedProfile ? 'Structure' : 'House'} Model Available for {currentLength}m Cut Length
               </Typography>
               <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3, lineHeight: 1.6 }}>
-                Our 4 interactive Pico Rib 1220 house models support custom rafter cut lengths from 2.0m to 6.5m:
+                Our {modelsForProduct.length} interactive {product?.name || 'roofing'} models support custom cut lengths from{' '}
+                {modelsForProduct[0]?.minRafterLength?.toFixed(1) || '2.0'}m to{' '}
+                {modelsForProduct[modelsForProduct.length - 1]?.maxRafterLength?.toFixed(1) || '6.5'}m:
                 <br />
-                {getSupportedLengthRangeText()}
+                {getSupportedLengthRangeText(product?.name)}
               </Typography>
               <Stack direction="row" spacing={1} justifyContent="center" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                {AVAILABLE_3D_ROOF_MODELS.map((hm) => (
+                {modelsForProduct.map((hm) => (
                   <Button
                     key={hm.id}
                     variant="contained"
@@ -860,7 +887,7 @@ const Product3DViewerModal = ({
                 far={10}
               />
 
-              <Suspense fallback={<CanvasLoader />}>
+              <Suspense fallback={<CanvasLoader productName={product?.name} />}>
                 <ConfigurableRoofModel
                   modelPath={matchedModel.modelPath}
                   sheetQty={effectiveSheetQty}
@@ -884,7 +911,7 @@ const Product3DViewerModal = ({
                 target={[0, matchedModel?.cameraTargetY ?? 2.3, 0]}
                 maxPolarAngle={Math.PI / 2 - 0.05}
                 minDistance={0.35}
-                maxDistance={24}
+                maxDistance={matchedModel?.maxCameraDistance || 24}
               />
 
               <TouchpadControlsHandler
@@ -1181,7 +1208,13 @@ const Product3DViewerModal = ({
                   },
                 }}
               >
-                {showSubstructure ? 'Hide Timber Framing' : 'Show Timber Framing'}
+                {showSubstructure
+                  ? isCurvedProfile
+                    ? 'Hide Arch Framing'
+                    : 'Hide Timber Framing'
+                  : isCurvedProfile
+                  ? 'Show Arch Framing'
+                  : 'Show Timber Framing'}
               </Button>
             </Box>
 
@@ -1203,6 +1236,7 @@ const Product3DViewerModal = ({
               currentColor={currentColor}
               sheetsPerSlope={matchedModel?.sheetsPerSlope || 8}
               currentLength={currentLength}
+              productName={product?.name || ''}
               onFocusInternalCamera={() => handleSetCameraView('internal')}
             />
 
@@ -1215,6 +1249,7 @@ const Product3DViewerModal = ({
               onToggleSubstructure={() => setShowSubstructure((prev) => !prev)}
               isInspectEdgeActive={isInspectEdgeActive}
               inspectEdgeTrigger={inspectEdgeTrigger}
+              productName={product?.name || ''}
             />
 
             {/* Floating 3D Structural Member Inspector with 10s Timer & Hover-to-Hold */}
@@ -1225,6 +1260,7 @@ const Product3DViewerModal = ({
               currentColor={currentColor}
               sheetsPerSlope={matchedModel?.sheetsPerSlope || 8}
               currentLength={currentLength}
+              productName={product?.name || ''}
             />
           </>
         )}
