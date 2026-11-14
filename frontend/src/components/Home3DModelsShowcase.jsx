@@ -12,23 +12,48 @@ import {
 import {
   AVAILABLE_3D_ROOF_MODELS,
   AVAILABLE_CURVED_ROOF_MODELS,
+  isPicoRib1220,
   isMegaCurvedRoof,
 } from '../services/roofModelRegistry';
 
-const ALL_SHOWCASE_MODELS = [
-  ...AVAILABLE_3D_ROOF_MODELS,
-  ...AVAILABLE_CURVED_ROOF_MODELS,
-];
-
-const Home3DModelsShowcase = ({ onCustomizeIn3D }) => {
+const Home3DModelsShowcase = ({ availableProducts = [], onCustomizeIn3D }) => {
   const [selectedProfileFilter, setSelectedProfileFilter] = useState('all');
 
+  // Show 3D models only when an active Pre-Order product exists for that profile
+  const hasPicoProduct =
+    Array.isArray(availableProducts) &&
+    availableProducts.some((p) => isPicoRib1220(p?.name));
+  const hasCurvedProduct =
+    Array.isArray(availableProducts) &&
+    availableProducts.some((p) => isMegaCurvedRoof(p?.name));
+
+  const availablePicoModels = hasPicoProduct ? AVAILABLE_3D_ROOF_MODELS : [];
+  const availableCurvedModels = hasCurvedProduct ? AVAILABLE_CURVED_ROOF_MODELS : [];
+  const allAvailableModels = [...availablePicoModels, ...availableCurvedModels];
+
+  if (allAvailableModels.length === 0) {
+    return null;
+  }
+
+  const activeFilter =
+    (selectedProfileFilter === 'pico' && !hasPicoProduct) ||
+    (selectedProfileFilter === 'curved' && !hasCurvedProduct)
+      ? 'all'
+      : selectedProfileFilter;
+
   const displayedModels =
-    selectedProfileFilter === 'pico'
-      ? AVAILABLE_3D_ROOF_MODELS
-      : selectedProfileFilter === 'curved'
-      ? AVAILABLE_CURVED_ROOF_MODELS
-      : ALL_SHOWCASE_MODELS;
+    activeFilter === 'pico'
+      ? availablePicoModels
+      : activeFilter === 'curved'
+      ? availableCurvedModels
+      : allAvailableModels;
+
+  const showcaseSubtitle =
+    hasPicoProduct && hasCurvedProduct
+      ? 'Select a house, gymnasium, or canopy structure to explore in 360°, inspect trusses and purlins, and customize colors.'
+      : hasCurvedProduct
+      ? 'Select a canopy, covered court, or gymnasium dome to explore in 360°, inspect trusses and purlins, and customize colors.'
+      : 'Select a house structure to explore in 360°, inspect trusses and purlins, and customize colors.';
 
   return (
     <Box sx={{ mb: 6 }}>
@@ -70,38 +95,40 @@ const Home3DModelsShowcase = ({ onCustomizeIn3D }) => {
             Available 3D Roof Models
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Select a house, gymnasium, or canopy structure to explore in 360°, inspect trusses and purlins, and customize colors.
+            {showcaseSubtitle}
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-          {[
-            { id: 'all', label: `All (${ALL_SHOWCASE_MODELS.length})` },
-            { id: 'pico', label: `Pico Rib 1220 (${AVAILABLE_3D_ROOF_MODELS.length})` },
-            { id: 'curved', label: `Mega Curved Roof (${AVAILABLE_CURVED_ROOF_MODELS.length})` },
-          ].map((tab) => {
-            const active = selectedProfileFilter === tab.id;
-            return (
-              <Button
-                key={tab.id}
-                size="small"
-                variant={active ? 'contained' : 'outlined'}
-                color="primary"
-                onClick={() => setSelectedProfileFilter(tab.id)}
-                sx={{
-                  borderRadius: 2,
-                  px: 1.5,
-                  py: 0.5,
-                  fontWeight: 700,
-                  fontSize: '0.76rem',
-                  textTransform: 'none',
-                }}
-              >
-                {tab.label}
-              </Button>
-            );
-          })}
-        </Stack>
+        {hasPicoProduct && hasCurvedProduct && (
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+            {[
+              { id: 'all', label: `All (${allAvailableModels.length})` },
+              { id: 'pico', label: `Pico Rib 1220 (${availablePicoModels.length})` },
+              { id: 'curved', label: `Mega Curved Roof (${availableCurvedModels.length})` },
+            ].map((tab) => {
+              const active = activeFilter === tab.id;
+              return (
+                <Button
+                  key={tab.id}
+                  size="small"
+                  variant={active ? 'contained' : 'outlined'}
+                  color="primary"
+                  onClick={() => setSelectedProfileFilter(tab.id)}
+                  sx={{
+                    borderRadius: 2,
+                    px: 1.5,
+                    py: 0.5,
+                    fontWeight: 700,
+                    fontSize: '0.76rem',
+                    textTransform: 'none',
+                  }}
+                >
+                  {tab.label}
+                </Button>
+              );
+            })}
+          </Stack>
+        )}
       </Box>
 
       <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>

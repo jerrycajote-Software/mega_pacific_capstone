@@ -77,12 +77,12 @@ const DashboardPage = ({ showHero = true }) => {
     : [];
 
   const picoRibProduct =
-    safeProducts.find((p) => isPicoRib1220(p.name)) || safeProducts[0] || null;
+    safeProducts.find((p) => isPicoRib1220(p.name)) || null;
   const megaCurvedProduct =
     safeProducts.find((p) => isMegaCurvedRoof(p.name)) || null;
   const active3DProduct =
     selected3DModel && isMegaCurvedRoof(selected3DModel.profileName)
-      ? megaCurvedProduct || { name: 'Mega Curved Roof', colors: picoRibProduct?.colors || [] }
+      ? megaCurvedProduct
       : picoRibProduct;
 
   const handleCustomizeIn3D = (houseModel) => {
@@ -167,8 +167,9 @@ const DashboardPage = ({ showHero = true }) => {
 
       <Container id="customer-product-catalog" maxWidth="xl" disableGutters sx={{ px: { xs: 1.5, sm: 3, md: 4 } }}>
         {/* Available 3D Models Showcase on Home Page */}
-        {showHero && (
+        {showHero && !loading && (
           <Home3DModelsShowcase
+            availableProducts={safeProducts}
             onCustomizeIn3D={handleCustomizeIn3D}
           />
         )}
