@@ -9,11 +9,17 @@ const formatCurrency = (val) => {
 
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return 'N/A';
+  return `${parsed.toLocaleString('en-US', {
+    timeZone: 'Asia/Manila',
     year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })} PHT`;
 };
 
 const OfficialReceiptModal = ({
@@ -37,9 +43,10 @@ const OfficialReceiptModal = ({
   const isPickup = (order.fulfillmentType || '').toLowerCase() === 'pickup';
   const deliveryFee = isPickup ? 0 : Math.max(0, Math.round((totalAmount - itemsSubtotal) * 100) / 100);
 
-  const isCOD50 = (order.paymentMode || '').includes('50%') || (order.paymentStatus || '').includes('50%');
-  const downpayment = isCOD50 ? Math.round(totalAmount * 0.5 * 100) / 100 : totalAmount;
-  const balanceRemaining = isCOD50 ? (totalAmount - downpayment) : 0;
+  const isPending50Balance = (order.paymentStatus || '').toLowerCase().includes('50%');
+  const isPaidFull = (order.paymentStatus || '').toLowerCase() === 'paid';
+  const downpayment = isPending50Balance ? Math.round(totalAmount * 0.5 * 100) / 100 : (isPaidFull ? totalAmount : 0);
+  const balanceRemaining = isPending50Balance ? Math.max(0, totalAmount - downpayment) : 0;
 
   const orderNum = order.id || `#ORD-${String(order.rawId || '').padStart(3, '0')}`;
   const isSalesApproved = order.orderStatus === 'sales_approved';
@@ -162,7 +169,10 @@ const OfficialReceiptModal = ({
                 marginBottom: '1rem',
               }}
             >
-              <strong style={{ color: '#d97706' }}>Receipt Verification Notice:</strong> Please examine the official receipt and billing specifications below. Once confirmed, payment is recorded as verified and the order is forwarded to Logistics for fabrication and fulfillment.
+              <strong style={{ color: '#d97706' }}>Receipt Verification Notice:</strong> Please examine the official receipt and billing specifications below.{' '}
+              {isPending50Balance
+                ? 'This customer paid a 50% downpayment. Confirming marks the 50% downpayment verified and keeps the remaining 50% pending until Logistics confirms final payment upon delivery or pick-up.'
+                : 'Once confirmed, full payment is recorded as verified and the order is sent to Logistics for preparation and delivery or pick-up.'}
             </div>
           )}
 
@@ -219,7 +229,16 @@ const OfficialReceiptModal = ({
                 <div><strong>Date Placed:</strong> {formatDate(order.createdAt || order.dateOrdered)}</div>
                 <div><strong>Delivery Method:</strong> {isPickup ? 'Store / Plant Pick-up' : 'Truck Delivery'}</div>
                 <div><strong>Payment Method:</strong> {order.paymentMode || 'Cash on Delivery'}</div>
-                <div><strong>Payment Status:</strong> <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{order.paymentStatus || 'Pending'}</span></div>
+                <div>
+                  <strong>Payment Status:</strong>{' '}
+                  <span style={{ fontWeight: 700, color: isPending50Balance ? '#d97706' : isPaidFull ? '#16a34a' : '#475569' }}>
+                    {isPending50Balance
+                      ? 'Pending 50% Payment (Waiting for Logistics Confirmation)'
+                      : isPaidFull
+                        ? 'Paid (Full 100%)'
+                        : (order.paymentStatus || 'Pending')}
+                  </span>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.83rem' }}>
@@ -304,20 +323,63 @@ const OfficialReceiptModal = ({
                   <span>Total Order Value:</span>
                   <span style={{ color: '#16a34a' }}>{formatCurrency(totalAmount)}</span>
                 </div>
-                {isCOD50 && (
+                {isPending50Balance && (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a', fontSize: '0.82rem' }}>
                       <span>50% Downpayment (Paid):</span>
                       <span style={{ fontWeight: 700 }}>{formatCurrency(downpayment)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#d97706', fontSize: '0.82rem' }}>
-                      <span>Balance on Delivery:</span>
+                      <span>{isPickup ? 'Pending 50% Balance (Confirm on Pick-up):' : 'Pending 50% Balance (Confirm with Logistics):'}</span>
                       <span style={{ fontWeight: 700 }}>{formatCurrency(balanceRemaining)}</span>
                     </div>
                   </>
                 )}
               </div>
             </div>
+
+            {order.paymentProofUrl && (
+              <div
+                style={{
+                  padding: '1rem 1.5rem',
+                  borderTop: '1px solid var(--border)',
+                  backgroundColor: 'rgba(22, 163, 74, 0.04)',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: '1rem'
+                }}
+              >
+                <a href={order.paymentProofUrl} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={order.paymentProofUrl}
+                    alt="Logistics Payment Proof"
+                    style={{
+                      width: '88px',
+                      height: '88px',
+                      objectFit: 'cover',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(22, 163, 74, 0.3)'
+                    }}
+                  />
+                </a>
+                <div style={{ fontSize: '0.82rem', lineHeight: 1.5 }}>
+                  <div style={{ fontWeight: 700, color: '#15803d' }}>
+                    Logistics Final Payment Photo Proof Attached
+                  </div>
+                  {order.balanceConfirmedByName && (
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                      Confirmed by: <strong>{order.balanceConfirmedByName}</strong>
+                    </div>
+                  )}
+                  {order.balanceConfirmedAt && (
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                      Confirmed on: <strong>{formatDate(order.balanceConfirmedAt)}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

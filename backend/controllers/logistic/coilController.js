@@ -1,4 +1,5 @@
 const prisma = require("../../config/db");
+const { notifyLogisticLowCoilStock } = require("../../services/notificationManagerService");
 
 const METERS_PER_COIL_ROLL = 4100;
 
@@ -186,6 +187,7 @@ const deductCoil = async (req, res) => {
         coilsDeducted: countToDeduct,
         status: newStatus
       });
+      notifyLogisticLowCoilStock({ io, coil: result.updatedCoil, status: newStatus });
     }
 
     res.status(200).json({

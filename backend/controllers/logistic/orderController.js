@@ -1,6 +1,14 @@
 const prisma = require("../../config/db");
 const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
-const { sendReadyForPickupEmail } = require("../../utils/emailService");
+const { uploadBase64Image } = require("../../services/storageService");
+const { isPartial50Order, buildOrderPaymentSummary } = require("../../services/paymentCalculationService");
+const {
+  notifyOrderOutForDelivery,
+  notifyOrderReadyForPickup,
+  notifyOrderDeliveredOrCompleted,
+  notifyLogisticsStatusTransition,
+  notifyFinanceBalanceCollected
+} = require("../../services/notificationManagerService");
 
 const getLogisticOrders = async (req, res) => {
   try {
@@ -41,6 +49,8 @@ const getLogisticOrders = async (req, res) => {
         return `${item.product.name}${suffix} (x${item.quantity})`;
       }).join(", ");
 
+      const paymentSummary = buildOrderPaymentSummary(o);
+
       return {
         id: `#ORD-${o.id.toString().padStart(4, "0")}`,
         rawId: o.id,
@@ -50,6 +60,13 @@ const getLogisticOrders = async (req, res) => {
         productsSummary,
         totalQuantity: o.items.reduce((acc, item) => acc + item.quantity, 0),
         totalAmount: o.total,
+        collectedAmount: paymentSummary.collectedAmount,
+        pendingBalanceAmount: paymentSummary.pendingBalanceAmount,
+        isPending50Payment: paymentSummary.isPending50Payment,
+        paymentSummary,
+        paymentProofUrl: o.paymentProofUrl || null,
+        balanceConfirmedAt: o.balanceConfirmedAt || null,
+        balanceConfirmedByName: o.balanceConfirmedByName || null,
         orderStatus: o.status,
         paymentStatus: o.paymentStatus,
         paymentMode: o.paymentMode || 'Cash on Delivery',
@@ -82,7 +99,7 @@ const getLogisticOrders = async (req, res) => {
 
 const updateLogisticStatus = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, paymentProofImage } = req.body;
   try {
     const existingOrder = await prisma.order.findUnique({
       where: { id: parseInt(id) },
@@ -124,12 +141,48 @@ const updateLogisticStatus = async (req, res) => {
        return res.status(400).json({ success: false, error: "Invalid status for Pickup order" });
     }
 
+    const isCompletingOrder = status === "completed" || status === "delivered";
+    const needsBalanceCollection = isPartial50Order(existingOrder);
+
+    if (isCompletingOrder && needsBalanceCollection && !paymentProofImage && !existingOrder.paymentProofUrl) {
+      return res.status(400).json({
+        success: false,
+        error: "Please attach a clear photo showing the customer's remaining 50% balance payment before confirming full payment."
+      });
+    }
+
+    let uploadedProofUrl = existingOrder.paymentProofUrl || null;
+    if (paymentProofImage) {
+      try {
+        uploadedProofUrl = await uploadBase64Image(paymentProofImage, "payment-proofs");
+      } catch (uploadErr) {
+        console.error("Failed to upload logistics payment proof image:", uploadErr);
+        return res.status(400).json({
+          success: false,
+          error: "Failed to upload payment proof photo. Please retake or upload a smaller image."
+        });
+      }
+    }
+
+    const updateData = {
+      status,
+      statusUpdatedAt: new Date()
+    };
+
+    if (uploadedProofUrl) {
+      updateData.paymentProofUrl = uploadedProofUrl;
+    }
+
+    if (isCompletingOrder && needsBalanceCollection) {
+      updateData.paymentStatus = "paid";
+      updateData.balanceConfirmedAt = new Date();
+      updateData.balanceConfirmedById = req.user?.userId || req.user?.id || null;
+      updateData.balanceConfirmedByName = req.user?.name || req.user?.email || "Logistics Staff";
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id: parseInt(id) },
-      data: {
-        status,
-        statusUpdatedAt: new Date()
-      },
+      data: updateData,
       include: {
         user: {
           select: {
@@ -148,12 +201,16 @@ const updateLogisticStatus = async (req, res) => {
     });
 
     const io = req.app.get("io");
+    const paymentSummary = buildOrderPaymentSummary(updatedOrder);
     if (io) {
       const orderNumber = `#ORD-${updatedOrder.id.toString().padStart(4, "0")}`;
       const payload = {
         orderId: updatedOrder.id,
         orderNumber,
         status: updatedOrder.status,
+        paymentStatus: updatedOrder.paymentStatus,
+        paymentSummary,
+        paymentProofUrl: updatedOrder.paymentProofUrl || null,
         fulfillmentType: updatedOrder.fulfillmentType,
         customerName: updatedOrder.customerName || updatedOrder.shippingName || updatedOrder.user?.customerProfile?.name || updatedOrder.user?.name,
         pickupLocation: "379 Aguinaldo Highway Anabu 1-C, Imus City, Cavite",
@@ -169,23 +226,48 @@ const updateLogisticStatus = async (req, res) => {
           io.to(`user_${updatedOrder.userId}`).emit("order_ready_for_pickup", payload);
         }
       }
+
+      if (isCompletingOrder && needsBalanceCollection) {
+        io.emit("order_payment_completed", {
+          orderId: updatedOrder.id,
+          orderNumber,
+          totalAmount: updatedOrder.total,
+          paymentProofUrl: updatedOrder.paymentProofUrl,
+          confirmedBy: updatedOrder.balanceConfirmedByName,
+          confirmedAt: updatedOrder.balanceConfirmedAt
+        });
+        notifyFinanceBalanceCollected({ io, order: updatedOrder });
+      }
+
+      notifyLogisticsStatusTransition({ io, order: updatedOrder });
     }
 
-    if (status === "ready_for_pickup") {
-      const targetEmail = updatedOrder.customerEmail || (updatedOrder.user && updatedOrder.user.email);
-      if (targetEmail) {
-        sendReadyForPickupEmail(targetEmail, updatedOrder).catch(err => {
-          console.error("Failed to send ready for pickup email notification:", err);
-        });
-      }
+    // Dispatch Gmail and real-time browser notifications via NotificationManager
+    if (status === "out_for_delivery") {
+      notifyOrderOutForDelivery({ io, order: updatedOrder }).catch(err => {
+        console.error("Failed to send out-for-delivery notification:", err);
+      });
+    } else if (status === "ready_for_pickup") {
+      notifyOrderReadyForPickup({ io, order: updatedOrder }).catch(err => {
+        console.error("Failed to send ready-for-pickup notification:", err);
+      });
+    } else if (status === "delivered" || status === "completed") {
+      notifyOrderDeliveredOrCompleted({ io, order: updatedOrder }).catch(err => {
+        console.error("Failed to send completed/delivered notification:", err);
+      });
     }
 
     res.status(200).json({
       success: true,
-      data: updatedOrder,
-      message: status === "ready_for_pickup"
-        ? `Order #${updatedOrder.id} marked Ready for Pick-up! Customer notified via email and live signal.`
-        : `Order status updated to ${status}`
+      data: {
+        ...updatedOrder,
+        paymentSummary
+      },
+      message: isCompletingOrder && needsBalanceCollection
+        ? `Order #${updatedOrder.id} marked completed and remaining 50% payment confirmed with photo proof!`
+        : status === "ready_for_pickup"
+          ? `Order #${updatedOrder.id} marked Ready for Pick-up! Customer notified via email and live signal.`
+          : `Order status updated to ${status}`
     });
   } catch (error) {
     console.error("Failed to update logistic status:", error);

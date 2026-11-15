@@ -8,11 +8,17 @@ const formatPHP = (amount) => {
 
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return 'N/A';
+  return `${parsed.toLocaleString('en-US', {
+    timeZone: 'Asia/Manila',
     year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })} PHT`;
 };
 
 /**
@@ -219,9 +225,10 @@ export const generateReceiptPDF = (order) => {
   const totalAmount = Number(order.total ?? order.totalAmount) || itemsSubtotal;
   const actualShippingFee = isPickup ? 0 : Math.max(0, Math.round((totalAmount - itemsSubtotal) * 100) / 100);
 
-  const isCOD50 = (order.paymentMode || '').includes('50%') || (order.paymentStatus || '').includes('50%');
-  const downpayment = isCOD50 ? Math.round(totalAmount * 0.5 * 100) / 100 : totalAmount;
-  const balanceRemaining = isCOD50 ? (totalAmount - downpayment) : 0;
+  const isPending50Balance = (order.paymentStatus || '').toLowerCase().includes('50%');
+  const isFullPaid = (order.paymentStatus || '').toLowerCase() === 'paid';
+  const amountPaid = isPending50Balance ? Math.round(totalAmount * 0.5 * 100) / 100 : (isFullPaid ? totalAmount : 0);
+  const balanceRemaining = isPending50Balance ? Math.max(0, totalAmount - amountPaid) : (isFullPaid ? 0 : totalAmount);
 
   const boxHeight = 54;
   doc.setFillColor(248, 250, 252);
@@ -266,17 +273,28 @@ export const generateReceiptPDF = (order) => {
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
-  doc.text(isCOD50 ? '50% Downpayment (Paid):' : 'Amount Paid:', summaryBoxX + 4, finalTableY + 42);
+  doc.text(isPending50Balance ? '50% Downpayment (Paid):' : 'Amount Paid:', summaryBoxX + 4, finalTableY + 42);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(22, 101, 52);
-  doc.text(formatPHP(downpayment), summaryBoxX + summaryBoxW - 4, finalTableY + 42, { align: 'right' });
+  doc.text(formatPHP(amountPaid), summaryBoxX + summaryBoxW - 4, finalTableY + 42, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
-  doc.text(isCOD50 ? 'Remaining Balance (Delivery):' : 'Balance Remaining:', summaryBoxX + 4, finalTableY + 49);
+  doc.text(
+    isPending50Balance
+      ? `Pending 50% (${isPickup ? 'Pick-up' : 'Logistics'}):`
+      : 'Balance Remaining:',
+    summaryBoxX + 4,
+    finalTableY + 49
+  );
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(isCOD50 ? 180 : 22, isCOD50 ? 83 : 101, isCOD50 ? 9 : 52);
-  doc.text(isCOD50 ? formatPHP(balanceRemaining) : 'PHP 0.00 (Paid)', summaryBoxX + summaryBoxW - 4, finalTableY + 49, { align: 'right' });
+  doc.setTextColor(isPending50Balance ? 180 : 22, isPending50Balance ? 83 : 101, isPending50Balance ? 9 : 52);
+  doc.text(
+    isPending50Balance ? formatPHP(balanceRemaining) : 'PHP 0.00 (Full Payment)',
+    summaryBoxX + summaryBoxW - 4,
+    finalTableY + 49,
+    { align: 'right' }
+  );
 
   // 5. Pick-up / Delivery Guidance Note (Left side)
   const noticeBoxX = 14;

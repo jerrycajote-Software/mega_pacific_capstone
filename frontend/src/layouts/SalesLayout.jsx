@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import axios from 'axios';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomDashboardIcon,
@@ -16,8 +17,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
-import { io } from 'socket.io-client';
-import { Snackbar, Alert, Tooltip } from '@mui/material';
+import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
+import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
+import { Tooltip } from '@mui/material';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -40,8 +43,6 @@ const SalesLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-  const [notification, setNotification] = useState(null);
-  const [notificationSeverity, setNotificationSeverity] = useState('warning');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
   });
@@ -54,36 +55,105 @@ const SalesLayout = () => {
     });
   };
 
-  React.useEffect(() => {
-    if (!user?.id) return;
-    
+  // Remind Sales staff about pending customer orders, open support messages, and low pre-order stock
+  const fetchSalesReminders = useCallback(async () => {
+    const token = localStorage.getItem('appToken');
+    if (!token) return null;
     const API_URL = import.meta.env.VITE_API_URL || '';
-    const socket = io(API_URL, {
-      auth: { user }
-    });
+    const headers = { Authorization: `Bearer ${token}` };
 
-    socket.emit('join_room', `user_${user.id}`);
+    const [ordersRes, inquiriesRes, dashboardRes] = await Promise.allSettled([
+      axios.get(`${API_URL}/api/sales/orders`, { headers }),
+      axios.get(`${API_URL}/api/inquiries`, { headers }),
+      axios.get(`${API_URL}/api/sales/dashboard`, { headers })
+    ]);
 
-    socket.on('new_device_login', (data) => {
-      setNotificationSeverity('warning');
-      setNotification(data.message);
-    });
+    const orders = ordersRes.status === 'fulfilled' ? (ordersRes.value.data?.data || []) : [];
+    const inquiries = inquiriesRes.status === 'fulfilled' && Array.isArray(inquiriesRes.value.data)
+      ? inquiriesRes.value.data
+      : [];
+    const dashboardData = dashboardRes.status === 'fulfilled' ? (dashboardRes.value.data?.data || {}) : {};
 
-    // Show a toast notification when the Owner updates and sends a new sales quota target
-    socket.on('sales_quota_updated', (payload) => {
-      setNotificationSeverity('success');
-      setNotification(payload?.message || 'The Business Owner has updated the Sales Quota Target.');
-    });
+    const pendingOrdersCount = orders.filter((o) => o.orderStatus === 'pending').length;
+    const openInquiriesCount = inquiries.filter(
+      (inq) => !['resolved', 'closed'].includes(String(inq.status || '').toLowerCase())
+    ).length;
+    const lowStockCount = Number(dashboardData?.lowStockCount || 0);
 
-    return () => socket.close();
-  }, [user?.id]);
+    const parts = [];
+    if (pendingOrdersCount > 0) parts.push(`${pendingOrdersCount} pending order(s) needing approval`);
+    if (openInquiriesCount > 0) parts.push(`${openInquiriesCount} open customer support inquiry(ies)`);
+    if (lowStockCount > 0) parts.push(`${lowStockCount} low-stock product(s)`);
+
+    if (parts.length === 0) return null;
+
+    let targetUrl = '/sales/orders';
+    let actionLabel = 'Review Orders';
+    if (pendingOrdersCount === 0 && openInquiriesCount > 0) {
+      targetUrl = '/sales/customer-service';
+      actionLabel = 'Open Support';
+    } else if (pendingOrdersCount === 0 && openInquiriesCount === 0 && lowStockCount > 0) {
+      targetUrl = '/sales/pre-order-products';
+      actionLabel = 'Check Products';
+    }
+
+    return {
+      title: 'Sales Reminder',
+      body: `Needs attention: ${parts.join(', ')}.`,
+      severity: pendingOrdersCount > 0 || openInquiriesCount > 0 ? 'warning' : 'info',
+      url: targetUrl,
+      actionLabel,
+      tag: 'sales-session-reminder'
+    };
+  }, []);
+
+  const salesExtraEvents = useMemo(() => ({
+    new_inquiry: (inquiry) => ({
+      title: 'New Customer Inquiry',
+      body: `${inquiry?.customer?.customerProfile?.name || 'A customer'} started a new support inquiry.`,
+      severity: 'info',
+      url: '/sales/customer-service',
+      actionLabel: 'Open Support',
+      tag: `sales-new-inquiry-${inquiry?.id || Date.now()}`
+    }),
+    inquiry_updated: (data) => {
+      if (data?.message?.sender?.role !== 'customer') return null;
+      return {
+        title: 'New Customer Message',
+        body: 'A customer replied in Customer Support.',
+        severity: 'info',
+        url: '/sales/customer-service',
+        actionLabel: 'Reply Now',
+        tag: `sales-inquiry-reply-${data?.inquiryId || Date.now()}`
+      };
+    },
+    sales_quota_updated: (payload) => ({
+      title: 'Sales Quota Target Updated',
+      body: payload?.message || 'The Business Owner has updated the Sales Quota Target.',
+      severity: 'success',
+      url: '/sales/sales-target',
+      actionLabel: 'View Target',
+      tag: 'sales-quota-updated'
+    })
+  }), []);
+
+  const {
+    activeNotification,
+    permissionFeedback,
+    setPermissionFeedback,
+    handleCloseNotification,
+    handleClosePermissionFeedback
+  } = usePortalNotificationManager({
+    user,
+    rooms: ['sales', 'saless'],
+    primaryEvent: 'sales_notification',
+    extraEvents: salesExtraEvents,
+    reminderStorageKey: user?.id ? `megapacific_sales_reminded_${user.id}` : null,
+    fetchPendingReminder: fetchSalesReminders
+  });
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
-  };
-
-  const handleCloseNotification = () => {
-    setNotification(null);
   };
 
   const checkIsActive = (itemPath) => {
@@ -230,6 +300,20 @@ const SalesLayout = () => {
 
       <div className={`admin-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="admin-content">
+          <NotificationPermissionBanner
+            bannerKey="megapacific_sales_banner_dismissed"
+            sx={{ mx: { xs: 2, md: 5 }, mt: 2, mb: 0 }}
+            title="Turn On Live Sales Order & Customer Alerts"
+            description="Allow browser alerts in Chrome, Edge, or Safari to get instant reminders for new orders needing approval, customer messages, product reviews, and sales target updates."
+            deniedDescription="To receive live Sales pop-ups in Chrome, Edge, or Safari, allow notifications for this website in your browser address bar settings."
+            sampleNotification={{
+              title: 'Mega Pacific Sales Alerts Active',
+              body: 'You will now receive instant alerts for new orders needing approval, customer support messages, product reviews, and target updates.',
+              url: '/sales/orders',
+              tag: 'megapacific-sales-test'
+            }}
+            onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
+          />
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
@@ -245,17 +329,13 @@ const SalesLayout = () => {
           }}
         />
       )}
-      
-      <Snackbar 
-        open={!!notification} 
-        autoHideDuration={6000} 
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseNotification} severity={notificationSeverity} sx={{ width: '100%', borderRadius: 2 }}>
-          {notification}
-        </Alert>
-      </Snackbar>
+
+      <PortalNotificationAlerts
+        activeNotification={activeNotification}
+        onCloseNotification={handleCloseNotification}
+        permissionFeedback={permissionFeedback}
+        onClosePermissionFeedback={handleClosePermissionFeedback}
+      />
     </div>
   );
 };

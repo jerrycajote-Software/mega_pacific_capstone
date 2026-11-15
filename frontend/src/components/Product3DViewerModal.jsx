@@ -130,7 +130,6 @@ const Product3DViewerModal = ({
   initialQuantity = 10,
   initialHouseModelId = null,
   onApplyChanges,
-  onProceedToOrder,
   onNavigateToProduct,
 }) => {
   const navigate = useNavigate();
@@ -501,20 +500,6 @@ const Product3DViewerModal = ({
     if (onClose) {
       onClose();
     }
-  };
-
-  const handleProceedToOrderNow = () => {
-    if (onProceedToOrder) {
-      onProceedToOrder({
-        product,
-        quantity: currentQty,
-        color: currentColor,
-        length: currentLength,
-        thickness: currentThickness,
-        houseModel: matchedModel,
-      });
-    }
-    onClose();
   };
 
   const handleDiscardChanges = () => {
@@ -1454,28 +1439,7 @@ const Product3DViewerModal = ({
 
           {/* Action Buttons */}
           <Stack direction="row" spacing={1.5} alignItems="center">
-            {onApplyChanges && onProceedToOrder && (
-              <Button
-                variant="outlined"
-                color="inherit"
-                onClick={handleApplyChangesToOrder}
-                sx={{
-                  fontWeight: 700,
-                  borderRadius: 2,
-                  px: 2.5,
-                  textTransform: 'none',
-                  borderColor: 'rgba(255,255,255,0.2)',
-                  color: '#ffffff',
-                  '&:hover': {
-                    borderColor: 'rgba(255,255,255,0.4)',
-                    bgcolor: 'rgba(255,255,255,0.06)',
-                  },
-                }}
-              >
-                Apply Changes
-              </Button>
-            )}
-            {onApplyChanges && !onProceedToOrder && (
+            {onApplyChanges && (
               <Button
                 variant="contained"
                 color="primary"
@@ -1491,7 +1455,7 @@ const Product3DViewerModal = ({
                 Apply Changes to Order
               </Button>
             )}
-            {/* Link to Product Page Button (Placed before Proceed to Order) */}
+            {/* Link to Product Page Button */}
             {product?.id && !onApplyChanges && (
               <Button
                 variant="outlined"
@@ -1514,23 +1478,6 @@ const Product3DViewerModal = ({
                 }}
               >
                 View Product Page
-              </Button>
-            )}
-            {onProceedToOrder && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleProceedToOrderNow}
-                sx={{
-                  fontWeight: 800,
-                  borderRadius: 2,
-                  px: 3,
-                  py: 0.85,
-                  textTransform: 'none',
-                  boxShadow: '0 4px 16px rgba(79, 119, 45, 0.4)',
-                }}
-              >
-                Proceed to Order
               </Button>
             )}
           </Stack>

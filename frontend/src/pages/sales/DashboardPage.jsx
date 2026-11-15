@@ -381,7 +381,7 @@ const SalesDashboard = () => {
             <div style={{ fontSize: '1.875rem', fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
               {totals?.revenue || '₱0'}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               <span style={{
                 color: 'var(--green)',
                 fontWeight: 700,
@@ -391,7 +391,13 @@ const SalesDashboard = () => {
               }}>
                 {totals?.orders || 0} orders
               </span>
-              <span>across all products</span>
+              {totals?.rawPendingBalanceTotal > 0 ? (
+                <span style={{ color: '#d97706', fontWeight: 600 }}>
+                  Pending 50%: {totals.pendingBalanceTotal}
+                </span>
+              ) : (
+                <span>across all products</span>
+              )}
             </div>
           </div>
         </div>
@@ -648,7 +654,7 @@ const SalesDashboard = () => {
               gap: 4
             }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Items Dispatched
+                Items Sold
               </span>
               <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
                 {dailyActivity.itemsSold || 0}

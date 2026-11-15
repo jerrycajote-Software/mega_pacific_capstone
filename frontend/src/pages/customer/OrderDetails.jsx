@@ -312,9 +312,13 @@ const OrderDetails = () => {
   }, 0);
   const orderTotal = Number(order.total || 0);
   const calculatedShippingFee = isPickup ? 0 : Math.max(0, Math.round((orderTotal - calculatedItemsSubtotal) * 100) / 100);
-  const isCOD50 = (order.paymentMode || '').includes('50%') || (order.paymentStatus || '').includes('50%');
-  const downpaymentAmount = isCOD50 ? (orderTotal * 0.5) : orderTotal;
-  const balanceAmount = isCOD50 ? (orderTotal * 0.5) : 0;
+  const isPending50Balance = Boolean(
+    order.paymentSummary?.isPending50Payment ||
+    (order.paymentStatus || '').toLowerCase().includes('50%')
+  );
+  const isPartial50Method = (order.paymentMode || '').includes('50%') || isPending50Balance;
+  const downpaymentAmount = isPending50Balance ? Math.round(orderTotal * 0.5 * 100) / 100 : orderTotal;
+  const balanceAmount = isPending50Balance ? Math.max(0, orderTotal - downpaymentAmount) : 0;
 
   const handleCopyOrderId = () => {
     navigator.clipboard.writeText(formattedOrderId);
@@ -468,7 +472,13 @@ const OrderDetails = () => {
             />
 
             <Chip
-              label={order.paymentStatus === 'paid' ? 'Paid' : 'Payment Pending'}
+              label={
+                order.paymentStatus === 'paid'
+                  ? 'Paid (Full Payment)'
+                  : isPending50Balance
+                    ? 'Pending 50% Payment (Confirm with Logistics)'
+                    : 'Payment Pending'
+              }
               size="small"
               icon={order.paymentStatus === 'paid' ? <CustomFulfillmentCompleteIcon size={15} /> : <CustomPendingPaymentChipIcon size={15} />}
               sx={{
@@ -485,7 +495,7 @@ const OrderDetails = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
             <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <i className="fi fi-rr-calendar" style={{ fontSize: 13 }} />
-              Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              Placed on {new Date(order.createdAt).toLocaleString('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })} PHT
             </Typography>
 
             {!isPickup && order.estimatedDeliveryDate && (
@@ -1235,17 +1245,38 @@ const OrderDetails = () => {
                 </Typography>
               </Box>
 
-              {isCOD50 && (
+              {isPending50Balance && (
                 <>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'rgba(22, 163, 74, 0.08)', p: 1, borderRadius: 1.5, mt: 0.5 }}>
                     <Typography variant="caption" fontWeight={700} color="success.main">50% Downpayment Paid</Typography>
                     <Typography variant="caption" fontWeight={800} color="success.main">₱{downpaymentAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'rgba(217, 119, 6, 0.08)', p: 1, borderRadius: 1.5 }}>
-                    <Typography variant="caption" fontWeight={700} color="warning.main">50% Balance on Delivery</Typography>
-                    <Typography variant="caption" fontWeight={800} color="warning.main">₱{balanceAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'rgba(217, 119, 6, 0.1)', p: 1, borderRadius: 1.5, border: '1px dashed rgba(217, 119, 6, 0.4)' }}>
+                    <Typography variant="caption" fontWeight={700} color="warning.dark">
+                      {isPickup ? 'Pending 50% Balance (Pay & Confirm at Pick-up)' : 'Pending 50% Balance (Confirm with Logistics)'}
+                    </Typography>
+                    <Typography variant="caption" fontWeight={800} color="warning.dark">₱{balanceAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
                   </Box>
+                  <Typography variant="caption" sx={{ color: '#92400e', fontSize: '0.73rem', mt: 0.25, lineHeight: 1.4 }}>
+                    {isPickup
+                      ? 'Your 50% downpayment is recorded. Settle the remaining 50% at our plant counter so Logistics can confirm your order as Paid in Full.'
+                      : 'Your 50% downpayment is recorded. After successful delivery, pay the remaining 50% so Logistics can attach payment proof and mark this order Paid in Full.'}
+                  </Typography>
                 </>
+              )}
+
+              {!isPending50Balance && isPartial50Method && order.paymentStatus === 'paid' && (
+                <Box sx={{ bgcolor: 'rgba(22, 163, 74, 0.08)', p: 1.25, borderRadius: 1.5, mt: 0.5, border: '1px solid rgba(22, 163, 74, 0.25)' }}>
+                  <Typography variant="caption" fontWeight={800} color="success.main" display="block">
+                    Full 100% Payment Confirmed by Logistics
+                  </Typography>
+                  {order.balanceConfirmedAt && (
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.72rem' }}>
+                      Confirmed on {new Date(order.balanceConfirmedAt).toLocaleString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })} PHT
+                      {order.balanceConfirmedByName ? ` by ${order.balanceConfirmedByName}` : ''}
+                    </Typography>
+                  )}
+                </Box>
               )}
             </Stack>
 
@@ -1260,7 +1291,7 @@ const OrderDetails = () => {
                 alignItems: 'center', 
                 justifyContent: 'space-between',
                 gap: 2,
-                mb: 2.5
+                mb: order.paymentProofUrl ? 2 : 2.5
               }}
             >
               <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1273,7 +1304,13 @@ const OrderDetails = () => {
               </Box>
 
               <Chip 
-                label={order.paymentStatus === 'paid' ? 'PAID' : 'PENDING'} 
+                label={
+                  order.paymentStatus === 'paid'
+                    ? 'PAID (FULL)'
+                    : isPending50Balance
+                      ? 'PENDING 50%'
+                      : 'PENDING'
+                } 
                 size="small" 
                 sx={{ 
                   fontWeight: 800, 
@@ -1285,6 +1322,37 @@ const OrderDetails = () => {
                 }} 
               />
             </Box>
+
+            {order.paymentProofUrl && (
+              <Box
+                sx={{
+                  p: 1.5,
+                  mb: 2.5,
+                  borderRadius: 2,
+                  bgcolor: 'rgba(22, 163, 74, 0.05)',
+                  border: '1px solid rgba(22, 163, 74, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5
+                }}
+              >
+                <a href={order.paymentProofUrl} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={order.paymentProofUrl}
+                    alt="Final Payment Proof"
+                    style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(22,163,74,0.35)' }}
+                  />
+                </a>
+                <Box>
+                  <Typography variant="caption" fontWeight={800} color="success.main" display="block">
+                    Final Payment Photo Proof Attached
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.72rem' }}>
+                    Tap image to view full proof uploaded by Logistics.
+                  </Typography>
+                </Box>
+              </Box>
+            )}
 
             <Button
               variant="contained"

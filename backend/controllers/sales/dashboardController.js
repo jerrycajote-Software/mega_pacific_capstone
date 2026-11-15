@@ -1,5 +1,10 @@
 const prisma = require("../../config/db");
 const { getBusinessSalesQuotaSummary } = require("../../services/salesQuotaService");
+const {
+  isPartial50Order,
+  getCollectedRevenueAmount,
+  getPendingBalanceAmount
+} = require("../../services/paymentCalculationService");
 
 // Fetch all metrics and KPIs for the Sales dashboard, including the Owner's quota target
 const getSalesDashboardStats = async (req, res) => {
@@ -31,11 +36,13 @@ const getSalesDashboardStats = async (req, res) => {
     const completedOrders = await prisma.order.findMany({
       where: {
         status: { notIn: ["cancelled", "rejected"] },
-        paymentStatus: { not: "refunded" }
+        paymentStatus: { notIn: ["refunded", "refund_pending"] }
       },
-      select: { total: true, createdAt: true }
+      select: { total: true, createdAt: true, status: true, paymentStatus: true, paymentMode: true }
     });
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + getCollectedRevenueAmount(order), 0);
+    const pendingBalanceTotal = completedOrders.reduce((sum, order) => sum + getPendingBalanceAmount(order), 0);
+    const pending50OrdersCount = completedOrders.filter(isPartial50Order).length;
 
     let totalStock = 0;
     let lowStockCount = 0;
@@ -151,7 +158,7 @@ const getSalesDashboardStats = async (req, res) => {
     let itemsSoldToday = 0;
     let todayRevenue = 0;
     todayOrders.forEach(o => {
-      todayRevenue += (o.total || 0);
+      todayRevenue += getCollectedRevenueAmount(o);
       o.items.forEach(item => {
         itemsSoldToday += item.quantity;
       });
@@ -235,7 +242,7 @@ const getSalesDashboardStats = async (req, res) => {
           status: { notIn: ["cancelled", "rejected"] },
           paymentStatus: { not: "refunded" }
         },
-        select: { createdAt: true, total: true, status: true, paymentStatus: true }
+        select: { createdAt: true, total: true, status: true, paymentStatus: true, paymentMode: true }
       });
     } catch (e) {
       console.warn("Could not fetch past week orders:", e.message);
@@ -244,7 +251,7 @@ const getSalesDashboardStats = async (req, res) => {
     const salesTrend = last7Days.map(slot => {
       const dayOrders = pastWeekOrders.filter(o => o.createdAt >= slot.start && o.createdAt < slot.end);
       const dayRev = dayOrders
-        .reduce((sum, o) => sum + (o.total || 0), 0);
+        .reduce((sum, o) => sum + getCollectedRevenueAmount(o), 0);
       return {
         day: slot.dayName,
         date: slot.dateStr,
@@ -287,6 +294,9 @@ const getSalesDashboardStats = async (req, res) => {
         totals: {
           revenue: `₱${totalRevenue.toLocaleString()}`,
           rawRevenue: totalRevenue,
+          pendingBalanceTotal: `₱${pendingBalanceTotal.toLocaleString()}`,
+          rawPendingBalanceTotal: pendingBalanceTotal,
+          pending50OrdersCount,
           products: totalProducts,
           orders: validOrdersCount
         },

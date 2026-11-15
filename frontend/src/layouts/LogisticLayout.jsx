@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   CustomDashboardIcon,
   CustomDeliveriesIcon,
@@ -12,8 +15,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
-import { io } from 'socket.io-client';
-import { Snackbar, Alert, Tooltip } from '@mui/material';
+import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
+import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
+import { Tooltip } from '@mui/material';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
@@ -30,10 +35,14 @@ const LogisticLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-  const [notification, setNotification] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
   });
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleToggleSidebarNavigation = () => {
     setIsSidebarCollapsed((prev) => {
@@ -43,29 +52,65 @@ const LogisticLayout = () => {
     });
   };
 
-  React.useEffect(() => {
-    if (!user?.id) return;
-    
+  // Remind Logistics staff about Finance-approved orders waiting for dispatch and low coil inventory
+  const fetchLogisticReminders = useCallback(async () => {
+    const token = localStorage.getItem('appToken');
+    if (!token) return null;
     const API_URL = import.meta.env.VITE_API_URL || '';
-    const socket = io(API_URL, {
-      auth: { user }
-    });
+    const headers = { Authorization: `Bearer ${token}` };
 
-    socket.emit('join_room', `user_${user.id}`);
+    const [ordersRes, coilsRes] = await Promise.allSettled([
+      axios.get(`${API_URL}/api/logistic/orders`, { headers }),
+      axios.get(`${API_URL}/api/logistic/coils/summary`, { headers })
+    ]);
 
-    socket.on('new_device_login', (data) => {
-      setNotification(data.message);
-    });
+    const orders = ordersRes.status === 'fulfilled' ? (ordersRes.value.data?.data || []) : [];
+    const coilSummary = coilsRes.status === 'fulfilled' ? (coilsRes.value.data?.data || {}) : {};
 
-    return () => socket.close();
-  }, [user?.id]);
+    const readyToPrepare = orders.filter(
+      (o) => o.orderStatus === 'finance_verified' || o.orderStatus === 'processing'
+    ).length;
+    const inTransit = orders.filter(
+      (o) => o.orderStatus === 'shipped' || o.orderStatus === 'out_for_delivery'
+    ).length;
+    const pickupReady = orders.filter((o) => o.orderStatus === 'ready_for_pickup').length;
+    const lowCoilCount = (coilSummary.criticalCount || 0) + (coilSummary.lowCount || 0);
+
+    const parts = [];
+    if (readyToPrepare > 0) parts.push(`${readyToPrepare} approved order(s) waiting for dispatch`);
+    if (inTransit > 0) parts.push(`${inTransit} active delivery(ies) on the road`);
+    if (pickupReady > 0) parts.push(`${pickupReady} order(s) waiting for store pick-up`);
+    if (lowCoilCount > 0) parts.push(`${lowCoilCount} coil item(s) low or out of stock`);
+
+    if (parts.length === 0) return null;
+
+    const targetUrl = (readyToPrepare + inTransit + pickupReady) > 0 ? '/logistic/deliveries' : '/logistic/products';
+    return {
+      title: 'Logistics Reminder',
+      body: `Pending items: ${parts.join(', ')}.`,
+      severity: readyToPrepare > 0 || lowCoilCount > 0 ? 'warning' : 'info',
+      url: targetUrl,
+      actionLabel: targetUrl === '/logistic/deliveries' ? 'View Deliveries' : 'View Inventory',
+      tag: 'logistic-session-reminder'
+    };
+  }, []);
+
+  const {
+    activeNotification,
+    permissionFeedback,
+    setPermissionFeedback,
+    handleCloseNotification,
+    handleClosePermissionFeedback
+  } = usePortalNotificationManager({
+    user,
+    rooms: ['logistic'],
+    primaryEvent: 'logistic_notification',
+    reminderStorageKey: user?.id ? `megapacific_logistic_reminded_${user.id}` : null,
+    fetchPendingReminder: fetchLogisticReminders
+  });
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
-  };
-
-  const handleCloseNotification = () => {
-    setNotification(null);
   };
 
   const checkIsActive = (itemPath) => {
@@ -84,8 +129,15 @@ const LogisticLayout = () => {
 
   return (
     <div className="admin-shell">
+      {mobileMenuOpen && (
+        <div
+          className="admin-mobile-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-      <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
 
         <div className="sidebar-brand-box">
           <Tooltip title="Mega Pacific Logistic Dashboard" placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
@@ -142,6 +194,7 @@ const LogisticLayout = () => {
               <Tooltip key={item.name} title={item.name} placement="right" arrow disableHoverListener={!isSidebarCollapsed}>
                 <NavLink
                   to={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
                   data-active={isTabActive ? "true" : undefined}
                   className={({ isActive }) => `nav-link${isActive || isTabActive ? ' active' : ''}`}
                   style={({ isActive }) => {
@@ -209,7 +262,74 @@ const LogisticLayout = () => {
       </aside>
 
       <div className={`admin-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <header className="admin-mobile-topbar">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 10,
+              border: '1px solid var(--border-light)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0
+            }}
+          >
+            {mobileMenuOpen ? <CloseIcon fontSize="small" /> : <MenuIcon fontSize="small" />}
+          </button>
+
+          <Link to="/logistic/dashboard" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontWeight: 900, fontSize: '0.95rem', letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
+              MEGA PACIFIC
+            </span>
+            <span style={{ fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.14em', color: '#7a90e8' }}>
+              LOGISTICS PORTAL
+            </span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 10,
+              border: '1px solid var(--border-light)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0
+            }}
+          >
+            {isDark ? <LightModeIcon sx={{ fontSize: 18, color: '#fbbf24' }} /> : <DarkModeIcon sx={{ fontSize: 18, color: '#475569' }} />}
+          </button>
+        </header>
+
         <div className="admin-content">
+          <NotificationPermissionBanner
+            bannerKey="megapacific_logistic_banner_dismissed"
+            sx={{ mx: { xs: 2, md: 5 }, mt: 2, mb: 0 }}
+            title="Turn On Live Delivery & Dispatch Alerts"
+            description="Allow browser alerts in Chrome, Edge, or Safari to get notified right away when Finance approves a new order, delivery status updates, or coil stock runs low."
+            deniedDescription="To receive live delivery pop-ups in Chrome, Edge, or Safari, allow notifications for this website in your browser address bar settings."
+            sampleNotification={{
+              title: 'Mega Pacific Logistics Alerts Active',
+              body: 'You will now receive instant alerts when Finance approves new orders for delivery or pick-up, or when coil stock runs low.',
+              url: '/logistic/deliveries',
+              tag: 'megapacific-logistic-test'
+            }}
+            onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
+          />
           <Outlet />
         </div>
       </div>
@@ -223,17 +343,13 @@ const LogisticLayout = () => {
           }}
         />
       )}
-      
-      <Snackbar 
-        open={!!notification} 
-        autoHideDuration={6000} 
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseNotification} severity="warning" sx={{ width: '100%', borderRadius: 2 }}>
-          {notification}
-        </Alert>
-      </Snackbar>
+
+      <PortalNotificationAlerts
+        activeNotification={activeNotification}
+        onCloseNotification={handleCloseNotification}
+        permissionFeedback={permissionFeedback}
+        onClosePermissionFeedback={handleClosePermissionFeedback}
+      />
     </div>
   );
 };

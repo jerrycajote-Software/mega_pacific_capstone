@@ -141,9 +141,11 @@ const formatPaymentMode = (rawMode) => {
 
     return {
       primary: '50/50 Downpayment',
-      secondary: lower.includes('cash on delivery')
-        ? `Deposit via ${depositChannel} • Balance on Delivery`
-        : `Downpayment via ${depositChannel}`
+      secondary: (lower.includes('cash on pick-up') || lower.includes('pickup'))
+        ? `Deposit via ${depositChannel} • 50% at Pick-up`
+        : lower.includes('cash on delivery')
+          ? `Deposit via ${depositChannel} • 50% on Delivery`
+          : `Downpayment via ${depositChannel}`
     };
   }
 
@@ -164,10 +166,14 @@ const formatPaymentMode = (rawMode) => {
 };
 
 const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleDateString('en-US', {
+  new Date(dateStr).toLocaleString('en-US', {
+    timeZone: 'Asia/Manila',
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
   });
 
 const formatCurrency = (amount) =>
@@ -186,6 +192,10 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
   const statusMeta = getOrderStatusMeta(order.status, order.fulfillmentType, order.paymentStatus);
   const isReadyForPickup = isPickup && order.status?.toLowerCase() === 'ready_for_pickup';
   const isCompleted = ['delivered', 'completed'].includes(order.status?.toLowerCase());
+  const isPending50Payment = Boolean(
+    order.paymentSummary?.isPending50Payment ||
+    (order.paymentStatus || '').toLowerCase().includes('50%')
+  );
   const paymentInfo = formatPaymentMode(order.paymentMode);
 
   const previewImages = (order.items || [])
@@ -353,6 +363,21 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
               <Typography variant="h6" fontWeight={900} sx={{ color: '#16a34a', letterSpacing: '-0.01em' }}>
                 {formatCurrency(order.total)}
               </Typography>
+              {isPending50Payment && (
+                <Chip
+                  size="small"
+                  label="Pending 50% Payment (Confirm with Logistics)"
+                  sx={{
+                    mt: 0.5,
+                    bgcolor: 'rgba(217, 119, 6, 0.12)',
+                    color: '#b45309',
+                    fontWeight: 800,
+                    fontSize: '0.68rem',
+                    height: 22,
+                    border: '1px solid rgba(217, 119, 6, 0.35)'
+                  }}
+                />
+              )}
             </Box>
           </Box>
         </Box>
@@ -377,7 +402,7 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
               </Typography>
             </Box>
             <Typography variant="caption" sx={{ color: '#7c3aed', fontWeight: 700, display: { xs: 'none', sm: 'block' } }}>
-              View Pass →
+              View Pass &gt;
             </Typography>
           </Box>
         )}
@@ -1060,7 +1085,7 @@ const OrdersPage = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: orders.length === 0 ? 3.5 : 0, maxWidth: 420, mx: 'auto' }}>
             {orders.length === 0
               ? 'Customize your first roofing profile or browse our catalog to get started.'
-              : 'No orders matched your active filter or search keywords. Try selecting another tab or clearing search.'}
+              : 'No orders matched your active filter or search keywords.'}
           </Typography>
           {orders.length === 0 && (
             <Button 

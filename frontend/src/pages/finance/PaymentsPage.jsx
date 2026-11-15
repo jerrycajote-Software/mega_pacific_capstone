@@ -114,34 +114,81 @@ const PaymentsPage = () => {
         </div>
       </div>
 
-      <div style={{ background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', padding: '1.5rem' }}>
-        <div style={{ marginBottom: '1rem', position: 'relative', width: '300px' }}>
+      <div style={{ background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', padding: '1.5rem', overflowX: 'auto' }}>
+        <div style={{ marginBottom: '1rem', position: 'relative', width: '100%', maxWidth: '340px' }}>
           <SearchIcon sx={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 18 }} />
           <input 
             type="text" 
-            placeholder="Search orders..." 
+            placeholder="Search order ID, customer, or status..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ width: '100%', padding: '10px 10px 10px 40px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }}
           />
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
               <th style={{ padding: '1rem' }}>Order ID</th>
               <th style={{ padding: '1rem' }}>Customer</th>
-              <th style={{ padding: '1rem' }}>Amount</th>
-              <th style={{ padding: '1rem' }}>Status</th>
+              <th style={{ padding: '1rem' }}>Amount & Balance</th>
+              <th style={{ padding: '1rem' }}>Payment Status</th>
+              <th style={{ padding: '1rem' }}>Order Status</th>
               <th style={{ padding: '1rem', textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map(order => (
+            {filteredOrders.map(order => {
+              const isPending50 = Boolean(
+                order.isPending50Payment ||
+                order.paymentSummary?.isPending50Payment ||
+                (order.paymentStatus || '').toLowerCase().includes('50%')
+              );
+              const isPaidFull = (order.paymentStatus || '').toLowerCase() === 'paid';
+              const collectedAmt = order.collectedAmount ?? (isPending50 ? Math.round(order.totalAmount * 0.5 * 100) / 100 : (isPaidFull ? order.totalAmount : 0));
+              const pendingAmt = order.pendingBalanceAmount ?? Math.max(0, (order.totalAmount || 0) - collectedAmt);
+
+              return (
               <tr key={order.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '1rem', fontWeight: 600, color: '#4ade80' }}>{order.id}</td>
+                <td style={{ padding: '1rem', fontWeight: 600, color: '#4ade80' }}>
+                  <div>{order.id}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                    {order.fulfillmentType || 'Delivery'}
+                  </div>
+                </td>
                 <td style={{ padding: '1rem' }}>{order.customerName}</td>
-                <td style={{ padding: '1rem', color: '#22c55e', fontWeight: 600 }}>₱{order.totalAmount.toLocaleString()}</td>
+                <td style={{ padding: '1rem' }}>
+                  <div style={{ color: '#22c55e', fontWeight: 700 }}>
+                    ₱{(order.totalAmount || 0).toLocaleString()}
+                  </div>
+                  {isPending50 && (
+                    <div style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600, marginTop: 2 }}>
+                      Paid: ₱{collectedAmt.toLocaleString()} • Pending: ₱{pendingAmt.toLocaleString()}
+                    </div>
+                  )}
+                </td>
+                <td style={{ padding: '1rem' }}>
+                  {isPending50 ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 99, background: 'rgba(245,158,11,0.12)', color: '#d97706', fontSize: '0.74rem', fontWeight: 700, border: '1px solid rgba(245,158,11,0.3)' }}>
+                      Pending 50% (Wait for Logistics)
+                    </span>
+                  ) : isPaidFull ? (
+                    <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 99, background: 'rgba(34,197,94,0.12)', color: '#16a34a', fontSize: '0.74rem', fontWeight: 700, border: '1px solid rgba(34,197,94,0.3)' }}>
+                        Paid in Full (100%)
+                      </span>
+                      {order.paymentProofUrl && (
+                        <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 600 }}>
+                          Logistics Photo Proof Attached
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 99, background: 'rgba(100,116,139,0.12)', color: '#64748b', fontSize: '0.74rem', fontWeight: 600 }}>
+                      {order.paymentStatus || 'Pending'}
+                    </span>
+                  )}
+                </td>
                 <td style={{ padding: '1rem' }}><StatusBadge status={order.orderStatus} /></td>
                 <td style={{ padding: '1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
@@ -224,9 +271,10 @@ const PaymentsPage = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+            })}
             {filteredOrders.length === 0 && (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No orders found.</td></tr>
+              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No orders found.</td></tr>
             )}
           </tbody>
         </table>

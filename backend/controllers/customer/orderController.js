@@ -1,7 +1,8 @@
 const prisma = require("../../config/db");
-const { sendOrderReceiptEmail } = require("../../utils/emailService");
 const { calculateDeliveryFee } = require("../../services/deliveryFeeService");
 const { validateRealisticEmail } = require("../../utils/emailValidator");
+const { buildOrderPaymentSummary } = require("../../services/paymentCalculationService");
+const { notifyOrderPlaced } = require("../../services/notificationManagerService");
 
 const HARDCODED_SHIPPING_FEE = 100;
 
@@ -12,10 +13,11 @@ const isCustomLengthProfile = (type) => {
   return CUSTOM_LENGTH_PROFILE_TYPES.includes(type.trim().toLowerCase());
 };
 
-const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel, paymongoReference) => {
+const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel, paymongoReference, fulfillmentType = 'Delivery') => {
   const mode = (paymentMode || '').trim();
   const plan = paymentPlan || (mode.toLowerCase().includes('50%') || mode.toLowerCase().includes('cash on delivery') ? 'COD_50' : 'FULL_PAYMENT');
   const channel = paymentChannel || (cardDetails && cardDetails.cardNumber ? 'Card' : gcashNumber ? 'GCash' : (mode.toLowerCase().includes('card') ? 'Card' : 'Card'));
+  const isPickup = String(fulfillmentType || '').trim().toLowerCase() === 'pickup';
 
   let channelDetails = '';
   if (channel === 'Card' || (cardDetails && cardDetails.cardNumber)) {
@@ -44,7 +46,9 @@ const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, 
 
   if (plan === 'COD_50') {
     return {
-      paymentMode: `Cash on Delivery (50% Downpayment via ${channelDetails}, 50% on Delivery)`,
+      paymentMode: isPickup
+        ? `Cash on Pick-up (50% Downpayment via ${channelDetails}, 50% on Pick-up)`
+        : `Cash on Delivery (50% Downpayment via ${channelDetails}, 50% on Delivery)`,
       paymentStatus: '50% Downpayment Paid'
     };
   }
@@ -190,7 +194,8 @@ const createOrder = async (req, res) => {
       gcashNumber,
       paymentPlan,
       paymentChannel,
-      paymongoReference
+      paymongoReference,
+      fulfillmentType
     );
 
     
@@ -277,16 +282,24 @@ const createOrder = async (req, res) => {
       });
 
       const targetEmail = customerEmail || fullOrder?.user?.email;
-      if (targetEmail && fullOrder) {
-        sendOrderReceiptEmail(targetEmail, fullOrder).catch((err) => {
-          console.error("[RECEIPT EMAIL DISPATCH ERROR]:", err.message);
+      const io = req.app.get("io");
+      if (fullOrder) {
+        notifyOrderPlaced({ io, order: fullOrder, customerEmail: targetEmail }).catch((err) => {
+          console.error("[ORDER PLACED NOTIFICATION ERROR]:", err.message);
         });
       }
     } catch (postErr) {
       console.warn("[POST-ORDER RECEIPT NON-FATAL WARNING]:", postErr.message);
     }
 
-    res.status(201).json({ success: true, data: fullOrder || newOrder });
+    const responseOrder = fullOrder || newOrder;
+    res.status(201).json({
+      success: true,
+      data: {
+        ...responseOrder,
+        paymentSummary: buildOrderPaymentSummary(responseOrder)
+      }
+    });
   } catch (error) {
     console.error("Failed to create order:", error);
     if (error.type === 'STOCK_ERROR') {
@@ -399,7 +412,13 @@ const getOrderById = async (req, res) => {
     const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
     const updatedOrder = await checkAndExtendDeliveryDates(orderWithReviews);
 
-    res.status(200).json({ success: true, data: updatedOrder });
+    res.status(200).json({
+      success: true,
+      data: {
+        ...updatedOrder,
+        paymentSummary: buildOrderPaymentSummary(updatedOrder)
+      }
+    });
   } catch (error) {
     console.error("Failed to fetch order:", error);
     res.status(500).json({ success: false, error: "Failed to fetch order details" });
@@ -453,8 +472,12 @@ const getMyOrders = async (req, res) => {
 
     const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
     const updatedOrders = await checkAndExtendDeliveryDates(ordersWithReviews);
+    const enrichedOrders = updatedOrders.map((ord) => ({
+      ...ord,
+      paymentSummary: buildOrderPaymentSummary(ord)
+    }));
 
-    res.status(200).json({ success: true, data: updatedOrders });
+    res.status(200).json({ success: true, data: enrichedOrders });
   } catch (error) {
     console.error("Failed to fetch customer orders:", error);
     res.status(500).json({ success: false, error: "Failed to fetch orders" });
@@ -514,7 +537,8 @@ const createBulkOrder = async (req, res) => {
     gcashNumber,
     paymentPlan,
     paymentChannel,
-    paymongoReference
+    paymongoReference,
+    fulfillmentType
   );
 
   try {
@@ -685,16 +709,24 @@ const createBulkOrder = async (req, res) => {
       });
 
       const targetEmail = customerEmail || fullOrder?.user?.email;
-      if (targetEmail && fullOrder) {
-        sendOrderReceiptEmail(targetEmail, fullOrder).catch((err) => {
-          console.error("[RECEIPT EMAIL DISPATCH ERROR]:", err.message);
+      const io = req.app.get("io");
+      if (fullOrder || targetEmail) {
+        notifyOrderPlaced({ io, order: fullOrder || newOrder, customerEmail: targetEmail }).catch((err) => {
+          console.error("[ORDER NOTIFICATION DISPATCH ERROR]:", err.message);
         });
       }
     } catch (postErr) {
       console.warn("[POST-BULK-ORDER RECEIPT NON-FATAL WARNING]:", postErr.message);
     }
 
-    res.status(201).json({ success: true, data: fullOrder || newOrder });
+    const responseOrder = fullOrder || newOrder;
+    res.status(201).json({
+      success: true,
+      data: {
+        ...responseOrder,
+        paymentSummary: buildOrderPaymentSummary(responseOrder)
+      }
+    });
   } catch (error) {
     console.error("Failed to create bulk order:", error);
     if (error.type === 'STOCK_ERROR') {

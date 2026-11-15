@@ -699,43 +699,6 @@ const ProductDetails = () => {
     }
   };
 
-  const handleProceedToOrderFrom3D = ({ quantity: newQty, color: newColor, length: newLen, thickness: newThick }) => {
-    handleApply3DChanges({ quantity: newQty, color: newColor, length: newLen, thickness: newThick });
-    const isPerM = product?.unit?.toLowerCase().includes('meter') || false;
-    const finalQty = Math.max(1, parseInt(newQty, 10) || 1);
-    const finalLen = isPerM ? (parseFloat(newLen) || 1) : 1;
-    const matchedOpt = productOptions.find(o => 
-      (o.thickness && o.thickness.toLowerCase().trim() === (newThick || '').toLowerCase().trim()) ||
-      (o.name && o.name.toLowerCase().includes((newThick || '').toLowerCase().trim()))
-    ) || selectedOption;
-
-    const unitPrice = matchedOpt ? matchedOpt.price : (product?.price || 0);
-    const origPrice = matchedOpt ? (matchedOpt.originalPrice || Math.round((unitPrice / 0.7) * 100) / 100) : (product?.originalPrice || Math.round((unitPrice / 0.7) * 100) / 100);
-    const itemTotal = unitPrice * (isPerM ? finalLen : 1) * finalQty;
-
-    const variantForCheckout = (matchedOpt && !matchedOpt.isBaseProduct)
-      ? (product?.variants?.find(v => v.id === matchedOpt.id) || null)
-      : null;
-
-    const orderItem = {
-      orderItemId: `prod-${product?.id}-${variantForCheckout?.id || 'base'}-${isPerM ? finalLen : '1'}-${newColor || 'def'}-${Date.now()}`,
-      name: product?.name,
-      type: product?.type,
-      product,
-      variant: variantForCheckout,
-      variantId: variantForCheckout?.id || null,
-      quantity: finalQty,
-      customLength: isPerM ? finalLen : null,
-      thickness: matchedOpt?.thickness || newThick || product?.thickness || '0.35mm',
-      color: newColor || product?.color || null,
-      total: itemTotal,
-      price: unitPrice,
-      originalPrice: origPrice
-    };
-
-    navigate('/checkout', { state: orderItem });
-  };
-
   const handleAddAdditionalProduct = (newItem) => {
     setAdditionalItems(prev => [
       ...prev,
@@ -1853,7 +1816,6 @@ const ProductDetails = () => {
             initialLength={isPerMeter ? customLength : 3.8}
             initialQuantity={quantity}
             onApplyChanges={handleApply3DChanges}
-            onProceedToOrder={handleProceedToOrderFrom3D}
           />
         </Suspense>
       )}

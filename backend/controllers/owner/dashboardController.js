@@ -1,5 +1,10 @@
 const prisma = require("../../config/db");
 const { getBusinessSalesQuotaSummary } = require("../../services/salesQuotaService");
+const {
+  isPartial50Order,
+  getCollectedRevenueAmount,
+  getPendingBalanceAmount
+} = require("../../services/paymentCalculationService");
 
 // Fetch all business summary statistics for the Owner dashboard, including the sales quota
 const getOwnerDashboardStats = async (req, res) => {
@@ -13,12 +18,14 @@ const getOwnerDashboardStats = async (req, res) => {
     const completedOrders = await prisma.order.findMany({
       where: {
         status: { notIn: ["cancelled", "rejected"] },
-        paymentStatus: { not: "refunded" }
+        paymentStatus: { notIn: ["refunded", "refund_pending"] }
       },
-      select: { total: true, createdAt: true }
+      select: { total: true, createdAt: true, status: true, paymentStatus: true, paymentMode: true }
     });
     
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + getCollectedRevenueAmount(order), 0);
+    const pendingBalanceTotal = completedOrders.reduce((sum, order) => sum + getPendingBalanceAmount(order), 0);
+    const pending50OrdersCount = completedOrders.filter(isPartial50Order).length;
 
     
     const now = new Date();
@@ -37,7 +44,7 @@ const getOwnerDashboardStats = async (req, res) => {
       if (orderDate >= thirtyDaysAgo) {
         const dateStr = orderDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
         if (chartDataMap[dateStr] !== undefined) {
-          chartDataMap[dateStr] += order.total;
+          chartDataMap[dateStr] += getCollectedRevenueAmount(order);
         }
       }
     });
@@ -158,6 +165,10 @@ const getOwnerDashboardStats = async (req, res) => {
       data: {
         totals: {
           revenue: `₱${totalRevenue.toLocaleString()}`,
+          rawRevenue: totalRevenue,
+          pendingBalanceTotal: `₱${pendingBalanceTotal.toLocaleString()}`,
+          rawPendingBalanceTotal: pendingBalanceTotal,
+          pending50OrdersCount,
           inventoryValue: `₱${totalInventoryValue.toLocaleString()}`,
           products: totalProducts,
           orders: totalOrders,

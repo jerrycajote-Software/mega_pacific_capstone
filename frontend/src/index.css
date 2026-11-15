@@ -1117,3 +1117,107 @@ html {
 .btn-table-pickup-complete:active:not(:disabled) {
   transform: translateY(0);
 }
+
+/* Mobile Responsive Layout for Admin & Logistics Browsers (Chrome, Edge, Safari) */
+.admin-mobile-topbar {
+  display: none;
+}
+
+.admin-mobile-overlay {
+  display: none;
+}
+
+.logistics-page-wrap {
+  padding: 2rem 2.5rem;
+  color: var(--text-primary);
+}
+
+.logistics-desktop-table {
+  display: block;
+  overflow-x: auto;
+}
+
+.logistics-mobile-cards {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .admin-shell {
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  .admin-main,
+  .admin-main.sidebar-collapsed {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100vw;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .admin-content {
+    padding: 0.85rem 0.9rem 2rem 0.9rem;
+  }
+
+  .admin-mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 1rem 0.75rem 1rem;
+    background: var(--bg-topbar);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .admin-mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 1100;
+  }
+
+  .admin-sidebar,
+  .admin-sidebar.collapsed {
+    width: min(280px, 84vw);
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    height: calc(100dvh - 1rem);
+    z-index: 1200;
+    transform: translateX(-115%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .admin-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .admin-sidebar .sidebar-toggle-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .logistics-page-wrap {
+    padding: 0.5rem 0.25rem 2rem 0.25rem;
+  }
+
+  .logistics-desktop-table {
+    display: none;
+  }
+
+  .logistics-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+}

@@ -1,5 +1,11 @@
 const prisma = require("../../config/db");
 const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
+const { buildOrderPaymentSummary } = require("../../services/paymentCalculationService");
+const {
+  notifyOrderRejected,
+  notifyFinancePaymentVerificationNeeded,
+  notifyFinanceRefundRequired
+} = require("../../services/notificationManagerService");
 
 const getSalesOrders = async (req, res) => {
   try {
@@ -29,6 +35,8 @@ const getSalesOrders = async (req, res) => {
         return `${item.product.name}${suffix} (x${item.quantity})`;
       }).join(", ");
 
+      const paymentSummary = buildOrderPaymentSummary(o);
+
       return {
         id: `#ORD-${o.id.toString().padStart(3, "0")}`,
         rawId: o.id,
@@ -37,6 +45,10 @@ const getSalesOrders = async (req, res) => {
         productsSummary,
         totalQuantity: o.items.reduce((acc, item) => acc + item.quantity, 0),
         totalAmount: o.total,
+        collectedAmount: paymentSummary.collectedAmount,
+        pendingBalanceAmount: paymentSummary.pendingBalanceAmount,
+        isPending50Payment: paymentSummary.isPending50Payment,
+        paymentSummary,
         orderStatus: o.status,
         paymentStatus: o.paymentStatus,
         paymentMode: o.paymentMode || 'Cash on Delivery',
@@ -111,6 +123,7 @@ const approveOrder = async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       io.emit("order_status_updated", { orderId: updatedOrder.id, status: updatedOrder.status });
+      notifyFinancePaymentVerificationNeeded({ io, order: updatedOrder });
     }
 
     res.status(200).json({ success: true, data: updatedOrder, message: "Order approved and forwarded to Finance." });
@@ -211,7 +224,26 @@ const rejectOrder = async (req, res) => {
         reason: refund.reason,
         createdAt: refund.createdAt
       });
+      if (refundableAmount > 0) {
+        notifyFinanceRefundRequired({ io, order: updatedOrder, refund });
+      }
     }
+
+    // Send customer browser and Gmail notification about order rejection
+    notifyOrderRejected({
+      io,
+      order: {
+        ...updatedOrder,
+        customerEmail: existingOrder.customerEmail,
+        customerName: existingOrder.customerName,
+        shippingName: existingOrder.shippingName,
+        user: existingOrder.user
+      },
+      reason,
+      refundableAmount
+    }).catch((err) => {
+      console.error("[ORDER REJECTED NOTIFICATION ERROR]:", err.message);
+    });
 
     res.status(200).json({
       success: true,

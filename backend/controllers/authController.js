@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validateRealisticEmail } = require("../utils/emailValidator");
 const { generateOtp, verifyOtpMatch } = require("../utils/otpHelper");
+const { consumeEmailSpamQuota, buildSpamPolicyErrorResponse } = require("../services/emailSpamPolicyService");
 
 
 const register = async (req, res) => {
@@ -24,6 +25,12 @@ const register = async (req, res) => {
     });
     if (existingUser) {
       if (existingUser.status === "deleted") {
+        // Enforce 10 emails / 5 min spam policy before sending restoration OTP
+        const restoreSpamCheck = consumeEmailSpamQuota(normalizedEmail, "register_restore_otp");
+        if (!restoreSpamCheck.allowed) {
+          return res.status(429).json(buildSpamPolicyErrorResponse(restoreSpamCheck));
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const otp = generateOtp('REG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
@@ -87,6 +94,12 @@ const register = async (req, res) => {
       }
 
       return res.status(409).json({ error: "An account with this email already exists. Please use a different email or sign in." });
+    }
+
+    // Enforce 10 emails / 5 min spam policy before creating the account and sending registration OTP
+    const registerSpamCheck = consumeEmailSpamQuota(normalizedEmail, "register_otp");
+    if (!registerSpamCheck.allowed) {
+      return res.status(429).json(buildSpamPolicyErrorResponse(registerSpamCheck));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -221,6 +234,12 @@ const login = async (req, res) => {
           data: { otpCode: null, otpExpiresAt: null }
         });
       } else if (!otp) {
+        // Enforce 10 emails / 5 min spam policy before sending login OTP
+        const loginSpamCheck = consumeEmailSpamQuota(user.email, "login_otp");
+        if (!loginSpamCheck.allowed) {
+          return res.status(429).json(buildSpamPolicyErrorResponse(loginSpamCheck));
+        }
+
         const newOtp = generateOtp('LOG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
@@ -725,6 +744,12 @@ const resendOtp = async (req, res) => {
       return res.status(400).json({ error: "Email is already verified" });
     }
 
+    // Enforce 10 emails / 5 min spam policy before sending another verification OTP
+    const resendSpamCheck = consumeEmailSpamQuota(user.email, "resend_otp");
+    if (!resendSpamCheck.allowed) {
+      return res.status(429).json(buildSpamPolicyErrorResponse(resendSpamCheck));
+    }
+
     // Check cooldown (60 seconds)
     if (user.lastOtpSentAt) {
       const timeSinceLastOtp = Date.now() - new Date(user.lastOtpSentAt).getTime();
@@ -792,6 +817,12 @@ const forgotPassword = async (req, res) => {
 
     if (user.role !== "customer") {
       return res.status(403).json({ error: "Password reset is only available for customer accounts." });
+    }
+
+    // Enforce 10 emails / 5 min spam policy before sending a password reset code
+    const forgotSpamCheck = consumeEmailSpamQuota(user.email, "forgot_password_otp");
+    if (!forgotSpamCheck.allowed) {
+      return res.status(429).json(buildSpamPolicyErrorResponse(forgotSpamCheck));
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

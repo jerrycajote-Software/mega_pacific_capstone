@@ -334,6 +334,31 @@ const sendForgotPasswordEmail = async (email, otp) => {
 };
 
 
+// Format dates and times consistently in Philippine Standard Time (Asia/Manila)
+const formatPhilippineDateTime = (dateInput) => {
+  const dateObj = dateInput ? new Date(dateInput) : new Date();
+  if (Number.isNaN(dateObj.getTime())) {
+    return new Date().toLocaleString("en-US", {
+      timeZone: "Asia/Manila",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+  }
+  return dateObj.toLocaleString("en-US", {
+    timeZone: "Asia/Manila",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+};
+
 const sendOrderReceiptEmail = async (email, order) => {
   if (!email) {
     console.warn("[EMAIL RECEIPT] No recipient email specified, skipping email.");
@@ -342,14 +367,7 @@ const sendOrderReceiptEmail = async (email, order) => {
 
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const orderNum = order.id ? `#ORD-${String(order.id).padStart(4, '0')}` : 'N/A';
-  const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  }) : new Date().toLocaleString('en-US');
+  const orderDate = formatPhilippineDateTime(order.createdAt);
 
   const customerName = order.customerName || order.shippingName || (order.user?.customerProfile?.name) || (order.user?.name) || 'Valued Customer';
   const fulfillmentType = order.fulfillmentType || 'Delivery';
@@ -375,11 +393,11 @@ const sendOrderReceiptEmail = async (email, order) => {
 
   let paymentBadge = '';
   if (isCOD50) {
-    paymentBadge = '<span style="background-color: #dbeafe; color: #1e40af; font-weight: 700; padding: 4px 10px; border-radius: 9999px; font-size: 12px; letter-spacing: 0.5px;">50% DOWNPAYMENT PAID</span>';
+    paymentBadge = '<span style="display: inline-block; white-space: nowrap; background-color: #dbeafe; color: #1e40af; font-weight: 700; padding: 5px 12px; border-radius: 9999px; font-size: 12px; letter-spacing: 0.5px;">50% DOWNPAYMENT PAID</span>';
   } else if (isPaid) {
-    paymentBadge = '<span style="background-color: #dcfce7; color: #15803d; font-weight: 700; padding: 4px 10px; border-radius: 9999px; font-size: 12px; letter-spacing: 0.5px;">PAID (FULL PAYMENT)</span>';
+    paymentBadge = '<span style="display: inline-block; white-space: nowrap; background-color: #dcfce7; color: #15803d; font-weight: 700; padding: 5px 12px; border-radius: 9999px; font-size: 12px; letter-spacing: 0.5px;">PAID (FULL PAYMENT)</span>';
   } else {
-    paymentBadge = '<span style="background-color: #fef9c3; color: #854d0e; font-weight: 700; padding: 4px 10px; border-radius: 9999px; font-size: 12px; letter-spacing: 0.5px;">PENDING PAYMENT</span>';
+    paymentBadge = '<span style="display: inline-block; white-space: nowrap; background-color: #fef9c3; color: #854d0e; font-weight: 700; padding: 5px 12px; border-radius: 9999px; font-size: 12px; letter-spacing: 0.5px;">PENDING PAYMENT</span>';
   }
 
   const itemsHtml = items.map((item) => {
@@ -444,34 +462,38 @@ const sendOrderReceiptEmail = async (email, order) => {
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px;">
         <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
           
-          <!-- Header Banner -->
-          <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 32px 28px; color: #ffffff;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">MEGA PACIFIC</h1>
-                <p style="margin: 4px 0 0 0; font-size: 13px; color: #93c5fd; font-weight: 500;">Metal and Steel Corporation</p>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #cbd5e1;">Official Receipt</div>
-                <div style="font-size: 18px; font-weight: 700; color: #ffffff; margin-top: 2px;">${orderNum}</div>
-              </div>
-            </div>
+          <!-- Header Banner (table layout ensures Gmail aligns left/right edges reliably) -->
+          <div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); background-color: #1e3a8a; padding: 32px 28px; color: #ffffff;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td align="left" valign="middle">
+                  <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">MEGA PACIFIC</h1>
+                  <p style="margin: 4px 0 0 0; font-size: 13px; color: #93c5fd; font-weight: 500;">Metal and Steel Corporation</p>
+                </td>
+                <td align="right" valign="middle" style="text-align: right;">
+                  <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #cbd5e1;">Official Receipt</div>
+                  <div style="font-size: 18px; font-weight: 700; color: #ffffff; margin-top: 2px;">${orderNum}</div>
+                </td>
+              </tr>
+            </table>
           </div>
 
           <!-- Body Content -->
           <div style="padding: 28px;">
-            <!-- Greeting & Status -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;">
-              <div>
-                <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi ${customerName},</p>
-                <p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">
-                  ${isPaid ? 'Thank you for your payment! Your order has been placed successfully.' : 'Thank you for your order! We are processing your request.'}
-                </p>
-              </div>
-              <div style="text-align: right;">
-                ${paymentBadge}
-              </div>
-            </div>
+            <!-- Greeting & Payment Status Badge -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9;">
+              <tr>
+                <td align="left" valign="top" style="padding-bottom: 20px; padding-right: 12px;">
+                  <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Hi ${customerName},</p>
+                  <p style="margin: 4px 0 0 0; font-size: 14px; color: #64748b;">
+                    ${isPaid ? 'Thank you for your payment! Your order has been placed successfully.' : 'Thank you for your order! We are processing your request.'}
+                  </p>
+                </td>
+                <td align="right" valign="top" style="text-align: right; padding-bottom: 20px; white-space: nowrap;">
+                  ${paymentBadge}
+                </td>
+              </tr>
+            </table>
 
             <!-- Order Metadata Grid -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; background-color: #f8fafc; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
@@ -524,41 +546,59 @@ const sendOrderReceiptEmail = async (email, order) => {
             </table>
 
             <!-- Financial Totals Block -->
-            <div style="margin-left: auto; max-width: 340px; border-top: 2px solid #e2e8f0; padding-top: 14px; margin-bottom: 28px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: #64748b;">
-                <span>Subtotal:</span>
-                <span style="font-weight: 600; color: #0f172a;">₱${itemsSubtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; color: #64748b;">
-                <span>${isPickup ? 'Store Pick-up Fee:' : 'Truck Delivery Fee:'}</span>
-                <span style="font-weight: 600; color: ${isPickup ? '#16a34a' : '#0f172a'};">${isPickup ? 'FREE (₱0.00)' : `₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #e2e8f0; margin-bottom: 10px; font-size: 14px; font-weight: 700; color: #0f172a;">
-                <span>Total Amount:</span>
-                <span>₱${totalAmount}</span>
-              </div>
-              ${isCOD50 ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: #166534; background-color: #f0fdf4; padding: 6px 10px; border-radius: 4px; border: 1px solid #bbf7d0;">
-                  <span style="font-weight: 600;">50% Downpayment Paid:</span>
-                  <span style="font-weight: 800;">₱${downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #9a3412; background-color: #fff7ed; padding: 6px 10px; border-radius: 4px; border: 1px solid #fed7aa;">
-                  <span style="font-weight: 600;">50% Balance on Delivery:</span>
-                  <span style="font-weight: 800;">₱${balanceOnDelivery.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-              ` : `
-                <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 16px; font-weight: 800; color: #1e3a8a;">
-                  <span>Total Paid:</span>
-                  <span>₱${totalAmount}</span>
-                </div>
-              `}
-            </div>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
+              <tr>
+                <td align="right">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 340px; border-collapse: collapse; border-top: 2px solid #e2e8f0;">
+                    <tr>
+                      <td align="left" style="padding: 14px 0 6px 0; font-size: 13px; color: #64748b;">Subtotal:</td>
+                      <td align="right" style="padding: 14px 0 6px 12px; font-size: 13px; font-weight: 600; color: #0f172a; white-space: nowrap;">₱${itemsSubtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                    <tr>
+                      <td align="left" style="padding: 0 0 12px 0; font-size: 13px; color: #64748b;">${isPickup ? 'Store Pick-up Fee:' : 'Truck Delivery Fee:'}</td>
+                      <td align="right" style="padding: 0 0 12px 12px; font-size: 13px; font-weight: 600; color: ${isPickup ? '#16a34a' : '#0f172a'}; white-space: nowrap;">${isPickup ? 'FREE (₱0.00)' : `₱${actualShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td>
+                    </tr>
+                    <tr>
+                      <td align="left" style="padding: 8px 0 10px 0; border-top: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; color: #0f172a;">Total Amount:</td>
+                      <td align="right" style="padding: 8px 0 10px 12px; border-top: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; color: #0f172a; white-space: nowrap;">₱${totalAmount}</td>
+                    </tr>
+                    ${isCOD50 ? `
+                      <tr>
+                        <td colspan="2" style="padding-bottom: 6px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px;">
+                            <tr>
+                              <td align="left" style="padding: 6px 10px; font-size: 13px; font-weight: 600; color: #166534;">50% Downpayment Paid:</td>
+                              <td align="right" style="padding: 6px 10px; font-size: 13px; font-weight: 800; color: #166534; white-space: nowrap;">₱${downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse; background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 4px;">
+                            <tr>
+                              <td align="left" style="padding: 6px 10px; font-size: 13px; font-weight: 600; color: #9a3412;">${isPickup ? 'Pending 50% Balance on Pick-up:' : 'Pending 50% Balance on Delivery:'}</td>
+                              <td align="right" style="padding: 6px 10px; font-size: 13px; font-weight: 800; color: #9a3412; white-space: nowrap;">₱${balanceOnDelivery.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    ` : `
+                      <tr>
+                        <td align="left" style="padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 16px; font-weight: 800; color: #1e3a8a;">Total Paid:</td>
+                        <td align="right" style="padding: 8px 0 0 12px; border-top: 1px dashed #cbd5e1; font-size: 16px; font-weight: 800; color: #1e3a8a; white-space: nowrap;">₱${totalAmount}</td>
+                      </tr>
+                    `}
+                  </table>
+                </td>
+              </tr>
+            </table>
 
             <!-- Customer Note / Callout -->
             <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 4px; margin-bottom: 24px;">
               ${isCOD50 ? `
                 <p style="margin: 0 0 6px 0; font-size: 12px; color: #1e40af; line-height: 1.5;">
-                  <strong>Cash on Delivery (50% Downpayment):</strong> Your 50% downpayment of ₱${downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been received. Please prepare the remaining 50% cash balance of <strong>₱${balanceOnDelivery.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> when your delivery arrives.
+                  <strong>Pending 50% Payment (${isPickup ? 'Store Pick-up' : 'Cash on Delivery'}):</strong> Your 50% downpayment of ₱${downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been received. Please prepare the remaining 50% cash balance of <strong>₱${balanceOnDelivery.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> to confirm full payment with Logistics ${isPickup ? 'when you pick up your order at our plant' : 'when your delivery arrives'}.
                 </p>
               ` : `
                 <p style="margin: 0 0 6px 0; font-size: 12px; color: #1e40af; line-height: 1.5;">
@@ -737,13 +777,7 @@ const sendRefundNotificationEmail = async (email, { order, refund, transactionRe
   const refundAmount = Number(refund?.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const paymentMethod = refund?.paymentMethod || order?.paymentMode || 'Original Payment Method';
   const refNo = transactionReference || refund?.transactionReference || 'N/A';
-  const formattedDate = new Date(processedAt || Date.now()).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const formattedDate = formatPhilippineDateTime(processedAt || Date.now());
 
   if (!isEmailConfigured()) {
     console.log(`\n[EMAIL FALLBACK - Customer Payment Refunded]`);
@@ -859,17 +893,201 @@ const sendRefundNotificationEmail = async (email, { order, refund, transactionRe
   }
 };
 
+// Send an email alert when a customer order is dispatched and out for delivery
+const sendOutForDeliveryEmail = async (email, order) => {
+  if (!email) {
+    return { success: false, message: "No email specified" };
+  }
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const orderNum = order?.id ? `#ORD-${String(order.id).padStart(4, "0")}` : "N/A";
+  const customerName = order?.customerName || order?.shippingName || order?.user?.customerProfile?.name || "Valued Customer";
+  const deliveryAddress = [order?.shippingAddress, order?.shippingCity, order?.shippingProvince, order?.shippingZipCode]
+    .filter(Boolean)
+    .join(", ") || "Your registered delivery address";
+  const isPending50 = String(order?.paymentStatus || "").toLowerCase().includes("50%") ||
+    (String(order?.paymentMode || "").toLowerCase().includes("50%") && String(order?.paymentStatus || "").toLowerCase() !== "paid");
+  const balanceDue = isPending50 ? Math.round((Number(order?.total || 0) * 0.5) * 100) / 100 : 0;
+
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL FALLBACK - Out for Delivery] To: ${email} | Order: ${orderNum}`);
+    return { success: true, message: "Logged to console (SMTP not configured)" };
+  }
+
+  const mailOptions = {
+    from: `"Mega Pacific Logistics" <${process.env.SMTP_FROM || "noreply@megapacific.com"}>`,
+    to: email,
+    subject: `[Out for Delivery] Order ${orderNum} is On Its Way!`,
+    text: `Hello ${customerName}, your Mega Pacific order ${orderNum} is now out for delivery to ${deliveryAddress}.${isPending50 ? ` Please prepare your remaining 50% balance of ₱${balanceDue.toLocaleString("en-PH", { minimumFractionDigits: 2 })} for Logistics confirmation.` : ""}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); padding: 24px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 20px;">MEGA PACIFIC METAL & STEEL</h1>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #bfdbfe;">DELIVERY DISPATCH UPDATE</p>
+        </div>
+        <div style="padding: 24px;">
+          <span style="display: inline-block; background: #dbeafe; color: #1d4ed8; font-weight: 700; padding: 5px 12px; border-radius: 999px; font-size: 12px; margin-bottom: 12px;">OUT FOR DELIVERY</span>
+          <h2 style="margin: 0 0 8px; color: #0f172a; font-size: 19px;">Your Order ${orderNum} is On the Way!</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Hello <strong>${customerName}</strong>, our delivery truck has left our plant and is now heading to your delivery location:
+          </p>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin: 16px 0;">
+            <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700;">Delivery Destination</div>
+            <div style="font-size: 14px; color: #0f172a; font-weight: 700; margin-top: 4px;">${deliveryAddress}</div>
+          </div>
+          ${isPending50 ? `
+            <div style="background: #fff7ed; border-left: 4px solid #f59e0b; padding: 12px 14px; border-radius: 6px; margin-bottom: 16px;">
+              <strong style="color: #b45309; font-size: 13px;">Pending 50% Balance Due Upon Arrival: ₱${balanceDue.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #78350f;">Please prepare this remaining 50% cash balance so our Logistics team can confirm your full payment.</p>
+            </div>
+          ` : ""}
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="${frontendUrl}/order/${order.id}" style="background: #2563eb; color: #ffffff; padding: 11px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">Track Order ${orderNum}</a>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const info = await deliverMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`[EMAIL OUT FOR DELIVERY ERROR] ${orderNum}:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send an email alert when a customer order is delivered or picked up and completed
+const sendOrderDeliveredEmail = async (email, order) => {
+  if (!email) {
+    return { success: false, message: "No email specified" };
+  }
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const orderNum = order?.id ? `#ORD-${String(order.id).padStart(4, "0")}` : "N/A";
+  const customerName = order?.customerName || order?.shippingName || order?.user?.customerProfile?.name || "Valued Customer";
+  const isPickup = String(order?.fulfillmentType || "").toLowerCase() === "pickup";
+  const totalFormatted = Number(order?.total || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const confirmedAtText = formatPhilippineDateTime(order?.balanceConfirmedAt || new Date());
+
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL FALLBACK - Order Completed/Delivered] To: ${email} | Order: ${orderNum}`);
+    return { success: true, message: "Logged to console (SMTP not configured)" };
+  }
+
+  const mailOptions = {
+    from: `"Mega Pacific Logistics" <${process.env.SMTP_FROM || "noreply@megapacific.com"}>`,
+    to: email,
+    subject: `[${isPickup ? "Picked Up" : "Delivered"}] Order ${orderNum} Completed & Full Payment Confirmed`,
+    text: `Hello ${customerName}, your order ${orderNum} has been ${isPickup ? "picked up" : "delivered"} on ${confirmedAtText}. Full payment of ₱${totalFormatted} is confirmed. Thank you for choosing Mega Pacific!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 24px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 20px;">MEGA PACIFIC METAL & STEEL</h1>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #bbf7d0;">ORDER COMPLETION CONFIRMATION</p>
+        </div>
+        <div style="padding: 24px;">
+          <span style="display: inline-block; background: #dcfce7; color: #15803d; font-weight: 700; padding: 5px 12px; border-radius: 999px; font-size: 12px; margin-bottom: 12px;">${isPickup ? "PICKED UP & PAID" : "DELIVERED & PAID"}</span>
+          <h2 style="margin: 0 0 8px; color: #0f172a; font-size: 19px;">Order ${orderNum} Completed!</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Hello <strong>${customerName}</strong>, your order has been ${isPickup ? "picked up at our plant" : "successfully delivered"} and marked as fully paid.
+          </p>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin: 16px 0; font-size: 13px; color: #1e293b;">
+            <div style="margin-bottom: 6px;"><strong>Total Order Amount:</strong> ₱${totalFormatted}</div>
+            <div style="margin-bottom: 6px;"><strong>Payment Status:</strong> Paid (Full Payment Confirmed)</div>
+            <div><strong>Completed Time:</strong> ${confirmedAtText}</div>
+          </div>
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="${frontendUrl}/order/${order.id}" style="background: #16a34a; color: #ffffff; padding: 11px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">View Order & Leave a Review</a>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const info = await deliverMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`[EMAIL DELIVERED ERROR] ${orderNum}:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send an email alert when a customer order is rejected by Sales
+const sendOrderRejectedEmail = async (email, order, { reason, refundableAmount } = {}) => {
+  if (!email) {
+    return { success: false, message: "No email specified" };
+  }
+
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const orderNum = order?.id ? `#ORD-${String(order.id).padStart(4, "0")}` : "N/A";
+  const customerName = order?.customerName || order?.shippingName || order?.user?.customerProfile?.name || "Valued Customer";
+  const refundText = Number(refundableAmount || 0) > 0
+    ? `Your paid amount of ₱${Number(refundableAmount).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been forwarded to our Finance team for refund.`
+    : "No charge was collected for this order.";
+
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL FALLBACK - Order Rejected] To: ${email} | Order: ${orderNum}`);
+    return { success: true, message: "Logged to console (SMTP not configured)" };
+  }
+
+  const mailOptions = {
+    from: `"Mega Pacific Sales" <${process.env.SMTP_FROM || "noreply@megapacific.com"}>`,
+    to: email,
+    subject: `[Order Rejected] Update on Order ${orderNum} - Mega Pacific`,
+    text: `Hello ${customerName}, we are sorry to inform you that your order ${orderNum} was rejected.${reason ? ` Reason: ${reason}.` : ""} ${refundText}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 24px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 20px;">MEGA PACIFIC METAL & STEEL</h1>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #fecaca;">ORDER STATUS UPDATE</p>
+        </div>
+        <div style="padding: 24px;">
+          <span style="display: inline-block; background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 5px 12px; border-radius: 999px; font-size: 12px; margin-bottom: 12px;">ORDER REJECTED</span>
+          <h2 style="margin: 0 0 8px; color: #0f172a; font-size: 19px;">Order ${orderNum} Could Not Be Processed</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Hello <strong>${customerName}</strong>, your order ${orderNum} was rejected by our Sales team.
+          </p>
+          ${reason ? `
+            <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 13px; color: #7f1d1d;">
+              <strong>Reason:</strong> ${reason}
+            </div>
+          ` : ""}
+          <p style="color: #334155; font-size: 13px; line-height: 1.5;">${refundText}</p>
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="${frontendUrl}/order/${order.id}" style="background: #334155; color: #ffffff; padding: 11px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">View Order Details</a>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const info = await deliverMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`[EMAIL REJECTED ERROR] ${orderNum}:`, error.message);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   isEmailConfigured,
   deliverMail,
   getEmailDiagnostics,
   testEmailDispatch,
+  formatPhilippineDateTime,
   sendOtpEmail,
   sendLoginOtpEmail,
   sendForgotPasswordEmail,
   sendOrderReceiptEmail,
   sendReadyForPickupEmail,
-  sendRefundNotificationEmail
+  sendRefundNotificationEmail,
+  sendOutForDeliveryEmail,
+  sendOrderDeliveredEmail,
+  sendOrderRejectedEmail
 };
 
 

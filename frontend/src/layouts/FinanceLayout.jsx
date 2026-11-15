@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import axios from 'axios';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomDashboardIcon,
@@ -14,8 +15,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
-import { io } from 'socket.io-client';
-import { Snackbar, Alert, Button, Tooltip } from '@mui/material';
+import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
+import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
+import { Tooltip } from '@mui/material';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
@@ -34,7 +37,6 @@ const FinanceLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-  const [notification, setNotification] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
   });
@@ -47,36 +49,61 @@ const FinanceLayout = () => {
     });
   };
 
-  React.useEffect(() => {
-    if (!user?.id) return;
-    
+  // Remind Finance staff about Sales-approved orders waiting for Payment Verification and pending refunds
+  const fetchFinanceReminders = useCallback(async () => {
+    const token = localStorage.getItem('appToken');
+    if (!token) return null;
     const API_URL = import.meta.env.VITE_API_URL || '';
-    const socket = io(API_URL, {
-      auth: { user }
-    });
+    const headers = { Authorization: `Bearer ${token}` };
 
-    socket.emit('join_room', `user_${user.id}`);
+    const [ordersRes, refundsRes] = await Promise.allSettled([
+      axios.get(`${API_URL}/api/finance/orders`, { headers }),
+      axios.get(`${API_URL}/api/finance/refunds?status=pending`, { headers })
+    ]);
 
-    socket.on('new_device_login', (data) => {
-      setNotification(data.message);
-    });
+    const orders = ordersRes.status === 'fulfilled' ? (ordersRes.value.data?.data || []) : [];
+    const refunds = refundsRes.status === 'fulfilled' ? (refundsRes.value.data?.data || []) : [];
 
-    socket.on('new_refund_request', (data) => {
-      setNotification({
-        message: `Refund Action Required: ${data.orderNumber} for ${data.customerName} (₱${Number(data.amount || 0).toLocaleString()})`,
-        path: '/finance/refunds'
-      });
-    });
+    const pendingVerificationCount = orders.filter((o) => o.orderStatus === 'sales_approved').length;
+    const pendingRefundCount = refunds.filter((r) => (r.status || '').toLowerCase() === 'pending').length;
 
-    return () => socket.close();
-  }, [user?.id]);
+    const parts = [];
+    if (pendingVerificationCount > 0) {
+      parts.push(`${pendingVerificationCount} order(s) waiting for Payment Verification`);
+    }
+    if (pendingRefundCount > 0) {
+      parts.push(`${pendingRefundCount} refund request(s) waiting for processing`);
+    }
+
+    if (parts.length === 0) return null;
+
+    const targetUrl = pendingVerificationCount > 0 ? '/finance/payments' : '/finance/refunds';
+    return {
+      title: 'Finance Action Reminder',
+      body: `Needs your review: ${parts.join(' and ')}.`,
+      severity: 'warning',
+      url: targetUrl,
+      actionLabel: pendingVerificationCount > 0 ? 'Verify Payments' : 'View Refunds',
+      tag: 'finance-session-reminder'
+    };
+  }, []);
+
+  const {
+    activeNotification,
+    permissionFeedback,
+    setPermissionFeedback,
+    handleCloseNotification,
+    handleClosePermissionFeedback
+  } = usePortalNotificationManager({
+    user,
+    rooms: ['finance'],
+    primaryEvent: 'finance_notification',
+    reminderStorageKey: user?.id ? `megapacific_finance_reminded_${user.id}` : null,
+    fetchPendingReminder: fetchFinanceReminders
+  });
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
-  };
-
-  const handleCloseNotification = () => {
-    setNotification(null);
   };
 
   const checkIsActive = (itemPath) => {
@@ -221,6 +248,20 @@ const FinanceLayout = () => {
 
       <div className={`admin-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="admin-content">
+          <NotificationPermissionBanner
+            bannerKey="megapacific_finance_banner_dismissed"
+            sx={{ mx: { xs: 2, md: 5 }, mt: 2, mb: 0 }}
+            title="Turn On Live Payment & Refund Alerts"
+            description="Allow browser alerts in Chrome, Edge, or Safari to get notified when orders require Payment Verification, refunds are requested, or Logistics collects final cash payments."
+            deniedDescription="To receive live Finance pop-ups in Chrome, Edge, or Safari, allow notifications for this website in your browser address bar settings."
+            sampleNotification={{
+              title: 'Mega Pacific Finance Alerts Active',
+              body: 'You will now receive instant alerts for orders needing Payment Verification, refund requests, and completed cash collections.',
+              url: '/finance/payments',
+              tag: 'megapacific-finance-test'
+            }}
+            onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
+          />
           <Outlet />
         </div>
       </div>
@@ -234,37 +275,13 @@ const FinanceLayout = () => {
           }}
         />
       )}
-      
-      <Snackbar 
-        open={!!notification} 
-        autoHideDuration={7000} 
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={handleCloseNotification} 
-          severity="warning" 
-          sx={{ width: '100%', borderRadius: 2, alignItems: 'center' }}
-          action={
-            notification?.path ? (
-              <Button 
-                color="inherit" 
-                size="small" 
-                onClick={() => {
-                  const p = notification.path;
-                  handleCloseNotification();
-                  navigate(p);
-                }}
-                sx={{ fontWeight: 700, textTransform: 'none' }}
-              >
-                View
-              </Button>
-            ) : undefined
-          }
-        >
-          {typeof notification === 'string' ? notification : notification?.message}
-        </Alert>
-      </Snackbar>
+
+      <PortalNotificationAlerts
+        activeNotification={activeNotification}
+        onCloseNotification={handleCloseNotification}
+        permissionFeedback={permissionFeedback}
+        onClosePermissionFeedback={handleClosePermissionFeedback}
+      />
     </div>
   );
 };

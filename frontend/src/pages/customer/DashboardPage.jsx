@@ -95,57 +95,6 @@ const DashboardPage = ({ showHero = true }) => {
     setSelected3DModel(null);
   };
 
-  const handleProceedToOrderFrom3D = ({
-    product,
-    quantity: newQty,
-    color: newColor,
-    length: newLen,
-    thickness: newThick,
-  }) => {
-    const targetProduct = product || picoRibProduct;
-    if (!targetProduct) return;
-
-    const isPerM = targetProduct.unit?.toLowerCase().includes('meter') ?? true;
-    const finalQty = Math.max(1, parseInt(newQty, 10) || 1);
-    const finalLen = parseFloat(newLen) || 3.8;
-    const options = buildProductOptions(targetProduct);
-    const matchedOpt =
-      options.find(
-        (o) =>
-          (o.thickness && o.thickness.toLowerCase().trim() === (newThick || '').toLowerCase().trim()) ||
-          (o.name && o.name.toLowerCase().includes((newThick || '').toLowerCase().trim()))
-      ) || getDefaultOption(options);
-
-    const unitPrice = matchedOpt ? matchedOpt.price : targetProduct.price || 0;
-    const origPrice = matchedOpt
-      ? matchedOpt.originalPrice || Math.round((unitPrice / 0.7) * 100) / 100
-      : targetProduct.originalPrice || Math.round((unitPrice / 0.7) * 100) / 100;
-    const itemTotal = unitPrice * (isPerM ? finalLen : 1) * finalQty;
-
-    const variantForCheckout =
-      matchedOpt && !matchedOpt.isBaseProduct
-        ? targetProduct.variants?.find((v) => v.id === matchedOpt.id) || null
-        : null;
-
-    const orderItem = {
-      orderItemId: `prod-${targetProduct.id}-${variantForCheckout?.id || 'base'}-${isPerM ? finalLen : '1'}-${newColor || 'def'}-${Date.now()}`,
-      name: targetProduct.name,
-      type: targetProduct.type,
-      product: targetProduct,
-      variant: variantForCheckout,
-      variantId: variantForCheckout?.id || null,
-      quantity: finalQty,
-      customLength: isPerM ? finalLen : null,
-      thickness: matchedOpt?.thickness || newThick || targetProduct.thickness || '0.35mm',
-      color: newColor || targetProduct.color || 'Marshall Dark Gray',
-      total: itemTotal,
-      price: unitPrice,
-      originalPrice: origPrice,
-    };
-
-    navigate('/checkout', { state: orderItem });
-  };
-
   const handleNavigateToFullCatalog = () => {
     navigate('/products');
   };
@@ -698,7 +647,6 @@ const DashboardPage = ({ showHero = true }) => {
               initialLength={selected3DModel?.recommendedLength || 3.8}
               initialQuantity={selected3DModel?.totalSheets || 16}
               initialHouseModelId={selected3DModel?.id}
-              onProceedToOrder={handleProceedToOrderFrom3D}
               onNavigateToProduct={(prod, config) => {
                 handleClose3DViewer();
                 navigate(`/product/${prod.id}`, { state: config });

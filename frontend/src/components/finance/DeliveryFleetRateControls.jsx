@@ -175,12 +175,12 @@ const DeliveryFleetRateControls = ({
             <CustomInfoIcon size={15} color="#2563EB" />
             <Typography variant="subtitle2" fontWeight={700}>
               {useDefault
-                ? 'Delivery Fleet Rate Reference Table (from Guidelines)'
-                : 'Delivery Fleet Rate Matrix (Custom Editable Mode)'}
+                ? 'Delivery Truck Rate Reference Table (from Guidelines)'
+                : 'Delivery Truck Rate Table (Custom Editable Mode)'}
             </Typography>
             <Chip
               size="small"
-              label={useDefault ? 'Default Guidelines Active' : 'Custom Fleet Rates Active'}
+              label={useDefault ? 'Default Guidelines Active' : 'Custom Truck Rates Active'}
               sx={{
                 height: 22,
                 fontSize: '0.68rem',
@@ -200,7 +200,7 @@ const DeliveryFleetRateControls = ({
                 onClick={handleRestoreDefaultFleetRates}
                 sx={{ borderRadius: 1.5, textTransform: 'none', fontWeight: 600, fontSize: '0.75rem' }}
               >
-                Restore Default Fleet Rates
+                Restore Default Truck Rates
               </Button>
             )}
             <FormControlLabel
