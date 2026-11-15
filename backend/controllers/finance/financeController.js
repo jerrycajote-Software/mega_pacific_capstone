@@ -1,20 +1,34 @@
 const prisma = require('../../config/db');
+const {
+  isPartial50Order,
+  isFullyPaidOrder,
+  getCollectedRevenueAmount,
+  getPendingBalanceAmount
+} = require('../../services/paymentCalculationService');
 
 const getDashboardData = async (req, res) => {
   try {
-    
-    
-    const orders = await prisma.order.findMany({
+    const activeOrders = await prisma.order.findMany({
       where: {
-        paymentStatus: 'paid',
+        status: { notIn: ['cancelled', 'rejected'] },
+        paymentStatus: { notIn: ['refunded', 'refund_pending'] }
+      },
+    });
+
+    const collectedOrders = activeOrders.filter((order) => getCollectedRevenueAmount(order) > 0);
+    const totalRevenue = collectedOrders.reduce((sum, order) => sum + getCollectedRevenueAmount(order), 0);
+    const pendingBalanceTotal = activeOrders.reduce((sum, order) => sum + getPendingBalanceAmount(order), 0);
+    const pending50OrdersCount = activeOrders.filter(isPartial50Order).length;
+    const paidOrdersCount = activeOrders.filter(isFullyPaidOrder).length;
+
+    const pendingBankTransferCount = await prisma.order.count({
+      where: {
+        paymentStatus: 'pending',
+        paymentMode: 'Bank Transfer',
         status: { notIn: ['cancelled', 'rejected'] }
       },
     });
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
-
-    const pendingOrders = await prisma.order.count({
-      where: { paymentStatus: 'pending', paymentMode: 'Bank Transfer' },
-    });
+    const pendingOrders = pendingBankTransferCount + pending50OrdersCount;
 
     const expenses = await prisma.expense.findMany({
       where: { status: 'Approved' },
@@ -42,16 +56,22 @@ const getDashboardData = async (req, res) => {
     });
 
     const activity = [
-      ...recentOrders.map(o => ({
-        id: `#ORD-${o.id.toString().padStart(3, '0')}`,
-        date: o.createdAt.toISOString().split('T')[0],
-        amount: `₱${(o.total || 0).toLocaleString()}`,
-        method: o.paymentMode || 'Cash on Delivery',
-        status: o.paymentStatus === 'paid' ? 'verified' : o.paymentStatus,
-        by: o.customerName || 'Customer',
-        type: 'order',
-        timestamp: o.createdAt
-      })),
+      ...recentOrders.map(o => {
+        const collected = getCollectedRevenueAmount(o);
+        const partial50 = isPartial50Order(o);
+        return {
+          id: `#ORD-${o.id.toString().padStart(3, '0')}`,
+          date: o.createdAt.toISOString().split('T')[0],
+          amount: partial50
+            ? `₱${collected.toLocaleString()} / ₱${(o.total || 0).toLocaleString()}`
+            : `₱${(o.total || 0).toLocaleString()}`,
+          method: o.paymentMode || 'Cash on Delivery',
+          status: o.paymentStatus === 'paid' ? 'verified' : partial50 ? 'pending 50% payment' : o.paymentStatus,
+          by: o.customerName || 'Customer',
+          type: 'order',
+          timestamp: o.createdAt
+        };
+      }),
       ...recentExpenses.map(e => ({
         id: e.reference || `#EXP-${e.id}`,
         date: e.date.toISOString().split('T')[0],
@@ -73,10 +93,10 @@ const getDashboardData = async (req, res) => {
       trendMap[key] = { month: key, revenue: 0, expenses: 0, profit: 0 };
     }
 
-    orders.forEach(o => {
+    collectedOrders.forEach(o => {
       const m = new Date(o.createdAt).toLocaleString('en-US', { month: 'short' });
       if (trendMap[m]) {
-        trendMap[m].revenue += (o.total || 0);
+        trendMap[m].revenue += getCollectedRevenueAmount(o);
       }
     });
 
@@ -93,10 +113,10 @@ const getDashboardData = async (req, res) => {
     }));
 
     const paymentMap = {};
-    orders.forEach(o => {
+    collectedOrders.forEach(o => {
       const mode = o.paymentMode || 'Cash on Delivery';
       if (!paymentMap[mode]) paymentMap[mode] = { name: mode, value: 0, count: 0 };
-      paymentMap[mode].value += (o.total || 0);
+      paymentMap[mode].value += getCollectedRevenueAmount(o);
       paymentMap[mode].count += 1;
     });
     const paymentBreakdown = Object.values(paymentMap);
@@ -112,7 +132,7 @@ const getDashboardData = async (req, res) => {
 
     const profitMargin = totalRevenue > 0 ? Number(((netProfit / totalRevenue) * 100).toFixed(1)) : 0;
     const expenseRatio = totalRevenue > 0 ? Number(((totalExpenses / totalRevenue) * 100).toFixed(1)) : 0;
-    const avgOrderValue = orders.length > 0 ? Math.round(totalRevenue / orders.length) : 0;
+    const avgOrderValue = collectedOrders.length > 0 ? Math.round(totalRevenue / collectedOrders.length) : 0;
 
     res.json({
       success: true,
@@ -120,16 +140,18 @@ const getDashboardData = async (req, res) => {
         kpi: {
           totalRevenue,
           pendingPayments: pendingOrders,
+          pendingBalanceTotal,
+          pending50OrdersCount,
           totalExpenses,
           netProfit,
           profitMargin,
           expenseRatio,
           avgOrderValue,
-          paidOrdersCount: orders.length
+          paidOrdersCount
         },
         revenueVsExpensesTrend,
         paymentBreakdown: paymentBreakdown.length > 0 ? paymentBreakdown : [
-          { name: 'Cash on Delivery', value: totalRevenue || 1, count: orders.length || 1 }
+          { name: 'Cash on Delivery', value: totalRevenue || 1, count: collectedOrders.length || 1 }
         ],
         expenseCategoryBreakdown: expenseCategoryBreakdown.length > 0 ? expenseCategoryBreakdown : [
           { name: 'Logistics', value: 1000, count: 1 },
@@ -180,16 +202,18 @@ const getFinancialReports = async (req, res) => {
       }
     });
 
-    const paidOrders = orders.filter(o => o.paymentStatus === 'paid' && !['cancelled', 'rejected'].includes(o.status));
-    const grossRevenue = paidOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+    const collectedOrders = orders.filter(o => getCollectedRevenueAmount(o) > 0 && !['cancelled', 'rejected'].includes(o.status));
+    const grossRevenue = collectedOrders.reduce((acc, o) => acc + getCollectedRevenueAmount(o), 0);
+    const pendingBalanceTotal = orders.reduce((acc, o) => acc + getPendingBalanceAmount(o), 0);
+    const pending50OrdersCount = orders.filter(isPartial50Order).length;
     const totalExpenses = expenses.reduce((acc, e) => acc + (e.amount || 0), 0);
     const netIncome = grossRevenue - totalExpenses;
     const vat12 = Math.round(grossRevenue * (0.12 / 1.12));
     const netSales = grossRevenue - vat12;
     const profitMargin = grossRevenue > 0 ? Number(((netIncome / grossRevenue) * 100).toFixed(1)) : 0;
 
-    const deliveryRevenue = paidOrders.filter(o => o.fulfillmentType === 'Delivery').reduce((acc, o) => acc + (o.total || 0), 0);
-    const pickupRevenue = paidOrders.filter(o => o.fulfillmentType === 'Pickup').reduce((acc, o) => acc + (o.total || 0), 0);
+    const deliveryRevenue = collectedOrders.filter(o => o.fulfillmentType === 'Delivery').reduce((acc, o) => acc + getCollectedRevenueAmount(o), 0);
+    const pickupRevenue = collectedOrders.filter(o => o.fulfillmentType === 'Pickup').reduce((acc, o) => acc + getCollectedRevenueAmount(o), 0);
 
     const categoryTotals = {};
     expenses.forEach(e => {
@@ -223,7 +247,9 @@ const getFinancialReports = async (req, res) => {
           vat12,
           netSales,
           profitMargin,
-          ordersCount: paidOrders.length,
+          ordersCount: collectedOrders.length,
+          pendingBalanceTotal,
+          pending50OrdersCount,
           expensesCount: expenses.length
         },
         incomeStatementRows,
@@ -304,7 +330,7 @@ const getDeliverySettings = async (req, res) => {
     console.error('Get Delivery Settings Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to load delivery fee and fleet rate settings.'
+      message: 'Failed to load delivery fee and truck rate settings.'
     });
   }
 };
@@ -380,7 +406,7 @@ const updateDeliverySettings = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Delivery fee parameters and fleet rates updated successfully.',
+      message: 'Delivery fee parameters and truck rates updated successfully.',
       data: {
         ...updatedConfig,
         plantOriginDetails: PLANT_ORIGIN,
@@ -391,7 +417,7 @@ const updateDeliverySettings = async (req, res) => {
     console.error('Update Delivery Settings Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to save delivery fee and fleet rate settings.'
+      message: 'Failed to save delivery fee and truck rate settings.'
     });
   }
 };

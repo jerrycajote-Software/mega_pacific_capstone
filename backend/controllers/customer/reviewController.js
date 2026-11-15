@@ -1,4 +1,5 @@
 const prisma = require("../../config/db");
+const { notifySalesNewReview } = require("../../services/notificationManagerService");
 
 const submitReview = async (req, res) => {
   const userId = req.user.userId || req.user.id;
@@ -117,13 +118,28 @@ const submitReview = async (req, res) => {
     const totalRating = allReviews.reduce((acc, curr) => acc + curr.rating, 0);
     const newAverageRating = newReviewCount > 0 ? totalRating / newReviewCount : 0;
 
-    await prisma.product.update({
+    const updatedProduct = await prisma.product.update({
       where: { id: parseInt(productId) },
       data: {
         reviewCount: newReviewCount,
         averageRating: newAverageRating
-      }
+      },
+      select: { name: true }
     });
+
+    const io = req.app.get("io");
+    if (io) {
+      const reviewer = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, customerProfile: { select: { name: true } } }
+      });
+      notifySalesNewReview({
+        io,
+        review,
+        productName: updatedProduct?.name,
+        customerName: reviewer?.customerProfile?.name || reviewer?.email
+      });
+    }
 
     res.status(201).json({ success: true, message: "Review submitted successfully", data: review });
   } catch (error) {

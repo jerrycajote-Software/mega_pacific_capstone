@@ -5,8 +5,10 @@ import CustomerHeader from '../components/CustomerHeader';
 import Footer from '../components/Footer';
 import CustomerBottomNav from '../components/CustomerBottomNav';
 import CustomerServiceWidget from '../components/CustomerServiceWidget';
+import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
+import { sendBrowserNotification } from '../utils/notificationManager';
 import {
   Box,
   Button,
@@ -21,6 +23,8 @@ const CustomerLayoutContent = () => {
   const navigate = useNavigate();
   const [pickupNotification, setPickupNotification] = useState(null);
   const [refundNotification, setRefundNotification] = useState(null);
+  const [liveOrderAlert, setLiveOrderAlert] = useState(null);
+  const [permissionFeedback, setPermissionFeedback] = useState(null);
 
   React.useEffect(() => {
     if (!user?.id) return;
@@ -37,6 +41,21 @@ const CustomerLayoutContent = () => {
 
     socket.on('order_refunded', (data) => {
       setRefundNotification(data);
+    });
+
+    // Listen to unified customer lifecycle notifications (Chrome, Edge, Safari)
+    socket.on('customer_notification', (payload) => {
+      if (!payload) return;
+      sendBrowserNotification({
+        title: payload.title,
+        body: payload.body,
+        tag: payload.tag || `order-${payload.orderId || 'update'}`,
+        url: payload.url || (payload.orderId ? `/orders/${payload.orderId}` : '/orders')
+      });
+
+      if (payload.eventType !== 'ready_for_pickup' && payload.eventType !== 'payment_refunded') {
+        setLiveOrderAlert(payload);
+      }
     });
 
     return () => socket.close();
@@ -56,11 +75,77 @@ const CustomerLayoutContent = () => {
         }}
       >
         <ErrorBoundary>
+          {user && (
+            <NotificationPermissionBanner
+              onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
+            />
+          )}
           <Outlet />
         </ErrorBoundary>
       </Box>
 
       <Footer />
+
+      <Snackbar
+        open={Boolean(permissionFeedback)}
+        autoHideDuration={5000}
+        onClose={() => setPermissionFeedback(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setPermissionFeedback(null)}
+          severity={permissionFeedback?.severity || 'info'}
+          variant="filled"
+          sx={{ borderRadius: 2.5, fontWeight: 600 }}
+        >
+          {permissionFeedback?.message}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={Boolean(liveOrderAlert)}
+        autoHideDuration={10000}
+        onClose={() => setLiveOrderAlert(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ mt: { xs: 7, sm: 8 } }}
+      >
+        <Alert
+          onClose={() => setLiveOrderAlert(null)}
+          severity={liveOrderAlert?.eventType === 'order_rejected' ? 'warning' : 'info'}
+          variant="filled"
+          sx={{
+            width: '100%',
+            maxWidth: 580,
+            borderRadius: 3,
+            bgcolor: liveOrderAlert?.eventType === 'order_rejected' ? '#b91c1c' : '#0B3574',
+            color: '#ffffff',
+            boxShadow: '0 12px 32px rgba(11, 53, 116, 0.35)',
+            fontWeight: 600,
+            alignItems: 'center'
+          }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => {
+                const targetUrl = liveOrderAlert?.url || (liveOrderAlert?.orderId ? `/orders/${liveOrderAlert.orderId}` : '/orders');
+                setLiveOrderAlert(null);
+                navigate(targetUrl);
+              }}
+              sx={{ fontWeight: 800, textTransform: 'none', bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
+            >
+              View Order
+            </Button>
+          }
+        >
+          <div>
+            <strong>{liveOrderAlert?.title}</strong>
+            <div style={{ fontSize: '0.8rem', opacity: 0.95, marginTop: 2 }}>
+              {liveOrderAlert?.body}
+            </div>
+          </div>
+        </Alert>
+      </Snackbar>
 
       <Snackbar
         open={Boolean(pickupNotification)}

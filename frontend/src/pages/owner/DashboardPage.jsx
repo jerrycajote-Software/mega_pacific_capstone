@@ -205,9 +205,9 @@ const OwnerDashboardPage = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
         <StatCard
-          label="Gross Revenue"
+          label="Gross Collected Revenue"
           value={totals.revenue}
-          sub="Total"
+          sub={totals.rawPendingBalanceTotal > 0 ? `Pending 50%: ${totals.pendingBalanceTotal}` : 'Collected Total'}
           icon={<CustomOwnerRevenueIcon size={30} />}
           accentColor="#f59e0b"
           bgGradient="rgba(245, 158, 11, 0.1)"

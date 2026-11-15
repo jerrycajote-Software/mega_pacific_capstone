@@ -1,6 +1,6 @@
 const prisma = require("../../config/db");
-const { sendRefundNotificationEmail } = require("../../utils/emailService");
 const { createPaymongoRefund, extractPaymongoIdFromPaymentMethod } = require("../../services/paymongoService");
+const { notifyPaymentRefunded } = require("../../services/notificationManagerService");
 
 
 const getRefunds = async (req, res) => {
@@ -290,18 +290,21 @@ const processRefund = async (req, res) => {
 
     const customerEmail = refund.order?.customerEmail || refund.user?.email;
     const customerName = refund.order?.customerName || refund.order?.shippingName || refund.user?.customerProfile?.name || "Valued Customer";
+    const ioInstance = req.app.get("io");
 
     try {
-      await sendRefundNotificationEmail(customerEmail, {
+      await notifyPaymentRefunded({
+        io: ioInstance,
         order: refund.order,
         refund: updatedRefund,
         transactionReference: refNo,
         notes: finalNotes,
         processedAt,
-        customerName
+        customerName,
+        customerEmail
       });
     } catch (emailErr) {
-      console.error("[REFUND EMAIL NOTICE] Failed to send email, proceeding:", emailErr.message);
+      console.error("[REFUND NOTIFICATION NOTICE] Failed to send refund notice, proceeding:", emailErr.message);
     }
 
     res.status(200).json({

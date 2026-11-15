@@ -141,7 +141,7 @@ const LogisticDashboardPage = () => {
       <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', gap: 2 }}>
         <CircularProgress size={48} thickness={4} sx={{ color: 'primary.main' }} />
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
-          Loading logistics & fleet monitoring...
+          Loading delivery and pick-up monitoring...
         </Typography>
       </Box>
     );
@@ -203,11 +203,11 @@ const LogisticDashboardPage = () => {
   ];
 
   return (
-    <Box sx={{ p: { xs: 2.5, md: 4 }, animation: 'fadeIn 0.4s ease-in-out' }}>
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 4 }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2.5, md: 4 }, animation: 'fadeIn 0.4s ease-in-out' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 3 }}>
         <Box>
           <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
-            <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em' }}>
+            <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
               Logistics Overview
             </Typography>
             <Chip
@@ -548,10 +548,14 @@ const LogisticDashboardPage = () => {
               <Tabs
                 value={dispatchFilter}
                 onChange={(_, val) => setDispatchFilter(val)}
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
                 sx={{
-                  minHeight: 32,
+                  maxWidth: '100%',
+                  minHeight: 34,
                   '& .MuiTab-root': {
-                    minHeight: 32,
+                    minHeight: 34,
                     textTransform: 'none',
                     fontWeight: 600,
                     fontSize: '0.75rem',
@@ -568,8 +572,8 @@ const LogisticDashboardPage = () => {
               </Tabs>
             </Box>
 
-            <TableContainer sx={{ maxHeight: 420 }}>
-              <Table stickyHeader>
+            <TableContainer sx={{ maxHeight: 420, overflowX: 'auto' }}>
+              <Table stickyHeader sx={{ minWidth: 640 }}>
                 <TableHead>
                   <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider' } }}>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Order Tracking ID</TableCell>

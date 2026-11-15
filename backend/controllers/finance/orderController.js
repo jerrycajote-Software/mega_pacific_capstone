@@ -1,12 +1,23 @@
 const prisma = require("../../config/db");
 const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
+const { isPartial50Order, buildOrderPaymentSummary } = require("../../services/paymentCalculationService");
+const { notifyPaymentVerifiedWorkflow } = require("../../services/notificationManagerService");
 
 const getFinanceOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       where: {
         status: {
-          in: ["sales_approved", "finance_verified", "processing"]
+          in: [
+            "sales_approved",
+            "finance_verified",
+            "processing",
+            "shipped",
+            "out_for_delivery",
+            "ready_for_pickup",
+            "delivered",
+            "completed"
+          ]
         }
       },
       orderBy: { createdAt: "desc" },
@@ -34,6 +45,8 @@ const getFinanceOrders = async (req, res) => {
         return `${item.product.name}${suffix} (x${item.quantity})`;
       }).join(", ");
 
+      const paymentSummary = buildOrderPaymentSummary(o);
+
       return {
         id: `#ORD-${o.id.toString().padStart(3, "0")}`,
         rawId: o.id,
@@ -54,6 +67,13 @@ const getFinanceOrders = async (req, res) => {
         totalQuantity: o.items.reduce((acc, item) => acc + item.quantity, 0),
         totalAmount: o.total,
         total: o.total,
+        collectedAmount: paymentSummary.collectedAmount,
+        pendingBalanceAmount: paymentSummary.pendingBalanceAmount,
+        isPending50Payment: paymentSummary.isPending50Payment,
+        paymentSummary,
+        paymentProofUrl: o.paymentProofUrl || null,
+        balanceConfirmedAt: o.balanceConfirmedAt || null,
+        balanceConfirmedByName: o.balanceConfirmedByName || null,
         orderStatus: o.status,
         status: o.status,
         paymentStatus: o.paymentStatus,
@@ -114,10 +134,14 @@ const verifyPayment = async (req, res) => {
       });
     }
 
+    // Keep 50% downpayment orders marked as pending remaining 50% balance until Logistics confirms final collection
+    const isDownpayment50 = isPartial50Order(existingOrder);
+    const verifiedPaymentStatus = isDownpayment50 ? "50% Downpayment Paid" : "paid";
+
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
-        paymentStatus: "paid",
+        paymentStatus: verifiedPaymentStatus,
         status: "finance_verified",
         statusUpdatedAt: new Date()
       }
@@ -125,10 +149,25 @@ const verifyPayment = async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      io.emit("order_status_updated", { orderId: updatedOrder.id, status: updatedOrder.status });
+      io.emit("order_status_updated", {
+        orderId: updatedOrder.id,
+        status: updatedOrder.status,
+        paymentStatus: updatedOrder.paymentStatus,
+        paymentSummary: buildOrderPaymentSummary(updatedOrder)
+      });
+      notifyPaymentVerifiedWorkflow({ io, order: updatedOrder });
     }
 
-    res.status(200).json({ success: true, data: updatedOrder, message: "Payment verified and order forwarded to Logistics." });
+    res.status(200).json({
+      success: true,
+      data: {
+        ...updatedOrder,
+        paymentSummary: buildOrderPaymentSummary(updatedOrder)
+      },
+      message: isDownpayment50
+        ? "50% downpayment verified! Order forwarded to Logistics with pending 50% balance to collect upon fulfillment."
+        : "Full payment verified and order forwarded to Logistics."
+    });
   } catch (error) {
     console.error("Failed to verify payment:", error);
     res.status(500).json({ success: false, error: "Failed to verify payment due to an internal server error." });

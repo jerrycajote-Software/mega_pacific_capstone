@@ -746,7 +746,7 @@ const SuperAdminDashboardPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-slate-700/80 transition-all">
             <div className="flex items-center justify-between text-slate-400 mb-2">
-              <span className="text-xs font-mono uppercase tracking-wider">Fleet Operational</span>
+              <span className="text-xs font-mono uppercase tracking-wider">Portals Online</span>
               <Server className="w-4 h-4 text-indigo-400" />
             </div>
             <div className="flex items-baseline gap-2">
@@ -853,7 +853,7 @@ const SuperAdminDashboardPage = () => {
               }`}
             >
               <Server className="w-4 h-4" />
-              <span>Fleet & Portals</span>
+              <span>System Portals</span>
             </button>
 
             <button
@@ -918,7 +918,7 @@ const SuperAdminDashboardPage = () => {
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-white tracking-tight">Portal Fleet Operations</h2>
+                <h2 className="text-lg font-bold text-white tracking-tight">System Portal Controls</h2>
                 <p className="text-xs sm:text-sm text-slate-400">
                   Control operational availability and maintenance states across client gateways.
                 </p>

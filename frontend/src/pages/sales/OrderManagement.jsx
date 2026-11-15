@@ -329,7 +329,7 @@ const OrderManagement = () => {
             </div>
 
             <div style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '10px' }}>
                 <div style={{ background: 'var(--bg-primary)', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Customer</div>
                   <div style={{ fontWeight: 600, marginTop: 3, color: 'var(--text-primary)' }}>{selectedOrder.customerName}</div>
@@ -347,6 +347,31 @@ const OrderManagement = () => {
                   <div style={{ fontWeight: 600, marginTop: 3, color: 'var(--text-primary)' }}>{selectedOrder.fulfillmentType || 'Delivery'}</div>
                 </div>
               </div>
+
+              {/* Show the delivery destination or store pick-up location below the summary grid */}
+              {(() => {
+                const isPickup = String(selectedOrder.fulfillmentType || '').trim().toLowerCase() === 'pickup';
+                const cleanedCityProvince = (selectedOrder.cityProvince || '').replace(/^,\s*/, '').trim();
+                const secondaryLocation = [cleanedCityProvince, selectedOrder.zipCode].filter(Boolean).join(' ');
+
+                return (
+                  <div style={{ background: 'var(--bg-primary)', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', marginBottom: '1.25rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>
+                      {isPickup ? 'Pick-up Location' : 'Delivery Address'}
+                    </div>
+                    <div style={{ fontWeight: 600, marginTop: 3, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                      {isPickup
+                        ? 'Mega Pacific Metal and Steel — 379 Aguinaldo Highway, Anabu 1-C, Imus City, Cavite'
+                        : (selectedOrder.address || 'No delivery address provided')}
+                    </div>
+                    {!isPickup && secondaryLocation && (
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                        {secondaryLocation}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 8, color: 'var(--text-primary)' }}>Products Ordered:</div>
               <div style={{ background: 'var(--bg-primary)', borderRadius: 10, border: '1px solid var(--border)', padding: '10px 14px', maxHeight: '180px', overflowY: 'auto' }}>

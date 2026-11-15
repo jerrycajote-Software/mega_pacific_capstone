@@ -513,10 +513,15 @@ const PaymentMethodWidget = ({
             </Box>
             <Box>
               <Typography variant="body2" fontWeight={700} color="#0f172a">
-                Cash on Delivery (50% Downpayment):
+                {isPickup ? 'Cash on Pick-up (50% Downpayment):' : 'Cash on Delivery (50% Downpayment):'}
               </Typography>
               <Typography variant="body2" color="#334155" sx={{ lineHeight: 1.45 }}>
-                <strong>50% bank transfer and 50% Cash on the Item Delivered</strong>. You can pay the 50% downpayment via Bank Transfer or GCash. The remaining 50% balance will be paid in cash upon delivery.
+                <strong>
+                  {isPickup
+                    ? '50% downpayment online and 50% upon Store Pick-up'
+                    : '50% downpayment online and 50% Cash on Delivery'}
+                </strong>
+                . Pay the first 50% now via Bank Transfer, Card, or GCash. Your order will be marked as Pending 50% Payment until you pay and confirm the remaining 50% with Logistics upon {isPickup ? 'pick-up at our plant' : 'delivery'}.
               </Typography>
             </Box>
           </Box>
@@ -627,11 +632,11 @@ const PaymentMethodWidget = ({
                     color="#0f172a"
                     sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}
                   >
-                    Cash on Delivery (50% Downpayment)
+                    {isPickup ? 'Cash on Pick-up (50% Downpayment)' : 'Cash on Delivery (50% Downpayment)'}
                   </Typography>
                 </Box>
                 <Chip
-                  label="50% Upfront + 50% COD"
+                  label={isPickup ? '50% Upfront + 50% at Pick-up' : '50% Upfront + 50% COD'}
                   size="small"
                   sx={{
                     bgcolor: '#f0fdf4',
@@ -648,7 +653,9 @@ const PaymentMethodWidget = ({
                 color="#475569"
                 sx={{ mt: 0.5, fontWeight: 500, fontSize: { xs: '0.85rem', sm: '0.875rem' } }}
               >
-                50% bank transfer and 50% Cash on the Item Delivered
+                {isPickup
+                  ? 'Pay 50% downpayment now, then settle and confirm the remaining 50% with Logistics at pick-up'
+                  : 'Pay 50% downpayment now, then settle and confirm the remaining 50% cash on delivery'}
               </Typography>
             </Box>
           </Box>

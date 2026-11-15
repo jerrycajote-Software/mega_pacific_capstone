@@ -1,4 +1,5 @@
 const prisma = require("../config/db");
+const { getCollectedRevenueAmount, getPendingBalanceAmount } = require("./paymentCalculationService");
 
 const BUSINESS_SALES_QUOTA_KEY = "business_sales_quota";
 
@@ -117,15 +118,20 @@ const getBusinessSalesQuotaSummary = async () => {
         lte: periodWindow.endDate
       },
       status: { notIn: ["cancelled", "rejected"] },
-      paymentStatus: { not: "refunded" }
+      paymentStatus: { notIn: ["refunded", "refund_pending"] }
     },
     select: {
       id: true,
-      total: true
+      total: true,
+      status: true,
+      paymentStatus: true,
+      paymentMode: true
     }
   });
 
-  const currentSalesAmount = validPeriodOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+  // Record 50% collected for downpayment orders until Logistics confirms full payment
+  const currentSalesAmount = validPeriodOrders.reduce((sum, order) => sum + getCollectedRevenueAmount(order), 0);
+  const pendingBalanceAmount = validPeriodOrders.reduce((sum, order) => sum + getPendingBalanceAmount(order), 0);
   const currentOrdersCount = validPeriodOrders.length;
   const targetAmount = Number(config.targetAmount) || 0;
   const targetOrders = Number(config.targetOrders) || 0;
@@ -156,6 +162,7 @@ const getBusinessSalesQuotaSummary = async () => {
     startDate: periodWindow.startDate.toISOString(),
     endDate: periodWindow.endDate.toISOString(),
     currentSalesAmount,
+    pendingBalanceAmount,
     currentOrdersCount,
     progressPercent,
     rawProgressPercent,

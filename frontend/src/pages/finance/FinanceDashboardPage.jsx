@@ -145,9 +145,9 @@ const FinanceDashboardPage = () => {
       useDefaultFleetRates: checked
     }));
     if (checked) {
-      toast('Switched to Default Guideline Fleet Rates. Click "Save Delivery Settings" to apply.', { icon: 'ℹ️' });
+      toast('Switched to Default Guideline Truck Rates. Click "Save Delivery Settings" to apply.', { icon: 'ℹ️' });
     } else {
-      toast('Custom Fleet Rate editing enabled. Adjust truck rates below and save.', { icon: '✏️' });
+      toast('Custom Truck Rate editing enabled. Adjust truck rates below and save.', { icon: '✏️' });
     }
   };
 
@@ -157,7 +157,7 @@ const FinanceDashboardPage = () => {
       ...prev,
       customVehicleSpecs: cleanDefaults
     }));
-    toast.success('Fleet rate inputs restored to official guideline values.');
+    toast.success('Truck rate inputs restored to official guideline values.');
   };
 
   const handleUpdateVehicleField = (vehicleCode, field, rawValue) => {
@@ -211,13 +211,13 @@ const FinanceDashboardPage = () => {
         }
         toast.success(
           deliverySettings.useDefaultFleetRates
-            ? 'Delivery settings saved with Default Guideline Fleet Rates!'
-            : 'Delivery settings and custom Fleet Rates saved successfully!'
+            ? 'Delivery settings saved with Default Guideline Truck Rates!'
+            : 'Delivery settings and custom Truck Rates saved successfully!'
         );
       }
     } catch (err) {
       console.error('Failed to update delivery settings:', err);
-      toast.error('Failed to save delivery fee and fleet rate settings.');
+      toast.error('Failed to save delivery fee and truck rate settings.');
     } finally {
       setSavingDelivery(false);
     }
@@ -274,10 +274,12 @@ const FinanceDashboardPage = () => {
 
   const kpis = [
     {
-      label: 'Total Revenue',
+      label: 'Collected Revenue',
       value: `₱${(data.kpi.totalRevenue || 0).toLocaleString()}`,
-      badge: `${data.kpi.paidOrdersCount || 0} Paid Orders`,
-      trend: '+12.4% vs last mo',
+      badge: `${data.kpi.paidOrdersCount || 0} Full Paid Orders`,
+      trend: (data.kpi.pendingBalanceTotal || 0) > 0
+        ? `Pending 50%: ₱${Number(data.kpi.pendingBalanceTotal).toLocaleString()}`
+        : 'All verified payments collected',
       color: '#10B981',
       bg: 'rgba(16, 185, 129, 0.08)',
       borderColor: 'rgba(16, 185, 129, 0.25)',
@@ -290,10 +292,14 @@ const FinanceDashboardPage = () => {
       IconComponent: CustomFinanceRevenueIcon
     },
     {
-      label: 'Pending Payments',
+      label: 'Pending 50% & Bank Checks',
       value: `${data.kpi.pendingPayments || 0}`,
-      badge: 'Action Required',
-      trend: 'Awaiting bank verification',
+      badge: (data.kpi.pendingBalanceTotal || 0) > 0
+        ? `₱${Number(data.kpi.pendingBalanceTotal).toLocaleString()} Pending`
+        : 'Action Required',
+      trend: (data.kpi.pending50OrdersCount || 0) > 0
+        ? `${data.kpi.pending50OrdersCount} waiting on Logistics`
+        : 'Awaiting verification',
       color: '#F59E0B',
       bg: 'rgba(245, 158, 11, 0.08)',
       borderColor: 'rgba(245, 158, 11, 0.25)',
