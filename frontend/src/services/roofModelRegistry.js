@@ -3,11 +3,10 @@
  *
  * Specific validation rules (strict exact product name matching):
  * 1. Pico Rib 1220: Dedicated 3D modular models mapped across 4 house tiers (2.0m - 6.5m).
- * 2. Mega Curved Roof: Dedicated 3D barrel-vault models mapped across 3 structural tiers (4.0m - 14.0m):
- *    - Curved Canopy / Walkway (4.45m x 8.1m, 8 sheets): 4.0m - 5.9m arc cut length
- *    - Covered Court / Mini Gymnasium (7.6m x 12.2m, 12 sheets): 6.0m - 8.9m arc cut length
- *    - Full Sports Gymnasium & Dome (9.6m x 16.2m, 16 sheets): 9.0m - 14.0m arc cut length
- * 3. All other products return status: "Nothing available model for this product".
+ * 2. Mega Curved Roof: Dedicated 3D barrel-vault models mapped across 3 structural tiers (4.0m - 14.0m).
+ * 3. Hermosa Tile: 2 dedicated 2-storey residential models (Compact Porch House & L-Shape Balcony House, 2.0m - 7.0m).
+ * 4. Agua Corr 1220: Reuses the same 2 residential house architectures fitted with sinusoidal corrugated sheets (2.0m - 7.0m).
+ * 5. All other products return status: "Nothing available model for this product".
  */
 
 const normalizeProductName = (productName) => {
@@ -23,8 +22,21 @@ export const isMegaCurvedRoof = (productName) => {
   return normalizeProductName(productName) === 'mega curved roof';
 };
 
+export const isHermosaTile = (productName) => {
+  return normalizeProductName(productName) === 'hermosa tile';
+};
+
+export const isAguaCorr1220 = (productName) => {
+  return normalizeProductName(productName) === 'agua corr 1220';
+};
+
 export const has3DModel = (productName) => {
-  return isPicoRib1220(productName) || isMegaCurvedRoof(productName);
+  return (
+    isPicoRib1220(productName) ||
+    isMegaCurvedRoof(productName) ||
+    isHermosaTile(productName) ||
+    isAguaCorr1220(productName)
+  );
 };
 
 export const isProduct3DSupported = (productName) => {
@@ -236,6 +248,105 @@ export const AVAILABLE_CURVED_ROOF_MODELS = [
   },
 ];
 
+const createResidentialTwoHousePresets = ({
+  idPrefix,
+  profileName,
+  filePrefix,
+  effectiveWidthMm,
+  nominalWidthMm,
+  ribHeightMm,
+  sheetWidthMeters,
+  profileSummary,
+}) => [
+  {
+    id: `${idPrefix}_compact_porch_house`,
+    name: '2-Storey Dormer & Porch House (6.2×6m)',
+    shortLabel: 'Dormer & Porch House',
+    profileName,
+    modelPath: `/models/house/${filePrefix}_Compact_Porch_House.glb`,
+    blendFileName: `${filePrefix}_Compact_Porch_House.blend`,
+    floorArea: '75 sqm total (6.2m × 6m, 2 floors)',
+    roofDimensions: '7m × 7m main gable + porch & dormer (25 sheets)',
+    effectiveWidthMm,
+    nominalWidthMm,
+    ribHeightMm,
+    minRafterLength: 2.0,
+    maxRafterLength: 4.5,
+    recommendedLength: 3.8,
+    totalSheets: 25,
+    sheetsPerSlope: 7,
+    sheetWidthMeters,
+    cameraTargetY: 3.4,
+    cameraDefaultPos: [-8.2, 5.4, 9.0],
+    sheetEdgeTarget: [3.55, 5.15, 2.8],
+    sheetEdgeCameraPos: [4.25, 5.12, 3.25],
+    internalTrussTarget: [0, 5.85, 0],
+    internalTrussCameraPos: [3.4, 5.3, 3.0],
+    roofTopTarget: [0, 6.2, 0],
+    roofTopCameraPos: [0, 13.5, 2.0],
+    maxCameraDistance: 30,
+    description: `Compact 2-storey residential home with shed dormer, side entry canopy, and covered front porch fitted with ${profileSummary} across 25 panels.`,
+  },
+  {
+    id: `${idPrefix}_lshape_balcony_house`,
+    name: '2-Storey L-Shape Balcony Residence (10×8m)',
+    shortLabel: 'L-Shape Balcony House',
+    profileName,
+    modelPath: `/models/house/${filePrefix}_LShape_Balcony_House.glb`,
+    blendFileName: `${filePrefix}_LShape_Balcony_House.blend`,
+    floorArea: '128 sqm total (L-shaped 2-storey)',
+    roofDimensions: 'Intersecting gable valley + wrap-around porch (47 sheets)',
+    effectiveWidthMm,
+    nominalWidthMm,
+    ribHeightMm,
+    minRafterLength: 4.6,
+    maxRafterLength: 7.0,
+    recommendedLength: 5.5,
+    totalSheets: 47,
+    sheetsPerSlope: 8,
+    sheetWidthMeters,
+    cameraTargetY: 3.6,
+    cameraDefaultPos: [10.5, 6.8, 10.5],
+    sheetEdgeTarget: [-4.95, 5.24, 4.2],
+    sheetEdgeCameraPos: [-5.65, 5.2, 4.65],
+    internalTrussTarget: [-1.2, 5.95, 0.5],
+    internalTrussCameraPos: [3.8, 5.35, 3.6],
+    roofTopTarget: [0.2, 6.2, 0.4],
+    roofTopCameraPos: [0.2, 16.5, 2.5],
+    maxCameraDistance: 36,
+    description: `Spacious 2-storey L-shaped residence featuring an upper covered balcony, intersecting valley gable roofs, and wrap-around porch fitted with ${profileSummary} across 47 panels.`,
+  },
+];
+
+export const AVAILABLE_HERMOSA_TILE_MODELS = createResidentialTwoHousePresets({
+  idPrefix: 'hermosa_tile',
+  profileName: 'Hermosa Tile',
+  filePrefix: 'Hermosa_Tile',
+  effectiveWidthMm: 1000,
+  nominalWidthMm: 1100,
+  ribHeightMm: 42,
+  sheetWidthMeters: 1.0,
+  profileSummary: 'Hermosa Tile Mediterranean pressed steel step-tile roofing (42mm height, 1000mm effective width)',
+});
+
+export const AVAILABLE_AGUA_CORR_1220_MODELS = createResidentialTwoHousePresets({
+  idPrefix: 'agua_corr_1220',
+  profileName: 'Agua Corr 1220',
+  filePrefix: 'Agua_Corr_1220',
+  effectiveWidthMm: 988,
+  nominalWidthMm: 1077,
+  ribHeightMm: 18,
+  sheetWidthMeters: 0.988,
+  profileSummary: 'Agua Corr 1220 classic sinusoidal corrugated sheets (18mm depth, 76mm pitch, 988mm effective width)',
+});
+
+export const getAll3DModelPresets = () => [
+  ...AVAILABLE_3D_ROOF_MODELS,
+  ...AVAILABLE_CURVED_ROOF_MODELS,
+  ...AVAILABLE_HERMOSA_TILE_MODELS,
+  ...AVAILABLE_AGUA_CORR_1220_MODELS,
+];
+
 /**
  * Returns the dedicated 3D structure models strictly matching the exact product name.
  * @param {string} [productName]
@@ -244,6 +355,8 @@ export const AVAILABLE_CURVED_ROOF_MODELS = [
 export const getAvailable3DModelsForProduct = (productName = '') => {
   if (!productName) return AVAILABLE_3D_ROOF_MODELS;
   if (isMegaCurvedRoof(productName)) return AVAILABLE_CURVED_ROOF_MODELS;
+  if (isHermosaTile(productName)) return AVAILABLE_HERMOSA_TILE_MODELS;
+  if (isAguaCorr1220(productName)) return AVAILABLE_AGUA_CORR_1220_MODELS;
   if (isPicoRib1220(productName)) return AVAILABLE_3D_ROOF_MODELS;
   return [];
 };

@@ -21,7 +21,7 @@ import InternalStructureControlPanel from './InternalStructureControlPanel';
 import FloatingStructuralMemberInspector from './FloatingStructuralMemberInspector';
 import GuideHiddenObjectsAssistant from './GuideHiddenObjectsAssistant';
 import {
-  AVAILABLE_3D_ROOF_MODELS,
+  getAll3DModelPresets,
   getAvailable3DModelsForProduct,
   getCompatibleRoofModel,
   getSupportedLengthRangeText,
@@ -202,12 +202,12 @@ const Product3DViewerModal = ({
           );
         }
       }
-      let targetLength = parseFloat(initialLength) || (isCurvedProfile ? 8.5 : 3.8);
+      let targetLength = parseFloat(initialLength) || modelsForProduct[0]?.recommendedLength || (isCurvedProfile ? 8.5 : 3.8);
       let targetQty = Math.max(1, parseInt(initialQuantity, 10) || 1);
       if (initialHouseModelId) {
         const modelPreset =
           modelsForProduct.find((m) => m.id === initialHouseModelId) ||
-          AVAILABLE_3D_ROOF_MODELS.find((m) => m.id === initialHouseModelId);
+          getAll3DModelPresets().find((m) => m.id === initialHouseModelId);
         if (modelPreset) {
           targetLength = modelPreset.recommendedLength;
           targetQty = modelPreset.totalSheets;
@@ -760,8 +760,10 @@ const Product3DViewerModal = ({
               </Typography>
               <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3.5, lineHeight: 1.65 }}>
                 Our interactive 3D model visualization is currently built specifically for{' '}
-                <strong style={{ color: '#4ade80' }}>Pico Rib 1220</strong> and{' '}
-                <strong style={{ color: '#4ade80' }}>Mega Curved Roof</strong> panels.
+                <strong style={{ color: '#4ade80' }}>Pico Rib 1220</strong>,{' '}
+                <strong style={{ color: '#4ade80' }}>Mega Curved Roof</strong>,{' '}
+                <strong style={{ color: '#4ade80' }}>Hermosa Tile</strong>, and{' '}
+                <strong style={{ color: '#4ade80' }}>Agua Corr 1220</strong> panels.
                 <br />
                 A dedicated 3D profile model for <strong>{product?.name || 'this product'}</strong> is not yet available.
               </Typography>

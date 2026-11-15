@@ -6,52 +6,57 @@ import {
   Typography,
   Button,
   Chip,
-  Grid,
   Stack,
 } from '@mui/material';
 import {
   AVAILABLE_3D_ROOF_MODELS,
   AVAILABLE_CURVED_ROOF_MODELS,
+  AVAILABLE_HERMOSA_TILE_MODELS,
+  AVAILABLE_AGUA_CORR_1220_MODELS,
   isPicoRib1220,
   isMegaCurvedRoof,
+  isHermosaTile,
+  isAguaCorr1220,
 } from '../services/roofModelRegistry';
+
+const PROFILE_SHOWCASE_GROUPS = [
+  { id: 'pico', label: 'Pico Rib 1220', matcher: isPicoRib1220, models: AVAILABLE_3D_ROOF_MODELS },
+  { id: 'curved', label: 'Mega Curved Roof', matcher: isMegaCurvedRoof, models: AVAILABLE_CURVED_ROOF_MODELS },
+  { id: 'hermosa', label: 'Hermosa Tile', matcher: isHermosaTile, models: AVAILABLE_HERMOSA_TILE_MODELS },
+  { id: 'agua', label: 'Agua Corr 1220', matcher: isAguaCorr1220, models: AVAILABLE_AGUA_CORR_1220_MODELS },
+];
 
 const Home3DModelsShowcase = ({ availableProducts = [], onCustomizeIn3D }) => {
   const [selectedProfileFilter, setSelectedProfileFilter] = useState('all');
 
   // Show 3D models only when an active Pre-Order product exists for that profile
-  const hasPicoProduct =
-    Array.isArray(availableProducts) &&
-    availableProducts.some((p) => isPicoRib1220(p?.name));
-  const hasCurvedProduct =
-    Array.isArray(availableProducts) &&
-    availableProducts.some((p) => isMegaCurvedRoof(p?.name));
+  const activeGroups = PROFILE_SHOWCASE_GROUPS.filter(
+    (group) =>
+      Array.isArray(availableProducts) &&
+      availableProducts.some((p) => group.matcher(p?.name))
+  );
 
-  const availablePicoModels = hasPicoProduct ? AVAILABLE_3D_ROOF_MODELS : [];
-  const availableCurvedModels = hasCurvedProduct ? AVAILABLE_CURVED_ROOF_MODELS : [];
-  const allAvailableModels = [...availablePicoModels, ...availableCurvedModels];
+  const allAvailableModels = activeGroups.flatMap((group) => group.models);
 
   if (allAvailableModels.length === 0) {
     return null;
   }
 
   const activeFilter =
-    (selectedProfileFilter === 'pico' && !hasPicoProduct) ||
-    (selectedProfileFilter === 'curved' && !hasCurvedProduct)
+    selectedProfileFilter !== 'all' && !activeGroups.some((g) => g.id === selectedProfileFilter)
       ? 'all'
       : selectedProfileFilter;
 
   const displayedModels =
-    activeFilter === 'pico'
-      ? availablePicoModels
-      : activeFilter === 'curved'
-      ? availableCurvedModels
-      : allAvailableModels;
+    activeFilter === 'all'
+      ? allAvailableModels
+      : activeGroups.find((g) => g.id === activeFilter)?.models || allAvailableModels;
 
+  const hasCurvedOnly = activeGroups.length === 1 && activeGroups[0].id === 'curved';
   const showcaseSubtitle =
-    hasPicoProduct && hasCurvedProduct
+    activeGroups.some((g) => g.id === 'curved') && activeGroups.length > 1
       ? 'Select a house, gymnasium, or canopy structure to explore in 360°, inspect trusses and purlins, and customize colors.'
-      : hasCurvedProduct
+      : hasCurvedOnly
       ? 'Select a canopy, covered court, or gymnasium dome to explore in 360°, inspect trusses and purlins, and customize colors.'
       : 'Select a house structure to explore in 360°, inspect trusses and purlins, and customize colors.';
 
@@ -99,12 +104,14 @@ const Home3DModelsShowcase = ({ availableProducts = [], onCustomizeIn3D }) => {
           </Typography>
         </Box>
 
-        {hasPicoProduct && hasCurvedProduct && (
+        {activeGroups.length > 1 && (
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
             {[
               { id: 'all', label: `All (${allAvailableModels.length})` },
-              { id: 'pico', label: `Pico Rib 1220 (${availablePicoModels.length})` },
-              { id: 'curved', label: `Mega Curved Roof (${availableCurvedModels.length})` },
+              ...activeGroups.map((g) => ({
+                id: g.id,
+                label: `${g.label} (${g.models.length})`,
+              })),
             ].map((tab) => {
               const active = activeFilter === tab.id;
               return (
@@ -131,7 +138,18 @@ const Home3DModelsShowcase = ({ availableProducts = [], onCustomizeIn3D }) => {
         )}
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            lg: 'repeat(4, minmax(0, 1fr))',
+          },
+          gap: { xs: 2, sm: 2.5, md: 3 },
+          alignItems: 'stretch',
+        }}
+      >
         {displayedModels.map((model, index) => {
           const isCurved = isMegaCurvedRoof(model.profileName);
           const handleCustomizeIn3D = () => {
@@ -141,10 +159,11 @@ const Home3DModelsShowcase = ({ availableProducts = [], onCustomizeIn3D }) => {
           };
 
           return (
-            <Grid item xs={12} sm={6} lg={3} key={model.id}>
+            <Box key={model.id} sx={{ minWidth: 0, display: 'flex' }}>
               <Card
                 elevation={0}
                 sx={{
+                  width: '100%',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -446,10 +465,10 @@ const Home3DModelsShowcase = ({ availableProducts = [], onCustomizeIn3D }) => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           );
         })}
-      </Grid>
+      </Box>
     </Box>
   );
 };
