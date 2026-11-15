@@ -1,11 +1,16 @@
-import { isMegaCurvedRoof } from '../services/roofModelRegistry';
+import {
+  isMegaCurvedRoof,
+  isHermosaTile,
+  isAguaCorr1220,
+} from '../services/roofModelRegistry';
 
 /**
  * Structural Layer Definitions & Mesh Inspector Metadata
  * Powers the interactive 3D Internal Roof Structure Visualization.
  *
- * Maps every 3D mesh node inside Pico Rib 1220 and Mega Curved Roof GLB assets
- * to one of 7 structural layers with vertical explode offsets and human-friendly specs.
+ * Maps every 3D mesh node inside Pico Rib 1220, Mega Curved Roof,
+ * Hermosa Tile, and Agua Corr 1220 GLB assets to one of 7 structural layers
+ * with vertical explode offsets and human-friendly specs.
  */
 
 export const ROOF_STRUCTURAL_LAYERS = [
@@ -68,6 +73,28 @@ export const ROOF_STRUCTURAL_LAYERS = [
 ];
 
 export const getRoofStructuralLayers = (productName = '') => {
+  if (isHermosaTile(productName)) {
+    return ROOF_STRUCTURAL_LAYERS.map((layer) =>
+      layer.id === 'roof_sheets'
+        ? {
+            ...layer,
+            label: 'Hermosa Tile Roofing Sheets',
+            description: 'Mediterranean pressed steel step-tile panels featuring 42mm curved tile arches, 350mm tile courses, and 1000mm effective coverage.',
+          }
+        : layer
+    );
+  }
+  if (isAguaCorr1220(productName)) {
+    return ROOF_STRUCTURAL_LAYERS.map((layer) =>
+      layer.id === 'roof_sheets'
+        ? {
+            ...layer,
+            label: 'Agua Corr 1220 Corrugated Sheets',
+            description: 'Classic sinusoidal corrugated steel roofing panels with 18mm corrugation depth, 76mm pitch, and 988mm effective width.',
+          }
+        : layer
+    );
+  }
   if (!isMegaCurvedRoof(productName)) {
     return ROOF_STRUCTURAL_LAYERS;
   }
@@ -133,7 +160,9 @@ export const getLayerIdForMesh = (meshName = '') => {
   }
   if (
     meshName === 'Ridge_Cap' ||
+    meshName.startsWith('Ridge_Cap_') ||
     meshName.startsWith('Rake_Flashing_') ||
+    meshName.startsWith('Valley_Flashing_') ||
     meshName.startsWith('Gutter_') ||
     meshName.startsWith('Fascia_Board_') ||
     meshName.startsWith('Eave_Flashing_')
@@ -175,12 +204,20 @@ export const getExplodeOffsetForMesh = (meshName = '') => {
 export const getStructuralMeshMetadata = (meshName = '', context = {}) => {
   if (!meshName) return null;
   const isCurved = isMegaCurvedRoof(context.productName);
+  const isHermosa = isHermosaTile(context.productName);
+  const isAgua = isAguaCorr1220(context.productName);
   const layers = getRoofStructuralLayers(context.productName);
   const layerId = getLayerIdForMesh(meshName);
   const layerMeta = layers.find((l) => l.id === layerId) || layers[6];
   const activeThick = context.thickness || '0.35mm';
   const activeColor = context.color || 'Marshall Dark Gray';
-  const profileLabel = isCurved ? 'Mega Curved Roof' : 'Pico Rib 1220';
+  const profileLabel = isCurved
+    ? 'Mega Curved Roof'
+    : isHermosa
+    ? 'Hermosa Tile'
+    : isAgua
+    ? 'Agua Corr 1220'
+    : 'Pico Rib 1220';
 
   if (meshName.startsWith('RoofSheet_')) {
     const num = parseInt(meshName.replace('RoofSheet_', ''), 10) || 1;
@@ -196,6 +233,30 @@ export const getStructuralMeshMetadata = (meshName = '', context = {}) => {
         dimensions: `1013mm effective width (1080mm nominal) × ${sheetLength}m arc length • 28mm rib • ${activeThick} gauge`,
         material: `Pre-Painted Crimped Galvanized Steel (${activeColor})`,
         role: 'Continuous crimped barrel-arch roofing sheet designed for gymnasiums, domes, and curved canopies with 253mm rib pitch.',
+      };
+    }
+    if (isHermosa) {
+      return {
+        meshName,
+        layerId,
+        layerLabel: layerMeta.label,
+        badgeColor: layerMeta.badgeColor,
+        title: `Hermosa Tile Panel #${num}`,
+        dimensions: `1000mm effective width (1100mm nominal) × ${sheetLength}m length • 42mm tile arch • ${activeThick} gauge`,
+        material: `Pre-Painted Pressed Steel Tile (${activeColor})`,
+        role: 'Mediterranean step-tile steel sheet with 350mm pressed tile courses and 5 arched waves for residential roofing.',
+      };
+    }
+    if (isAgua) {
+      return {
+        meshName,
+        layerId,
+        layerLabel: layerMeta.label,
+        badgeColor: layerMeta.badgeColor,
+        title: `Agua Corr 1220 Panel #${num}`,
+        dimensions: `988mm effective width (1077mm nominal) × ${sheetLength}m length • 18mm depth • ${activeThick} gauge`,
+        material: `Pre-Painted Corrugated Galvanized Steel (${activeColor})`,
+        role: 'Classic sinusoidal corrugated steel panel with 76mm wave pitch and R19 curves fastened into horizontal purlins.',
       };
     }
     const slope = num <= sheetsPerSlope ? 'Front Slope' : 'Back Slope';
@@ -313,16 +374,29 @@ export const getStructuralMeshMetadata = (meshName = '', context = {}) => {
     };
   }
 
-  if (meshName === 'Ridge_Cap') {
+  if (meshName === 'Ridge_Cap' || meshName.startsWith('Ridge_Cap_')) {
     return {
       meshName,
       layerId,
       layerLabel: layerMeta.label,
       badgeColor: layerMeta.badgeColor,
       title: 'Top Ridge Cap Flashing',
-      dimensions: '280mm girth × 8.2m total ridge length',
+      dimensions: '280mm girth ridge flashing',
       material: 'Pre-Painted Galvanized Steel Trim',
-      role: 'Covers and weather-seals the top peak joint where the front and back Pico Rib 1220 roof slopes meet.',
+      role: `Covers and weather-seals the top peak joint where the ${profileLabel} roof slopes meet.`,
+    };
+  }
+
+  if (meshName.startsWith('Valley_Flashing_')) {
+    return {
+      meshName,
+      layerId,
+      layerLabel: layerMeta.label,
+      badgeColor: layerMeta.badgeColor,
+      title: 'Roof Valley Flashing Channel',
+      dimensions: '180mm wide galvanized steel valley gutter',
+      material: 'Pre-Painted Galvanized Steel Trim',
+      role: 'Channels stormwater cleanly down the 45° intersecting gable roof valley without leaks.',
     };
   }
 

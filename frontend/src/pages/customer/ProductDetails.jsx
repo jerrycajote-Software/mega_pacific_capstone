@@ -1757,7 +1757,7 @@ const ProductDetails = () => {
               lineHeight: 1.5
             }}
           >
-            Our interactive 3D roof viewer is currently designed only for <strong>Pico Rib 1220</strong> and <strong>Mega Curved Roof</strong>.
+            Our interactive 3D roof viewer is currently designed only for <strong>Pico Rib 1220</strong>, <strong>Mega Curved Roof</strong>, <strong>Hermosa Tile</strong>, and <strong>Agua Corr 1220</strong>.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>

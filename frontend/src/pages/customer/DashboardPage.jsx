@@ -19,7 +19,12 @@ import HeroSection from '../../components/HeroSection';
 import Home3DModelsShowcase from '../../components/Home3DModelsShowcase';
 import { buildProductOptions, getDefaultOption } from './buildProductOptions';
 import { io } from 'socket.io-client';
-import { isPicoRib1220, isMegaCurvedRoof } from '../../services/roofModelRegistry';
+import {
+  isPicoRib1220,
+  isMegaCurvedRoof,
+  isHermosaTile,
+  isAguaCorr1220,
+} from '../../services/roofModelRegistry';
 
 const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 
@@ -76,14 +81,15 @@ const DashboardPage = ({ showHero = true }) => {
     ? products.filter((p) => p.isPreOrder !== false && p.isActive !== false)
     : [];
 
-  const picoRibProduct =
-    safeProducts.find((p) => isPicoRib1220(p.name)) || null;
-  const megaCurvedProduct =
-    safeProducts.find((p) => isMegaCurvedRoof(p.name)) || null;
-  const active3DProduct =
-    selected3DModel && isMegaCurvedRoof(selected3DModel.profileName)
-      ? megaCurvedProduct
-      : picoRibProduct;
+  const findProductFor3DProfile = (profileName) => {
+    if (!profileName) return null;
+    if (isMegaCurvedRoof(profileName)) return safeProducts.find((p) => isMegaCurvedRoof(p.name)) || null;
+    if (isHermosaTile(profileName)) return safeProducts.find((p) => isHermosaTile(p.name)) || null;
+    if (isAguaCorr1220(profileName)) return safeProducts.find((p) => isAguaCorr1220(p.name)) || null;
+    return safeProducts.find((p) => isPicoRib1220(p.name)) || null;
+  };
+
+  const active3DProduct = findProductFor3DProfile(selected3DModel?.profileName);
 
   const handleCustomizeIn3D = (houseModel) => {
     setSelected3DModel(houseModel);
