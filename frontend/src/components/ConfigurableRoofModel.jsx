@@ -42,9 +42,24 @@ const ConfigurableRoofModel = ({
   onSelectMesh,
   ...props
 }) => {
-  const { scene } = useGLTF(modelPath);
+  const { scene: rawScene } = useGLTF(modelPath);
   const modelRef = useRef();
   const [hoveredMeshName, setHoveredMeshName] = useState(null);
+
+  // Clone cached GLTF scene so unmounting or switching between viewers never disposes or mutates shared cache
+  const scene = useMemo(() => {
+    if (!rawScene) return null;
+    const copy = rawScene.clone(true);
+    copy.traverse((child) => {
+      if (child.isMesh) {
+        child.userData = { ...child.userData };
+        if (child.name.startsWith('RoofSheet_')) {
+          child.geometry = child.geometry.clone();
+        }
+      }
+    });
+    return copy;
+  }, [rawScene]);
 
   // Cache initial resting Y position for each mesh for smooth exploded view animation
   useEffect(() => {
@@ -365,10 +380,13 @@ const ConfigurableRoofModel = ({
     };
   }, [gl, scene, camera, onSelectMesh]);
 
+  if (!scene) return null;
+
   return (
     <primitive
       ref={modelRef}
       object={scene}
+      dispose={null}
       {...props}
     />
   );

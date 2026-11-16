@@ -25,11 +25,13 @@ import {
   CustomCustomerHomeIcon,
   CustomCustomerCatalogIcon,
   CustomCustomerSupportDeskIcon,
+  CustomPreOrderIcon,
 } from './icons';
 
 const NAV_LINKS = [
   { to: '/dashboard', label: 'Home', icon: CustomCustomerHomeIcon },
   { to: '/products', label: 'Products', icon: CustomCustomerCatalogIcon },
+  { to: '/3d-studio', label: '3D Studio', icon: CustomPreOrderIcon },
 ];
 
 const CustomerHeader = () => {

@@ -421,3 +421,214 @@ export const getSupportedLengthRangeText = (productName = '') => {
     )
     .join(' | ');
 };
+
+// Studio Roof Profiles allowlist: strictly limited to the 3 residential roof profiles
+export const STUDIO_ROOF_PROFILES = [
+  {
+    id: 'pico_rib_1220',
+    name: 'Pico Rib 1220',
+    filePrefix: 'Pico_Rib_1220',
+    effectiveWidthMm: 1013,
+    nominalWidthMm: 1080,
+    ribHeightMm: 28,
+    sheetWidthMeters: 1.013,
+    profileTagline: '28mm trapezoidal ribs with dual pan stiffeners',
+    matcher: isPicoRib1220,
+  },
+  {
+    id: 'hermosa_tile',
+    name: 'Hermosa Tile',
+    filePrefix: 'Hermosa_Tile',
+    effectiveWidthMm: 1000,
+    nominalWidthMm: 1100,
+    ribHeightMm: 42,
+    sheetWidthMeters: 1.0,
+    profileTagline: '42mm Mediterranean pressed steel step-tile',
+    matcher: isHermosaTile,
+  },
+  {
+    id: 'agua_corr_1220',
+    name: 'Agua Corr 1220',
+    filePrefix: 'Agua_Corr_1220',
+    effectiveWidthMm: 988,
+    nominalWidthMm: 1077,
+    ribHeightMm: 18,
+    sheetWidthMeters: 0.988,
+    profileTagline: '18mm classic sinusoidal corrugated profile',
+    matcher: isAguaCorr1220,
+  },
+];
+
+// Six residential house architectures supported in the 3D House & Roof Studio
+export const STUDIO_HOUSE_ARCHITECTURES = [
+  {
+    id: 'starter_6x6',
+    name: 'Small / Starter House (6×6m)',
+    shortLabel: 'Starter House 6×6m',
+    floorArea: '36 sqm (6m × 6m, 1 floor)',
+    roofLabel: '8m × 6m gable roof (16 sheets)',
+    fileKey: 'Starter_House_6x6',
+    picoExistingGlb: '/models/house/Pico_Rib_1220_House.glb',
+    recommendedLength: 3.8,
+    totalSheets: 16,
+    sheetsPerSlope: 8,
+    cameraTargetY: 2.3,
+    cameraDefaultPos: [5.6, 3.8, 5.6],
+    sheetEdgeTarget: [-3.546, 2.879, 3.510],
+    sheetEdgeCameraPos: [-3.546, 2.859, 4.230],
+    internalTrussTarget: [0, 3.634, 0],
+    internalTrussCameraPos: [3.2, 3.175, 2.8],
+    roofTopTarget: [0, 3.634, 0],
+    roofTopCameraPos: [0, 9.0, 1.4],
+    maxCameraDistance: 24,
+  },
+  {
+    id: 'two_storey_8x6',
+    name: 'Typical 2-Storey House (8×6m)',
+    shortLabel: '2-Storey House 8×6m',
+    floorArea: '96 sqm (8m × 6m, 2 floors)',
+    roofLabel: '9m × 7m gable roof (18 sheets)',
+    fileKey: 'Two_Storey_8x6',
+    picoExistingGlb: '/models/house/Pico_Rib_1220_Two_Storey_8x6.glb',
+    recommendedLength: 4.2,
+    totalSheets: 18,
+    sheetsPerSlope: 9,
+    cameraTargetY: 4.2,
+    cameraDefaultPos: [7.5, 6.4, 7.5],
+    sheetEdgeTarget: [-4.052, 5.679, 3.510],
+    sheetEdgeCameraPos: [-4.052, 5.659, 4.230],
+    internalTrussTarget: [0, 6.434, 0],
+    internalTrussCameraPos: [3.2, 5.975, 2.8],
+    roofTopTarget: [0, 6.434, 0],
+    roofTopCameraPos: [0, 11.8, 1.4],
+    maxCameraDistance: 28,
+  },
+  {
+    id: 'single_storey_8x8',
+    name: 'Single-Storey House (8×8m)',
+    shortLabel: 'Single-Storey 8×8m',
+    floorArea: '64 sqm (8m × 8m, 1 floor)',
+    roofLabel: '10m × 8m gable roof (20 sheets)',
+    fileKey: 'Single_Storey_8x8',
+    picoExistingGlb: '/models/house/Pico_Rib_1220_Single_Storey_8x8.glb',
+    recommendedLength: 4.8,
+    totalSheets: 20,
+    sheetsPerSlope: 10,
+    cameraTargetY: 2.6,
+    cameraDefaultPos: [7.2, 4.6, 7.2],
+    sheetEdgeTarget: [-4.558, 3.100, 4.460],
+    sheetEdgeCameraPos: [-4.558, 3.080, 5.180],
+    internalTrussTarget: [0, 4.036, 0],
+    internalTrussCameraPos: [3.2, 3.375, 2.8],
+    roofTopTarget: [0, 4.036, 0],
+    roofTopCameraPos: [0, 9.8, 1.4],
+    maxCameraDistance: 28,
+  },
+  {
+    id: 'large_two_storey_10x6',
+    name: 'Larger 2-Storey House (10×6m)',
+    shortLabel: 'Larger 2-Storey 10×6m',
+    floorArea: '120 sqm (10m × 6m, 2 floors)',
+    roofLabel: '10m × 8m gable roof (20 sheets)',
+    fileKey: 'Large_Two_Storey_10x6',
+    picoExistingGlb: '/models/house/Pico_Rib_1220_Large_Two_Storey_10x6.glb',
+    recommendedLength: 6.0,
+    totalSheets: 20,
+    sheetsPerSlope: 10,
+    cameraTargetY: 4.4,
+    cameraDefaultPos: [8.4, 6.8, 8.4],
+    sheetEdgeTarget: [-4.558, 5.677, 4.010],
+    sheetEdgeCameraPos: [-4.558, 5.657, 4.730],
+    internalTrussTarget: [0, 6.634, 0],
+    internalTrussCameraPos: [3.2, 6.175, 2.8],
+    roofTopTarget: [0, 6.634, 0],
+    roofTopCameraPos: [0, 12.0, 1.4],
+    maxCameraDistance: 30,
+  },
+  {
+    id: 'compact_porch_house',
+    name: '2-Storey Dormer & Porch House (6.2×6m)',
+    shortLabel: 'Dormer & Porch House',
+    floorArea: '75 sqm (6.2m × 6m, 2 floors)',
+    roofLabel: '7m × 7m main gable + porch & dormer (25 sheets)',
+    fileKey: 'Compact_Porch_House',
+    recommendedLength: 3.8,
+    totalSheets: 25,
+    sheetsPerSlope: 7,
+    cameraTargetY: 3.4,
+    cameraDefaultPos: [-8.2, 5.4, 9.0],
+    sheetEdgeTarget: [3.55, 5.15, 2.8],
+    sheetEdgeCameraPos: [4.25, 5.12, 3.25],
+    internalTrussTarget: [0, 5.85, 0],
+    internalTrussCameraPos: [3.4, 5.3, 3.0],
+    roofTopTarget: [0, 6.2, 0],
+    roofTopCameraPos: [0, 13.5, 2.0],
+    maxCameraDistance: 30,
+  },
+  {
+    id: 'lshape_balcony_house',
+    name: '2-Storey L-Shape Balcony Residence (10×8m)',
+    shortLabel: 'L-Shape Balcony House',
+    floorArea: '128 sqm (L-shaped, 2 floors)',
+    roofLabel: 'Intersecting gable valley + wrap-around porch (47 sheets)',
+    fileKey: 'LShape_Balcony_House',
+    recommendedLength: 5.5,
+    totalSheets: 47,
+    sheetsPerSlope: 8,
+    cameraTargetY: 3.6,
+    cameraDefaultPos: [10.5, 6.8, 10.5],
+    sheetEdgeTarget: [-4.95, 5.24, 4.2],
+    sheetEdgeCameraPos: [-5.65, 5.2, 4.65],
+    internalTrussTarget: [-1.2, 5.95, 0.5],
+    internalTrussCameraPos: [3.8, 5.35, 3.6],
+    roofTopTarget: [0.2, 6.2, 0.4],
+    roofTopCameraPos: [0.2, 16.5, 2.5],
+    maxCameraDistance: 36,
+  },
+];
+
+// Return only allowed studio roof profiles that have an active Pre-Order product in catalog
+export const getAvailableStudioRoofs = (activeProducts = []) => {
+  if (!Array.isArray(activeProducts) || activeProducts.length === 0) return [];
+  return STUDIO_ROOF_PROFILES.reduce((acc, profile) => {
+    const matchedProduct = activeProducts.find(
+      (p) => p && p.isPreOrder !== false && p.isActive !== false && profile.matcher(p.name)
+    );
+    if (matchedProduct) {
+      acc.push({
+        ...profile,
+        product: matchedProduct,
+      });
+    }
+    return acc;
+  }, []);
+};
+
+// Resolve the 3D GLB model metadata for any (houseId, roofProfileId) studio selection
+export const resolveStudioHouseRoofModel = (houseId, roofProfileId) => {
+  const house =
+    STUDIO_HOUSE_ARCHITECTURES.find((h) => h.id === houseId) ||
+    STUDIO_HOUSE_ARCHITECTURES[0];
+  const roof =
+    STUDIO_ROOF_PROFILES.find((r) => r.id === roofProfileId) ||
+    STUDIO_ROOF_PROFILES[0];
+
+  const modelPath =
+    roof.id === 'pico_rib_1220' && house.picoExistingGlb
+      ? house.picoExistingGlb
+      : `/models/house/${roof.filePrefix}_${house.fileKey}.glb`;
+
+  return {
+    ...house,
+    id: `${roof.id}_${house.id}`,
+    houseId: house.id,
+    roofId: roof.id,
+    profileName: roof.name,
+    modelPath,
+    roofDimensions: house.roofLabel,
+    effectiveWidthMm: roof.effectiveWidthMm,
+    nominalWidthMm: roof.nominalWidthMm,
+    ribHeightMm: roof.ribHeightMm,
+    sheetWidthMeters: roof.sheetWidthMeters,
+  };
+};
