@@ -64,6 +64,8 @@ import OrderDetails from './pages/customer/OrderDetails';
 import OrdersPage from './pages/customer/OrdersPage';
 import ProfilePage from './pages/customer/ProfilePage';
 
+const RoofStudio3DPage = React.lazy(() => import('./pages/customer/RoofStudio3DPage'));
+
 
 
 const ProtectedRoute = ({ children, redirectTo = "/login", requiredRole }) => {
@@ -234,6 +236,16 @@ const App = () => {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<CustomerDashboardPage showHero={true} />} />
           <Route path="products" element={<CustomerDashboardPage showHero={false} />} />
+          <Route path="3d-studio" element={
+            <Suspense fallback={
+              <div className="fixed inset-0 z-[1300] bg-[#0b1120] flex flex-col items-center justify-center gap-3 text-slate-200">
+                <div className="w-11 h-11 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin"></div>
+                <p className="text-sm font-bold tracking-wide">Loading 3D House &amp; Roof Studio...</p>
+              </div>
+            }>
+              <RoofStudio3DPage />
+            </Suspense>
+          } />
           <Route path="product/:id" element={<ProductDetails />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="orders" element={<OrdersPage />} />
