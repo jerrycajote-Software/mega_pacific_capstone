@@ -30,6 +30,22 @@ export const isAguaCorr1220 = (productName) => {
   return normalizeProductName(productName) === 'agua corr 1220';
 };
 
+export const isMegaHiRib = (productName) => {
+  return normalizeProductName(productName) === 'mega hi-rib';
+};
+
+export const isMegaTwinRib = (productName) => {
+  return normalizeProductName(productName) === 'mega twin rib';
+};
+
+export const isMegaSixRibs = (productName) => {
+  return normalizeProductName(productName) === 'mega six ribs';
+};
+
+export const isMegaSRib = (productName) => {
+  return normalizeProductName(productName) === 'mega s-rib';
+};
+
 export const has3DModel = (productName) => {
   return (
     isPicoRib1220(productName) ||
@@ -422,7 +438,7 @@ export const getSupportedLengthRangeText = (productName = '') => {
     .join(' | ');
 };
 
-// Studio Roof Profiles allowlist: strictly limited to the 3 residential roof profiles
+// Studio Roof Profiles allowlist across all 7 residential profiles supported in 3D Studio
 export const STUDIO_ROOF_PROFILES = [
   {
     id: 'pico_rib_1220',
@@ -434,6 +450,14 @@ export const STUDIO_ROOF_PROFILES = [
     sheetWidthMeters: 1.013,
     profileTagline: '28mm trapezoidal ribs with dual pan stiffeners',
     matcher: isPicoRib1220,
+    sheetCountsByHouse: {
+      starter_6x6: 16,
+      two_storey_8x6: 18,
+      single_storey_8x8: 20,
+      large_two_storey_10x6: 20,
+      compact_porch_house: 25,
+      lshape_balcony_house: 47,
+    },
   },
   {
     id: 'hermosa_tile',
@@ -445,6 +469,14 @@ export const STUDIO_ROOF_PROFILES = [
     sheetWidthMeters: 1.0,
     profileTagline: '42mm Mediterranean pressed steel step-tile',
     matcher: isHermosaTile,
+    sheetCountsByHouse: {
+      starter_6x6: 16,
+      two_storey_8x6: 18,
+      single_storey_8x8: 20,
+      large_two_storey_10x6: 20,
+      compact_porch_house: 25,
+      lshape_balcony_house: 47,
+    },
   },
   {
     id: 'agua_corr_1220',
@@ -456,6 +488,90 @@ export const STUDIO_ROOF_PROFILES = [
     sheetWidthMeters: 0.988,
     profileTagline: '18mm classic sinusoidal corrugated profile',
     matcher: isAguaCorr1220,
+    sheetCountsByHouse: {
+      starter_6x6: 16,
+      two_storey_8x6: 18,
+      single_storey_8x8: 20,
+      large_two_storey_10x6: 20,
+      compact_porch_house: 25,
+      lshape_balcony_house: 47,
+    },
+  },
+  {
+    id: 'mega_hi_rib',
+    name: 'Mega Hi-Rib',
+    filePrefix: 'Mega_Hi_Rib',
+    effectiveWidthMm: 900,
+    nominalWidthMm: 1003,
+    ribHeightMm: 51,
+    sheetWidthMeters: 0.900,
+    profileTagline: '51mm deep trapezoidal ribs at 300mm pitch',
+    matcher: isMegaHiRib,
+    sheetCountsByHouse: {
+      starter_6x6: 18,
+      two_storey_8x6: 20,
+      single_storey_8x8: 22,
+      large_two_storey_10x6: 22,
+      compact_porch_house: 29,
+      lshape_balcony_house: 52,
+    },
+  },
+  {
+    id: 'mega_twin_rib',
+    name: 'Mega Twin Rib',
+    filePrefix: 'Mega_Twin_Rib',
+    effectiveWidthMm: 945,
+    nominalWidthMm: 1053,
+    ribHeightMm: 28,
+    sheetWidthMeters: 0.945,
+    profileTagline: '28mm twin ribs (72.85mm pair) with 242.15mm pan',
+    matcher: isMegaTwinRib,
+    sheetCountsByHouse: {
+      starter_6x6: 18,
+      two_storey_8x6: 20,
+      single_storey_8x8: 22,
+      large_two_storey_10x6: 22,
+      compact_porch_house: 26,
+      lshape_balcony_house: 47,
+    },
+  },
+  {
+    id: 'mega_six_ribs',
+    name: 'Mega Six Ribs',
+    filePrefix: 'Mega_Six_Ribs',
+    effectiveWidthMm: 1045,
+    nominalWidthMm: 1100,
+    ribHeightMm: 23,
+    sheetWidthMeters: 1.045,
+    profileTagline: '23mm 6-rib profile across 1045mm effective coverage',
+    matcher: isMegaSixRibs,
+    sheetCountsByHouse: {
+      starter_6x6: 16,
+      two_storey_8x6: 18,
+      single_storey_8x8: 20,
+      large_two_storey_10x6: 20,
+      compact_porch_house: 25,
+      lshape_balcony_house: 46,
+    },
+  },
+  {
+    id: 'mega_s_rib',
+    name: 'Mega S-Rib',
+    filePrefix: 'Mega_S_Rib',
+    effectiveWidthMm: 500,
+    nominalWidthMm: 510,
+    ribHeightMm: 62,
+    sheetWidthMeters: 0.500,
+    profileTagline: '62mm concealed standing-seam profile for long spans',
+    matcher: isMegaSRib,
+    sheetCountsByHouse: {
+      starter_6x6: 32,
+      two_storey_8x6: 36,
+      single_storey_8x8: 40,
+      large_two_storey_10x6: 40,
+      compact_porch_house: 51,
+      lshape_balcony_house: 92,
+    },
   },
 ];
 
@@ -618,6 +734,16 @@ export const resolveStudioHouseRoofModel = (houseId, roofProfileId) => {
       ? house.picoExistingGlb
       : `/models/house/${roof.filePrefix}_${house.fileKey}.glb`;
 
+  const resolvedTotalSheets = roof.sheetCountsByHouse?.[house.id] ?? house.totalSheets;
+  const isSimpleGable =
+    house.id === 'starter_6x6' ||
+    house.id === 'two_storey_8x6' ||
+    house.id === 'single_storey_8x8' ||
+    house.id === 'large_two_storey_10x6';
+  const resolvedSheetsPerSlope = isSimpleGable
+    ? Math.round(resolvedTotalSheets / 2)
+    : house.sheetsPerSlope;
+
   return {
     ...house,
     id: `${roof.id}_${house.id}`,
@@ -625,7 +751,9 @@ export const resolveStudioHouseRoofModel = (houseId, roofProfileId) => {
     roofId: roof.id,
     profileName: roof.name,
     modelPath,
-    roofDimensions: house.roofLabel,
+    totalSheets: resolvedTotalSheets,
+    sheetsPerSlope: resolvedSheetsPerSlope,
+    roofDimensions: house.roofLabel.replace(/\(\d+\s*sheets\)/i, `(${resolvedTotalSheets} sheets)`),
     effectiveWidthMm: roof.effectiveWidthMm,
     nominalWidthMm: roof.nominalWidthMm,
     ribHeightMm: roof.ribHeightMm,

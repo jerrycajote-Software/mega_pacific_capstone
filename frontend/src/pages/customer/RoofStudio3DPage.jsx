@@ -269,6 +269,9 @@ const RoofStudio3DPage = () => {
     setSelectedRoofId(roofId);
     setSelectedMeshName(null);
     setIsInspectEdgeActive(false);
+    if (viewFullRoof) {
+      setCurrentQty(nextModel.totalSheets);
+    }
   };
 
   const handleSelectRoofThickness = (thick) => {
@@ -461,7 +464,7 @@ const RoofStudio3DPage = () => {
             No Supported 3D Roof Products Available
           </Typography>
           <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3 }}>
-            The 3D House &amp; Roof Studio displays Pico Rib 1220, Hermosa Tile, and Agua Corr 1220 once those products are created and active in the catalog.
+            The 3D House &amp; Roof Studio displays Pico Rib 1220, Hermosa Tile, Agua Corr 1220, Mega Hi-Rib, Mega Twin Rib, Mega Six Ribs, and Mega S-Rib once those products are created and active in the catalog.
           </Typography>
           <Button variant="contained" color="primary" onClick={handleExitStudio} sx={{ borderRadius: 2.5, fontWeight: 700, textTransform: 'none' }}>
             Exit 3D Studio

@@ -2,7 +2,72 @@ import {
   isMegaCurvedRoof,
   isHermosaTile,
   isAguaCorr1220,
+  isMegaHiRib,
+  isMegaTwinRib,
+  isMegaSixRibs,
+  isMegaSRib,
 } from '../services/roofModelRegistry';
+
+const RESIDENTIAL_ROOF_SPECS = [
+  {
+    matcher: isHermosaTile,
+    profileLabel: 'Hermosa Tile',
+    layerLabel: 'Hermosa Tile Roofing Sheets',
+    layerDescription: 'Mediterranean pressed steel step-tile panels featuring 42mm curved tile arches, 350mm tile courses, and 1000mm effective coverage.',
+    dimensions: (len, thick) => `1000mm effective width (1100mm nominal) × ${len}m length • 42mm tile arch • ${thick} gauge`,
+    material: (color) => `Pre-Painted Pressed Steel Tile (${color})`,
+    role: 'Mediterranean step-tile steel sheet with 350mm pressed tile courses and 5 arched waves for residential roofing.',
+  },
+  {
+    matcher: isAguaCorr1220,
+    profileLabel: 'Agua Corr 1220',
+    layerLabel: 'Agua Corr 1220 Corrugated Sheets',
+    layerDescription: 'Classic sinusoidal corrugated steel roofing panels with 18mm corrugation depth, 76mm pitch, and 988mm effective width.',
+    dimensions: (len, thick) => `988mm effective width (1077mm nominal) × ${len}m length • 18mm depth • ${thick} gauge`,
+    material: (color) => `Pre-Painted Corrugated Galvanized Steel (${color})`,
+    role: 'Classic sinusoidal corrugated steel panel with 76mm wave pitch and R19 curves fastened into horizontal purlins.',
+  },
+  {
+    matcher: isMegaHiRib,
+    profileLabel: 'Mega Hi-Rib',
+    layerLabel: 'Mega Hi-Rib Roofing Sheets',
+    layerDescription: 'Heavy-duty industrial & commercial steel panels with 51mm high trapezoidal ribs, 300mm pitch, and 900mm effective width.',
+    dimensions: (len, thick) => `900mm effective width (1003mm nominal) × ${len}m length • 51mm rib height • ${thick} gauge`,
+    material: (color) => `Pre-Painted Galvanized Steel (${color})`,
+    role: 'Deep-ribbed 51mm high-profile steel roofing sheet built for maximum rainwater capacity and wide purlin spans.',
+  },
+  {
+    matcher: isMegaTwinRib,
+    profileLabel: 'Mega Twin Rib',
+    layerLabel: 'Mega Twin Rib Roofing Sheets',
+    layerDescription: 'Sturdy residential & commercial steel panels featuring twin 28mm ribs spaced 72.85mm apart with 242.15mm wide pans and 945mm effective width.',
+    dimensions: (len, thick) => `945mm effective width (1053mm nominal) × ${len}m length • 28mm twin ribs • ${thick} gauge`,
+    material: (color) => `Pre-Painted Galvanized Steel (${color})`,
+    role: 'Dual-crest twin-ribbed roofing sheet combining rigid twin-rib strength with clean wide drainage pans.',
+  },
+  {
+    matcher: isMegaSixRibs,
+    profileLabel: 'Mega Six Ribs',
+    layerLabel: 'Mega Six Ribs Roofing Sheets',
+    layerDescription: 'Economical 6-ribbed roofing sheets featuring 23mm ribs across 1045mm effective width (1100mm nominal) for residential and commercial roofs.',
+    dimensions: (len, thick) => `1045mm effective width (1100mm nominal) × ${len}m length • 23mm rib height • ${thick} gauge`,
+    material: (color) => `Pre-Painted Galvanized Steel (${color})`,
+    role: 'Wide-coverage 6-ribbed galvanized steel panel delivering fast installation and clean architectural lines.',
+  },
+  {
+    matcher: isMegaSRib,
+    profileLabel: 'Mega S-Rib',
+    layerLabel: 'Mega S-Rib Standing-Seam Sheets',
+    layerDescription: 'Water-tight standing-seam steel panels with 62mm concealed-lock ribs and 500mm effective width engineered for low-pitched long spans.',
+    dimensions: (len, thick) => `500mm effective width (510mm nominal) × ${len}m length • 62mm seam height • ${thick} gauge`,
+    material: (color) => `Pre-Painted Standing-Seam Steel (${color})`,
+    role: 'Interlocking 62mm standing-seam panel engineered for superior water-tightness on low-slope and long-span roofs.',
+  },
+];
+
+const findResidentialRoofSpec = (productName = '') => {
+  return RESIDENTIAL_ROOF_SPECS.find((entry) => entry.matcher(productName)) || null;
+};
 
 /**
  * Structural Layer Definitions & Mesh Inspector Metadata
@@ -73,24 +138,14 @@ export const ROOF_STRUCTURAL_LAYERS = [
 ];
 
 export const getRoofStructuralLayers = (productName = '') => {
-  if (isHermosaTile(productName)) {
+  const matchedSpec = findResidentialRoofSpec(productName);
+  if (matchedSpec) {
     return ROOF_STRUCTURAL_LAYERS.map((layer) =>
       layer.id === 'roof_sheets'
         ? {
             ...layer,
-            label: 'Hermosa Tile Roofing Sheets',
-            description: 'Mediterranean pressed steel step-tile panels featuring 42mm curved tile arches, 350mm tile courses, and 1000mm effective coverage.',
-          }
-        : layer
-    );
-  }
-  if (isAguaCorr1220(productName)) {
-    return ROOF_STRUCTURAL_LAYERS.map((layer) =>
-      layer.id === 'roof_sheets'
-        ? {
-            ...layer,
-            label: 'Agua Corr 1220 Corrugated Sheets',
-            description: 'Classic sinusoidal corrugated steel roofing panels with 18mm corrugation depth, 76mm pitch, and 988mm effective width.',
+            label: matchedSpec.layerLabel,
+            description: matchedSpec.layerDescription,
           }
         : layer
     );
@@ -204,8 +259,7 @@ export const getExplodeOffsetForMesh = (meshName = '') => {
 export const getStructuralMeshMetadata = (meshName = '', context = {}) => {
   if (!meshName) return null;
   const isCurved = isMegaCurvedRoof(context.productName);
-  const isHermosa = isHermosaTile(context.productName);
-  const isAgua = isAguaCorr1220(context.productName);
+  const matchedSpec = findResidentialRoofSpec(context.productName);
   const layers = getRoofStructuralLayers(context.productName);
   const layerId = getLayerIdForMesh(meshName);
   const layerMeta = layers.find((l) => l.id === layerId) || layers[6];
@@ -213,10 +267,8 @@ export const getStructuralMeshMetadata = (meshName = '', context = {}) => {
   const activeColor = context.color || 'Marshall Dark Gray';
   const profileLabel = isCurved
     ? 'Mega Curved Roof'
-    : isHermosa
-    ? 'Hermosa Tile'
-    : isAgua
-    ? 'Agua Corr 1220'
+    : matchedSpec
+    ? matchedSpec.profileLabel
     : 'Pico Rib 1220';
 
   if (meshName.startsWith('RoofSheet_')) {
@@ -235,28 +287,16 @@ export const getStructuralMeshMetadata = (meshName = '', context = {}) => {
         role: 'Continuous crimped barrel-arch roofing sheet designed for gymnasiums, domes, and curved canopies with 253mm rib pitch.',
       };
     }
-    if (isHermosa) {
+    if (matchedSpec) {
       return {
         meshName,
         layerId,
         layerLabel: layerMeta.label,
         badgeColor: layerMeta.badgeColor,
-        title: `Hermosa Tile Panel #${num}`,
-        dimensions: `1000mm effective width (1100mm nominal) × ${sheetLength}m length • 42mm tile arch • ${activeThick} gauge`,
-        material: `Pre-Painted Pressed Steel Tile (${activeColor})`,
-        role: 'Mediterranean step-tile steel sheet with 350mm pressed tile courses and 5 arched waves for residential roofing.',
-      };
-    }
-    if (isAgua) {
-      return {
-        meshName,
-        layerId,
-        layerLabel: layerMeta.label,
-        badgeColor: layerMeta.badgeColor,
-        title: `Agua Corr 1220 Panel #${num}`,
-        dimensions: `988mm effective width (1077mm nominal) × ${sheetLength}m length • 18mm depth • ${activeThick} gauge`,
-        material: `Pre-Painted Corrugated Galvanized Steel (${activeColor})`,
-        role: 'Classic sinusoidal corrugated steel panel with 76mm wave pitch and R19 curves fastened into horizontal purlins.',
+        title: `${matchedSpec.profileLabel} Panel #${num}`,
+        dimensions: matchedSpec.dimensions(sheetLength, activeThick),
+        material: matchedSpec.material(activeColor),
+        role: matchedSpec.role,
       };
     }
     const slope = num <= sheetsPerSlope ? 'Front Slope' : 'Back Slope';
