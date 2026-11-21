@@ -25,7 +25,9 @@ export const isCoilInStock = (coils, thickness, color) => {
   });
 
   if (!matched) return false;
-  return Number(matched.coilCount) > 0 && String(matched.status || '').toLowerCase() !== 'out of stock';
+  const hasRolls = Number(matched.coilCount) > 0;
+  const hasMeters = matched.availableMeters == null ? true : Number(matched.availableMeters) > 0;
+  return hasRolls && hasMeters && String(matched.status || '').toLowerCase() !== 'out of stock';
 };
 
 export const getFirstInStockColor = (coils, thickness, allColors = [], currentColor = null) => {

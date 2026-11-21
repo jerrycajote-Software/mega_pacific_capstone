@@ -25,13 +25,11 @@ import {
   CustomCustomerHomeIcon,
   CustomCustomerCatalogIcon,
   CustomCustomerSupportDeskIcon,
-  CustomPreOrderIcon,
 } from './icons';
 
 const NAV_LINKS = [
   { to: '/dashboard', label: 'Home', icon: CustomCustomerHomeIcon },
   { to: '/products', label: 'Products', icon: CustomCustomerCatalogIcon },
-  { to: '/3d-studio', label: '3D Studio', icon: CustomPreOrderIcon },
 ];
 
 const CustomerHeader = () => {
@@ -151,31 +149,31 @@ const CustomerHeader = () => {
                     textTransform: 'none',
                     fontWeight: isActive ? 750 : 600,
                     color: isActive
-                      ? (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d'
+                      ? (theme) => theme.palette.mode === 'dark' ? '#93c5fd' : '#1e3a8a'
                       : 'text.secondary',
                     bgcolor: isActive
-                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.2)' : '#ffffff'
+                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.35)' : '#ffffff'
                       : 'transparent',
                     border: '1px solid',
                     borderColor: isActive
-                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(74, 222, 128, 0.45)' : 'rgba(34, 197, 94, 0.35)'
+                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(96, 165, 250, 0.45)' : 'rgba(30, 58, 138, 0.35)'
                       : 'transparent',
                     boxShadow: isActive
                       ? (theme) => theme.palette.mode === 'dark'
-                        ? '0 2px 10px rgba(34, 197, 94, 0.25)'
-                        : '0 2px 8px rgba(34, 197, 94, 0.16), 0 1px 2px rgba(0, 0, 0, 0.04)'
+                        ? '0 2px 10px rgba(30, 58, 138, 0.3)'
+                        : '0 2px 8px rgba(30, 58, 138, 0.16), 0 1px 2px rgba(0, 0, 0, 0.04)'
                       : 'none',
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       bgcolor: isActive
-                        ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.26)' : '#ffffff'
-                        : (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.14)' : '#dcfce7',
-                      color: (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d',
-                      borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(74, 222, 128, 0.35)' : 'rgba(34, 197, 94, 0.3)',
+                        ? (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.42)' : '#ffffff'
+                        : (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.2)' : 'rgba(30, 58, 138, 0.08)',
+                      color: (theme) => theme.palette.mode === 'dark' ? '#93c5fd' : '#1e3a8a',
+                      borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(96, 165, 250, 0.35)' : 'rgba(30, 58, 138, 0.3)',
                       transform: 'translateY(-1px)',
                       boxShadow: (theme) => theme.palette.mode === 'dark'
-                        ? '0 4px 12px rgba(34, 197, 94, 0.25)'
-                        : '0 3px 10px rgba(34, 197, 94, 0.18)',
+                        ? '0 4px 12px rgba(30, 58, 138, 0.28)'
+                        : '0 3px 10px rgba(30, 58, 138, 0.18)',
                     },
                   }}
                 >
@@ -362,18 +360,18 @@ const CustomerHeader = () => {
                   sx={{
                     borderRadius: 2.5,
                     bgcolor: isActive
-                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.18)' : '#dcfce7'
+                      ? (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.1)'
                       : 'transparent',
                     color: isActive
-                      ? (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d'
+                      ? (theme) => theme.palette.mode === 'dark' ? '#93c5fd' : '#1e3a8a'
                       : 'text.primary',
                     fontWeight: isActive ? 700 : 500,
                     transition: 'all 0.2s ease',
                     '&:hover': {
                       bgcolor: isActive
-                        ? (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.24)' : '#dcfce7'
-                        : (theme) => theme.palette.mode === 'dark' ? 'rgba(34, 197, 94, 0.1)' : '#f0fdf4',
-                      color: (theme) => theme.palette.mode === 'dark' ? '#4ade80' : '#15803d',
+                        ? (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.32)' : 'rgba(30, 58, 138, 0.14)'
+                        : (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.15)' : 'rgba(30, 58, 138, 0.06)',
+                      color: (theme) => theme.palette.mode === 'dark' ? '#93c5fd' : '#1e3a8a',
                       transform: 'translateX(3px)',
                     },
                   }}

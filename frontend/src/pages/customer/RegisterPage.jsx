@@ -938,9 +938,9 @@ const RegisterPage = () => {
                 fontSize: { xs: '0.95rem', sm: '1rem' },
                 letterSpacing: '0.02em',
                 textTransform: 'none',
-                boxShadow: '0 4px 14px rgba(79, 119, 45, 0.35)',
+                boxShadow: '0 4px 14px rgba(30, 58, 138, 0.35)',
                 '&:hover': {
-                  boxShadow: '0 6px 20px rgba(79, 119, 45, 0.45)',
+                  boxShadow: '0 6px 20px rgba(30, 58, 138, 0.45)',
                 },
               }}
             >

@@ -3,6 +3,14 @@ const { calculateDeliveryFee } = require("../../services/deliveryFeeService");
 const { validateRealisticEmail } = require("../../utils/emailValidator");
 const { buildOrderPaymentSummary } = require("../../services/paymentCalculationService");
 const { notifyOrderPlaced } = require("../../services/notificationManagerService");
+const {
+  deductCoilsForOrderInTx,
+  emitCoilInventoryUpdates
+} = require("../../services/coilInventoryService");
+const {
+  findExistingOrderByIdempotency,
+  recordOrderIdempotencyInTx
+} = require("../../services/orderIdempotencyService");
 
 const HARDCODED_SHIPPING_FEE = 100;
 
@@ -71,6 +79,8 @@ const createOrder = async (req, res) => {
     cardDetails,
     gcashNumber,
     paymongoReference,
+    paymentIntentId,
+    clientRequestId,
     fulfillmentType,
     customerEmail,
     shippingName,
@@ -106,6 +116,23 @@ const createOrder = async (req, res) => {
   }
 
   try {
+    // Return already-created order if this is a retry after a network disconnect
+    const existingDuplicateOrder = await findExistingOrderByIdempotency({
+      userId: resolvedUserId,
+      clientRequestId,
+      paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+    });
+    if (existingDuplicateOrder) {
+      return res.status(200).json({
+        success: true,
+        duplicatePrevented: true,
+        data: {
+          ...existingDuplicateOrder,
+          paymentSummary: buildOrderPaymentSummary(existingDuplicateOrder)
+        }
+      });
+    }
+
     const product = await prisma.product.findUnique({
       where: { id: parseInt(productId) }
     });
@@ -199,7 +226,7 @@ const createOrder = async (req, res) => {
     );
 
     
-    const newOrder = await prisma.$transaction(async (tx) => {
+    const { order: newOrder, coilUpdates } = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           userId: resolvedUserId,
@@ -233,7 +260,25 @@ const createOrder = async (req, res) => {
         }
       });
 
-      
+      // Automatically deduct ordered linear meters from matching coil inventory
+      const deductedCoils = await deductCoilsForOrderInTx(tx, {
+        orderId: order.id,
+        userId: resolvedUserId,
+        items: [
+          {
+            productName: product.name,
+            productThickness: product.thickness,
+            productUnit: product.unit,
+            variantName,
+            thickness: thickness || (parsedVariantId ? variantName : null) || product.thickness,
+            color: color || null,
+            customLength,
+            quantity: parseInt(quantity),
+            isPerMeter
+          }
+        ]
+      });
+
       if (!isPreOrder) {
         if (parsedVariantId) {
           const updated = await tx.productVariant.updateMany({
@@ -256,8 +301,21 @@ const createOrder = async (req, res) => {
         }
       }
 
-      return order;
+      // Save idempotency keys atomically so network retries never create duplicate orders
+      await recordOrderIdempotencyInTx(tx, {
+        orderId: order.id,
+        userId: resolvedUserId,
+        clientRequestId,
+        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+      });
+
+      return { order, coilUpdates: deductedCoils };
     });
+
+    const ioForOrder = req.app.get("io");
+    if (ioForOrder && coilUpdates.length > 0) {
+      emitCoilInventoryUpdates(ioForOrder, coilUpdates);
+    }
 
     
     let fullOrder = null;
@@ -302,6 +360,23 @@ const createOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to create order:", error);
+    if (error.code === "P2002") {
+      const existingOrder = await findExistingOrderByIdempotency({
+        userId: resolvedUserId,
+        clientRequestId,
+        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+      });
+      if (existingOrder) {
+        return res.status(200).json({
+          success: true,
+          duplicatePrevented: true,
+          data: {
+            ...existingOrder,
+            paymentSummary: buildOrderPaymentSummary(existingOrder)
+          }
+        });
+      }
+    }
     if (error.type === 'STOCK_ERROR') {
       return res.status(409).json({ success: false, error: 'Out of Stock', details: error });
     }
@@ -494,6 +569,8 @@ const createBulkOrder = async (req, res) => {
     cardDetails,
     gcashNumber,
     paymongoReference,
+    paymentIntentId,
+    clientRequestId,
     fulfillmentType,
     customerEmail,
     shippingName,
@@ -542,9 +619,27 @@ const createBulkOrder = async (req, res) => {
   );
 
   try {
-    const newOrder = await prisma.$transaction(async (tx) => {
+    // Return already-created bulk order if this is a retry after a network disconnect
+    const existingDuplicateBulkOrder = await findExistingOrderByIdempotency({
+      userId: resolvedUserId,
+      clientRequestId,
+      paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+    });
+    if (existingDuplicateBulkOrder) {
+      return res.status(200).json({
+        success: true,
+        duplicatePrevented: true,
+        data: {
+          ...existingDuplicateBulkOrder,
+          paymentSummary: buildOrderPaymentSummary(existingDuplicateBulkOrder)
+        }
+      });
+    }
+
+    const { order: newOrder, coilUpdates } = await prisma.$transaction(async (tx) => {
       let totalAmount = 0;
       const orderItemsData = [];
+      const coilDeductionItems = [];
 
       for (const item of items) {
         const { productId, variantId, quantity } = item;
@@ -607,27 +702,18 @@ const createBulkOrder = async (req, res) => {
         const lengthMultiplier = (customLength && isPerMeterItem) ? customLength : 1;
         totalAmount += Math.round(unitPrice * lengthMultiplier * parseInt(quantity) * 100) / 100;
 
-        
         if (item.color) {
-          const effThickness = thickness || variantName || product.thickness || "0.35mm";
-          const thickMatch = String(effThickness).match(/0\.\d+/);
-          const cleanThick = thickMatch ? `${thickMatch[0]}mm` : String(effThickness).trim();
-
-          const coil = await tx.coilInventory.findFirst({
-            where: {
-              thickness: { contains: cleanThick, mode: "insensitive" },
-              color: { equals: item.color.trim(), mode: "insensitive" }
-            }
+          coilDeductionItems.push({
+            productName: product.name,
+            productThickness: product.thickness,
+            productUnit: product.unit,
+            variantName,
+            thickness: thickness || variantName || product.thickness,
+            color: item.color,
+            customLength,
+            quantity: parseInt(quantity),
+            isPerMeter: isPerMeterItem
           });
-
-          if (!coil || coil.coilCount <= 0) {
-            throw {
-              type: 'STOCK_ERROR',
-              itemName: `${product.name} (${cleanThick} • ${item.color})`,
-              available: 0,
-              requested: quantity
-            };
-          }
         }
 
         orderItemsData.push({
@@ -683,8 +769,28 @@ const createBulkOrder = async (req, res) => {
         }
       });
 
-      return order;
+      // Atomically validate remaining meters and deduct combined coil length for all items
+      const deductedCoils = await deductCoilsForOrderInTx(tx, {
+        orderId: order.id,
+        userId: resolvedUserId,
+        items: coilDeductionItems
+      });
+
+      // Save idempotency keys atomically so network retries never create duplicate orders
+      await recordOrderIdempotencyInTx(tx, {
+        orderId: order.id,
+        userId: resolvedUserId,
+        clientRequestId,
+        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+      });
+
+      return { order, coilUpdates: deductedCoils };
     });
+
+    const ioForBulkOrder = req.app.get("io");
+    if (ioForBulkOrder && coilUpdates.length > 0) {
+      emitCoilInventoryUpdates(ioForBulkOrder, coilUpdates);
+    }
 
     
     let fullOrder = null;
@@ -729,6 +835,23 @@ const createBulkOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to create bulk order:", error);
+    if (error.code === "P2002") {
+      const existingOrder = await findExistingOrderByIdempotency({
+        userId: resolvedUserId,
+        clientRequestId,
+        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+      });
+      if (existingOrder) {
+        return res.status(200).json({
+          success: true,
+          duplicatePrevented: true,
+          data: {
+            ...existingOrder,
+            paymentSummary: buildOrderPaymentSummary(existingOrder)
+          }
+        });
+      }
+    }
     if (error.type === 'STOCK_ERROR') {
       return res.status(409).json({ success: false, error: 'Out of Stock', details: error });
     }

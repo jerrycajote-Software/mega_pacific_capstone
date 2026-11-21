@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import CustomerBottomNav from '../components/CustomerBottomNav';
 import CustomerServiceWidget from '../components/CustomerServiceWidget';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import PendingPaymentRecoveryBanner from '../components/PendingPaymentRecoveryBanner';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 import { sendBrowserNotification } from '../utils/notificationManager';
@@ -76,9 +77,12 @@ const CustomerLayoutContent = () => {
       >
         <ErrorBoundary>
           {user && (
-            <NotificationPermissionBanner
-              onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
-            />
+            <>
+              <PendingPaymentRecoveryBanner />
+              <NotificationPermissionBanner
+                onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
+              />
+            </>
           )}
           <Outlet />
         </ErrorBoundary>

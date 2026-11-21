@@ -470,12 +470,12 @@ const OrderCard = ({ order, onClick, onReviewClick }) => {
             sx={{ 
               fontWeight: 700, 
               textTransform: 'none', 
-              color: '#4f772d', 
+              color: '#1e3a8a', 
               fontSize: '0.78rem', 
               px: 1, 
               py: 0.5, 
               borderRadius: 2,
-              '&:hover': { bgcolor: 'rgba(79, 119, 45, 0.08)' } 
+              '&:hover': { bgcolor: 'rgba(30, 58, 138, 0.08)' } 
             }}
           >
             Download Receipt (PDF)
@@ -1021,14 +1021,14 @@ const OrdersPage = () => {
                 borderRadius: 2.5,
                 flexShrink: 0,
                 cursor: 'pointer',
-                bgcolor: isActive ? '#4f772d' : 'background.paper',
+                bgcolor: isActive ? '#1e3a8a' : 'background.paper',
                 color: isActive ? '#ffffff' : 'text.primary',
                 border: '1px solid',
-                borderColor: isActive ? '#4f772d' : 'divider',
-                boxShadow: isActive ? '0 4px 12px rgba(79, 119, 45, 0.25)' : 'none',
+                borderColor: isActive ? '#1e3a8a' : 'divider',
+                boxShadow: isActive ? '0 4px 12px rgba(30, 58, 138, 0.25)' : 'none',
                 transition: 'all 0.2s',
                 '&:hover': {
-                  bgcolor: isActive ? '#3d5c22' : 'action.hover'
+                  bgcolor: isActive ? '#172554' : 'action.hover'
                 }
               }}
             />
@@ -1091,7 +1091,7 @@ const OrdersPage = () => {
             <Button 
               variant="contained" 
               onClick={() => navigate('/dashboard')}
-              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#4f772d', '&:hover': { bgcolor: '#3d5c22' }, px: 3, py: 1 }}
+              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#1e3a8a', color: '#ffffff', '&:hover': { bgcolor: '#172554' }, px: 3, py: 1 }}
             >
               Browse Roofing Catalog
             </Button>

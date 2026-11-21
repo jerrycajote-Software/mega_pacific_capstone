@@ -84,7 +84,9 @@ const InventoryDataGrid = ({
         type: product.type || '',
         unit: product.unit || '',
         price: product.price || 0,
-        originalPrice: product.originalPrice ?? (product.price ? Math.round((product.price / 0.7) * 100) / 100 : 0),
+        originalPrice: (product.discountPercent ?? 30) > 0
+          ? (product.originalPrice ?? (product.price ? Math.round((product.price / (1 - (product.discountPercent ?? 30) / 100)) * 100) / 100 : 0))
+          : (product.price || 0),
         discountPercent: product.discountPercent ?? 30,
         stock: product.stock || 0,
         imageUrl: product.imageUrl || '',
@@ -240,8 +242,8 @@ const InventoryDataGrid = ({
         renderCell: (params) => {
           const sellingPrice = Number(params.row.price || 0);
           const origPrice = Number(params.row.originalPrice || 0);
-          const hasDiscount = origPrice > sellingPrice;
-          const discountPct = params.row.discountPercent || 30;
+          const discountPct = params.row.discountPercent ?? 30;
+          const hasDiscount = discountPct > 0 && origPrice > sellingPrice;
 
           return (
             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

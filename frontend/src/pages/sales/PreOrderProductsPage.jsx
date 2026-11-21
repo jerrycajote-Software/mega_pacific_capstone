@@ -41,6 +41,8 @@ import { isCoilInStock, getAvailableColorsForThickness, hasCoilStockForThickness
 import { isCustomLengthProfile } from '../customer/buildProductOptions';
 import { io } from 'socket.io-client';
 import CustomMessageDialog from '../../components/CustomMessageDialog';
+import GlobalDiscountCard from '../../components/sales/GlobalDiscountCard';
+import ProductDiscountEditModal from '../../components/sales/ProductDiscountEditModal';
 import { useCustomDialog } from '../../hooks/useCustomDialog';
 
 const normalizeThickness = (val) => {
@@ -70,6 +72,7 @@ const EMPTY_FORM = {
   name: '',
   type: 'Rib Type',
   originalPrice: '',
+  discountPercent: 30,
   unit: 'per meter',
   thickness: '0.35mm',
   effectiveWidth: '',
@@ -96,6 +99,11 @@ const PreOrderProductsPage = () => {
   const [selectedType, setSelectedType] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [togglingId, setTogglingId] = useState(null);
+  const [globalDiscountPercent, setGlobalDiscountPercent] = useState(30);
+  const [discountRefreshKey, setDiscountRefreshKey] = useState(0);
+  const [discountModalProduct, setDiscountModalProduct] = useState(null);
+  const [savingProductDiscount, setSavingProductDiscount] = useState(false);
+  const [discountModalError, setDiscountModalError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
@@ -144,6 +152,9 @@ const PreOrderProductsPage = () => {
           if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
           return next;
         });
+        if (typeof res.data.globalDiscountPercent === 'number') {
+          setGlobalDiscountPercent(res.data.globalDiscountPercent);
+        }
       }
     } catch (err) {
       console.error('Failed to load pre-order products:', err);
@@ -287,6 +298,7 @@ const PreOrderProductsPage = () => {
 
     setFormData({
       ...EMPTY_FORM,
+      discountPercent: globalDiscountPercent,
       isActive: true,
       thickness: initialThick,
       colors: initialColors,
@@ -310,6 +322,7 @@ const PreOrderProductsPage = () => {
       name: p.name || '',
       type: p.type || 'Rib Type',
       originalPrice: p.originalPrice ?? p.price ?? '',
+      discountPercent: p.discountPercent ?? globalDiscountPercent,
       unit: p.unit || 'per meter',
       thickness: rawThick,
       effectiveWidth: p.effectiveWidth ?? '',
@@ -651,6 +664,11 @@ const PreOrderProductsPage = () => {
       showProductWarning('Please provide a valid price per meter.');
       return;
     }
+    const parsedFormDiscount = formData.discountPercent === '' ? NaN : Number(formData.discountPercent);
+    if (Number.isNaN(parsedFormDiscount) || parsedFormDiscount < 0 || parsedFormDiscount > 95) {
+      showProductWarning('Please enter a valid discount percentage between 0% and 95%.');
+      return;
+    }
     if (!hasCoilStockForThickness(coils, formData.thickness)) {
       showProductWarning(`Cannot save pre-order product: thickness "${formData.thickness}" has no raw coils in Coil Inventory. Steel coils must be stocked in inventory before products can be created.`);
       return;
@@ -695,6 +713,7 @@ const PreOrderProductsPage = () => {
         colors: validColors,
         isActive: formData.isActive !== false,
         originalPrice: parseFloat(formData.originalPrice),
+        discountPercent: Math.round(parsedFormDiscount * 100) / 100,
         variants: variants.filter(v => v.originalPrice !== '' && !isNaN(parseFloat(v.originalPrice))).map(v => ({
           id: v.id,
           name: v.name || `${v.thickness} Thickness`,
@@ -717,6 +736,7 @@ const PreOrderProductsPage = () => {
       }
 
       setIsModalOpen(false);
+      setDiscountRefreshKey((prev) => prev + 1);
       fetchProducts();
     } catch (err) {
       console.error('Save error:', err);
@@ -733,6 +753,46 @@ const PreOrderProductsPage = () => {
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleOpenProductDiscountModal = (product) => {
+    setDiscountModalError('');
+    setDiscountModalProduct(product);
+  };
+
+  const handleCloseProductDiscountModal = () => {
+    if (savingProductDiscount) return;
+    setDiscountModalError('');
+    setDiscountModalProduct(null);
+  };
+
+  const handleSaveSingleProductDiscount = async (product, nextDiscountPercent) => {
+    if (!product?.id) return;
+    setSavingProductDiscount(true);
+    setDiscountModalError('');
+    try {
+      const token = localStorage.getItem('appToken');
+      const res = await axios.patch(
+        `${API_URL}/api/sales/pre-order-products/${product.id}/discount`,
+        { discountPercent: nextDiscountPercent },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data?.success) {
+        setDiscountModalProduct(null);
+        setDiscountRefreshKey((prev) => prev + 1);
+        setToast({
+          open: true,
+          message: res.data.message || `Updated discount for ${product.name}.`,
+          severity: 'success'
+        });
+        fetchProducts(false);
+      }
+    } catch (err) {
+      console.error('Failed to update product discount:', err);
+      setDiscountModalError(err.response?.data?.message || 'Failed to update product discount. Please try again.');
+    } finally {
+      setSavingProductDiscount(false);
     }
   };
 
@@ -873,6 +933,17 @@ const PreOrderProductsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Storewide Product Discount Control */}
+      <GlobalDiscountCard
+        refreshKey={discountRefreshKey}
+        onGlobalDiscountApplied={(nextPct) => {
+          if (typeof nextPct === 'number') {
+            setGlobalDiscountPercent(nextPct);
+          }
+          fetchProducts(false);
+        }}
+      />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -1126,19 +1197,68 @@ const PreOrderProductsPage = () => {
                       </td>
 
                       <td style={{ padding: '1rem', verticalAlign: 'middle' }}>
-                        <div>
-                          <span style={{ display: 'inline-flex', padding: '0.15rem 0.45rem', borderRadius: 6, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', fontWeight: 700, fontSize: '0.75rem', marginBottom: 4 }}>
-                            {p.thickness || '0.35mm'}
-                          </span>
-                          <div style={{ fontWeight: 700, color: '#16a34a', fontSize: '0.92rem' }}>
-                            ₱{((p.originalPrice || p.price) * 0.70).toFixed(2)} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>/{p.unit || 'm'}</span>
-                          </div>
-                          {p.originalPrice && (
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
-                              Orig: ₱{parseFloat(p.originalPrice).toFixed(2)}
+                        {(() => {
+                          const prodDiscount = p.discountPercent ?? globalDiscountPercent ?? 30;
+                          const origPriceNum = Number(p.originalPrice ?? p.price ?? 0);
+                          const liveSelling =
+                            p.price !== undefined && p.price !== null
+                              ? Number(p.price)
+                              : Math.round(origPriceNum * (1 - prodDiscount / 100) * 100) / 100;
+                          const isCustomRate = Math.abs(prodDiscount - globalDiscountPercent) > 0.001;
+
+                          return (
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                                <span style={{ display: 'inline-flex', padding: '0.15rem 0.45rem', borderRadius: 6, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', fontWeight: 700, fontSize: '0.75rem' }}>
+                                  {p.thickness || '0.35mm'}
+                                </span>
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    padding: '0.15rem 0.45rem',
+                                    borderRadius: 6,
+                                    background: prodDiscount > 0 ? 'rgba(220,38,38,0.12)' : 'rgba(100,116,139,0.14)',
+                                    color: prodDiscount > 0 ? '#ef4444' : 'var(--text-muted)',
+                                    fontWeight: 700,
+                                    fontSize: '0.7rem'
+                                  }}
+                                >
+                                  {prodDiscount > 0 ? `${prodDiscount}% OFF` : '0% Discount'}
+                                </span>
+                                {isCustomRate && (
+                                  <span style={{ fontSize: '0.64rem', fontWeight: 700, color: '#f59e0b' }}>
+                                    Custom
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontWeight: 700, color: '#16a34a', fontSize: '0.92rem' }}>
+                                ₱{liveSelling.toFixed(2)} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>/{p.unit || 'm'}</span>
+                              </div>
+                              {prodDiscount > 0 && origPriceNum > liveSelling && (
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                                  Orig: ₱{origPriceNum.toFixed(2)}
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenProductDiscountModal(p)}
+                                style={{
+                                  marginTop: 6,
+                                  padding: '0.24rem 0.6rem',
+                                  borderRadius: 6,
+                                  border: '1px solid rgba(59, 130, 246, 0.35)',
+                                  background: 'rgba(59, 130, 246, 0.08)',
+                                  color: '#3b82f6',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Edit Discount
+                              </button>
                             </div>
-                          )}
-                        </div>
+                          );
+                        })()}
                       </td>
 
                       <td style={{ padding: '1rem', verticalAlign: 'middle' }}>
@@ -1606,7 +1726,7 @@ const PreOrderProductsPage = () => {
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.85fr 1fr', gap: '1rem' }}>
                     <div>
                       <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>
                         Original Price (₱)
@@ -1625,11 +1745,41 @@ const PreOrderProductsPage = () => {
                           color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box'
                         }}
                       />
-                      {formData.originalPrice && (
-                        <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: 4 }}>
-                          Selling: ₱{(parseFloat(formData.originalPrice) * 0.70).toFixed(2)} (Less 30% Auto Discount)
-                        </div>
-                      )}
+                      {formData.originalPrice && (() => {
+                        const liveDisc = Math.max(0, Math.min(95, Number(formData.discountPercent) || 0));
+                        const liveSelling = Math.round(parseFloat(formData.originalPrice) * (1 - liveDisc / 100) * 100) / 100;
+                        return (
+                          <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 600, marginTop: 4 }}>
+                            {liveDisc > 0
+                              ? `Selling: ₱${liveSelling.toFixed(2)} (Less ${liveDisc}% Discount)`
+                              : `Selling: ₱${liveSelling.toFixed(2)} (Regular Price — No Discount)`}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>
+                        Discount (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        max="95"
+                        required
+                        placeholder="ex. 30"
+                        value={formData.discountPercent}
+                        onChange={(e) => setFormData({ ...formData, discountPercent: e.target.value })}
+                        style={{
+                          width: '100%', padding: '0.65rem 0.85rem', borderRadius: 10,
+                          background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                          color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 700, outline: 'none', boxSizing: 'border-box'
+                        }}
+                      />
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                        Default discount: {globalDiscountPercent}% (0% hides discount)
+                      </div>
                     </div>
 
                     <div>
@@ -2161,7 +2311,10 @@ const PreOrderProductsPage = () => {
                       </tr>
                     ) : (
                       variants.map((v, idx) => {
-                      const vSelling = v.originalPrice ? (parseFloat(v.originalPrice) * 0.70).toFixed(2) : '0.00';
+                      const activeFormDisc = Math.max(0, Math.min(95, Number(formData.discountPercent) || 0));
+                      const vSelling = v.originalPrice
+                        ? (Math.round(parseFloat(v.originalPrice) * (1 - activeFormDisc / 100) * 100) / 100).toFixed(2)
+                        : '0.00';
                       const rowConflict = variantThicknessConflicts[idx];
                       return (
                         <tr key={idx} style={{
@@ -2540,6 +2693,16 @@ const PreOrderProductsPage = () => {
           {toast.message}
         </Alert>
       </Snackbar>
+
+      <ProductDiscountEditModal
+        open={Boolean(discountModalProduct)}
+        product={discountModalProduct}
+        globalDiscountPercent={globalDiscountPercent}
+        saving={savingProductDiscount}
+        errorMessage={discountModalError}
+        onClose={handleCloseProductDiscountModal}
+        onSaveProductDiscount={handleSaveSingleProductDiscount}
+      />
 
       <CustomMessageDialog {...dialogState} />
 

@@ -1,60 +1,75 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { CustomCustomerSupportDeskIcon } from '../icons';
+import SupportGreetingBubble from './SupportGreetingBubble';
 
 const SupportDockTab = ({ onOpenSupport, isOpen = false }) => {
   if (isOpen) return null;
 
   return (
     <Box
-      component="button"
-      onClick={onOpenSupport}
-      aria-label="Open Customer Support Workspace"
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: { xs: 1, sm: 1.25 },
         position: 'fixed',
         bottom: { xs: 'calc(56px + max(10px, env(safe-area-inset-bottom)) + 10px)', sm: 0 },
         right: { xs: 16, sm: 32, md: 48 },
         zIndex: 1200,
-        px: { xs: 1.75, sm: 2 },
-        py: { xs: 0.8, sm: 0.85 },
-        bgcolor: 'background.paper',
-        color: 'text.primary',
-        border: '1px solid',
-        borderColor: { xs: 'rgba(79, 119, 45, 0.35)', sm: 'divider' },
-        borderBottom: { xs: '1px solid', sm: 'none' },
-        borderRadius: { xs: '999px', sm: '10px 10px 0 0' },
-        cursor: 'pointer',
-        boxShadow: { xs: '0 6px 20px rgba(0, 0, 0, 0.16)', sm: '0 -4px 16px rgba(0, 0, 0, 0.08)' },
-        backdropFilter: 'blur(10px)',
-        transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease',
-        userSelect: 'none',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 -6px 20px rgba(79, 119, 45, 0.2)',
-          borderColor: 'primary.main',
-        },
-        '&:active': {
-          transform: 'scale(0.96)',
-        }
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: 1,
+        pointerEvents: 'none',
       }}
     >
+      <SupportGreetingBubble isOpen={isOpen} onOpenSupport={onOpenSupport} />
+
       <Box
+        component="button"
+        type="button"
+        onClick={onOpenSupport}
+        aria-label="Open Customer Support Workspace"
         sx={{
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          bgcolor: '#22c55e',
-          boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.25)',
-          flexShrink: 0
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: 1, sm: 1.25 },
+          px: { xs: 1.75, sm: 2 },
+          py: { xs: 0.8, sm: 0.85 },
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          border: '1px solid',
+          borderColor: { xs: 'rgba(30, 58, 138, 0.35)', sm: 'divider' },
+          borderBottom: { xs: '1px solid', sm: 'none' },
+          borderRadius: { xs: '999px', sm: '10px 10px 0 0' },
+          cursor: 'pointer',
+          pointerEvents: 'auto',
+          boxShadow: { xs: '0 6px 20px rgba(0, 0, 0, 0.16)', sm: '0 -4px 16px rgba(0, 0, 0, 0.08)' },
+          backdropFilter: 'blur(10px)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease',
+          userSelect: 'none',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 -6px 20px rgba(30, 58, 138, 0.22)',
+            borderColor: 'primary.main',
+          },
+          '&:active': {
+            transform: 'scale(0.96)',
+          }
         }}
-      />
-      <CustomCustomerSupportDeskIcon size={18} />
-      <Typography variant="body2" sx={{ fontWeight: 700, fontSize: { xs: '0.78rem', sm: '0.82rem' }, letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
-        Live Support Desk
-      </Typography>
+      >
+        <Box
+          sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            bgcolor: '#22c55e',
+            boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.25)',
+            flexShrink: 0
+          }}
+        />
+        <CustomCustomerSupportDeskIcon size={18} />
+        <Typography variant="body2" sx={{ fontWeight: 700, fontSize: { xs: '0.78rem', sm: '0.82rem' }, letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
+          Live Support Desk
+        </Typography>
+      </Box>
     </Box>
   );
 };

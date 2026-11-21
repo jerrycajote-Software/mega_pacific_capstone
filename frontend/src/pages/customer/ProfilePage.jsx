@@ -541,11 +541,12 @@ const ProfilePage = () => {
                 textTransform: 'none',
                 fontWeight: 700,
                 py: 1.15,
-                bgcolor: '#4f772d',
-                boxShadow: '0 4px 12px rgba(79, 119, 45, 0.25)',
+                bgcolor: '#1e3a8a',
+                color: '#ffffff',
+                boxShadow: '0 4px 12px rgba(30, 58, 138, 0.28)',
                 '&:hover': { 
-                  bgcolor: '#3d5c22',
-                  boxShadow: '0 6px 16px rgba(79, 119, 45, 0.35)'
+                  bgcolor: '#172554',
+                  boxShadow: '0 6px 16px rgba(30, 58, 138, 0.38)'
                 }
               }}
             >
@@ -586,12 +587,12 @@ const ProfilePage = () => {
                 fontWeight: 700,
                 px: 2.5,
                 py: 0.9,
-                bgcolor: '#4f772d',
+                bgcolor: '#1e3a8a',
                 color: '#ffffff',
-                boxShadow: '0 4px 12px rgba(79, 119, 45, 0.25)',
+                boxShadow: '0 4px 12px rgba(30, 58, 138, 0.28)',
                 '&:hover': {
-                  bgcolor: '#3d5c22',
-                  boxShadow: '0 6px 16px rgba(79, 119, 45, 0.35)'
+                  bgcolor: '#172554',
+                  boxShadow: '0 6px 16px rgba(30, 58, 138, 0.38)'
                 }
               }}
             >
@@ -614,7 +615,7 @@ const ProfilePage = () => {
                 variant="contained"
                 onClick={handleOpenAddModal}
                 
-                sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#4f772d', '&:hover': { bgcolor: '#3d5c22' } }}
+                sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#1e3a8a', color: '#ffffff', '&:hover': { bgcolor: '#172554' } }}
               >
                 Add Your First Address
               </Button>
@@ -723,7 +724,7 @@ const ProfilePage = () => {
                               variant="text" 
                               onClick={() => handleSetDefault(addr.id)} 
                               startIcon={<i className="fi fi-rr-star" style={{ fontSize: 11 }} />}
-                              sx={{ fontWeight: 700, textTransform: 'none', color: '#4f772d', fontSize: '0.75rem' }}
+                              sx={{ fontWeight: 700, textTransform: 'none', color: '#1e3a8a', fontSize: '0.75rem' }}
                             >
                               Set Default
                             </Button>
@@ -892,8 +893,9 @@ const ProfilePage = () => {
                   textTransform: 'none', 
                   fontWeight: 700, 
                   px: 3, 
-                  bgcolor: '#4f772d', 
-                  '&:hover': { bgcolor: '#3d5c22' } 
+                  bgcolor: '#1e3a8a',
+                  color: '#ffffff',
+                  '&:hover': { bgcolor: '#172554' } 
                 }}
               >
                 {saving ? <CircularProgress size={20} color="inherit" /> : (editingAddressId ? 'Save Changes' : 'Add Address')}

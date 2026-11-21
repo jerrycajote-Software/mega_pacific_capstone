@@ -72,7 +72,7 @@ class Studio3DErrorBoundary extends React.Component {
                 onClick={this.props.onExitStudio}
                 sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none', color: '#cbd5e1', borderColor: 'rgba(255,255,255,0.25)' }}
               >
-                Exit 3D Studio
+                Exit 3D Customization
               </Button>
             )}
           </Box>

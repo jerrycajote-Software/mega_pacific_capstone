@@ -682,8 +682,8 @@ const CoilInventoryPage = () => {
                               </div>
 
                               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
-                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                  ~{(count * METERS_PER_ROLL).toLocaleString()} linear meters
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                  {(coil.availableMeters != null ? Number(coil.availableMeters) : count * METERS_PER_ROLL).toLocaleString(undefined, { maximumFractionDigits: 2 })} m remaining
                                 </span>
                               </div>
 
@@ -779,8 +779,8 @@ const CoilInventoryPage = () => {
                                 <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                                   {count === 1 ? 'Roll' : 'Rolls'}
                                 </span>
-                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                  (~{(count * METERS_PER_ROLL).toLocaleString()} m)
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                  ({(coil.availableMeters != null ? Number(coil.availableMeters) : count * METERS_PER_ROLL).toLocaleString(undefined, { maximumFractionDigits: 2 })} m)
                                 </span>
                               </div>
                               <div style={{ marginTop: 4 }}>
@@ -865,8 +865,15 @@ const CoilInventoryPage = () => {
                 <tbody>
                   {logs.map(log => {
                     const isDeduction = log.actionType === 'deduction';
-                    const rollQty = Math.abs(log.coilsDeducted || log.metersDeducted || 1);
-                    const remainingBalance = log.remainingCount ?? log.remainingMeters ?? 0;
+                    const rollDelta = Math.abs(Number(log.coilsDeducted) || 0);
+                    const meterDelta = Math.abs(Number(log.metersDeducted) || 0);
+                    const isMeterOnlyChange = meterDelta > 0 && rollDelta === 0;
+                    const displayMeters = meterDelta > 0 ? meterDelta : rollDelta * METERS_PER_ROLL;
+                    const remainingRolls = log.remainingCount ?? 0;
+                    const remainingMeters =
+                      log.remainingMeters != null && Number(log.remainingMeters) >= 0
+                        ? Number(log.remainingMeters)
+                        : remainingRolls * METERS_PER_ROLL;
 
                     return (
                       <tr key={log.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
@@ -886,15 +893,21 @@ const CoilInventoryPage = () => {
                           </span>
                         </td>
                         <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: isDeduction ? '#ef4444' : '#10b981' }}>
-                          <div>{isDeduction ? `-${rollQty} roll${rollQty > 1 ? 's' : ''}` : `+${rollQty} roll${rollQty > 1 ? 's' : ''}`}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                            ~{(rollQty * METERS_PER_ROLL).toLocaleString()} m
-                          </div>
+                          {isMeterOnlyChange ? (
+                            <div>{isDeduction ? '-' : '+'}{displayMeters.toLocaleString(undefined, { maximumFractionDigits: 2 })} m</div>
+                          ) : (
+                            <>
+                              <div>{isDeduction ? `-${rollDelta} roll${rollDelta > 1 ? 's' : ''}` : `+${rollDelta} roll${rollDelta > 1 ? 's' : ''}`}</div>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                                {isDeduction ? '-' : '+'}{displayMeters.toLocaleString(undefined, { maximumFractionDigits: 2 })} m
+                              </div>
+                            </>
+                          )}
                         </td>
                         <td style={{ padding: '0.85rem 1rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                          <div>{remainingBalance} roll{remainingBalance !== 1 ? 's' : ''}</div>
+                          <div>{remainingMeters.toLocaleString(undefined, { maximumFractionDigits: 2 })} m</div>
                           <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                            ~{(remainingBalance * METERS_PER_ROLL).toLocaleString()} m
+                            {remainingRolls} {remainingRolls === 1 ? 'roll' : 'rolls'}
                           </div>
                         </td>
                         <td style={{ padding: '0.85rem 1.25rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>

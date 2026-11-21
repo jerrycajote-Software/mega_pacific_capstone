@@ -1,7 +1,12 @@
 const prisma = require("../../config/db");
 const { notifyLogisticLowCoilStock } = require("../../services/notificationManagerService");
-
-const METERS_PER_COIL_ROLL = 4100;
+const {
+  METERS_PER_COIL_ROLL,
+  roundMeters,
+  resolveCoilAvailableMeters,
+  computeRollCountFromMeters,
+  getCoilStockStatus
+} = require("../../services/coilInventoryService");
 
 const OFFICIAL_COIL_COLORS = [
   "Marshall Dark Gray",
@@ -44,11 +49,12 @@ const getCoils = async (req, res) => {
     });
 
     const enriched = coils.map((c) => {
-      const coilStatus = getCoilStatus(c);
-      const count = c.coilCount || 0;
-      const linearMeters = count * METERS_PER_COIL_ROLL;
+      const linearMeters = resolveCoilAvailableMeters(c);
+      const count = computeRollCountFromMeters(linearMeters);
+      const coilStatus = getCoilStockStatus({ ...c, availableMeters: linearMeters, coilCount: count });
       return {
         ...c,
+        coilCount: count,
         availableMeters: linearMeters,
         linearMeters,
         metersPerRoll: METERS_PER_COIL_ROLL,
@@ -85,12 +91,13 @@ const getCoilSummary = async (req, res) => {
     };
 
     for (const c of coils) {
-      const count = c.coilCount || 0;
+      const meters = resolveCoilAvailableMeters(c);
+      const count = computeRollCountFromMeters(meters);
       totalRolls += count;
-      totalMeters += count * METERS_PER_COIL_ROLL;
+      totalMeters += meters;
       thicknessCounts[c.thickness] = (thicknessCounts[c.thickness] || 0) + count;
 
-      const status = getCoilStatus(c);
+      const status = getCoilStockStatus({ ...c, availableMeters: meters, coilCount: count });
       if (status === "Out of Stock") criticalCount++;
       else if (status === "Low Stock") lowCount++;
       else optimalCount++;
@@ -143,15 +150,18 @@ const deductCoil = async (req, res) => {
       });
     }
 
-    const previousCount = coil.coilCount;
-    const remainingCount = previousCount - countToDeduct;
+    const previousMeters = resolveCoilAvailableMeters(coil);
+    const previousCount = computeRollCountFromMeters(previousMeters);
+    const metersToDeduct = roundMeters(countToDeduct * METERS_PER_COIL_ROLL);
+    const remainingMeters = roundMeters(Math.max(0, previousMeters - metersToDeduct));
+    const remainingCount = computeRollCountFromMeters(remainingMeters);
 
     const result = await prisma.$transaction(async (tx) => {
       const updatedCoil = await tx.coilInventory.update({
         where: { id },
         data: {
           coilCount: remainingCount,
-          availableMeters: remainingCount * METERS_PER_COIL_ROLL
+          availableMeters: remainingMeters
         }
       });
 
@@ -161,11 +171,11 @@ const deductCoil = async (req, res) => {
           userId: staffId ? parseInt(staffId, 10) : null,
           orderId: orderId ? parseInt(orderId, 10) : null,
           previousCount,
-          coilsDeducted: countToDeduct,
+          coilsDeducted: Math.max(0, previousCount - remainingCount),
           remainingCount,
-          previousMeters: previousCount * METERS_PER_COIL_ROLL,
-          metersDeducted: countToDeduct * METERS_PER_COIL_ROLL,
-          remainingMeters: remainingCount * METERS_PER_COIL_ROLL,
+          previousMeters,
+          metersDeducted: roundMeters(previousMeters - remainingMeters),
+          remainingMeters,
           actionType: "deduction",
           reason: reason || (orderId ? `Production Order #ORD-${orderId}` : "Manual roll-forming job deduction")
         }
@@ -174,7 +184,7 @@ const deductCoil = async (req, res) => {
       return { updatedCoil, log };
     });
 
-    const newStatus = getCoilStatus(result.updatedCoil);
+    const newStatus = getCoilStockStatus(result.updatedCoil);
 
     const io = req.app.get("io");
     if (io) {
@@ -221,15 +231,18 @@ const restockCoil = async (req, res) => {
       return res.status(404).json({ success: false, error: "Coil inventory record not found" });
     }
 
-    const previousCount = coil.coilCount;
-    const remainingCount = previousCount + countToAdd;
+    const previousMeters = resolveCoilAvailableMeters(coil);
+    const previousCount = computeRollCountFromMeters(previousMeters);
+    const metersToAdd = roundMeters(countToAdd * METERS_PER_COIL_ROLL);
+    const remainingMeters = roundMeters(previousMeters + metersToAdd);
+    const remainingCount = computeRollCountFromMeters(remainingMeters);
 
     const result = await prisma.$transaction(async (tx) => {
       const updatedCoil = await tx.coilInventory.update({
         where: { id },
         data: {
           coilCount: remainingCount,
-          availableMeters: remainingCount * METERS_PER_COIL_ROLL
+          availableMeters: remainingMeters
         }
       });
 
@@ -238,11 +251,11 @@ const restockCoil = async (req, res) => {
           coilId: id,
           userId: staffId ? parseInt(staffId, 10) : null,
           previousCount,
-          coilsDeducted: -countToAdd,
+          coilsDeducted: -(remainingCount - previousCount),
           remainingCount,
-          previousMeters: previousCount * METERS_PER_COIL_ROLL,
-          metersDeducted: -countToAdd * METERS_PER_COIL_ROLL,
-          remainingMeters: remainingCount * METERS_PER_COIL_ROLL,
+          previousMeters,
+          metersDeducted: -metersToAdd,
+          remainingMeters,
           actionType: "restock",
           reason: reason || "Coil roll delivery restock"
         }
@@ -251,7 +264,7 @@ const restockCoil = async (req, res) => {
       return { updatedCoil, log };
     });
 
-    const newStatus = getCoilStatus(result.updatedCoil);
+    const newStatus = getCoilStockStatus(result.updatedCoil);
 
     const io = req.app.get("io");
     if (io) {

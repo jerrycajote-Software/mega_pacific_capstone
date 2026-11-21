@@ -201,7 +201,7 @@ const StudioCustomizerFooter = ({
             textTransform: 'none',
             fontSize: '0.88rem',
             whiteSpace: 'nowrap',
-            boxShadow: '0 4px 16px rgba(79, 119, 45, 0.4)',
+            boxShadow: '0 4px 16px rgba(30, 58, 138, 0.4)',
           }}
         >
           View Product Page

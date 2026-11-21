@@ -22,14 +22,24 @@ export function buildProductOptions(product) {
     (v.name && v.name.toLowerCase().replace(/\s+/g, '') === baseName.toLowerCase().replace(/\s+/g, ''))
   );
 
+  const baseDiscountPct = product.discountPercent ?? 30;
+  const computeFallbackOriginal = (sellingPrice, discountPct) => {
+    if (!sellingPrice) return 0;
+    if (!discountPct || discountPct <= 0 || discountPct >= 100) return sellingPrice;
+    return Math.round((sellingPrice / (1 - discountPct / 100)) * 100) / 100;
+  };
+
   if (!baseCoveredByVariant && (product.price > 0 || product.stock > 0 || isPreOrder)) {
+    const baseSelling = product.price ?? 0;
     options.push({
       id: null,
       name: baseName,
       thickness: baseThickness,
-      price: product.price ?? 0,
-      originalPrice: product.originalPrice ?? (product.price ? Math.round((product.price / 0.70) * 100) / 100 : 0),
-      discountPercent: product.discountPercent ?? 30,
+      price: baseSelling,
+      originalPrice: baseDiscountPct > 0
+        ? (product.originalPrice ?? computeFallbackOriginal(baseSelling, baseDiscountPct))
+        : baseSelling,
+      discountPercent: baseDiscountPct,
       stock: isPreOrder ? 9999 : (product.stock ?? 0),
       status: 'available',
       color: product.color || null,
@@ -39,13 +49,17 @@ export function buildProductOptions(product) {
 
   if (hasVariants) {
     product.variants.forEach((v) => {
+      const variantDiscountPct = v.discountPercent ?? baseDiscountPct;
+      const variantSelling = v.price ?? 0;
       options.push({
         id: v.id,
         name: v.name,
         thickness: v.thickness || v.name,
-        price: v.price,
-        originalPrice: v.originalPrice ?? (v.price ? Math.round((v.price / 0.70) * 100) / 100 : 0),
-        discountPercent: v.discountPercent ?? 30,
+        price: variantSelling,
+        originalPrice: variantDiscountPct > 0
+          ? (v.originalPrice ?? computeFallbackOriginal(variantSelling, variantDiscountPct))
+          : variantSelling,
+        discountPercent: variantDiscountPct,
         stock: isPreOrder ? 9999 : v.stock,
         status: isPreOrder ? 'available' : v.status,
         sku: v.sku || null,

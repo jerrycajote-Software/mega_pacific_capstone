@@ -261,7 +261,7 @@ const GuideHiddenObjectsAssistant = ({
                     fontSize: '0.78rem',
                     textTransform: 'none',
                     borderRadius: 1.8,
-                    boxShadow: '0 4px 14px rgba(79, 119, 45, 0.4)',
+                    boxShadow: '0 4px 14px rgba(30, 58, 138, 0.4)',
                   }}
                 >
                   Hide Ridge Cap, Flashings & Gutters
@@ -359,7 +359,7 @@ const GuideHiddenObjectsAssistant = ({
                         fontSize: '0.78rem',
                         textTransform: 'none',
                         borderRadius: 1.8,
-                        boxShadow: '0 4px 14px rgba(79, 119, 45, 0.4)',
+                        boxShadow: '0 4px 14px rgba(30, 58, 138, 0.4)',
                       }}
                     >
                       Make Visible Again
@@ -431,7 +431,7 @@ const GuideHiddenObjectsAssistant = ({
                         fontSize: '0.78rem',
                         textTransform: 'none',
                         borderRadius: 1.8,
-                        boxShadow: '0 4px 14px rgba(79, 119, 45, 0.4)',
+                        boxShadow: '0 4px 14px rgba(30, 58, 138, 0.4)',
                       }}
                     >
                       Show All Layers
