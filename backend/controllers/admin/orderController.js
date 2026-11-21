@@ -1,5 +1,9 @@
 const prisma = require("../../config/db");
 const EstimatedDeliveryValidator = require("../../utils/EstimatedDeliveryValidator");
+const {
+  restoreCoilsForOrderInTx,
+  emitCoilInventoryUpdates
+} = require("../../services/coilInventoryService");
 
 
 const getOrders = async (req, res) => {
@@ -91,10 +95,35 @@ const updateOrderStatus = async (req, res) => {
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
     if (estimatedDeliveryDate !== undefined) updateData.estimatedDeliveryDate = estimatedDeliveryDate ? new Date(estimatedDeliveryDate) : null;
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: parseInt(id) },
-      data: updateData
+    const normalizedPrevStatus = (existingOrder.status || "").trim().toLowerCase();
+    const normalizedNextStatus = (status || "").trim().toLowerCase();
+    const shouldRestoreCoils =
+      (normalizedNextStatus === "cancelled" || normalizedNextStatus === "rejected") &&
+      normalizedPrevStatus !== "cancelled" &&
+      normalizedPrevStatus !== "rejected";
+
+    const { updatedOrder, restoredCoils } = await prisma.$transaction(async (tx) => {
+      const ord = await tx.order.update({
+        where: { id: parseInt(id) },
+        data: updateData
+      });
+
+      const restored = shouldRestoreCoils
+        ? await restoreCoilsForOrderInTx(tx, {
+            orderId: ord.id,
+            staffUserId: req.user?.userId || req.user?.id || null,
+            reason: `Restored coil length after Admin marked Order #ORD-${String(ord.id).padStart(3, "0")} as ${normalizedNextStatus}`
+          })
+        : [];
+
+      return { updatedOrder: ord, restoredCoils: restored };
     });
+
+    const io = req.app.get("io");
+    if (io && restoredCoils.length > 0) {
+      emitCoilInventoryUpdates(io, restoredCoils);
+    }
+
     res.status(200).json({ success: true, data: updatedOrder });
   } catch (error) {
     console.error("Failed to update order:", error);

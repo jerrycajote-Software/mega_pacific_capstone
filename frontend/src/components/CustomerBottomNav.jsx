@@ -5,13 +5,11 @@ import {
   CustomCustomerHomeIcon,
   CustomCustomerCatalogIcon,
   CustomCustomerProfileIcon,
-  CustomPreOrderIcon,
 } from './icons';
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Home', icon: CustomCustomerHomeIcon },
   { path: '/products', label: 'Catalog', icon: CustomCustomerCatalogIcon },
-  { path: '/3d-studio', label: '3D Studio', icon: CustomPreOrderIcon },
   { path: '/profile', label: 'Profile', icon: CustomCustomerProfileIcon },
 ];
 

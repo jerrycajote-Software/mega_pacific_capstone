@@ -30,6 +30,7 @@ const getProductById = async (req, res) => {
         thickness: true,
         color: true,
         coilCount: true,
+        availableMeters: true,
         minAlertCount: true
       }
     });
@@ -143,6 +144,7 @@ const getCoilAvailability = async (req, res) => {
         thickness: true,
         color: true,
         coilCount: true,
+        availableMeters: true,
         minAlertCount: true
       }
     });

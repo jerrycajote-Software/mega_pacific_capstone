@@ -1,6 +1,10 @@
 const prisma = require("../../config/db");
 const { getBusinessSalesQuotaSummary } = require("../../services/salesQuotaService");
 const {
+  getGlobalDiscountOverview,
+  applyGlobalProductDiscount
+} = require("../../services/discountService");
+const {
   isPartial50Order,
   getCollectedRevenueAmount,
   getPendingBalanceAmount
@@ -359,7 +363,65 @@ const getSalesQuotaForStaff = async (req, res) => {
   }
 };
 
+// Fetch the storewide default discount setting and product discount summary for Sales staff
+const getGlobalDiscountSettings = async (req, res) => {
+  try {
+    const overview = await getGlobalDiscountOverview();
+    res.status(200).json({
+      success: true,
+      data: overview
+    });
+  } catch (error) {
+    console.error("Sales get global discount error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load the global product discount settings."
+    });
+  }
+};
+
+// Update the global product discount percentage and apply it across all products and variants
+const updateGlobalDiscountForAllProducts = async (req, res) => {
+  try {
+    const { discountPercent } = req.body;
+    const summary = await applyGlobalProductDiscount(discountPercent);
+    const overview = await getGlobalDiscountOverview();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("product_catalog_updated", {
+        action: "global_discount_updated",
+        discountPercent: summary.globalDiscountPercent
+      });
+    }
+
+    const message =
+      summary.globalDiscountPercent === 0
+        ? `Removed discount for all ${summary.updatedProductCount} products. Regular prices are now active.`
+        : `Updated discount to ${summary.globalDiscountPercent}% OFF for all ${summary.updatedProductCount} products.`;
+
+    res.status(200).json({
+      success: true,
+      message,
+      data: {
+        ...overview,
+        updatedProductCount: summary.updatedProductCount,
+        updatedVariantCount: summary.updatedVariantCount
+      }
+    });
+  } catch (error) {
+    console.error("Sales update global discount error:", error);
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to update the global product discount."
+    });
+  }
+};
+
 module.exports = {
   getSalesDashboardStats,
-  getSalesQuotaForStaff
+  getSalesQuotaForStaff,
+  getGlobalDiscountSettings,
+  updateGlobalDiscountForAllProducts
 };

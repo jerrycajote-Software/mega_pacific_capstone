@@ -5,6 +5,7 @@ const {
   getPreOrderProducts,
   createPreOrderProduct,
   updatePreOrderProduct,
+  updatePreOrderProductDiscount,
   deletePreOrderProduct,
   addVariant,
   deleteVariant,
@@ -15,6 +16,7 @@ router.get("/", verifySales, getPreOrderProducts);
 router.post("/", verifySales, createPreOrderProduct);
 router.put("/:id", verifySales, updatePreOrderProduct);
 router.patch("/:id/status", verifySales, togglePreOrderProductStatus);
+router.patch("/:id/discount", verifySales, updatePreOrderProductDiscount);
 router.delete("/:id", verifySales, deletePreOrderProduct);
 router.post("/:id/variants", verifySales, addVariant);
 router.delete("/:id/variants/:variantId", verifySales, deleteVariant);

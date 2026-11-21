@@ -1451,7 +1451,7 @@ const Product3DViewerModal = ({
                   borderRadius: 2,
                   px: 3,
                   textTransform: 'none',
-                  boxShadow: '0 4px 16px rgba(79, 119, 45, 0.4)',
+                  boxShadow: '0 4px 16px rgba(30, 58, 138, 0.4)',
                 }}
               >
                 Apply Changes to Order

@@ -47,6 +47,13 @@ import {
 } from '@mui/material';
 import { fetchDeliveryFee, computeClientDeliveryFee } from '../../utils/deliveryFeeCalculator';
 import { validateRealisticEmail } from '../../utils/emailValidator';
+import {
+  generateCheckoutRequestId,
+  savePendingPaymentRecovery,
+  loadPendingPaymentRecovery,
+  clearPendingPaymentRecovery,
+  isNetworkDisconnectError
+} from '../../utils/pendingPaymentRecovery';
 
 
 const Checkout = () => {
@@ -100,12 +107,26 @@ const Checkout = () => {
     return unitP * len;
   };
 
+  const getItemDiscountPercent = (item) => {
+    const rawPct = item.variant?.discountPercent ?? item.product?.discountPercent ?? item.discountPercent ?? 30;
+    const numericPct = Number(rawPct);
+    return Number.isNaN(numericPct) ? 0 : Math.max(0, Math.min(95, numericPct));
+  };
+
   const computeItemOriginalPrice = (item) => {
     const isCustomEligible = isCustomLengthProfile(item.product?.type || item.type);
     const isPerMeter = isCustomEligible && (item.product?.unit === 'per meter' || item.product?.unit === 'meter' || item.product?.isPreOrder);
     const len = isPerMeter && item.customLength ? Number(item.customLength) : 1;
     const unitP = item.variant?.price ?? item.product?.price ?? (item.price || 0);
-    const origP = item.variant?.originalPrice ?? item.product?.originalPrice ?? item.originalPrice ?? (unitP ? Math.round((unitP / 0.70) * 100) / 100 : 0);
+    const itemDiscountPct = getItemDiscountPercent(item);
+    if (itemDiscountPct <= 0) {
+      return unitP * len;
+    }
+    const origP =
+      item.variant?.originalPrice ??
+      item.product?.originalPrice ??
+      item.originalPrice ??
+      (unitP && itemDiscountPct < 100 ? Math.round((unitP / (1 - itemDiscountPct / 100)) * 100) / 100 : unitP);
     return origP * len;
   };
 
@@ -526,39 +547,39 @@ const Checkout = () => {
     }
   };
 
-  const executeOrderCreation = async (paymongoReference = null) => {
-    if (submittingRef.current || isSubmitting) return;
-    submittingRef.current = true;
-    setIsSubmitting(true);
+  const clientRequestIdRef = useRef(generateCheckoutRequestId());
+  const pendingVerifiedPaymentRef = useRef(null);
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine === false : false
+  );
+  const [recoveringPendingPayment, setRecoveringPendingPayment] = useState(false);
 
-    if (formData.fulfillmentType === 'Delivery' && (isEditingAddress || !hasProfile)) {
-      await saveProfileAddress();
-    }
+  const buildOrderRequestConfig = (paymongoRefStr = null, paymongoIntentId = null) => {
+    const paymentModeDescription = formData.paymentPlan === 'COD_50'
+      ? 'Cash on Delivery (50% Downpayment)'
+      : 'Bank Transfer - Full Payment';
 
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      
-      const paymentModeDescription = formData.paymentPlan === 'COD_50'
-        ? 'Cash on Delivery (50% Downpayment)'
-        : 'Bank Transfer - Full Payment';
+    const paymentDetails = {
+      paymentPlan: formData.paymentPlan,
+      paymentChannel: formData.paymentChannel,
+      paymentMode: paymentModeDescription,
+      shippingFee: shippingFee,
+      cardDetails: formData.paymentChannel === 'Card' ? {
+        cardNumber: formData.cardNumber,
+        cardExpiry: formData.cardExpiry,
+        cardCvv: formData.cardCvv,
+      } : undefined,
+      gcashNumber: formData.paymentChannel === 'GCash' ? formData.gcashNumber : undefined,
+      paymongoReference: paymongoRefStr || undefined,
+      paymentIntentId: paymongoIntentId || undefined,
+      clientRequestId: clientRequestIdRef.current
+    };
 
-      const paymentDetails = {
-        paymentPlan: formData.paymentPlan,
-        paymentChannel: formData.paymentChannel,
-        paymentMode: paymentModeDescription,
-        shippingFee: shippingFee,
-        cardDetails: formData.paymentChannel === 'Card' ? {
-          cardNumber: formData.cardNumber,
-          cardExpiry: formData.cardExpiry,
-          cardCvv: formData.cardCvv,
-        } : undefined,
-        gcashNumber: formData.paymentChannel === 'GCash' ? formData.gcashNumber : undefined,
-        paymongoReference: paymongoReference || undefined
-      };
-
-      let res;
-      if (state.isBulk || orderItems.length > 1) {
-        const bulkPayload = {
+    const isBulkRequest = Boolean(state.isBulk || orderItems.length > 1);
+    if (isBulkRequest) {
+      return {
+        isBulk: true,
+        payload: {
           userId: user?.id || user?.userId,
           fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
@@ -578,37 +599,56 @@ const Checkout = () => {
             thickness: item?.thickness || null,
             color: item?.color || null
           }))
-        };
-        res = await axios.post(`${API_URL}/api/customer/orders/bulk`, bulkPayload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } else {
-        const singleItem = orderItems[0];
-        const singlePayload = {
-          userId: user?.id || user?.userId,
-          productId: singleItem?.product?.id || singleItem?.productId || singleItem?.id,
-          variantId: singleItem?.variant?.id || singleItem?.variantId || null,
-          quantity: singleItem?.quantity || 1,
-          customLength: singleItem?.customLength ? Number(singleItem.customLength) : null,
-          thickness: singleItem?.thickness || null,
-          color: singleItem?.color || null,
-          fulfillmentType: formData.fulfillmentType,
-          customerEmail: formData.customerEmail,
-          shippingName: formData.customerName,
-          shippingContactNumber: formData.contactNumber || formData.gcashNumber || '',
-          shippingAddress: formData.address,
-          shippingCity: formData.city,
-          shippingProvince: formData.province,
-          shippingZipCode: formData.zipCode,
-          notes: formData.notes,
-          ...paymentDetails
-        };
-        res = await axios.post(`${API_URL}/api/customer/orders`, singlePayload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        }
+      };
+    }
+
+    const singleItem = orderItems[0];
+    return {
+      isBulk: false,
+      payload: {
+        userId: user?.id || user?.userId,
+        productId: singleItem?.product?.id || singleItem?.productId || singleItem?.id,
+        variantId: singleItem?.variant?.id || singleItem?.variantId || null,
+        quantity: singleItem?.quantity || 1,
+        customLength: singleItem?.customLength ? Number(singleItem.customLength) : null,
+        thickness: singleItem?.thickness || null,
+        color: singleItem?.color || null,
+        fulfillmentType: formData.fulfillmentType,
+        customerEmail: formData.customerEmail,
+        shippingName: formData.customerName,
+        shippingContactNumber: formData.contactNumber || formData.gcashNumber || '',
+        shippingAddress: formData.address,
+        shippingCity: formData.city,
+        shippingProvince: formData.province,
+        shippingZipCode: formData.zipCode,
+        notes: formData.notes,
+        ...paymentDetails
       }
+    };
+  };
+
+  const executeOrderCreation = async (paymongoReference = null, paymongoIntentId = null) => {
+    if (submittingRef.current || isSubmitting) return;
+    submittingRef.current = true;
+    setIsSubmitting(true);
+
+    if (formData.fulfillmentType === 'Delivery' && (isEditingAddress || !hasProfile)) {
+      await saveProfileAddress();
+    }
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const { isBulk, payload } = buildOrderRequestConfig(paymongoReference, paymongoIntentId);
+      const endpoint = isBulk ? `${API_URL}/api/customer/orders/bulk` : `${API_URL}/api/customer/orders`;
+
+      const res = await axios.post(endpoint, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (res.data.success) {
+        clearPendingPaymentRecovery();
+        pendingVerifiedPaymentRef.current = null;
         isLeavingRef.current = true;
         setPaymongoQrModalOpen(false);
         setSuccess(res.data.data.id);
@@ -617,9 +657,31 @@ const Checkout = () => {
     } catch (err) {
       console.error('Failed to submit order', err);
       setPaymongoQrModalOpen(false);
-      if (err.response?.status === 409 && err.response?.data?.details?.type === 'STOCK_ERROR') {
-         const { itemName, available, requested } = err.response.data.details;
-         if (available === 0) {
+      if (isNetworkDisconnectError(err)) {
+        if (paymongoReference || paymongoIntentId) {
+          pendingVerifiedPaymentRef.current = {
+            paymongoReference,
+            paymongoIntentId
+          };
+          setErrors({
+            submit: `Your GCash payment was verified (Ref: ${paymongoReference || paymongoIntentId}), but your internet disconnected while saving your order. Keep this page open — your order will finish saving automatically once you reconnect, or click Pay again to retry safely without being charged twice.`
+          });
+        } else {
+          setErrors({
+            submit: 'Your internet connection dropped while sending your order. Once you reconnect, click Pay again — duplicate-order protection ensures you will not be ordered or charged twice.'
+          });
+        }
+      } else if (err.response?.status === 409 && err.response?.data?.details?.type === 'STOCK_ERROR') {
+         const { itemName, available, requested, unit, message } = err.response.data.details;
+         if (unit === 'meters') {
+           setErrors({
+             submit:
+               message ||
+               (available === 0
+                 ? `The item "${itemName}" is currently out of coil stock. Please choose another color or thickness.`
+                 : `Not enough coil length in stock for "${itemName}". Only ${Number(available).toFixed(2)}m remains, but your order needs ${Number(requested).toFixed(2)}m. Please lower your cut length or sheet quantity and try again.`)
+           });
+         } else if (available === 0) {
            setErrors({ submit: `The item "${itemName}" is Out of Stock, please find another item available.` });
          } else {
            setErrors({ submit: `The item "${itemName}" only has ${available} units left (you requested ${requested}). We've adjusted your quantity. Please review and try again.` });
@@ -638,22 +700,113 @@ const Checkout = () => {
     }
   };
 
+  // Monitor browser online/offline state and auto-recover any verified PayMongo payment on reconnect
+  useEffect(() => {
+    const handleOfflineEvent = () => setIsOffline(true);
+
+    const handleOnlineRecovery = async () => {
+      setIsOffline(false);
+
+      // Resume an already-verified PayMongo payment that failed to reach the server while offline
+      if (pendingVerifiedPaymentRef.current && !submittingRef.current) {
+        const { paymongoReference, paymongoIntentId } = pendingVerifiedPaymentRef.current;
+        setErrors({});
+        await executeOrderCreation(paymongoReference, paymongoIntentId);
+        return;
+      }
+
+      // Check localStorage for a previously scanned PayMongo QR session
+      const saved = loadPendingPaymentRecovery(user?.id || user?.userId);
+      if (!saved?.paymentIntentId || !saved?.orderPayload || !token || submittingRef.current) return;
+
+      try {
+        setRecoveringPendingPayment(true);
+        const API_URL = import.meta.env.VITE_API_URL || '';
+        const statusRes = await axios.get(
+          `${API_URL}/api/payments/paymongo/status/${saved.paymentIntentId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const statusData = statusRes.data?.data;
+        if (statusData?.isPaid) {
+          const endpoint = saved.isBulk
+            ? `${API_URL}/api/customer/orders/bulk`
+            : `${API_URL}/api/customer/orders`;
+          const orderRes = await axios.post(
+            endpoint,
+            {
+              ...saved.orderPayload,
+              clientRequestId: saved.clientRequestId,
+              paymentIntentId: statusData.paymentIntentId,
+              paymongoReference: statusData.paymentRecordId || statusData.paymentIntentId
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (orderRes.data?.success && orderRes.data?.data?.id) {
+            clearPendingPaymentRecovery();
+            isLeavingRef.current = true;
+            setPaymongoQrModalOpen(false);
+            setSuccess(orderRes.data.data.id);
+            setCreatedOrder(orderRes.data.data);
+          }
+        }
+      } catch (recoveryErr) {
+        console.warn('Checkout reconnect recovery check skipped:', recoveryErr?.message);
+      } finally {
+        setRecoveringPendingPayment(false);
+      }
+    };
+
+    window.addEventListener('offline', handleOfflineEvent);
+    window.addEventListener('online', handleOnlineRecovery);
+
+    // Also run once on mount in case the user refreshed after paying via GCash QR
+    if (typeof navigator === 'undefined' || navigator.onLine !== false) {
+      handleOnlineRecovery();
+    }
+
+    return () => {
+      window.removeEventListener('offline', handleOfflineEvent);
+      window.removeEventListener('online', handleOnlineRecovery);
+    };
+  }, [token, user?.id, user?.userId]);
+
   const handleConfirmCheckoutOrder = async (e) => {
     e.preventDefault();
     if (submittingRef.current || isSubmitting) return;
     if (!validateForm()) return;
+
+    if (pendingVerifiedPaymentRef.current) {
+      const { paymongoReference, paymongoIntentId } = pendingVerifiedPaymentRef.current;
+      await executeOrderCreation(paymongoReference, paymongoIntentId);
+      return;
+    }
 
     if (formData.paymentChannel === 'GCash' && gcashQrEnabled) {
       setPaymongoQrModalOpen(true);
       return;
     }
 
-    await executeOrderCreation(null);
+    await executeOrderCreation(null, null);
+  };
+
+  const handlePaymongoQrSessionCreated = (session) => {
+    if (!session?.paymentIntentId) return;
+    const { isBulk, payload } = buildOrderRequestConfig(null, session.paymentIntentId);
+    savePendingPaymentRecovery({
+      userId: user?.id || user?.userId,
+      clientRequestId: clientRequestIdRef.current,
+      paymentIntentId: session.paymentIntentId,
+      amountPhp: formData.paymentPlan === 'COD_50' ? grandTotal * 0.5 : grandTotal,
+      paymentPlan: formData.paymentPlan,
+      isBulk,
+      orderPayload: payload
+    });
   };
 
   const handlePaymongoPaymentVerified = async (paymentInfo) => {
     const refId = paymentInfo?.paymentRecordId || paymentInfo?.paymentIntentId || 'Verified';
-    await executeOrderCreation(refId);
+    const intentId = paymentInfo?.paymentIntentId || null;
+    await executeOrderCreation(refId, intentId);
   };
 
   if (success) {
@@ -1226,7 +1379,7 @@ const Checkout = () => {
                                 ₱{(sheetOrigPrice * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </Typography>
                               <Chip
-                                label="-30%"
+                                label={`-${getItemDiscountPercent(item)}%`}
                                 size="small"
                                 sx={{
                                   height: 14,
@@ -1308,10 +1461,18 @@ const Checkout = () => {
                   return acc + (orig * item.quantity);
                 }, 0);
                 const totalOrderSavings = Math.max(0, originalOrderTotal - orderTotal);
+                const uniqueActiveRates = Array.from(
+                  new Set(orderItems.map((item) => getItemDiscountPercent(item)).filter((pct) => pct > 0))
+                );
+                const savingsLabel =
+                  uniqueActiveRates.length === 1
+                    ? `Less ${uniqueActiveRates[0]}% Savings`
+                    : 'Product Discount Savings';
+
                 if (totalOrderSavings > 0) {
                   return (
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 600 }}>Less 30% Savings</Typography>
+                      <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 600 }}>{savingsLabel}</Typography>
                       <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
                         -₱{totalOrderSavings.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </Typography>
@@ -1433,6 +1594,18 @@ const Checkout = () => {
               </Typography>
             </Box>
 
+            {isOffline && (
+              <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+                <strong>No internet connection.</strong> Please reconnect before submitting payment. Any completed GCash payment will be recovered automatically once you are back online.
+              </Alert>
+            )}
+
+            {recoveringPendingPayment && (
+              <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+                Checking your recent GCash payment after reconnecting...
+              </Alert>
+            )}
+
             {errors.submit && (
               <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
                 {errors.submit}
@@ -1455,7 +1628,7 @@ const Checkout = () => {
                 fontSize: '0.95rem',
                 textTransform: 'none',
                 mb: 1.5,
-                boxShadow: '0 6px 20px -4px rgba(79, 119, 45, 0.4)'
+                boxShadow: '0 6px 20px -4px rgba(30, 58, 138, 0.4)'
               }}
             >
               {isSubmitting ? 'Processing Order...' : formData.paymentPlan === 'COD_50' ? `Pay 50% (₱${(grandTotal * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : `Pay Full (₱${grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
@@ -1530,6 +1703,7 @@ const Checkout = () => {
         customerName={formData.customerName}
         customerEmail={formData.customerEmail}
         contactNumber={formData.gcashNumber || formData.contactNumber}
+        onQrSessionCreated={handlePaymongoQrSessionCreated}
         onPaymentConfirmed={handlePaymongoPaymentVerified}
       />
 
@@ -1597,7 +1771,7 @@ const Checkout = () => {
               textTransform: 'none',
               fontWeight: 700,
               py: 1,
-              boxShadow: '0 4px 12px rgba(79, 119, 45, 0.25)'
+              boxShadow: '0 4px 12px rgba(30, 58, 138, 0.25)'
             }}
           >
             Stay on Checkout

@@ -2,6 +2,10 @@ const prisma = require("../../config/db");
 const { checkAndExtendDeliveryDates } = require("../../utils/deliveryHelper");
 const { buildOrderPaymentSummary } = require("../../services/paymentCalculationService");
 const {
+  restoreCoilsForOrderInTx,
+  emitCoilInventoryUpdates
+} = require("../../services/coilInventoryService");
+const {
   notifyOrderRejected,
   notifyFinancePaymentVerificationNeeded,
   notifyFinanceRefundRequired
@@ -174,7 +178,7 @@ const rejectOrder = async (req, res) => {
       refundableAmount = 0;
     }
 
-    const { updatedOrder, refund } = await prisma.$transaction(async (tx) => {
+    const { updatedOrder, refund, restoredCoils } = await prisma.$transaction(async (tx) => {
       const ord = await tx.order.update({
         where: { id: orderId },
         data: {
@@ -203,11 +207,18 @@ const rejectOrder = async (req, res) => {
         }
       });
 
-      return { updatedOrder: ord, refund: ref };
+      const restored = await restoreCoilsForOrderInTx(tx, {
+        orderId,
+        staffUserId: req.user?.userId || req.user?.id || null,
+        reason: `Restored coil length from rejected Order #ORD-${String(orderId).padStart(3, "0")}${reason ? ` (${reason})` : ""}`
+      });
+
+      return { updatedOrder: ord, refund: ref, restoredCoils: restored };
     });
 
     const io = req.app.get("io");
     if (io) {
+      emitCoilInventoryUpdates(io, restoredCoils);
       io.emit("order_status_updated", {
         orderId: updatedOrder.id,
         status: updatedOrder.status,

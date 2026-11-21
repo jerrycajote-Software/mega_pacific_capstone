@@ -286,7 +286,7 @@ const OrderDetails = () => {
         <Button 
           variant="contained" 
           onClick={() => navigate('/orders')}
-          sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#4f772d', '&:hover': { bgcolor: '#3d5c22' } }}
+          sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, bgcolor: '#1e3a8a', color: '#ffffff', '&:hover': { bgcolor: '#172554' } }}
         >
           Return to Orders
         </Button>
@@ -1364,12 +1364,12 @@ const OrderDetails = () => {
                 textTransform: 'none',
                 fontWeight: 700,
                 py: 1.25,
-                bgcolor: '#4f772d',
+                bgcolor: '#1e3a8a',
                 color: '#ffffff',
-                boxShadow: '0 4px 14px rgba(79, 119, 45, 0.25)',
+                boxShadow: '0 4px 14px rgba(30, 58, 138, 0.28)',
                 '&:hover': {
-                  bgcolor: '#3d5c22',
-                  boxShadow: '0 6px 18px rgba(79, 119, 45, 0.35)'
+                  bgcolor: '#172554',
+                  boxShadow: '0 6px 18px rgba(30, 58, 138, 0.38)'
                 }
               }}
             >
@@ -1626,8 +1626,9 @@ const OrderDetails = () => {
                     borderRadius: 2, 
                     textTransform: 'none', 
                     fontWeight: 700, 
-                    bgcolor: '#4f772d', 
-                    '&:hover': { bgcolor: '#3d5c22' } 
+                    bgcolor: '#1e3a8a',
+                    color: '#ffffff',
+                    '&:hover': { bgcolor: '#172554' } 
                   }}
                 >
                   {submittingReview ? <CircularProgress size={20} color="inherit" /> : 'Submit Verified Review'}
@@ -1822,8 +1823,9 @@ const OrderDetails = () => {
                 borderRadius: 2, 
                 textTransform: 'none', 
                 fontWeight: 700, 
-                bgcolor: '#4f772d', 
-                '&:hover': { bgcolor: '#3d5c22' } 
+                bgcolor: '#1e3a8a',
+                color: '#ffffff',
+                '&:hover': { bgcolor: '#172554' } 
               }}
             >
               Close

@@ -453,10 +453,10 @@ const Home3DModelsShowcase = ({ availableProducts = [], onCustomizeIn3D }) => {
                         fontWeight: 800,
                         fontSize: '0.82rem',
                         textTransform: 'none',
-                        boxShadow: '0 4px 12px rgba(79,119,45,0.25)',
+                        boxShadow: '0 4px 12px rgba(30, 58, 138, 0.28)',
                         '&:hover': {
                           transform: 'translateY(-1px)',
-                          boxShadow: '0 6px 16px rgba(79,119,45,0.35)',
+                          boxShadow: '0 6px 16px rgba(30, 58, 138, 0.38)',
                         },
                       }}
                     >

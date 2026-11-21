@@ -31,10 +31,10 @@ const LogoutConfirmModal = ({ onClose, onConfirm }) => {
   
   const confirmBtnBg = isStaffPortal 
     ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' 
-    : 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)';
+    : 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)';
   const confirmBtnGlow = isStaffPortal
     ? 'rgba(34, 197, 94, 0.28)'
-    : 'rgba(79, 119, 45, 0.3)';
+    : 'rgba(30, 58, 138, 0.32)';
 
   return (
     <>

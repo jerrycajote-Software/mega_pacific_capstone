@@ -26,20 +26,36 @@ const getTypography = () => {
   };
 };
 
-const buildTheme = (mode, isCustomerRoute) =>
-  createTheme({
-    palette: {
-      mode,
-      primary: {
+const buildTheme = (mode, isCustomerRoute) => {
+  const primaryPalette = isCustomerRoute
+    ? {
+        main: '#1e3a8a',
+        dark: '#172554',
+        light: '#2563eb',
+        contrastText: '#ffffff',
+      }
+    : {
         main: '#4f772d',
         dark: '#3d5c22',
         light: '#6b9840',
         contrastText: '#ffffff',
-      },
-      secondary: {
+      };
+
+  const secondaryPalette = isCustomerRoute
+    ? {
+        main: '#172554',
+        contrastText: '#ffffff',
+      }
+    : {
         main: '#31572c',
         contrastText: '#ffffff',
-      },
+      };
+
+  return createTheme({
+    palette: {
+      mode,
+      primary: primaryPalette,
+      secondary: secondaryPalette,
       success: { main: '#4caf50', light: '#e8f5e9', dark: '#388e3c' },
       warning: { main: '#ed6c02', light: '#fff3e0' },
       error:   { main: '#d32f2f', light: '#fdecea' },
@@ -62,12 +78,50 @@ const buildTheme = (mode, isCustomerRoute) =>
           root: {
             borderRadius: 8,
             boxShadow: 'none',
-            '&:hover': { boxShadow: '0 4px 12px rgba(79,119,45,0.2)' },
+            '&:hover': {
+              boxShadow: isCustomerRoute
+                ? '0 4px 12px rgba(30, 58, 138, 0.25)'
+                : '0 4px 12px rgba(79,119,45,0.2)',
+            },
           },
           containedPrimary: {
-            background: 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
-            '&:hover': { background: 'linear-gradient(135deg, #5c8a35 0%, #4f772d 100%)' },
+            background: isCustomerRoute
+              ? 'linear-gradient(135deg, #1e3a8a 0%, #172554 100%)'
+              : 'linear-gradient(135deg, #4f772d 0%, #3d5c22 100%)',
+            color: '#ffffff',
+            '&:hover': {
+              background: isCustomerRoute
+                ? 'linear-gradient(135deg, #2548a8 0%, #1e3a8a 100%)'
+                : 'linear-gradient(135deg, #5c8a35 0%, #4f772d 100%)',
+              color: '#ffffff',
+            },
+            '&.Mui-disabled': isCustomerRoute
+              ? {
+                  background: '#cbd5e1',
+                  color: '#475569',
+                }
+              : {},
           },
+          outlinedPrimary: isCustomerRoute
+            ? {
+                color: '#1e3a8a',
+                borderColor: '#1e3a8a',
+                '&:hover': {
+                  borderColor: '#172554',
+                  backgroundColor: 'rgba(30, 58, 138, 0.06)',
+                  color: '#172554',
+                },
+              }
+            : {},
+          textPrimary: isCustomerRoute
+            ? {
+                color: '#1e3a8a',
+                '&:hover': {
+                  backgroundColor: 'rgba(30, 58, 138, 0.06)',
+                  color: '#172554',
+                },
+              }
+            : {},
         },
       },
       MuiCard: {
@@ -91,7 +145,7 @@ const buildTheme = (mode, isCustomerRoute) =>
             '& .MuiOutlinedInput-root': {
               backgroundColor: mode === 'dark' ? '#1e293b' : '#ffffff',
               '& fieldset': { borderColor: mode === 'dark' ? '#334155' : '#e0e7ef' },
-              '&:hover fieldset': { borderColor: '#4f772d' },
+              '&:hover fieldset': { borderColor: isCustomerRoute ? '#1e3a8a' : '#4f772d' },
             },
           },
         },
@@ -128,6 +182,7 @@ const buildTheme = (mode, isCustomerRoute) =>
       },
     },
   });
+};
 
 export const ThemeProvider = ({ children }) => {
   const location = useLocation();

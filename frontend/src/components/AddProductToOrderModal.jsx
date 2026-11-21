@@ -201,11 +201,19 @@ const AddProductToOrderModal = ({
     : 1.0;
 
   const activePrice = selectedOption?.price ?? selectedProduct?.price ?? 0;
-  const activeOrigPrice = selectedOption?.originalPrice ?? selectedProduct?.originalPrice ?? (activePrice ? Math.round((activePrice / 0.70) * 100) / 100 : 0);
+  const activeDiscountPct = selectedOption?.discountPercent ?? selectedProduct?.discountPercent ?? 30;
+  const activeOrigPrice = activeDiscountPct > 0
+    ? (selectedOption?.originalPrice ??
+        selectedProduct?.originalPrice ??
+        (activePrice && activeDiscountPct < 100
+          ? Math.round((activePrice / (1 - activeDiscountPct / 100)) * 100) / 100
+          : activePrice))
+    : activePrice;
+  const hasActiveDiscount = activeDiscountPct > 0 && activeOrigPrice > activePrice;
   const qtyNumber = quantity === '' ? 0 : (parseInt(quantity, 10) || 1);
   const calculatedLineTotal = activePrice * numLength * qtyNumber;
   const calculatedOrigTotal = activeOrigPrice * numLength * qtyNumber;
-  const calculatedSavings = Math.max(0, calculatedOrigTotal - calculatedLineTotal);
+  const calculatedSavings = hasActiveDiscount ? Math.max(0, calculatedOrigTotal - calculatedLineTotal) : 0;
 
   const handleAddCurrentToOrder = () => {
     if (!selectedProduct) return;
@@ -548,7 +556,9 @@ const AddProductToOrderModal = ({
                     <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
                         <Chip label={selectedProduct.type || 'Profile'} size="small" sx={{ fontWeight: 700, fontSize: '0.68rem', bgcolor: 'grey.100' }} />
-                        <Chip label="30% OFF Applied" size="small" sx={{ bgcolor: 'rgba(22, 163, 74, 0.08)', color: '#16a34a', fontWeight: 800, fontSize: '0.68rem' }} />
+                        {hasActiveDiscount && (
+                          <Chip label={`${activeDiscountPct}% OFF Applied`} size="small" sx={{ bgcolor: 'rgba(22, 163, 74, 0.08)', color: '#16a34a', fontWeight: 800, fontSize: '0.68rem' }} />
+                        )}
                       </Box>
                       <Typography variant="h6" fontWeight={900} sx={{ color: 'text.primary', lineHeight: 1.25, wordBreak: 'break-word' }}>
                         {selectedProduct.name}
@@ -952,9 +962,9 @@ const AddProductToOrderModal = ({
                       <Typography variant="h6" fontWeight={900} sx={{ color: '#16a34a', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
                         ₱{calculatedLineTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </Typography>
-                      {calculatedSavings > 0 && (
+                      {calculatedSavings > 0 && hasActiveDiscount && (
                         <Typography variant="caption" sx={{ color: '#dc2626', fontWeight: 800, display: 'block' }}>
-                          Save ₱{calculatedSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (30% OFF)
+                          Save ₱{calculatedSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({activeDiscountPct}% OFF)
                         </Typography>
                       )}
                     </Box>
@@ -985,9 +995,9 @@ const AddProductToOrderModal = ({
                             fontWeight: 800,
                             fontSize: '0.95rem',
                             textTransform: 'none',
-                            boxShadow: '0 8px 20px -6px rgba(79, 119, 45, 0.4)',
+                            boxShadow: '0 8px 20px -6px rgba(30, 58, 138, 0.4)',
                             '&:hover': {
-                              boxShadow: '0 12px 24px -6px rgba(79, 119, 45, 0.5)'
+                              boxShadow: '0 12px 24px -6px rgba(30, 58, 138, 0.5)'
                             }
                           }}
                         >

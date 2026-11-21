@@ -744,10 +744,16 @@ const ProductDetails = () => {
   const numLength = isPerMeter ? Math.max(MIN_PREORDER_LENGTH_METERS, Math.min(MAX_PREORDER_LENGTH_METERS, parseFloat(customLength) || 1.0)) : 1.0;
 
   const activePrice = selectedOption?.price ?? product?.price ?? 0;
-  const activeOrigPrice = selectedOption?.originalPrice ?? product?.originalPrice ?? (activePrice ? Math.round((activePrice / 0.70) * 100) / 100 : 0);
   const activeDiscountPct = selectedOption?.discountPercent ?? product?.discountPercent ?? 30;
-  const hasDiscount = activeOrigPrice > activePrice;
-  const unitSavings = Math.max(0, activeOrigPrice - activePrice);
+  const activeOrigPrice = activeDiscountPct > 0
+    ? (selectedOption?.originalPrice ??
+        product?.originalPrice ??
+        (activePrice && activeDiscountPct < 100
+          ? Math.round((activePrice / (1 - activeDiscountPct / 100)) * 100) / 100
+          : activePrice))
+    : activePrice;
+  const hasDiscount = activeDiscountPct > 0 && activeOrigPrice > activePrice;
+  const unitSavings = hasDiscount ? Math.max(0, activeOrigPrice - activePrice) : 0;
 
   const displayedUnitPrice = isPerMeter ? activePrice * numLength : activePrice;
   const displayedOrigUnitPrice = isPerMeter ? activeOrigPrice * numLength : activeOrigPrice;
@@ -999,7 +1005,7 @@ const ProductDetails = () => {
             </Box>
             {hasDiscount && (
               <Typography variant="caption" sx={{ color: '#16a34a', fontWeight: 700, mt: 0.5, display: 'block' }}>
-                ✨ Save ₱{displayedUnitSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per {isPerMeter ? `${numLength}m sheet` : 'unit'} with automatic 30% discount on every quantity!
+                Save ₱{displayedUnitSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per {isPerMeter ? `${numLength}m sheet` : 'unit'} with automatic {activeDiscountPct}% discount on every quantity!
               </Typography>
             )}
           </Box>
@@ -1392,7 +1398,7 @@ const ProductDetails = () => {
                 </Typography>
                 {hasDiscount && (
                   <Typography variant="caption" sx={{ color: '#dc2626', fontWeight: 700, display: 'block' }}>
-                    Total Saved: ₱{totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (30% OFF)
+                    Total Saved: ₱{totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({activeDiscountPct}% OFF)
                   </Typography>
                 )}
               </Box>
@@ -1446,9 +1452,9 @@ const ProductDetails = () => {
                     fontWeight: 800,
                     fontSize: '1rem',
                     textTransform: 'none',
-                    boxShadow: '0 8px 24px rgba(79,119,45,0.3)',
+                    boxShadow: '0 8px 24px rgba(30, 58, 138, 0.3)',
                     '&:hover': {
-                      boxShadow: '0 12px 28px rgba(79,119,45,0.45)',
+                      boxShadow: '0 12px 28px rgba(30, 58, 138, 0.45)',
                       transform: 'translateY(-1px)'
                     }
                   }}
@@ -1497,10 +1503,10 @@ const ProductDetails = () => {
                 py: 0.9,
                 borderStyle: 'dashed',
                 borderWidth: '1.5px',
-                bgcolor: 'rgba(79, 119, 45, 0.04)',
+                bgcolor: 'rgba(30, 58, 138, 0.04)',
                 '&:hover': {
                   borderStyle: 'solid',
-                  bgcolor: 'rgba(79, 119, 45, 0.1)'
+                  bgcolor: 'rgba(30, 58, 138, 0.1)'
                 }
               }}
             >

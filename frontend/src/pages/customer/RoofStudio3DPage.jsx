@@ -74,7 +74,7 @@ const RoofStudio3DPage = () => {
   const [isInspectEdgeActive, setIsInspectEdgeActive] = useState(false);
   const [inspectEdgeTrigger, setInspectEdgeTrigger] = useState(0);
 
-  // Prevent browser refresh, keyboard reload (F5 / Ctrl+R), and accidental Back navigation inside 3D Studio
+  // Prevent browser refresh, keyboard reload (F5 / Ctrl+R), and accidental Back navigation inside 3D Customization
   useEffect(() => {
     window.history.pushState({ studioLock: true }, '', window.location.href);
 
@@ -123,7 +123,7 @@ const RoofStudio3DPage = () => {
       setCoilInventory(coilData);
       setError('');
     } catch {
-      setError('Failed to load roofing products for the 3D Studio. Please try again.');
+      setError('Failed to load roofing products for 3D Customization. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -431,7 +431,7 @@ const RoofStudio3DPage = () => {
             Your browser or device does not have 3D WebGL acceleration enabled. Please enable hardware acceleration or use a modern desktop browser.
           </Typography>
           <Button variant="contained" color="primary" onClick={handleExitStudio} sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}>
-            Exit 3D Studio
+            Exit 3D Customization
           </Button>
         </Paper>
       </Box>
@@ -445,10 +445,10 @@ const RoofStudio3DPage = () => {
           <Alert severity="error" sx={{ borderRadius: 2.5, mb: 2.5, textAlign: 'left' }}>{error}</Alert>
           <Stack direction="row" spacing={1.5} justifyContent="center">
             <Button variant="contained" onClick={() => { setError(''); setLoading(true); fetchStudioCatalog(); }} sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}>
-              Retry Loading Studio
+              Retry Loading 3D Customization
             </Button>
             <Button variant="outlined" onClick={handleExitStudio} sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none', color: '#cbd5e1', borderColor: 'rgba(255,255,255,0.25)' }}>
-              Exit 3D Studio
+              Exit 3D Customization
             </Button>
           </Stack>
         </Paper>
@@ -464,10 +464,10 @@ const RoofStudio3DPage = () => {
             No Supported 3D Roof Products Available
           </Typography>
           <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3 }}>
-            The 3D House &amp; Roof Studio displays Pico Rib 1220, Hermosa Tile, Agua Corr 1220, Mega Hi-Rib, Mega Twin Rib, Mega Six Ribs, and Mega S-Rib once those products are created and active in the catalog.
+            3D Customization displays Pico Rib 1220, Hermosa Tile, Agua Corr 1220, Mega Hi-Rib, Mega Twin Rib, Mega Six Ribs, and Mega S-Rib once those products are created and active in the catalog.
           </Typography>
           <Button variant="contained" color="primary" onClick={handleExitStudio} sx={{ borderRadius: 2.5, fontWeight: 700, textTransform: 'none' }}>
-            Exit 3D Studio
+            Exit 3D Customization
           </Button>
         </Paper>
       </Box>
@@ -479,7 +479,7 @@ const RoofStudio3DPage = () => {
       <Box sx={{ ...FULLSCREEN_SHELL_SX, alignItems: 'center', justifyContent: 'center', gap: 2, p: 3 }}>
         <CircularProgress size={48} sx={{ color: '#4ade80' }} />
         <Typography variant="subtitle1" fontWeight={800} sx={{ color: '#f8fafc' }}>
-          Preparing 3D House &amp; Roof Studio
+          Preparing 3D Customization
         </Typography>
         <Typography variant="body2" sx={{ color: '#94a3b8' }}>
           {preloadStatus}
@@ -490,7 +490,7 @@ const RoofStudio3DPage = () => {
           onClick={handleExitStudio}
           sx={{ mt: 1, borderRadius: 2, color: '#cbd5e1', borderColor: 'rgba(255,255,255,0.2)', textTransform: 'none', fontWeight: 700 }}
         >
-          Exit 3D Studio
+          Exit 3D Customization
         </Button>
       </Box>
     );
@@ -502,14 +502,14 @@ const RoofStudio3DPage = () => {
         <Paper elevation={0} sx={{ maxWidth: 420, p: 4, borderRadius: 3.5, bgcolor: '#1e293b', color: '#f8fafc', textAlign: 'center' }}>
           <Typography variant="h6" fontWeight={800} gutterBottom>Desktop Device Recommended</Typography>
           <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3 }}>
-            The interactive 3D Studio runs best on desktop computers or high-spec tablets. Mobile browsers may experience slower frame rates.
+            Interactive 3D Customization runs best on desktop computers or high-spec tablets. Mobile browsers may experience slower frame rates.
           </Typography>
           <Stack spacing={1.5}>
             <Button variant="contained" color="primary" fullWidth onClick={() => setConfirmedMobileProceed(true)} sx={{ fontWeight: 700, borderRadius: 2, textTransform: 'none' }}>
-              Continue to 3D Studio
+              Continue to 3D Customization
             </Button>
             <Button variant="outlined" fullWidth onClick={handleExitStudio} sx={{ fontWeight: 700, borderRadius: 2, color: '#cbd5e1', borderColor: 'rgba(255,255,255,0.2)', textTransform: 'none' }}>
-              Exit 3D Studio
+              Exit 3D Customization
             </Button>
           </Stack>
         </Paper>

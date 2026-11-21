@@ -404,11 +404,11 @@ const SupportComposer = ({
                   borderRadius: 2,
                   color: attachedImage ? 'primary.main' : 'text.secondary',
                   bgcolor: attachedImage
-                    ? (theme) => theme.palette.mode === 'dark' ? 'rgba(79,119,45,0.25)' : 'rgba(79,119,45,0.1)'
+                    ? (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.25)' : 'rgba(30, 58, 138, 0.1)'
                     : 'transparent',
                   '&:hover': {
                     color: 'primary.main',
-                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(79,119,45,0.2)' : 'rgba(79,119,45,0.08)'
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(30, 58, 138, 0.2)' : 'rgba(30, 58, 138, 0.08)'
                   }
                 }}
               >
@@ -453,7 +453,7 @@ const SupportComposer = ({
             textTransform: 'none',
             boxShadow: 'none',
             '&:hover': {
-              boxShadow: '0 4px 12px rgba(79, 119, 45, 0.25)'
+              boxShadow: '0 4px 12px rgba(30, 58, 138, 0.28)'
             }
           }}
         >

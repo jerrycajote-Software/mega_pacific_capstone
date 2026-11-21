@@ -20,8 +20,8 @@
   --border-light: #2e2e2e;
 
   --customer-bg-main: #f5f7fa;
-  --customer-accent: #4f772d;
-  --customer-accent-hover: #3d5c22;
+  --customer-accent: #1e3a8a;
+  --customer-accent-hover: #172554;
 
   --sidebar-w: 260px;
   --sidebar-w-collapsed: 72px;
@@ -104,7 +104,7 @@ h1, h2, h3, h4, h5, h6,
 /* Reusable Customer Button Utility */
 .btn-customer-primary {
   background-color: var(--customer-accent);
-  color: #1A1A1A;
+  color: #ffffff;
   font-weight: 700;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid transparent;
@@ -112,8 +112,9 @@ h1, h2, h3, h4, h5, h6,
 
 .btn-customer-primary:hover {
   background-color: var(--customer-accent-hover);
+  color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(236, 243, 158, 0.35);
+  box-shadow: 0 8px 20px rgba(30, 58, 138, 0.32);
 }
 
 .btn-customer-primary:active {

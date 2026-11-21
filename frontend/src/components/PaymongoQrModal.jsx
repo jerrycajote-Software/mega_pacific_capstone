@@ -27,6 +27,7 @@ const PaymongoQrModal = ({
   customerName = '',
   customerEmail = '',
   contactNumber = '',
+  onQrSessionCreated,
   onPaymentConfirmed
 }) => {
   const [loadingQr, setLoadingQr] = useState(false);
@@ -34,6 +35,9 @@ const PaymongoQrModal = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('awaiting_next_action');
   const [checkingManual, setCheckingManual] = useState(false);
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine === false : false
+  );
   const confirmedRef = useRef(false);
 
   const API_URL = import.meta.env.VITE_API_URL || '';
@@ -66,6 +70,9 @@ const PaymongoQrModal = ({
       if (res.data?.success && res.data?.data) {
         setQrSession(res.data.data);
         setPaymentStatus(res.data.data.status || 'awaiting_next_action');
+        if (onQrSessionCreated) {
+          onQrSessionCreated(res.data.data);
+        }
       } else {
         setErrorMessage('Unable to generate a GCash QR code right now. Please try again.');
       }
@@ -105,10 +112,23 @@ const PaymongoQrModal = ({
   }, [open, amountPhp]);
 
   useEffect(() => {
+    const handleBrowserOffline = () => setIsOffline(true);
+    const handleBrowserOnline = () => setIsOffline(false);
+
+    window.addEventListener('offline', handleBrowserOffline);
+    window.addEventListener('online', handleBrowserOnline);
+    return () => {
+      window.removeEventListener('offline', handleBrowserOffline);
+      window.removeEventListener('online', handleBrowserOnline);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!open || !qrSession?.paymentIntentId || confirmedRef.current) return;
 
-    const intervalId = setInterval(async () => {
+    const pollPaymentStatus = async () => {
       if (confirmedRef.current) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
       try {
         const res = await axios.get(
           `${API_URL}/api/payments/paymongo/status/${qrSession.paymentIntentId}`,
@@ -131,11 +151,22 @@ const PaymongoQrModal = ({
           }
         }
       } catch (err) {
-        // Silent background poll
+        // Silent background poll while waiting for payment or reconnection
       }
-    }, 3000);
+    };
 
-    return () => clearInterval(intervalId);
+    const intervalId = setInterval(pollPaymentStatus, 3000);
+
+    // Check payment status immediately once the internet connection returns
+    const handleReconnectPoll = () => {
+      pollPaymentStatus();
+    };
+    window.addEventListener('online', handleReconnectPoll);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('online', handleReconnectPoll);
+    };
   }, [open, qrSession, token]);
 
   const handleVerifyGcashQrPaymentNow = async () => {
@@ -289,6 +320,12 @@ const PaymongoQrModal = ({
               Merchant: <strong>Mega Pacific Metal and Steel Corp</strong>
             </Typography>
           </Box>
+
+          {isOffline && (
+            <Alert severity="warning" sx={{ width: '100%', borderRadius: 2.5, fontSize: '0.8rem' }}>
+              <strong>Internet connection lost.</strong> Please do not close this window. If you already scanned and paid in GCash, your payment is safe and will be verified automatically once you reconnect.
+            </Alert>
+          )}
 
           {errorMessage && (
             <Alert severity="warning" sx={{ width: '100%', borderRadius: 2.5, fontSize: '0.8rem' }}>

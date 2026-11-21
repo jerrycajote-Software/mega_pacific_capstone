@@ -1,5 +1,11 @@
 const prisma = require("../../config/db");
 const storageService = require("../../services/storageService");
+const {
+  getGlobalProductDiscountPercent,
+  parseAndValidateDiscountPercent,
+  calculateDiscountedPrice,
+  updateSingleProductDiscount
+} = require("../../services/discountService");
 
 const normalizeThickness = (val) => {
   if (!val) return "";
@@ -43,7 +49,13 @@ const getPreOrderProducts = async (req, res) => {
       };
     });
 
-    res.status(200).json({ success: true, data: productsWithStats });
+    const globalDiscountPercent = await getGlobalProductDiscountPercent();
+
+    res.status(200).json({
+      success: true,
+      data: productsWithStats,
+      globalDiscountPercent
+    });
   } catch (error) {
     console.error("Failed to fetch pre-order products:", error);
     res.status(500).json({ success: false, error: "Failed to fetch pre-order products" });
@@ -93,8 +105,12 @@ const createPreOrderProduct = async (req, res) => {
     }
 
     const rawOrigPrice = originalPrice !== undefined && originalPrice !== "" ? parseFloat(originalPrice) : parseFloat(price) || 0;
-    const discountPct = req.body.discountPercent !== undefined && req.body.discountPercent !== "" ? parseFloat(req.body.discountPercent) : 30;
-    const sellingPrice = Math.round(rawOrigPrice * (1 - discountPct / 100) * 100) / 100;
+    const defaultGlobalDiscount = await getGlobalProductDiscountPercent();
+    const discountPct =
+      req.body.discountPercent !== undefined && req.body.discountPercent !== null && req.body.discountPercent !== ""
+        ? parseAndValidateDiscountPercent(req.body.discountPercent)
+        : defaultGlobalDiscount;
+    const sellingPrice = calculateDiscountedPrice(rawOrigPrice, discountPct);
 
     const parsedColors = Array.isArray(colors) ? colors : typeof colors === "string" ? colors.split(",").map(c => c.trim()).filter(Boolean) : [];
 
@@ -292,8 +308,12 @@ const updatePreOrderProduct = async (req, res) => {
     }
 
     const rawOrigPrice = originalPrice !== undefined && originalPrice !== "" ? parseFloat(originalPrice) : (price !== undefined && price !== "" ? parseFloat(price) : existing.originalPrice || existing.price);
-    const discountPct = req.body.discountPercent !== undefined && req.body.discountPercent !== "" ? parseFloat(req.body.discountPercent) : existing.discountPercent || 30;
-    const sellingPrice = Math.round(rawOrigPrice * (1 - discountPct / 100) * 100) / 100;
+    const fallbackExistingDiscount = existing.discountPercent ?? (await getGlobalProductDiscountPercent());
+    const discountPct =
+      req.body.discountPercent !== undefined && req.body.discountPercent !== null && req.body.discountPercent !== ""
+        ? parseAndValidateDiscountPercent(req.body.discountPercent)
+        : fallbackExistingDiscount;
+    const sellingPrice = calculateDiscountedPrice(rawOrigPrice, discountPct);
     const parsedColors = Array.isArray(colors) ? colors : existing.colors;
 
     const normBaseThickness = normalizeThickness(thickness || existing.thickness || "0.35mm");
@@ -437,6 +457,7 @@ const updatePreOrderProduct = async (req, res) => {
               thickness: v.thickness,
               originalPrice: vOrig,
               price: vSelling,
+              discountPercent: discountPct,
               status: resolvedVariantStatus
             }
           });
@@ -563,8 +584,8 @@ const addVariant = async (req, res) => {
     if (!product) return res.status(404).json({ success: false, error: "Product not found" });
 
     const rawOrig = originalPrice !== undefined && originalPrice !== "" ? parseFloat(originalPrice) : parseFloat(price) || 0;
-    const discountPct = product.discountPercent || 30;
-    const sellingPrice = Math.round(rawOrig * (1 - discountPct / 100) * 100) / 100;
+    const discountPct = product.discountPercent ?? (await getGlobalProductDiscountPercent());
+    const sellingPrice = calculateDiscountedPrice(rawOrig, discountPct);
 
     const vThick = normalizeThickness(thickness || "0.35mm");
     const baseThick = normalizeThickness(product.thickness || "0.35mm");
@@ -694,10 +715,49 @@ const togglePreOrderProductStatus = async (req, res) => {
   }
 };
 
+// Update the discount percentage for a single pre-order product and its thickness variants
+const updatePreOrderProductDiscount = async (req, res) => {
+  const { id } = req.params;
+  const { discountPercent } = req.body;
+
+  try {
+    const updatedProduct = await updateSingleProductDiscount(id, discountPercent);
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("product_catalog_updated", {
+        action: "product_discount_updated",
+        productId: updatedProduct.id,
+        product: updatedProduct
+      });
+    }
+
+    const activePct = updatedProduct.discountPercent ?? 0;
+    const message =
+      activePct === 0
+        ? `Removed discount for ${updatedProduct.name}. Regular selling price is now active.`
+        : `Updated discount for ${updatedProduct.name} to ${activePct}% OFF.`;
+
+    res.status(200).json({
+      success: true,
+      message,
+      data: updatedProduct
+    });
+  } catch (error) {
+    console.error("Failed to update pre-order product discount:", error);
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || "Failed to update the product discount."
+    });
+  }
+};
+
 module.exports = {
   getPreOrderProducts,
   createPreOrderProduct,
   updatePreOrderProduct,
+  updatePreOrderProductDiscount,
   deletePreOrderProduct,
   togglePreOrderProductStatus,
   addVariant,

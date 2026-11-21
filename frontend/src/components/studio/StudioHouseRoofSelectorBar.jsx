@@ -38,7 +38,7 @@ const StudioHouseRoofSelectorBar = ({
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
           <Typography variant="subtitle1" fontWeight={800} sx={{ color: '#f8fafc' }}>
-            3D House &amp; Roof Studio
+            3D Customization
           </Typography>
           {activeModel && (
             <Chip
@@ -76,7 +76,7 @@ const StudioHouseRoofSelectorBar = ({
             },
           }}
         >
-          Exit 3D Studio
+          Exit 3D Customization
         </Button>
       </Box>
 
