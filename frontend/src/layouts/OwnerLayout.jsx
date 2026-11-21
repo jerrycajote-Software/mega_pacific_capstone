@@ -12,6 +12,7 @@ import { Tooltip } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 // Primary sidebar tabs for the Owner overview and business sales quota management
@@ -184,7 +185,9 @@ const OwnerLayout = () => {
 
       <div className={`admin-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="admin-content">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </div>
       {isLogoutOpen && (

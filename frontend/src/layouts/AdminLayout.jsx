@@ -1,20 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import axios from 'axios';
 
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomDashboardIcon,
   CustomUsersIcon,
   CustomStaffManagementIcon,
+  CustomAdminSecurityFlagsIcon,
   CustomSettingsIcon,
   CustomNavToggleIcon,
   CustomLogoutIcon as LogoutIcon,
   CustomLightModeIcon as LightModeIcon,
   CustomDarkModeIcon as DarkModeIcon
 } from '../components/icons';
-import { Tooltip } from '@mui/material';
+import { Tooltip, Snackbar, Alert, Button } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { io } from 'socket.io-client';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
@@ -22,6 +25,7 @@ const navItems = [
   { name: 'Dashboard', path: '/admin/dashboard', icon: <CustomDashboardIcon size={20} /> },
   { name: 'Users', path: '/admin/users', icon: <CustomUsersIcon size={20} /> },
   { name: 'Staff Management', path: '/admin/accounts', icon: <CustomStaffManagementIcon size={20} /> },
+  { name: 'Error Reports', path: '/admin/error-reports', icon: <CustomAdminSecurityFlagsIcon size={20} /> },
   { name: 'Settings', path: '/admin/settings', icon: <CustomSettingsIcon size={20} /> },
 ];
 
@@ -33,9 +37,27 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [openErrorReportsCount, setOpenErrorReportsCount] = useState(0);
+  const [incomingErrorAlert, setIncomingErrorAlert] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
   });
+
+  const fetchOpenErrorReportsCount = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('appToken');
+      if (!token) return;
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.get(`${API_URL}/api/admin/error-reports?status=open`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.summary) {
+        setOpenErrorReportsCount(res.data.summary.open || 0);
+      }
+    } catch {
+      // Ignore silent badge refresh failures
+    }
+  }, []);
 
   const handleToggleSidebarNavigation = () => {
     setIsSidebarCollapsed((prev) => {
@@ -47,6 +69,8 @@ const AdminLayout = () => {
 
   React.useEffect(() => {
     if (!user) return;
+    fetchOpenErrorReportsCount();
+
     const API_URL = import.meta.env.VITE_API_URL || '';
     const socket = io(API_URL, {
       auth: { user }
@@ -54,10 +78,26 @@ const AdminLayout = () => {
 
     socket.emit("join_room", "admin");
 
+    socket.on("admin_error_report_created", (payload) => {
+      const report = payload?.report;
+      setOpenErrorReportsCount((prev) => prev + 1);
+      if (report) {
+        setIncomingErrorAlert({
+          traceId: report.traceId,
+          portal: report.portal,
+          reporterName: report.reporterName || report.reporterRole
+        });
+      }
+    });
+
+    socket.on("admin_error_report_updated", () => {
+      fetchOpenErrorReportsCount();
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [user]);
+  }, [user, fetchOpenErrorReportsCount]);
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
@@ -171,6 +211,26 @@ const AdminLayout = () => {
                   >
                     {item.name}
                   </span>
+                  {item.path === '/admin/error-reports' && openErrorReportsCount > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        minWidth: 20,
+                        height: 20,
+                        padding: '0 6px',
+                        borderRadius: 999,
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {openErrorReportsCount > 99 ? '99+' : openErrorReportsCount}
+                    </span>
+                  )}
                 </NavLink>
               </Tooltip>
             );
@@ -210,9 +270,39 @@ const AdminLayout = () => {
 
       <div className={`admin-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="admin-content">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </div>
+
+      <Snackbar
+        open={Boolean(incomingErrorAlert)}
+        autoHideDuration={8000}
+        onClose={() => setIncomingErrorAlert(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          severity="error"
+          variant="filled"
+          onClose={() => setIncomingErrorAlert(null)}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setIncomingErrorAlert(null);
+                navigate('/admin/error-reports');
+              }}
+              sx={{ fontWeight: 800, textTransform: 'none' }}
+            >
+              View Report
+            </Button>
+          }
+        >
+          New error report from {incomingErrorAlert?.portal || 'user'} ({incomingErrorAlert?.traceId})
+        </Alert>
+      </Snackbar>
       {isLogoutOpen && (
         <LogoutConfirmModal
           onClose={() => setIsLogoutOpen(false)}

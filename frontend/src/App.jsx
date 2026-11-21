@@ -25,6 +25,8 @@ import UserManagement from './pages/admin/UserManagement';
 import SalesManagement from './pages/admin/SalesManagement';
 import ReviewManagement from './pages/admin/ReviewManagement';
 import AdminSettingsPage from './pages/admin/SettingsPage';
+import AdminErrorReportsPage from './pages/admin/ErrorReportsPage';
+import GlobalErrorAlertHost from './components/GlobalErrorAlertHost';
 
 
 import SalesLoginPage from './pages/sales/LoginPage';
@@ -213,7 +215,9 @@ const App = () => {
   }
 
   return (
-    <Routes>
+    <>
+      <GlobalErrorAlertHost />
+      <Routes>
        
         <Route path="/register" element={
           systemStatuses.customer_portal_status === 'offline' ? <MaintenancePage /> : <GuestRoute><RegisterPage /></GuestRoute>
@@ -286,6 +290,7 @@ const App = () => {
           <Route path="users" element={<UserManagement />} />
           <Route path="accounts" element={<SalesManagement />} />
           <Route path="reviews" element={<ReviewManagement />} />
+          <Route path="error-reports" element={<AdminErrorReportsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
 
@@ -350,6 +355,7 @@ const App = () => {
        
         <Route path="*" element={<div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] text-white">404 - Page Not Found</div>} />
       </Routes>
+    </>
   );
 };
 

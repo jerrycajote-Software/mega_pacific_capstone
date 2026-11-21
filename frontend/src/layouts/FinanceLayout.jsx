@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
+import ErrorBoundary from '../components/ErrorBoundary';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
 import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
@@ -262,7 +263,9 @@ const FinanceLayout = () => {
             }}
             onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
           />
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </div>
       {isLogoutOpen && (

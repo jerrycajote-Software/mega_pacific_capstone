@@ -35,6 +35,7 @@ model User {
   coilInventoryLogs  CoilInventoryLog[]
   refunds            Refund[]          @relation("CustomerRefunds")
   processedRefunds   Refund[]          @relation("FinanceProcessedRefunds")
+  errorReports       ErrorReport[]     @relation("ReportedByUser")
   
   customerProfile    CustomerProfile?
   adminProfile       AdminProfile?
@@ -230,6 +231,10 @@ model Order {
   notes                 String?
   estimatedDeliveryDate DateTime?
   statusUpdatedAt       DateTime?   // Tracks when status last changed (used by auto-scheduler)
+  paymentProofUrl       String?     // Photo proof uploaded by Logistics when confirming 50% balance payment
+  balanceConfirmedAt    DateTime?   // Timestamp when Logistics confirmed full payment receipt
+  balanceConfirmedById  Int?        // User ID of the Logistics operator who confirmed balance payment
+  balanceConfirmedByName String?    // Display name of the Logistics operator who confirmed balance payment
   createdAt             DateTime    @default(now())
   items                 OrderItem[]
   reviews               Review[]
@@ -392,5 +397,35 @@ model Refund {
   refundedAt           DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+}
+
+model ErrorReport {
+  id              Int       @id @default(autoincrement())
+  traceId         String
+  userId          Int?
+  user            User?     @relation("ReportedByUser", fields: [userId], references: [id], onDelete: SetNull)
+  reporterName    String?
+  reporterEmail   String?
+  reporterRole    String    @default("guest")
+  portal          String    @default("customer")
+  source          String    @default("frontend_runtime")
+  pageUrl         String
+  apiEndpoint     String?
+  httpStatus      Int?
+  errorMessage    String
+  stackTrace      String?
+  componentStack  String?
+  userDescription String?
+  browserInfo     String?
+  status          String    @default("open")
+  adminNotes      String?
+  resolvedById    Int?
+  resolvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([portal])
+  @@index([traceId])
 }
 
