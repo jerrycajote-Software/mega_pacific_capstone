@@ -16,9 +16,15 @@ const io = new Server(server, {
 app.set("io", io);
 
 const PORT = process.env.PORT || 5000;
+const requestMonitorMiddleware = require("./middleware/requestMonitorMiddleware");
+const { globalErrorMiddleware, registerProcessErrorTracers } = require("./middleware/globalErrorMiddleware");
+
+registerProcessErrorTracers();
+
 app.use(cors());
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ limit: "100mb", extended: true }));
+app.use(requestMonitorMiddleware);
 
 const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/admin/productRoutes");
@@ -44,6 +50,9 @@ const financeRoutes = require("./routes/financeRoutes");
 const logisticRoutes = require("./routes/logisticRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const monitoringRoutes = require("./routes/monitoringRoutes");
+const errorReportRoutes = require("./routes/errorReportRoutes");
+const adminErrorReportRoutes = require("./routes/admin/errorReportRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/owner", ownerRoutes);
@@ -73,10 +82,15 @@ app.use("/api/finance", financeRoutes);
 app.use("/api/logistic", logisticRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/monitoring", monitoringRoutes);
+app.use("/api/error-reports", errorReportRoutes);
+app.use("/api/admin/error-reports", adminErrorReportRoutes);
 
 app.get("/", (req, res) => {
   res.send("Mega Pacific Backend is running!");
 });
+
+app.use(globalErrorMiddleware);
 
 const socketTrackingService = require("./services/socketTrackingService");
 
