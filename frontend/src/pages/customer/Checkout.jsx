@@ -352,58 +352,6 @@ const Checkout = () => {
     fetchProfile();
   }, [token]);
 
-  if (!user) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 10, textAlign: 'center' }}>
-        <Avatar sx={{ bgcolor: 'warning.light', width: 64, height: 64, mb: 3 }}>
-          <Alert color="warning" icon={false} sx={{ bgcolor: 'transparent' }} />
-        </Avatar>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>Authentication Required</Typography>
-        <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 400 }}>
-          You must be logged in to your account to proceed with the checkout and place an order.
-        </Typography>
-        <Button variant="contained" color="primary" onClick={() => navigate('/login')}>
-          Login to Proceed
-        </Button>
-      </Box>
-    );
-  }
-
-  if (orderItems.length === 0) {
-    return (
-      <Box sx={{ py: 10, px: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper elevation={0} sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center', maxWidth: 480, width: '100%', borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
-            <CustomShoppingCartIcon size={28} color="#94a3b8" />
-          </Box>
-          <Typography variant="h5" fontWeight={900} gutterBottom>Your Order is Empty</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5 }}>
-            You currently have no products selected for this order. Please return to the product catalog to select a product and start an order.
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => navigate('/dashboard')}
-              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, px: 3.5, py: 1.1 }}
-            >
-              Return to Catalog
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
-    );
-  }
-
-  if (isLoadingProfile) {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}>
-        <CircularProgress size={60} sx={{ mb: 3 }} />
-        <Typography color="text.secondary">Loading your secure checkout...</Typography>
-      </Box>
-    );
-  }
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
@@ -809,6 +757,24 @@ const Checkout = () => {
     await executeOrderCreation(refId, intentId);
   };
 
+  // Render access, completion, empty, and loading states only after all React hooks have run
+  if (!user) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 10, textAlign: 'center' }}>
+        <Avatar sx={{ bgcolor: 'warning.light', width: 64, height: 64, mb: 3 }}>
+          <Alert color="warning" icon={false} sx={{ bgcolor: 'transparent' }} />
+        </Avatar>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>Authentication Required</Typography>
+        <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 400 }}>
+          You must be logged in to your account to proceed with the checkout and place an order.
+        </Typography>
+        <Button variant="contained" color="primary" onClick={() => navigate('/login')}>
+          Login to Proceed
+        </Button>
+      </Box>
+    );
+  }
+
   if (success) {
     return (
       <Box sx={{ py: 10, textAlign: 'center', animation: 'fadeIn 0.5s ease-in-out' }}>
@@ -854,6 +820,41 @@ const Checkout = () => {
             View Order
           </Button>
         </Box>
+      </Box>
+    );
+  }
+
+  if (orderItems.length === 0) {
+    return (
+      <Box sx={{ py: 10, px: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Paper elevation={0} sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center', maxWidth: 480, width: '100%', borderRadius: 4, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 2 }}>
+            <CustomShoppingCartIcon size={28} color="#94a3b8" />
+          </Box>
+          <Typography variant="h5" fontWeight={900} gutterBottom>Your Order is Empty</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5 }}>
+            You currently have no products selected for this order. Please return to the product catalog to select a product and start an order.
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate('/dashboard')}
+              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700, px: 3.5, py: 1.1 }}
+            >
+              Return to Catalog
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    );
+  }
+
+  if (isLoadingProfile) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15 }}>
+        <CircularProgress size={60} sx={{ mb: 3 }} />
+        <Typography color="text.secondary">Loading your secure checkout...</Typography>
       </Box>
     );
   }
