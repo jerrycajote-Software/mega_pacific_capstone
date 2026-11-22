@@ -1,5 +1,11 @@
 const prisma = require("../../config/db");
 
+// Strip the internal archival prefix from soft-deleted account emails for readable Admin display
+const formatDisplayEmail = (email) => {
+  if (!email) return "";
+  return String(email).replace(/^deleted_\d+_\d+_/, "");
+};
+
 const getUsers = async (req, res) => {
   try {
     const rolesToExclude = ['superadmin', 'super_admin'];
@@ -18,6 +24,7 @@ const getUsers = async (req, res) => {
         email: true,
         role: true,
         status: true,
+        deletedAt: true,
         createdAt: true,
         isEmailVerified: true,
         customerProfile: { select: { name: true, contactNumber: true, city: true, province: true } },
@@ -31,6 +38,7 @@ const getUsers = async (req, res) => {
     });
 
     const formattedUsers = users.map(user => {
+      const displayEmail = formatDisplayEmail(user.email);
       const name = user.customerProfile?.name || 
                    user.adminProfile?.name || 
                    user.superAdminProfile?.name ||
@@ -38,7 +46,7 @@ const getUsers = async (req, res) => {
                    user.salesProfile?.name || 
                    user.logisticProfile?.name || 
                    user.financeProfile?.name || 
-                   user.email.split('@')[0];
+                   displayEmail.split('@')[0];
       
       const contactNumber = user.customerProfile?.contactNumber ||
                             user.adminProfile?.contactNumber ||
@@ -52,9 +60,10 @@ const getUsers = async (req, res) => {
 
       return {
         id: user.id,
-        email: user.email,
+        email: displayEmail,
         role: user.role,
         status: user.status,
+        deletedAt: user.deletedAt,
         createdAt: user.createdAt,
         isEmailVerified: Boolean(user.isEmailVerified),
         name,
@@ -76,11 +85,27 @@ const updateUserStatus = async (req, res) => {
     const { status } = req.body;
 
     if (!["active", "suspended"].includes(status)) {
-      return res.status(400).json({ success: false, error: "Invalid status." });
+      return res.status(400).json({ success: false, message: "Status must be either active or suspended." });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: parseInt(id, 10) },
+      select: { id: true, status: true }
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ success: false, message: "User account could not be found." });
+    }
+
+    if (existingUser.status === "deleted") {
+      return res.status(400).json({
+        success: false,
+        message: "This account has already been deleted and cannot be reactivated or suspended."
+      });
     }
 
     const user = await prisma.user.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id, 10) },
       data: { status },
       select: { id: true, email: true, status: true }
     });
@@ -88,7 +113,7 @@ const updateUserStatus = async (req, res) => {
     res.status(200).json({ success: true, data: user });
   } catch (error) {
     console.error("Failed to update user status:", error);
-    res.status(500).json({ success: false, error: "Failed to update user status" });
+    res.status(500).json({ success: false, message: "Failed to update user status." });
   }
 };
 

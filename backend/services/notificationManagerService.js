@@ -6,7 +6,10 @@ const {
   sendOutForDeliveryEmail,
   sendOrderDeliveredEmail,
   sendOrderRejectedEmail,
-  sendRefundNotificationEmail
+  sendRefundNotificationEmail,
+  sendAccountDeletionRequestedEmail,
+  sendAccountDeletionApprovedEmail,
+  sendAccountDeletionRejectedEmail
 } = require("../utils/emailService");
 const { consumeEmailSpamQuota } = require("./emailSpamPolicyService");
 
@@ -444,6 +447,79 @@ const notifySalesNewReview = ({ io, review, productName, customerName }) => {
   });
 };
 
+// Notify Admin in real time and email the customer when a new account deletion request is submitted
+const notifyAdminNewDeletionRequest = async ({ io, request }) => {
+  if (!request) return;
+
+  if (io) {
+    emitPortalSocketNotification(io, "admin", "admin_deletion_request_created", {
+      request,
+      title: "New Account Deletion Request",
+      body: `${request.customerName || request.customerEmail} requested account deletion.`,
+      url: "/admin/users?tab=deletion-requests"
+    });
+  }
+
+  if (request.customerEmail) {
+    sendAccountDeletionRequestedEmail(request.customerEmail, {
+      customerName: request.customerName,
+      reason: request.reason,
+      submittedAt: request.createdAt
+    }).catch((err) => {
+      console.error("[NOTIFICATION MANAGER] Account deletion request email failed:", err.message);
+    });
+  }
+};
+
+// Force-logout the customer in real time and send approval confirmation email
+const notifyCustomerDeletionApproved = async ({ io, userId, customerEmail, customerName, adminNotes, reviewedAt }) => {
+  if (io && userId) {
+    io.to(`user_${userId}`).emit("account_deleted", {
+      title: "Account Deleted",
+      message: "Your account deletion request has been approved by an Administrator. You will now be signed out.",
+      adminNotes: adminNotes || "",
+      reviewedAt: reviewedAt || new Date().toISOString()
+    });
+  }
+
+  if (customerEmail) {
+    sendAccountDeletionApprovedEmail(customerEmail, {
+      customerName,
+      approvedAt: reviewedAt,
+      adminNotes
+    }).catch((err) => {
+      console.error("[NOTIFICATION MANAGER] Account deletion approval email failed:", err.message);
+    });
+  }
+};
+
+// Notify the customer in real time and via email when Admin rejects their account deletion request
+const notifyCustomerDeletionRejected = async ({ io, userId, customerEmail, customerName, adminNotes, reviewedAt }) => {
+  if (io && userId) {
+    emitCustomerSocketNotification(io, userId, {
+      type: "account_deletion_rejected",
+      eventType: "account_deletion_rejected",
+      title: "Account Deletion Request Declined",
+      body: adminNotes
+        ? `Reason: ${adminNotes}`
+        : "Your account deletion request could not be approved at this time. Your account remains active.",
+      url: "/profile",
+      actionLabel: "View Profile",
+      tag: `account-deletion-rejected-${userId}`
+    });
+  }
+
+  if (customerEmail) {
+    sendAccountDeletionRejectedEmail(customerEmail, {
+      customerName,
+      rejectedAt: reviewedAt,
+      adminNotes
+    }).catch((err) => {
+      console.error("[NOTIFICATION MANAGER] Account deletion rejection email failed:", err.message);
+    });
+  }
+};
+
 module.exports = {
   notifyOrderPlaced,
   notifyOrderOutForDelivery,
@@ -458,5 +534,8 @@ module.exports = {
   notifyFinanceBalanceCollected,
   notifyLogisticsStatusTransition,
   notifyLogisticLowCoilStock,
-  notifySalesNewReview
+  notifySalesNewReview,
+  notifyAdminNewDeletionRequest,
+  notifyCustomerDeletionApproved,
+  notifyCustomerDeletionRejected
 };

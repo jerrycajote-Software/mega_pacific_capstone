@@ -1073,6 +1073,166 @@ const sendOrderRejectedEmail = async (email, order, { reason, refundableAmount }
   }
 };
 
+// Send confirmation email to customer when their account deletion request is received
+const sendAccountDeletionRequestedEmail = async (email, { customerName, reason, submittedAt } = {}) => {
+  if (!email) {
+    return { success: false, message: "No email specified" };
+  }
+
+  const name = customerName || "Valued Customer";
+  const formattedDate = formatPhilippineDateTime(submittedAt || Date.now());
+
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL FALLBACK - Account Deletion Requested] To: ${email} | Customer: ${name} | Date: ${formattedDate}`);
+    return { success: true, message: "Logged to console (SMTP not configured)" };
+  }
+
+  const mailOptions = {
+    from: `"Mega Pacific Support" <${process.env.SMTP_FROM || "noreply@megapacific.com"}>`,
+    to: email,
+    subject: "[Account Deletion Request Received] Mega Pacific Metal & Steel",
+    text: `Hello ${name}, we have received your request to delete your Mega Pacific customer account on ${formattedDate}. An Administrator will review your request shortly. If you change your mind, you can cancel your request anytime from your Profile page before it is approved.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%); padding: 24px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 20px;">MEGA PACIFIC METAL & STEEL</h1>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #bfdbfe;">ACCOUNT MANAGEMENT NOTICE</p>
+        </div>
+        <div style="padding: 24px;">
+          <span style="display: inline-block; background: #fef3c7; color: #92400e; font-weight: 700; padding: 5px 12px; border-radius: 999px; font-size: 12px; margin-bottom: 12px;">DELETION REQUEST RECEIVED</span>
+          <h2 style="margin: 0 0 8px; color: #0f172a; font-size: 19px;">We Received Your Account Deletion Request</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Hello <strong>${name}</strong>, your request to delete your Mega Pacific customer account has been submitted on <strong>${formattedDate}</strong> and is now waiting for Administrator review.
+          </p>
+          ${reason ? `
+            <div style="background: #f8fafc; border-left: 4px solid #64748b; padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 13px; color: #334155;">
+              <strong>Your Reason:</strong> ${reason}
+            </div>
+          ` : ""}
+          <p style="color: #475569; font-size: 13px; line-height: 1.6;">
+            If you did not make this request or changed your mind, you can sign in and cancel the request from your <strong>My Profile</strong> page before an Administrator approves it.
+          </p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const info = await deliverMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[EMAIL ACCOUNT DELETION REQUESTED ERROR]:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send confirmation email to customer when Admin approves their account deletion
+const sendAccountDeletionApprovedEmail = async (email, { customerName, approvedAt, adminNotes } = {}) => {
+  if (!email) {
+    return { success: false, message: "No email specified" };
+  }
+
+  const name = customerName || "Valued Customer";
+  const formattedDate = formatPhilippineDateTime(approvedAt || Date.now());
+
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL FALLBACK - Account Deletion Approved] To: ${email} | Customer: ${name} | Date: ${formattedDate}`);
+    return { success: true, message: "Logged to console (SMTP not configured)" };
+  }
+
+  const mailOptions = {
+    from: `"Mega Pacific Support" <${process.env.SMTP_FROM || "noreply@megapacific.com"}>`,
+    to: email,
+    subject: "[Account Deleted] Your Mega Pacific Account Has Been Deleted",
+    text: `Hello ${name}, your request to delete your Mega Pacific customer account was approved on ${formattedDate}. Your account has been deactivated. Past completed order receipts remain safely archived for billing records. You may create a brand-new account using this email address anytime in the future.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #334155 0%, #0f172a 100%); padding: 24px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 20px;">MEGA PACIFIC METAL & STEEL</h1>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #cbd5e1;">ACCOUNT DELETION CONFIRMATION</p>
+        </div>
+        <div style="padding: 24px;">
+          <span style="display: inline-block; background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 5px 12px; border-radius: 999px; font-size: 12px; margin-bottom: 12px;">ACCOUNT DELETED</span>
+          <h2 style="margin: 0 0 8px; color: #0f172a; font-size: 19px;">Your Account Deletion Request Was Approved</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Hello <strong>${name}</strong>, our Administrator approved your account deletion request on <strong>${formattedDate}</strong>. Your customer account has been deleted and signed out.
+          </p>
+          ${adminNotes ? `
+            <div style="background: #f8fafc; border-left: 4px solid #334155; padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 13px; color: #334155;">
+              <strong>Administrator Note:</strong> ${adminNotes}
+            </div>
+          ` : ""}
+          <p style="color: #475569; font-size: 13px; line-height: 1.6;">
+            Past completed order records remain safely archived for accounting compliance. If you wish to shop with Mega Pacific again in the future, you can register a brand-new account using this email address.
+          </p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const info = await deliverMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[EMAIL ACCOUNT DELETION APPROVED ERROR]:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send update email to customer when Admin rejects their account deletion request
+const sendAccountDeletionRejectedEmail = async (email, { customerName, rejectedAt, adminNotes } = {}) => {
+  if (!email) {
+    return { success: false, message: "No email specified" };
+  }
+
+  const name = customerName || "Valued Customer";
+  const formattedDate = formatPhilippineDateTime(rejectedAt || Date.now());
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+  if (!isEmailConfigured()) {
+    console.log(`[EMAIL FALLBACK - Account Deletion Rejected] To: ${email} | Customer: ${name} | Note: ${adminNotes || "N/A"}`);
+    return { success: true, message: "Logged to console (SMTP not configured)" };
+  }
+
+  const mailOptions = {
+    from: `"Mega Pacific Support" <${process.env.SMTP_FROM || "noreply@megapacific.com"}>`,
+    to: email,
+    subject: "[Update] Your Account Deletion Request Could Not Be Approved",
+    text: `Hello ${name}, your request to delete your Mega Pacific customer account was not approved on ${formattedDate}.${adminNotes ? ` Reason: ${adminNotes}.` : ""} Your account remains active.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #b45309 0%, #92400e 100%); padding: 24px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 20px;">MEGA PACIFIC METAL & STEEL</h1>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #fde68a;">ACCOUNT REQUEST UPDATE</p>
+        </div>
+        <div style="padding: 24px;">
+          <span style="display: inline-block; background: #fef3c7; color: #92400e; font-weight: 700; padding: 5px 12px; border-radius: 999px; font-size: 12px; margin-bottom: 12px;">REQUEST DECLINED</span>
+          <h2 style="margin: 0 0 8px; color: #0f172a; font-size: 19px;">Your Account Remains Active</h2>
+          <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+            Hello <strong>${name}</strong>, our Administrator reviewed your account deletion request on <strong>${formattedDate}</strong> and could not approve it at this time.
+          </p>
+          ${adminNotes ? `
+            <div style="background: #fffbeb; border-left: 4px solid #d97706; padding: 12px 14px; border-radius: 6px; margin: 14px 0; font-size: 13px; color: #78350f;">
+              <strong>Administrator Note:</strong> ${adminNotes}
+            </div>
+          ` : ""}
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="${frontendUrl}/profile" style="background: #1e3a8a; color: #ffffff; padding: 11px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">View My Profile</a>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const info = await deliverMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error("[EMAIL ACCOUNT DELETION REJECTED ERROR]:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   isEmailConfigured,
   deliverMail,
@@ -1087,7 +1247,10 @@ module.exports = {
   sendRefundNotificationEmail,
   sendOutForDeliveryEmail,
   sendOrderDeliveredEmail,
-  sendOrderRejectedEmail
+  sendOrderRejectedEmail,
+  sendAccountDeletionRequestedEmail,
+  sendAccountDeletionApprovedEmail,
+  sendAccountDeletionRejectedEmail
 };
 
 

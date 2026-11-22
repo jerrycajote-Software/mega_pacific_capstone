@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import CircularProgress from '@mui/material/CircularProgress';
+import DeletionRequestsTab from '../../components/admin/DeletionRequestsTab';
+import { fetchAdminDeletionRequests } from '../../services/accountDeletionApi';
 import {
   CustomAdminCustomersIcon,
   CustomAdminUserAccountIcon,
@@ -54,7 +57,11 @@ const roleStyles = {
 };
 
 const UserManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'deletion-requests' ? 'deletion-requests' : 'accounts';
+
   const [users, setUsers] = useState([]);
+  const [pendingDeletionCount, setPendingDeletionCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('All');
@@ -63,7 +70,18 @@ const UserManagement = () => {
   const itemsPerPage = 8;
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null, actionText: '', newStatus: '' });
 
-  const fetchUsers = async () => {
+  const fetchPendingDeletionCount = useCallback(async () => {
+    try {
+      const res = await fetchAdminDeletionRequests({ status: 'pending' });
+      if (res?.summary) {
+        setPendingDeletionCount(res.summary.pending || 0);
+      }
+    } catch {
+      // Ignore silent badge refresh failures
+    }
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
@@ -78,16 +96,28 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
-    const handleFocus = () => fetchUsers();
+    fetchPendingDeletionCount();
+    const handleFocus = () => {
+      fetchUsers();
+      fetchPendingDeletionCount();
+    };
     window.addEventListener('focus', handleFocus);
     return () => {
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [fetchUsers, fetchPendingDeletionCount]);
+
+  const handleSwitchUserManagementTab = (tabName) => {
+    if (tabName === 'deletion-requests') {
+      setSearchParams({ tab: 'deletion-requests' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const handleToggleStatusClick = (user) => {
     const newStatus = user.status === 'active' ? 'suspended' : 'active';
@@ -168,10 +198,77 @@ const UserManagement = () => {
             User Management
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Oversee registered customer accounts, contact details, role clearances, and access states.
+            Oversee registered customer accounts, contact details, account deletion requests, and access states.
           </p>
         </div>
+
+        <div style={{ display: 'inline-flex', background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 4, gap: 4 }}>
+          <button
+            type="button"
+            onClick={() => handleSwitchUserManagementTab('accounts')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 9,
+              border: 'none',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: activeTab === 'accounts' ? '#4f772d' : 'transparent',
+              color: activeTab === 'accounts' ? '#ffffff' : 'var(--text-muted)'
+            }}
+          >
+            All Accounts
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSwitchUserManagementTab('deletion-requests')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 16px',
+              borderRadius: 9,
+              border: 'none',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: activeTab === 'deletion-requests' ? '#4f772d' : 'transparent',
+              color: activeTab === 'deletion-requests' ? '#ffffff' : 'var(--text-muted)'
+            }}
+          >
+            <span>Deletion Requests</span>
+            {pendingDeletionCount > 0 && (
+              <span
+                style={{
+                  minWidth: 20,
+                  height: 20,
+                  padding: '0 6px',
+                  borderRadius: 999,
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {pendingDeletionCount > 99 ? '99+' : pendingDeletionCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
+
+      {activeTab === 'deletion-requests' ? (
+        <DeletionRequestsTab
+          onRequestsChanged={() => {
+            fetchUsers();
+            fetchPendingDeletionCount();
+          }}
+        />
+      ) : (
+        <>
 
       {/* Metric Cards Bar */}
       <div style={{
@@ -386,6 +483,7 @@ const UserManagement = () => {
             <option value="All">All Statuses</option>
             <option value="active">Active Only</option>
             <option value="suspended">Suspended Only</option>
+            <option value="deleted">Deleted Only</option>
           </select>
         </div>
 
@@ -427,6 +525,7 @@ const UserManagement = () => {
                   const roleConfig = roleStyles[user.role?.toLowerCase()] || roleStyles.customer;
                   const RoleIcon = roleConfig.icon;
                   const isActive = user.status === 'active';
+                  const isDeleted = user.status === 'deleted';
 
                   return (
                     <tr
@@ -507,13 +606,17 @@ const UserManagement = () => {
                           gap: 5,
                           padding: '3px 8px',
                           borderRadius: 6,
-                          background: isActive ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
-                          color: isActive ? '#22c55e' : '#ef4444',
+                          background: isDeleted
+                            ? 'rgba(100,116,139,0.16)'
+                            : isActive
+                              ? 'rgba(34,197,94,0.12)'
+                              : 'rgba(239,68,68,0.12)',
+                          color: isDeleted ? '#94a3b8' : isActive ? '#22c55e' : '#ef4444',
                           fontSize: '0.74rem',
                           fontWeight: 700
                         }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: isActive ? '#22c55e' : '#ef4444' }} />
-                          <span>{isActive ? 'Active' : 'Suspended'}</span>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: isDeleted ? '#94a3b8' : isActive ? '#22c55e' : '#ef4444' }} />
+                          <span>{isDeleted ? 'Deleted' : isActive ? 'Active' : 'Suspended'}</span>
                         </span>
                       </td>
 
@@ -522,26 +625,31 @@ const UserManagement = () => {
                       </td>
 
                       <td style={{ ...td, textAlign: 'right' }}>
-                        <button
-                          onClick={() => handleToggleStatusClick(user)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 5,
-                            padding: '5px 11px',
-                            borderRadius: 8,
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.18s',
-                            border: `1px solid ${isActive ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
-                            background: isActive ? 'rgba(239,68,68,0.08)' : 'rgba(34,197,94,0.08)',
-                            color: isActive ? '#f87171' : '#4ade80'
-                          }}
-                        >
-                          {isActive ? <BlockIcon sx={{ fontSize: 13 }} /> : <CheckIcon sx={{ fontSize: 13 }} />}
-                          <span>{isActive ? 'Suspend' : 'Activate'}</span>
-                        </button>
+                        {isDeleted ? (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                            Archived
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleStatusClick(user)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 5,
+                              padding: '5px 11px',
+                              borderRadius: 8,
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              transition: 'all 0.18s',
+                              border: `1px solid ${isActive ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+                              background: isActive ? 'rgba(239,68,68,0.08)' : 'rgba(34,197,94,0.08)',
+                              color: isActive ? '#f87171' : '#4ade80'
+                            }}
+                          >
+                            <span>{isActive ? 'Suspend' : 'Activate'}</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -628,6 +736,8 @@ const UserManagement = () => {
           </div>
         )}
       </div>
+        </>
+      )}
 
       {/* Confirmation Modal */}
       {confirmModal.isOpen && (

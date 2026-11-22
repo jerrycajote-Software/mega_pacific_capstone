@@ -36,6 +36,14 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => getStoredAuthToken());
   const [loading, setLoading] = useState(false);
   const [suspendedModal, setSuspendedModal] = useState(false);
+  const [deletedAccountModal, setDeletedAccountModal] = useState({ open: false, message: '' });
+
+  const triggerAccountDeletedNotice = useCallback((message) => {
+    setDeletedAccountModal({
+      open: true,
+      message: message || 'Your account deletion request has been approved by the Administrator. You will now be signed out.'
+    });
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -84,6 +92,9 @@ export const AuthProvider = ({ children }) => {
           }
           if (error.response && error.response.status === 403 && error.response.data?.error === 'account_suspended') {
             setSuspendedModal(true);
+          }
+          if (error.response && error.response.status === 403 && error.response.data?.error === 'account_deleted') {
+            triggerAccountDeletedNotice(error.response.data?.message);
           }
           if (error.response && error.response.status === 503 && error.response.data?.error === 'maintenance') {
             window.location.reload();
@@ -223,8 +234,34 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading, updateUser }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, loading, updateUser, triggerAccountDeletedNotice }}>
       {children}
+      {deletedAccountModal.open && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+          <div style={{ background: 'var(--bg-secondary, #1a1a1a)', border: '1px solid var(--border, #333)', borderRadius: 20, width: '100%', maxWidth: 420, padding: '2rem', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.7)', fontFamily: 'system-ui, sans-serif' }}>
+            <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', color: '#ef4444' }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            </div>
+            <h3 style={{ margin: '0 0 0.5rem', fontWeight: 700, color: '#fff', fontSize: '1.25rem' }}>
+              Account Deleted
+            </h3>
+            <p style={{ margin: '0 0 1.5rem', fontSize: '0.9rem', color: '#9ca3af', lineHeight: 1.55 }}>
+              {deletedAccountModal.message}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setDeletedAccountModal({ open: false, message: '' });
+                logout();
+                window.location.replace('/login');
+              }}
+              style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '0.75rem 2rem', borderRadius: 10, fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', width: '100%' }}
+            >
+              Return to Sign In
+            </button>
+          </div>
+        </div>
+      )}
       {suspendedModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: 'var(--bg-secondary, #1a1a1a)', border: '1px solid var(--border, #333)', borderRadius: 20, width: '100%', maxWidth: 400, padding: '2rem', textAlign: 'center', boxShadow: '0 32px 80px rgba(0,0,0,0.7)', fontFamily: 'system-ui, sans-serif' }}>

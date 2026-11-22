@@ -7,6 +7,7 @@ import {
   RemovePhotoConfirmDialog,
   compressProfilePhoto
 } from '../../components/profile/ProfilePhotoModal';
+import AccountDeletionSection from '../../components/profile/AccountDeletionSection';
 import {
   Box,
   Typography,
@@ -752,6 +753,11 @@ const ProfilePage = () => {
           )}
         </Paper>
       </Box>
+
+      <AccountDeletionSection
+        token={token}
+        onShowFeedback={(message, severity = 'success') => setToast({ open: true, message, severity })}
+      />
 
       <Modal
         open={isModalOpen}
