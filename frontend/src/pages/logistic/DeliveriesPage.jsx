@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { getStoredAuthToken } from '../../context/AuthContext';
 import LogisticsPaymentProofModal from '../../components/LogisticsPaymentProofModal';
+import OrderStatusFilterSelect from '../../components/OrderStatusFilterSelect';
 import {
   CustomSearchIcon as SearchIcon,
   CustomChevronRightIcon as ChevronRightIcon,
@@ -11,6 +12,16 @@ import {
   CustomStorefrontIcon as StorefrontIcon,
   CustomLocalShippingIcon as LocalShippingIcon
 } from '../../components/icons';
+
+const LOGISTICS_STATUS_FILTERS = [
+  { value: 'all', label: 'All Statuses', dotColor: null, matches: () => true },
+  { value: 'finance_verified', label: 'Finance Verified', dotColor: '#f59e0b', matches: (s) => s === 'finance_verified' },
+  { value: 'processing', label: 'Processing', dotColor: '#f59e0b', matches: (s) => s === 'processing' },
+  { value: 'shipped', label: 'Shipped', dotColor: '#2563eb', matches: (s) => s === 'shipped' },
+  { value: 'out_for_delivery', label: 'Out for Delivery', dotColor: '#2563eb', matches: (s) => s === 'out_for_delivery' },
+  { value: 'ready_for_pickup', label: 'Ready for Pick-up', dotColor: '#8b5cf6', matches: (s) => s === 'ready_for_pickup' },
+  { value: 'completed', label: 'Completed', dotColor: '#16a34a', matches: (s) => s === 'completed' || s === 'delivered' }
+];
 
 const checkIsOrderPending50 = (order) =>
   Boolean(
@@ -69,6 +80,7 @@ const DeliveriesPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [fulfillmentFilter, setFulfillmentFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updating, setUpdating] = useState(false);
@@ -191,6 +203,10 @@ const DeliveriesPage = () => {
     handleUpdateStatus(order.rawId, targetStatus);
   };
 
+  const handleChangeStatusFilter = (nextStatus) => {
+    setStatusFilter(nextStatus);
+  };
+
   const deliveryOrdersCount = orders.filter((o) => (o.fulfillmentType || 'Delivery') === 'Delivery').length;
   const pickupOrdersCount = orders.filter((o) => o.fulfillmentType === 'Pickup').length;
   const awaitingSignalCount = orders.filter(
@@ -198,33 +214,55 @@ const DeliveriesPage = () => {
   ).length;
   const pending50Count = orders.filter(checkIsOrderPending50).length;
 
-  const filteredOrders = orders.filter((o) => {
+  // Apply fulfillment method filter first so status dropdown counts reflect the active fulfillment tab
+  const ordersByFulfillment = useMemo(() => {
+    return orders.filter((o) => {
+      if (fulfillmentFilter === 'delivery') {
+        return (o.fulfillmentType || 'Delivery') === 'Delivery';
+      }
+      if (fulfillmentFilter === 'pickup') {
+        return o.fulfillmentType === 'Pickup';
+      }
+      if (fulfillmentFilter === 'pending_50') {
+        return checkIsOrderPending50(o);
+      }
+      if (fulfillmentFilter === 'awaiting_signal') {
+        return (
+          o.fulfillmentType === 'Pickup' &&
+          (o.orderStatus === 'processing' || o.orderStatus === 'finance_verified')
+        );
+      }
+      return true;
+    });
+  }, [orders, fulfillmentFilter]);
+
+  // Count orders per status option within the active fulfillment view
+  const statusCounts = useMemo(() => {
+    return LOGISTICS_STATUS_FILTERS.reduce((counts, option) => {
+      counts[option.value] = ordersByFulfillment.filter((o) =>
+        option.matches((o.orderStatus || '').toLowerCase())
+      ).length;
+      return counts;
+    }, {});
+  }, [ordersByFulfillment]);
+
+  const activeStatusOption =
+    LOGISTICS_STATUS_FILTERS.find((opt) => opt.value === statusFilter) || LOGISTICS_STATUS_FILTERS[0];
+
+  const filteredOrders = useMemo(() => {
     const query = searchTerm.toLowerCase();
-    const matchesSearch =
-      o.id.toLowerCase().includes(query) ||
-      o.customerName.toLowerCase().includes(query) ||
-      (o.contactNumber || '').toLowerCase().includes(query) ||
-      (o.customerEmail || '').toLowerCase().includes(query);
+    return ordersByFulfillment.filter((o) => {
+      const matchesSearch =
+        o.id.toLowerCase().includes(query) ||
+        o.customerName.toLowerCase().includes(query) ||
+        (o.contactNumber || '').toLowerCase().includes(query) ||
+        (o.customerEmail || '').toLowerCase().includes(query);
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    if (fulfillmentFilter === 'delivery') {
-      return (o.fulfillmentType || 'Delivery') === 'Delivery';
-    }
-    if (fulfillmentFilter === 'pickup') {
-      return o.fulfillmentType === 'Pickup';
-    }
-    if (fulfillmentFilter === 'pending_50') {
-      return checkIsOrderPending50(o);
-    }
-    if (fulfillmentFilter === 'awaiting_signal') {
-      return (
-        o.fulfillmentType === 'Pickup' &&
-        (o.orderStatus === 'processing' || o.orderStatus === 'finance_verified')
-      );
-    }
-    return true;
-  });
+      return activeStatusOption.matches((o.orderStatus || '').toLowerCase());
+    });
+  }, [ordersByFulfillment, searchTerm, activeStatusOption]);
 
   return (
     <div className="logistics-page-wrap">
@@ -269,25 +307,36 @@ const DeliveriesPage = () => {
       )}
 
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', padding: '1.15rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', flexWrap: 'wrap', gap: '0.85rem', marginBottom: '1.15rem' }}>
-          <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: '380px' }}>
-            <SearchIcon sx={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 18 }} />
-            <input
-              type="text"
-              placeholder="Search by Order ID, name, or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                minHeight: '42px',
-                padding: '10px 12px 10px 38px',
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                color: 'var(--text-primary)',
-                outline: 'none',
-                fontSize: '0.9rem'
-              }}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', marginBottom: '1.15rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', flex: '1 1 380px' }}>
+            <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: '340px' }}>
+              <SearchIcon sx={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 18 }} />
+              <input
+                type="text"
+                placeholder="Search by Order ID, name, or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: '42px',
+                  padding: '10px 12px 10px 38px',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
+
+            {/* Filter logistics orders by delivery or pick-up status */}
+            <OrderStatusFilterSelect
+              value={statusFilter}
+              onChange={handleChangeStatusFilter}
+              options={LOGISTICS_STATUS_FILTERS}
+              counts={statusCounts}
+              ariaLabel="Filter orders by status"
             />
           </div>
 

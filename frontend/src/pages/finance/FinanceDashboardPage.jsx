@@ -16,7 +16,6 @@ import {
   Button,
   Tabs,
   Tab,
-  LinearProgress,
   TextField,
   InputAdornment,
   FormControlLabel,
@@ -40,9 +39,8 @@ import {
 import DeliveryFleetRateControls from '../../components/finance/DeliveryFleetRateControls';
 import RevenueExpensesBarChart from '../../components/finance/RevenueExpensesBarChart';
 import PaymentDistributionCard from '../../components/finance/PaymentDistributionCard';
+import ExpenseAllocationsCard from '../../components/finance/ExpenseAllocationsCard';
 import { DEFAULT_VEHICLE_RULES } from '../../utils/deliveryFeeCalculator';
-
-const DONUT_COLORS = ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4'];
 
 const FinanceDashboardPage = () => {
   const [loading, setLoading] = useState(true);
@@ -209,6 +207,10 @@ const FinanceDashboardPage = () => {
       window.removeEventListener('focus', handleFocus);
     };
   }, []);
+
+  const handleChangeActivityFilter = (_, nextFilter) => {
+    setActivityFilter(nextFilter);
+  };
 
   const filteredActivity = useMemo(() => {
     if (!data.recentActivity) return [];
@@ -466,7 +468,8 @@ const FinanceDashboardPage = () => {
         handleUpdateVehicleTierFee={handleUpdateVehicleTierFee}
       />
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* Full-width stacked analytics, recent financial activity, and expense allocations */}
+      <Grid container spacing={3}>
         <Grid size={{ xs: 12 }}>
           <RevenueExpensesBarChart trendData={data.revenueVsExpensesTrend} />
         </Grid>
@@ -477,10 +480,8 @@ const FinanceDashboardPage = () => {
             totalRevenue={data.kpi.totalRevenue}
           />
         </Grid>
-      </Grid>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12 }}>
           <Paper
             elevation={0}
             sx={{
@@ -492,7 +493,8 @@ const FinanceDashboardPage = () => {
           >
             <Box
               sx={{
-                p: 2.5,
+                px: 3,
+                py: 2.5,
                 borderBottom: '1px solid',
                 borderColor: 'divider',
                 display: 'flex',
@@ -503,7 +505,7 @@ const FinanceDashboardPage = () => {
               }}
             >
               <Box>
-                <Typography variant="h6" fontWeight={700}>
+                <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
                   Recent Financial Activity
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -513,7 +515,7 @@ const FinanceDashboardPage = () => {
 
               <Tabs
                 value={activityFilter}
-                onChange={(_, val) => setActivityFilter(val)}
+                onChange={handleChangeActivityFilter}
                 sx={{
                   minHeight: 32,
                   '& .MuiTab-root': {
@@ -536,22 +538,22 @@ const FinanceDashboardPage = () => {
               <Table stickyHeader>
                 <TableHead>
                   <TableRow sx={{ '& th': { borderBottom: '1px solid', borderColor: 'divider' } }}>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Reference</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Entity / Source</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', whiteSpace: 'nowrap' }}>Reference</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', whiteSpace: 'nowrap' }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', whiteSpace: 'nowrap' }}>Entity / Source</TableCell>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc' }}>Channel</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'right' }}>Amount</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'center' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? '#141d2e' : '#f8fafc', textAlign: 'center', whiteSpace: 'nowrap' }}>Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredActivity.map((row, i) => (
                     <TableRow key={i} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                      <TableCell sx={{ fontWeight: 600, color: row.type === 'expense' ? '#DC2626' : 'primary.main', fontSize: '0.85rem' }}>
+                      <TableCell sx={{ fontWeight: 600, color: row.type === 'expense' ? '#DC2626' : 'primary.main', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
                         {row.id}
                       </TableCell>
-                      <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary' }}>{row.date}</TableCell>
-                      <TableCell sx={{ fontWeight: 500, fontSize: '0.85rem' }}>{row.by}</TableCell>
+                      <TableCell sx={{ fontSize: '0.82rem', color: 'text.secondary', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{row.date}</TableCell>
+                      <TableCell sx={{ fontWeight: 500, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{row.by}</TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" spacing={1}>
                           {row.method === 'Bank Transfer' ? (
@@ -566,10 +568,10 @@ const FinanceDashboardPage = () => {
                           </Typography>
                         </Stack>
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 800, textAlign: 'right', fontSize: '0.85rem', color: row.type === 'expense' ? 'error.dark' : 'text.primary' }}>
+                      <TableCell sx={{ fontWeight: 800, textAlign: 'right', fontSize: '0.85rem', color: row.type === 'expense' ? 'error.dark' : 'text.primary', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
                         {row.amount}
                       </TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
+                      <TableCell sx={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                         <Chip
                           label={row.status.toUpperCase()}
                           size="small"
@@ -606,67 +608,11 @@ const FinanceDashboardPage = () => {
           </Paper>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 3.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6" fontWeight={700}>
-                Expense Allocations
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Expenses by department
-              </Typography>
-            </Box>
-
-            <Stack spacing={2.5} sx={{ my: 'auto' }}>
-              {data.expenseCategoryBreakdown?.map((cat, idx) => {
-                const total = data.kpi.totalExpenses || 1;
-                const pct = Math.round((cat.value / total) * 100);
-                const color = DONUT_COLORS[idx % DONUT_COLORS.length];
-                return (
-                  <Box key={idx}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                      <Typography variant="body2" fontWeight={600} color="text.primary">
-                        {cat.name}
-                      </Typography>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="body2" fontWeight={700}>
-                          ₱{cat.value.toLocaleString()}
-                        </Typography>
-                        <Chip label={`${pct}%`} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700 }} />
-                      </Stack>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={pct}
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        bgcolor: 'grey.100',
-                        '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 4 }
-                      }}
-                    />
-                  </Box>
-                );
-              })}
-
-              {(!data.expenseCategoryBreakdown || data.expenseCategoryBreakdown.length === 0) && (
-                <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                  <Typography variant="body2">No expense allocations recorded.</Typography>
-                </Box>
-              )}
-            </Stack>
-          </Paper>
+        <Grid size={{ xs: 12 }}>
+          <ExpenseAllocationsCard
+            expenseCategoryBreakdown={data.expenseCategoryBreakdown}
+            totalExpenses={data.kpi.totalExpenses}
+          />
         </Grid>
       </Grid>
     </Box>

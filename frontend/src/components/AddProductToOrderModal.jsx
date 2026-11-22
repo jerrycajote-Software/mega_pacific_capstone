@@ -28,6 +28,7 @@ import {
 } from '../constants/roofingSpecs';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from '../pages/customer/buildProductOptions';
 import { isCoilInStock, getFirstInStockColor } from '../utils/coilAvailability';
+import { isSameOrderItem } from '../utils/orderItemMerger';
 
 
 const cleanHtmlDescription = (raw) => {
@@ -239,11 +240,21 @@ const AddProductToOrderModal = ({
       total: activePrice * numLength * finalQty
     };
 
+    const existingMatch = currentItems.find((item) => isSameOrderItem(item, newItem));
+    const existingQty = Math.max(0, parseInt(existingMatch?.quantity, 10) || 0);
+    const isMatchedPreOrder = existingMatch?.product?.isPreOrder ?? selectedProduct?.isPreOrder ?? true;
+    const stockCap = existingMatch?.variant?.stock ?? existingMatch?.product?.stock ?? 0;
+    const combinedQty = existingMatch
+      ? (!isMatchedPreOrder && stockCap > 0 ? Math.min(stockCap, existingQty + newItem.quantity) : existingQty + newItem.quantity)
+      : newItem.quantity;
+
     onAddProduct(newItem);
     setAddedAlert({
       name: selectedProduct.name,
       qty: newItem.quantity,
-      spec: `${newItem.thickness || ''} ${isPerMeter ? `${numLength}m` : ''} ${newItem.color || ''}`.trim()
+      combined: Boolean(existingMatch),
+      newTotalQty: combinedQty,
+      spec: [newItem.thickness, isPerMeter ? `${numLength}m` : null, newItem.color].filter(Boolean).join(' • ')
     });
   };
 
@@ -586,7 +597,15 @@ const AddProductToOrderModal = ({
 
                   {addedAlert && (
                     <Alert severity="success" sx={{ borderRadius: 2.5, py: 0.5 }}>
-                      ✓ Added <strong>{addedAlert.qty}x {addedAlert.name}</strong> ({addedAlert.spec}) to your order!
+                      {addedAlert.combined ? (
+                        <>
+                          Combined <strong>+{addedAlert.qty} {addedAlert.name}</strong> ({addedAlert.spec}) with the same product already in your order (Total Qty: <strong>{addedAlert.newTotalQty}</strong>).
+                        </>
+                      ) : (
+                        <>
+                          Added <strong>{addedAlert.qty}x {addedAlert.name}</strong> ({addedAlert.spec}) to your order.
+                        </>
+                      )}
                     </Alert>
                   )}
 
