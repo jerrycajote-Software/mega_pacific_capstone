@@ -178,7 +178,7 @@ const OwnerDashboardPage = () => {
   if (loading || !data) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: 'var(--text-muted)' }}>
-        <CircularProgress size={22} sx={{ color: '#10b981', marginRight: '10px' }} />
+        <CircularProgress size={22} color="primary" sx={{ marginRight: '10px' }} />
         Gathering Executive Insights...
       </div>
     );
@@ -190,7 +190,13 @@ const OwnerDashboardPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>Business Overview</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)' }}>Business Overview</h2>
+            <span className="role-identity-pill">
+              <span className="role-identity-dot" />
+              Executive Overview
+            </span>
+          </div>
           <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
             {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>

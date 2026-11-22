@@ -142,10 +142,11 @@ const FinanceLayout = () => {
             <Link to="/finance/dashboard" className="sidebar-brand-link">
               <div className="sidebar-brand-full">
                 <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '20px', letterSpacing: '0.04em', lineHeight: 1 }}>
-                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
-                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
+                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px var(--role-accent-strong)' }}>MEGA</span>
+                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px var(--role-accent)' }}>PACIFIC</span>
                 </div>
-                <div style={{ color: '#7a90e8', fontSize: '9px', fontWeight: 800, letterSpacing: '0.18em', marginTop: '4px', fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--role-accent-text)', fontSize: '9px', fontWeight: 800, letterSpacing: '0.18em', marginTop: '5px', fontFamily: 'Arial, sans-serif' }}>
+                  <span className="role-identity-dot" style={{ width: 6, height: 6 }} />
                   FINANCE DASHBOARD
                 </div>
               </div>
@@ -193,32 +194,10 @@ const FinanceLayout = () => {
                 <NavLink
                   to={item.path}
                   data-active={isTabActive ? "true" : undefined}
-                  className={({ isActive }) => `nav-link${isActive || isTabActive ? ' active' : ''}`}
-                  style={({ isActive }) => {
-                    const active = isActive || isTabActive;
-                    if (!active) return undefined;
-                    return isDark ? {
-                      borderRadius: '12px',
-                      background: 'linear-gradient(90deg, rgba(34, 197, 94, 0.28) 0%, rgba(16, 185, 129, 0.16) 60%, rgba(34, 197, 94, 0.08) 100%)',
-                      color: '#ffffff',
-                      border: '1.5px solid rgba(74, 222, 128, 0.65)',
-                      boxShadow: '0 4px 20px -2px rgba(34, 197, 94, 0.35)',
-                      fontWeight: 700,
-                    } : {
-                      borderRadius: '12px',
-                      background: '#dcfce7',
-                      color: '#15803d',
-                      border: '1.5px solid #22c55e',
-                      boxShadow: '0 4px 14px rgba(34, 197, 94, 0.25)',
-                      fontWeight: 700,
-                    };
-                  }}
+                  className={`nav-link${isTabActive ? ' active' : ''}`}
                 >
                   <span className="nav-icon">{item.icon}</span>
-                  <span
-                    className="sidebar-nav-label"
-                    style={isTabActive ? { fontWeight: 750, color: isDark ? '#ffffff' : '#15803d' } : undefined}
-                  >
+                  <span className="sidebar-nav-label">
                     {item.name}
                   </span>
                   {item.path === '/finance/admin-support' && unreadAdminReplies > 0 && (

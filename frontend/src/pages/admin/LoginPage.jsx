@@ -11,7 +11,7 @@ const LoginPage = () => (
     redirectPath="/admin/dashboard"
     accessDeniedMessage="Access denied. Admin portal requires administrator privileges."
     signInButtonLabel="Sign In"
-    accentTheme="green"
+    accentTheme="adminIndigo"
   />
 );
 

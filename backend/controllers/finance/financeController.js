@@ -262,12 +262,12 @@ const getFinancialReports = async (req, res) => {
           amount: e.amount,
           status: e.status
         })),
-        recentPaidOrders: paidOrders.map(o => ({
+        recentPaidOrders: collectedOrders.map(o => ({
           id: `#ORD-${o.id.toString().padStart(3, '0')}`,
           customer: o.customerName || o.shippingName || 'Customer',
-          total: o.total,
-          date: o.createdAt.toISOString().split('T')[0],
-          paymentMode: o.paymentMode
+          total: Number(o.total || 0),
+          date: o.createdAt ? o.createdAt.toISOString().split('T')[0] : '',
+          paymentMode: o.paymentMode || 'Standard'
         }))
       }
     });

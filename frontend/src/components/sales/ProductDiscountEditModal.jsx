@@ -30,9 +30,14 @@ const ProductDiscountEditModal = ({
 
   if (!open || !product) return null;
 
+  const rawInitialPct = Number(product.discountPercent ?? globalDiscountPercent ?? 30);
+  const initialDiscountPct = Number.isNaN(rawInitialPct) ? 0 : Math.round(rawInitialPct * 100) / 100;
   const parsedValue = discountInput === '' ? NaN : Number(discountInput);
   const isValid = !Number.isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 95;
   const nextDiscountPct = isValid ? Math.round(parsedValue * 100) / 100 : 0;
+  // Disable saving until the user enters a valid discount that differs from the current saved value
+  const hasDiscountChanged = isValid && Math.abs(nextDiscountPct - initialDiscountPct) >= 0.001;
+  const isSaveDisabled = !isValid || !hasDiscountChanged || saving;
 
   const baseOriginal = Number(product.originalPrice ?? product.price ?? 0);
   const nextBaseSelling = Math.round(baseOriginal * (1 - nextDiscountPct / 100) * 100) / 100;
@@ -52,7 +57,7 @@ const ProductDiscountEditModal = ({
 
   const handleSubmitProductDiscount = (event) => {
     event.preventDefault();
-    if (!isValid || saving) return;
+    if (isSaveDisabled) return;
     if (onSaveProductDiscount) {
       onSaveProductDiscount(product, nextDiscountPct);
     }
@@ -317,20 +322,22 @@ const ProductDiscountEditModal = ({
           {/* Focused footer action without redundant close button */}
           <button
             type="submit"
-            disabled={!isValid || saving}
+            disabled={isSaveDisabled}
             style={{
               width: '100%',
               padding: '0.72rem 1rem',
               borderRadius: 10,
               border: 'none',
-              background: !isValid || saving
+              background: isSaveDisabled
                 ? '#64748b'
                 : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
               color: '#ffffff',
               fontSize: '0.86rem',
               fontWeight: 700,
-              cursor: !isValid || saving ? 'not-allowed' : 'pointer',
-              boxShadow: !isValid || saving ? 'none' : '0 4px 14px rgba(37, 99, 235, 0.32)'
+              cursor: isSaveDisabled ? 'not-allowed' : 'pointer',
+              opacity: isSaveDisabled ? 0.65 : 1,
+              boxShadow: isSaveDisabled ? 'none' : '0 4px 14px rgba(37, 99, 235, 0.32)',
+              transition: 'all 0.15s ease'
             }}
           >
             {saving ? 'Saving Discount...' : 'Save Product Discount'}

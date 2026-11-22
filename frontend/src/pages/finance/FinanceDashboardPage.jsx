@@ -349,11 +349,15 @@ const FinanceDashboardPage = () => {
     <Box sx={{ p: { xs: 2.5, md: 4 }, animation: 'fadeIn 0.4s ease-in-out' }}>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 4 }}>
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em' }}>
               Finance Overview
             </Typography>
-            <Chip label="Live Analytics" size="small" sx={{ bgcolor: 'rgba(16, 185, 129, 0.12)', color: '#047857', fontWeight: 700, fontSize: '0.7rem' }} />
+            <span className="role-identity-pill">
+              <span className="role-identity-dot" />
+              Finance Operations
+            </span>
+            <Chip label="Live Analytics" size="small" sx={{ bgcolor: 'rgba(16, 185, 129, 0.12)', color: (theme) => theme.palette.mode === 'dark' ? '#34d399' : '#047857', fontWeight: 700, fontSize: '0.7rem' }} />
           </Stack>
           <Typography variant="body2" color="text.secondary">
             Summary of company revenue, expenses, and cash flow.

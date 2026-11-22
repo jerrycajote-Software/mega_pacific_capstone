@@ -10,6 +10,7 @@ import {
   CustomErrorOutlineIcon as ErrorOutlineIcon
 } from './icons';
 import { useTranslation } from 'react-i18next';
+import { ROLE_PORTAL_THEMES } from '../config/roleThemeTokens';
 
 const portalLoginCss = `
   @keyframes spl-fadeUp {
@@ -74,6 +75,11 @@ const ACCENT_PALETTES = {
     infoBorder: '#fde68a',
     infoText: '#b45309',
   },
+  salesBlue: ROLE_PORTAL_THEMES.sales.login,
+  financeNavy: ROLE_PORTAL_THEMES.finance.login,
+  logisticOcean: ROLE_PORTAL_THEMES.logistic.login,
+  adminIndigo: ROLE_PORTAL_THEMES.admin.login,
+  ownerGold: ROLE_PORTAL_THEMES.owner.login,
 };
 
 /**

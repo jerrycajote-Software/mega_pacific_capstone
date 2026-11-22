@@ -730,70 +730,267 @@ html {
   display: none;
 }
 
-/* Owner Layout Accent Variant */
-.owner-sidebar {
-  border-right-color: rgba(245, 158, 11, 0.25) !important;
+/* Unified 5-Role Color Identity Tokens (Dark Mode defaults + Light Mode overrides) */
+
+/* Sales Portal: Bright Royal Blue */
+[data-portal-role="sales"] {
+  --role-accent: #3b82f6;
+  --role-accent-strong: #2563eb;
+  --role-accent-light: #60a5fa;
+  --role-accent-text: #93c5fd;
+  --role-accent-soft: rgba(37, 99, 235, 0.16);
+  --role-accent-border: rgba(96, 165, 250, 0.45);
+  --role-sidebar-border: rgba(59, 130, 246, 0.28);
+  --role-nav-bg: linear-gradient(90deg, rgba(37, 99, 235, 0.34) 0%, rgba(59, 130, 246, 0.18) 60%, rgba(37, 99, 235, 0.08) 100%);
+  --role-nav-bg-collapsed: rgba(37, 99, 235, 0.32);
+  --role-nav-border: rgba(96, 165, 250, 0.72);
+  --role-nav-text: #ffffff;
+  --role-nav-bar: linear-gradient(180deg, #93c5fd 0%, #3b82f6 100%);
+  --role-nav-shadow: 0 6px 18px -4px rgba(37, 99, 235, 0.38);
+  --role-nav-icon-shadow: drop-shadow(0 2px 6px rgba(96, 165, 250, 0.5));
+  --role-badge-bg: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(37, 99, 235, 0.42);
+  --role-hover-bg: rgba(59, 130, 246, 0.14);
+  --role-hover-border: rgba(96, 165, 250, 0.36);
+  --role-selection-bg: rgba(59, 130, 246, 0.32);
 }
 
-.owner-sidebar .nav-link.active,
-.owner-sidebar .nav-link[data-active="true"],
-.owner-sidebar .nav-link.active,
-[data-theme="dark"] .owner-sidebar .nav-link.active,
-[data-theme="dark"] .owner-sidebar .nav-link[data-active="true"] {
+[data-theme="light"][data-portal-role="sales"] {
+  --role-accent: #2563eb;
+  --role-accent-strong: #1d4ed8;
+  --role-accent-light: #3b82f6;
+  --role-accent-text: #1d4ed8;
+  --role-accent-soft: #eff6ff;
+  --role-accent-border: #93c5fd;
+  --role-sidebar-border: rgba(37, 99, 235, 0.22);
+  --role-nav-bg: #dbeafe;
+  --role-nav-bg-collapsed: #dbeafe;
+  --role-nav-border: #3b82f6;
+  --role-nav-text: #1d4ed8;
+  --role-nav-bar: #2563eb;
+  --role-nav-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.22);
+  --role-nav-icon-shadow: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.28));
+  --role-badge-bg: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(37, 99, 235, 0.32);
+  --role-hover-bg: rgba(37, 99, 235, 0.08);
+  --role-hover-border: rgba(37, 99, 235, 0.25);
+  --role-selection-bg: rgba(37, 99, 235, 0.18);
+}
+
+/* Finance Portal: Deep Midnight Navy */
+[data-portal-role="finance"] {
+  --role-accent: #5b8def;
+  --role-accent-strong: #1e3a8a;
+  --role-accent-light: #8aaeff;
+  --role-accent-text: #a5c0ff;
+  --role-accent-soft: rgba(30, 58, 138, 0.32);
+  --role-accent-border: rgba(122, 162, 247, 0.45);
+  --role-sidebar-border: rgba(91, 141, 239, 0.32);
+  --role-nav-bg: linear-gradient(90deg, rgba(30, 58, 138, 0.62) 0%, rgba(23, 37, 84, 0.42) 65%, rgba(30, 58, 138, 0.18) 100%);
+  --role-nav-bg-collapsed: rgba(30, 58, 138, 0.56);
+  --role-nav-border: rgba(122, 162, 247, 0.68);
+  --role-nav-text: #ffffff;
+  --role-nav-bar: linear-gradient(180deg, #a5c0ff 0%, #3b63c4 100%);
+  --role-nav-shadow: 0 6px 18px -4px rgba(30, 58, 138, 0.55);
+  --role-nav-icon-shadow: drop-shadow(0 2px 6px rgba(138, 174, 255, 0.48));
+  --role-badge-bg: linear-gradient(135deg, #172554 0%, #3b63c4 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(23, 37, 84, 0.55);
+  --role-hover-bg: rgba(91, 141, 239, 0.15);
+  --role-hover-border: rgba(138, 174, 255, 0.36);
+  --role-selection-bg: rgba(91, 141, 239, 0.32);
+}
+
+[data-theme="light"][data-portal-role="finance"] {
+  --role-accent: #1e3a8a;
+  --role-accent-strong: #172554;
+  --role-accent-light: #1e40af;
+  --role-accent-text: #172554;
+  --role-accent-soft: #eef2fb;
+  --role-accent-border: #9db4ea;
+  --role-sidebar-border: rgba(30, 58, 138, 0.26);
+  --role-nav-bg: #e2e8f8;
+  --role-nav-bg-collapsed: #e2e8f8;
+  --role-nav-border: #1e40af;
+  --role-nav-text: #172554;
+  --role-nav-bar: #1e3a8a;
+  --role-nav-shadow: 0 4px 12px -2px rgba(30, 58, 138, 0.22);
+  --role-nav-icon-shadow: drop-shadow(0 2px 4px rgba(30, 58, 138, 0.28));
+  --role-badge-bg: linear-gradient(135deg, #0f1e4a 0%, #1e3a8a 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(23, 37, 84, 0.34);
+  --role-hover-bg: rgba(30, 58, 138, 0.08);
+  --role-hover-border: rgba(30, 58, 138, 0.28);
+  --role-selection-bg: rgba(30, 58, 138, 0.18);
+}
+
+/* Logistics Portal: Ocean Steel Blue */
+[data-portal-role="logistic"] {
+  --role-accent: #0ea5e9;
+  --role-accent-strong: #0284c7;
+  --role-accent-light: #38bdf8;
+  --role-accent-text: #7dd3fc;
+  --role-accent-soft: rgba(2, 132, 199, 0.18);
+  --role-accent-border: rgba(56, 189, 248, 0.45);
+  --role-sidebar-border: rgba(14, 165, 233, 0.28);
+  --role-nav-bg: linear-gradient(90deg, rgba(2, 132, 199, 0.34) 0%, rgba(14, 165, 233, 0.18) 60%, rgba(2, 132, 199, 0.08) 100%);
+  --role-nav-bg-collapsed: rgba(2, 132, 199, 0.32);
+  --role-nav-border: rgba(56, 189, 248, 0.7);
+  --role-nav-text: #ffffff;
+  --role-nav-bar: linear-gradient(180deg, #7dd3fc 0%, #0ea5e9 100%);
+  --role-nav-shadow: 0 6px 18px -4px rgba(2, 132, 199, 0.38);
+  --role-nav-icon-shadow: drop-shadow(0 2px 6px rgba(56, 189, 248, 0.5));
+  --role-badge-bg: linear-gradient(135deg, #0369a1 0%, #38bdf8 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(2, 132, 199, 0.4);
+  --role-hover-bg: rgba(14, 165, 233, 0.14);
+  --role-hover-border: rgba(56, 189, 248, 0.36);
+  --role-selection-bg: rgba(14, 165, 233, 0.3);
+}
+
+[data-theme="light"][data-portal-role="logistic"] {
+  --role-accent: #0369a1;
+  --role-accent-strong: #075985;
+  --role-accent-light: #0284c7;
+  --role-accent-text: #075985;
+  --role-accent-soft: #f0f9ff;
+  --role-accent-border: #7dd3fc;
+  --role-sidebar-border: rgba(3, 105, 161, 0.22);
+  --role-nav-bg: #e0f2fe;
+  --role-nav-bg-collapsed: #e0f2fe;
+  --role-nav-border: #0284c7;
+  --role-nav-text: #075985;
+  --role-nav-bar: #0369a1;
+  --role-nav-shadow: 0 4px 12px -2px rgba(3, 105, 161, 0.22);
+  --role-nav-icon-shadow: drop-shadow(0 2px 4px rgba(3, 105, 161, 0.28));
+  --role-badge-bg: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(3, 105, 161, 0.32);
+  --role-hover-bg: rgba(3, 105, 161, 0.08);
+  --role-hover-border: rgba(3, 105, 161, 0.25);
+  --role-selection-bg: rgba(3, 105, 161, 0.18);
+}
+
+/* Admin Portal: Deep Indigo */
+[data-portal-role="admin"] {
+  --role-accent: #6366f1;
+  --role-accent-strong: #4f46e5;
+  --role-accent-light: #818cf8;
+  --role-accent-text: #a5b4fc;
+  --role-accent-soft: rgba(79, 70, 229, 0.18);
+  --role-accent-border: rgba(129, 140, 248, 0.45);
+  --role-sidebar-border: rgba(99, 102, 241, 0.28);
+  --role-nav-bg: linear-gradient(90deg, rgba(79, 70, 229, 0.34) 0%, rgba(99, 102, 241, 0.18) 60%, rgba(79, 70, 229, 0.08) 100%);
+  --role-nav-bg-collapsed: rgba(79, 70, 229, 0.32);
+  --role-nav-border: rgba(129, 140, 248, 0.72);
+  --role-nav-text: #ffffff;
+  --role-nav-bar: linear-gradient(180deg, #a5b4fc 0%, #6366f1 100%);
+  --role-nav-shadow: 0 6px 18px -4px rgba(79, 70, 229, 0.4);
+  --role-nav-icon-shadow: drop-shadow(0 2px 6px rgba(129, 140, 248, 0.5));
+  --role-badge-bg: linear-gradient(135deg, #4338ca 0%, #818cf8 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(79, 70, 229, 0.42);
+  --role-hover-bg: rgba(99, 102, 241, 0.14);
+  --role-hover-border: rgba(129, 140, 248, 0.36);
+  --role-selection-bg: rgba(99, 102, 241, 0.32);
+}
+
+[data-theme="light"][data-portal-role="admin"] {
+  --role-accent: #4338ca;
+  --role-accent-strong: #3730a3;
+  --role-accent-light: #4f46e5;
+  --role-accent-text: #3730a3;
+  --role-accent-soft: #eef2ff;
+  --role-accent-border: #a5b4fc;
+  --role-sidebar-border: rgba(67, 56, 202, 0.22);
+  --role-nav-bg: #e0e7ff;
+  --role-nav-bg-collapsed: #e0e7ff;
+  --role-nav-border: #4f46e5;
+  --role-nav-text: #3730a3;
+  --role-nav-bar: #4338ca;
+  --role-nav-shadow: 0 4px 12px -2px rgba(67, 56, 202, 0.22);
+  --role-nav-icon-shadow: drop-shadow(0 2px 4px rgba(67, 56, 202, 0.28));
+  --role-badge-bg: linear-gradient(135deg, #3730a3 0%, #6366f1 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(67, 56, 202, 0.32);
+  --role-hover-bg: rgba(67, 56, 202, 0.08);
+  --role-hover-border: rgba(67, 56, 202, 0.25);
+  --role-selection-bg: rgba(67, 56, 202, 0.18);
+}
+
+/* Owner Portal: Executive Gold */
+[data-portal-role="owner"] {
+  --role-accent: #f59e0b;
+  --role-accent-strong: #d97706;
+  --role-accent-light: #fbbf24;
+  --role-accent-text: #fde68a;
+  --role-accent-soft: rgba(245, 158, 11, 0.16);
+  --role-accent-border: rgba(251, 191, 36, 0.45);
+  --role-sidebar-border: rgba(245, 158, 11, 0.28);
+  --role-nav-bg: linear-gradient(90deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.18) 60%, rgba(245, 158, 11, 0.08) 100%);
+  --role-nav-bg-collapsed: rgba(245, 158, 11, 0.28);
+  --role-nav-border: rgba(251, 191, 36, 0.72);
+  --role-nav-text: #ffffff;
+  --role-nav-bar: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  --role-nav-shadow: 0 6px 18px -4px rgba(245, 158, 11, 0.38);
+  --role-nav-icon-shadow: drop-shadow(0 2px 6px rgba(251, 191, 36, 0.5));
+  --role-badge-bg: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(245, 158, 11, 0.4);
+  --role-hover-bg: rgba(245, 158, 11, 0.14);
+  --role-hover-border: rgba(251, 191, 36, 0.36);
+  --role-selection-bg: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="light"][data-portal-role="owner"] {
+  --role-accent: #b45309;
+  --role-accent-strong: #92400e;
+  --role-accent-light: #d97706;
+  --role-accent-text: #92400e;
+  --role-accent-soft: #fffbeb;
+  --role-accent-border: #fcd34d;
+  --role-sidebar-border: rgba(217, 119, 6, 0.25);
+  --role-nav-bg: #fef3c7;
+  --role-nav-bg-collapsed: #fef3c7;
+  --role-nav-border: #d97706;
+  --role-nav-text: #92400e;
+  --role-nav-bar: #d97706;
+  --role-nav-shadow: 0 4px 12px -2px rgba(217, 119, 6, 0.24);
+  --role-nav-icon-shadow: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.3));
+  --role-badge-bg: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+  --role-badge-shadow: 0 6px 14px -2px rgba(180, 83, 9, 0.32);
+  --role-hover-bg: rgba(217, 119, 6, 0.08);
+  --role-hover-border: rgba(217, 119, 6, 0.28);
+  --role-selection-bg: rgba(245, 158, 11, 0.22);
+}
+
+/* Role-Aware Browser Surface Accents */
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) ::selection {
+  background: var(--role-selection-bg);
+}
+
+/* Unified Role-Coded Sidebar, Active Navigation, and Mobile Header Rules */
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar {
+  border-color: var(--role-sidebar-border);
+  border-top: 3px solid var(--role-accent-strong);
+}
+
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .sidebar-brand-badge {
+  background: var(--role-badge-bg) !important;
+  box-shadow: var(--role-badge-shadow) !important;
+}
+
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link.active,
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link[data-active="true"] {
   border-radius: 12px !important;
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.32) 0%, rgba(217, 119, 6, 0.18) 60%, rgba(245, 158, 11, 0.08) 100%) !important;
-  color: #ffffff !important;
-  border: 1.5px solid rgba(251, 191, 36, 0.75) !important;
-  box-shadow: 0 4px 20px -2px rgba(245, 158, 11, 0.4), inset 0 0 16px rgba(245, 158, 11, 0.12) !important;
+  background: var(--role-nav-bg) !important;
+  color: var(--role-nav-text) !important;
+  border: 1.5px solid var(--role-nav-border) !important;
+  box-shadow: var(--role-nav-shadow) !important;
 }
 
-.owner-sidebar .nav-link.active .sidebar-nav-label,
-.owner-sidebar .nav-link[data-active="true"] .sidebar-nav-label,
-[data-theme="dark"] .owner-sidebar .nav-link.active .sidebar-nav-label,
-[data-theme="dark"] .owner-sidebar .nav-link[data-active="true"] .sidebar-nav-label {
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link.active .sidebar-nav-label,
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link[data-active="true"] .sidebar-nav-label {
   font-weight: 750 !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 12px rgba(251, 191, 36, 0.6) !important;
-}
-
-.owner-sidebar .nav-link.active::before,
-.owner-sidebar .nav-link[data-active="true"]::before,
-[data-theme="dark"] .owner-sidebar .nav-link.active::before,
-[data-theme="dark"] .owner-sidebar .nav-link[data-active="true"]::before {
-  content: '' !important;
-  position: absolute !important;
-  left: 0 !important;
-  top: 18% !important;
-  height: 64% !important;
-  width: 4px !important;
-  border-radius: 0 4px 4px 0 !important;
-  background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%) !important;
-  box-shadow: 0 0 12px #f59e0b, 0 0 6px #fbbf24 !important;
-}
-
-.owner-sidebar .nav-link.active .nav-icon,
-.owner-sidebar .nav-link[data-active="true"] .nav-icon {
-  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.65)) !important;
-}
-
-[data-theme="light"] .owner-sidebar .nav-link.active,
-[data-theme="light"] .owner-sidebar .nav-link[data-active="true"] {
-  border-radius: 12px !important;
-  background: #fef3c7 !important;
-  color: #92400e !important;
-  border: 1.5px solid #f59e0b !important;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
-}
-
-[data-theme="light"] .owner-sidebar .nav-link.active .sidebar-nav-label,
-[data-theme="light"] .owner-sidebar .nav-link[data-active="true"] .sidebar-nav-label {
-  font-weight: 750 !important;
-  color: #92400e !important;
+  color: var(--role-nav-text) !important;
   text-shadow: none !important;
 }
 
-[data-theme="light"] .owner-sidebar .nav-link.active::before,
-[data-theme="light"] .owner-sidebar .nav-link[data-active="true"]::before {
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link.active::before,
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link[data-active="true"]::before {
   content: '' !important;
   position: absolute !important;
   left: 0 !important;
@@ -801,33 +998,57 @@ html {
   height: 64% !important;
   width: 4px !important;
   border-radius: 0 4px 4px 0 !important;
-  background: #d97706 !important;
-  box-shadow: 0 0 8px rgba(217, 119, 6, 0.6) !important;
+  background: var(--role-nav-bar) !important;
+  box-shadow: none !important;
 }
 
-[data-theme="light"] .owner-sidebar .nav-link.active .nav-icon,
-[data-theme="light"] .owner-sidebar .nav-link[data-active="true"] .nav-icon {
-  filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.4)) !important;
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link.active .nav-icon,
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .nav-link[data-active="true"] .nav-icon {
+  transform: scale(1.12) !important;
+  filter: var(--role-nav-icon-shadow) !important;
 }
 
-.owner-sidebar.collapsed .nav-link.active,
-.owner-sidebar.collapsed .nav-link[data-active="true"] {
-  background: rgba(245, 158, 11, 0.3) !important;
-  border: 1.5px solid rgba(251, 191, 36, 0.65) !important;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.45) !important;
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar.collapsed .nav-link.active,
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar.collapsed .nav-link[data-active="true"] {
+  background: var(--role-nav-bg-collapsed) !important;
+  border: 1.5px solid var(--role-nav-border) !important;
+  box-shadow: var(--role-nav-shadow) !important;
 }
 
-[data-theme="light"] .owner-sidebar.collapsed .nav-link.active,
-[data-theme="light"] .owner-sidebar.collapsed .nav-link[data-active="true"] {
-  background: #fef3c7 !important;
-  border: 1.5px solid #f59e0b !important;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3) !important;
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .sidebar-toggle-btn:hover,
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-sidebar .sidebar-theme-btn:hover {
+  background: var(--role-hover-bg) !important;
+  color: var(--role-accent-text) !important;
+  border-color: var(--role-hover-border) !important;
 }
 
-.owner-sidebar .sidebar-toggle-btn:hover {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.4);
+:is([data-portal-role="sales"], [data-portal-role="finance"], [data-portal-role="logistic"], [data-portal-role="admin"], [data-portal-role="owner"]) .admin-mobile-topbar {
+  border-bottom: 2px solid var(--role-accent-strong);
+}
+
+/* Reusable Role Identity Pill for Portal Headers */
+.role-identity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--role-accent-soft);
+  border: 1px solid var(--role-accent-border);
+  color: var(--role-accent-text);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.role-identity-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--role-accent);
+  flex-shrink: 0;
 }
 
 .admin-topbar {
