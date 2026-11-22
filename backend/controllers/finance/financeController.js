@@ -3,7 +3,8 @@ const {
   isPartial50Order,
   isFullyPaidOrder,
   getCollectedRevenueAmount,
-  getPendingBalanceAmount
+  getPendingBalanceAmount,
+  buildPaymentChannelBreakdown
 } = require('../../services/paymentCalculationService');
 
 const getDashboardData = async (req, res) => {
@@ -112,14 +113,8 @@ const getDashboardData = async (req, res) => {
       profit: item.revenue - item.expenses
     }));
 
-    const paymentMap = {};
-    collectedOrders.forEach(o => {
-      const mode = o.paymentMode || 'Cash on Delivery';
-      if (!paymentMap[mode]) paymentMap[mode] = { name: mode, value: 0, count: 0 };
-      paymentMap[mode].value += getCollectedRevenueAmount(o);
-      paymentMap[mode].count += 1;
-    });
-    const paymentBreakdown = Object.values(paymentMap);
+    // Group collected orders into clean, normalized payment channels
+    const paymentBreakdown = buildPaymentChannelBreakdown(collectedOrders);
 
     const categoryMap = {};
     expenses.forEach(e => {
@@ -150,9 +145,7 @@ const getDashboardData = async (req, res) => {
           paidOrdersCount
         },
         revenueVsExpensesTrend,
-        paymentBreakdown: paymentBreakdown.length > 0 ? paymentBreakdown : [
-          { name: 'Cash on Delivery', value: totalRevenue || 1, count: collectedOrders.length || 1 }
-        ],
+        paymentBreakdown,
         expenseCategoryBreakdown: expenseCategoryBreakdown.length > 0 ? expenseCategoryBreakdown : [
           { name: 'Logistics', value: 1000, count: 1 },
           { name: 'Maintenance', value: 500, count: 1 }

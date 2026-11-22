@@ -116,11 +116,128 @@ const buildOrderPaymentSummary = (order) => {
   };
 };
 
+// Normalize raw checkout paymentMode descriptions into clean collection channel names
+const classifyPaymentChannel = (paymentMode) => {
+  const raw = String(paymentMode || "").trim();
+  const normalized = raw.toLowerCase();
+
+  if (!normalized) return "Cash on Delivery";
+  if (normalized.includes("gcash")) return "GCash";
+  if (normalized.includes("maya")) return "Maya";
+  if (
+    normalized.includes("bank card") ||
+    normalized.includes("card ending") ||
+    normalized.includes("visa") ||
+    normalized.includes("mastercard") ||
+    normalized.includes("credit card") ||
+    normalized.includes("debit card")
+  ) {
+    return "Bank Card";
+  }
+  if (
+    normalized.includes("bank transfer") ||
+    normalized.includes("bank tranfer") ||
+    normalized.includes("bank deposit") ||
+    normalized.includes("instapay") ||
+    normalized.includes("pesonet") ||
+    normalized.includes("bank")
+  ) {
+    return "Bank Transfer";
+  }
+  if (normalized.includes("paymongo")) return "PayMongo";
+  if (normalized.includes("cash on delivery") || normalized.includes("cod")) {
+    return "Cash on Delivery";
+  }
+
+  return "Other Payment";
+};
+
+// Build a short plain-English description of payment terms seen inside a channel bucket
+const buildChannelSubtitle = (bucket) => {
+  if (bucket.name === "Cash on Delivery") {
+    return "100% payment on delivery";
+  }
+  const hasFull = bucket.fullPaymentCount > 0;
+  const hasDownpayment = bucket.downpaymentCount > 0;
+  const hasQr = bucket.hasQr;
+
+  if (bucket.name === "GCash" && hasQr && hasFull && hasDownpayment) {
+    return "Direct & PayMongo QR (Full + 50% downpayment)";
+  }
+  if (bucket.name === "GCash" && hasQr) {
+    return "Direct & PayMongo QR";
+  }
+  if (hasFull && hasDownpayment) {
+    return "Full payment & 50% downpayment";
+  }
+  if (hasDownpayment) {
+    return "50% downpayment + COD";
+  }
+  return "Full payment";
+};
+
+// Aggregate collected revenue across orders into clean, sorted collection channels
+const buildPaymentChannelBreakdown = (orders = []) => {
+  const channelMap = {};
+
+  orders.forEach((order) => {
+    const collected = getCollectedRevenueAmount(order);
+    if (collected <= 0) return;
+
+    const rawMode = String(order?.paymentMode || "");
+    const lowerMode = rawMode.toLowerCase();
+    const channelName = classifyPaymentChannel(rawMode);
+
+    if (!channelMap[channelName]) {
+      channelMap[channelName] = {
+        name: channelName,
+        value: 0,
+        count: 0,
+        fullPaymentValue: 0,
+        downpaymentValue: 0,
+        fullPaymentCount: 0,
+        downpaymentCount: 0,
+        hasQr: false
+      };
+    }
+
+    const bucket = channelMap[channelName];
+    bucket.value = roundCurrency(bucket.value + collected);
+    bucket.count += 1;
+
+    const isDownpaymentMode = lowerMode.includes("50%") || isPartial50Order(order);
+    if (isDownpaymentMode) {
+      bucket.downpaymentValue = roundCurrency(bucket.downpaymentValue + collected);
+      bucket.downpaymentCount += 1;
+    } else {
+      bucket.fullPaymentValue = roundCurrency(bucket.fullPaymentValue + collected);
+      bucket.fullPaymentCount += 1;
+    }
+
+    if (lowerMode.includes("qr") || lowerMode.includes("paymongo")) {
+      bucket.hasQr = true;
+    }
+  });
+
+  return Object.values(channelMap)
+    .map((bucket) => ({
+      name: bucket.name,
+      value: bucket.value,
+      count: bucket.count,
+      fullPaymentValue: bucket.fullPaymentValue,
+      downpaymentValue: bucket.downpaymentValue,
+      subtitle: buildChannelSubtitle(bucket)
+    }))
+    .sort((a, b) => b.value - a.value);
+};
+
 module.exports = {
   roundCurrency,
   isPartial50Order,
   isFullyPaidOrder,
   getCollectedRevenueAmount,
   getPendingBalanceAmount,
-  buildOrderPaymentSummary
+  buildOrderPaymentSummary,
+  classifyPaymentChannel,
+  buildPaymentChannelBreakdown
 };

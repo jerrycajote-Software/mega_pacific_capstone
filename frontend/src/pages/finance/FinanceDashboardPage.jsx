@@ -25,19 +25,6 @@ import {
   Avatar,
   Divider
 } from '@mui/material';
-import {
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  Legend
-} from 'recharts';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import {
@@ -51,42 +38,11 @@ import {
   CustomInventory2Icon
 } from '../../components/icons';
 import DeliveryFleetRateControls from '../../components/finance/DeliveryFleetRateControls';
+import RevenueExpensesBarChart from '../../components/finance/RevenueExpensesBarChart';
+import PaymentDistributionCard from '../../components/finance/PaymentDistributionCard';
 import { DEFAULT_VEHICLE_RULES } from '../../utils/deliveryFeeCalculator';
 
 const DONUT_COLORS = ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4'];
-
-const CustomChartTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <Paper
-        elevation={4}
-        sx={{
-          p: 1.5,
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper'
-        }}
-      >
-        <Typography variant="caption" fontWeight="bold" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-          {label}
-        </Typography>
-        {payload.map((item, idx) => (
-          <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1, my: 0.25 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color }} />
-            <Typography variant="caption" sx={{ color: 'text.secondary', minWidth: 65 }}>
-              {item.name}:
-            </Typography>
-            <Typography variant="caption" fontWeight="bold" sx={{ color: item.color }}>
-              ₱{Number(item.value || 0).toLocaleString()}
-            </Typography>
-          </Box>
-        ))}
-      </Paper>
-    );
-  }
-  return null;
-};
 
 const FinanceDashboardPage = () => {
   const [loading, setLoading] = useState(true);
@@ -511,168 +467,15 @@ const FinanceDashboardPage = () => {
       />
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 3.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
-              <Box>
-                <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
-                  Revenue & Expenses Trend
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Monthly performance comparison (Past 6 Months)
-                </Typography>
-              </Box>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Chip label="Profit & Loss" size="small" variant="outlined" sx={{ fontWeight: 600, fontSize: '0.7rem' }} />
-              </Stack>
-            </Box>
-
-            <Box sx={{ width: '100%', height: 320, flex: 1, minHeight: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={data.revenueVsExpensesTrend}
-                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(226, 232, 240, 0.8)" vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    stroke="#94A3B8"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={{ stroke: '#E2E8F0' }}
-                  />
-                  <YAxis
-                    stroke="#94A3B8"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(val) => `₱${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-                  />
-                  <RechartsTooltip content={<CustomChartTooltip />} />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    wrapperStyle={{ paddingBottom: 15, fontSize: '0.8rem' }}
-                  />
-                  <Area
-                    type="monotone"
-                    name="Revenue"
-                    dataKey="revenue"
-                    stroke="#10B981"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#revGrad)"
-                  />
-                  <Area
-                    type="monotone"
-                    name="Expenses"
-                    dataKey="expenses"
-                    stroke="#EF4444"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#expGrad)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
+        <Grid size={{ xs: 12 }}>
+          <RevenueExpensesBarChart trendData={data.revenueVsExpensesTrend} />
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 3.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
-                Payment Distribution
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Breakdown by collection channel
-              </Typography>
-            </Box>
-
-            <Box sx={{ width: '100%', height: 210, position: 'relative' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.paymentBreakdown}
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {data.paymentBreakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip content={<CustomChartTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  pointerEvents: 'none'
-                }}
-              >
-                <Typography variant="h6" fontWeight={900} sx={{ lineHeight: 1 }}>
-                  ₱{(data.kpi.totalRevenue || 0).toLocaleString()}
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                  Total Inflow
-                </Typography>
-              </Box>
-            </Box>
-
-            <Stack spacing={1.2} sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
-              {data.paymentBreakdown.map((item, index) => (
-                <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: DONUT_COLORS[index % DONUT_COLORS.length] }} />
-                    <Typography variant="body2" fontWeight={500} color="text.primary">
-                      {item.name}
-                    </Typography>
-                  </Stack>
-                  <Typography variant="body2" fontWeight={700}>
-                    ₱{Number(item.value || 0).toLocaleString()}
-                  </Typography>
-                </Box>
-              ))}
-            </Stack>
-          </Paper>
+        <Grid size={{ xs: 12 }}>
+          <PaymentDistributionCard
+            paymentBreakdown={data.paymentBreakdown}
+            totalRevenue={data.kpi.totalRevenue}
+          />
         </Grid>
       </Grid>
 
