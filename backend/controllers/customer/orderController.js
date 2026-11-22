@@ -21,6 +21,15 @@ const isCustomLengthProfile = (type) => {
   return CUSTOM_LENGTH_PROFILE_TYPES.includes(type.trim().toLowerCase());
 };
 
+// Detect whether the live database subtotal differs from what the customer saw on checkout
+const hasCheckoutPriceMismatch = ({ expectedItemsTotal, liveItemsTotal, hasVerifiedPaymongoPayment }) => {
+  if (hasVerifiedPaymongoPayment) return false;
+  if (expectedItemsTotal === undefined || expectedItemsTotal === null || expectedItemsTotal === "") return false;
+  const parsedExpected = Number(expectedItemsTotal);
+  if (Number.isNaN(parsedExpected) || !Number.isFinite(parsedExpected)) return false;
+  return Math.abs(parsedExpected - liveItemsTotal) > 0.01;
+};
+
 const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel, paymongoReference, fulfillmentType = 'Delivery') => {
   const mode = (paymentMode || '').trim();
   const plan = paymentPlan || (mode.toLowerCase().includes('50%') || mode.toLowerCase().includes('cash on delivery') ? 'COD_50' : 'FULL_PAYMENT');
@@ -198,6 +207,25 @@ const createOrder = async (req, res) => {
     const isPerMeter = isCustomEligible && (product.unit === "per meter" || product.unit === "meter" || isPreOrder);
     const lengthMultiplier = (customLength && isPerMeter) ? customLength : 1;
     const itemsTotal = Math.round(unitPrice * lengthMultiplier * parseInt(quantity) * 100) / 100;
+
+    // Guard against stale checkout screens when Sales updates a discount right before submission
+    const hasVerifiedPaymongoPayment = Boolean(paymentIntentId || paymongoReference);
+    if (hasCheckoutPriceMismatch({
+      expectedItemsTotal: req.body.expectedItemsTotal,
+      liveItemsTotal: itemsTotal,
+      hasVerifiedPaymongoPayment
+    })) {
+      return res.status(409).json({
+        success: false,
+        code: "PRICE_CHANGED",
+        error: "Product prices or discounts were just updated. Please review your updated order total before confirming.",
+        details: {
+          type: "PRICE_CHANGED",
+          previousItemsTotal: Math.round(Number(req.body.expectedItemsTotal) * 100) / 100,
+          updatedItemsTotal: itemsTotal
+        }
+      });
+    }
     let shippingFee = 0;
     if (fulfillmentType !== 'Pickup') {
       if (req.body.shippingFee !== undefined && !isNaN(parseFloat(req.body.shippingFee))) {
@@ -728,6 +756,20 @@ const createBulkOrder = async (req, res) => {
         });
       }
 
+      const roundedItemsTotal = Math.round(totalAmount * 100) / 100;
+      const hasVerifiedPaymongoPayment = Boolean(paymentIntentId || paymongoReference);
+      if (hasCheckoutPriceMismatch({
+        expectedItemsTotal: req.body.expectedItemsTotal,
+        liveItemsTotal: roundedItemsTotal,
+        hasVerifiedPaymongoPayment
+      })) {
+        throw {
+          type: "PRICE_CHANGED",
+          previousItemsTotal: Math.round(Number(req.body.expectedItemsTotal) * 100) / 100,
+          updatedItemsTotal: roundedItemsTotal
+        };
+      }
+
       let shippingFee = 0;
       if (fulfillmentType !== 'Pickup') {
         if (req.body.shippingFee !== undefined && !isNaN(parseFloat(req.body.shippingFee))) {
@@ -851,6 +893,14 @@ const createBulkOrder = async (req, res) => {
           }
         });
       }
+    }
+    if (error.type === 'PRICE_CHANGED') {
+      return res.status(409).json({
+        success: false,
+        code: 'PRICE_CHANGED',
+        error: 'Product prices or discounts were just updated. Please review your updated order total before confirming.',
+        details: error
+      });
     }
     if (error.type === 'STOCK_ERROR') {
       return res.status(409).json({ success: false, error: 'Out of Stock', details: error });

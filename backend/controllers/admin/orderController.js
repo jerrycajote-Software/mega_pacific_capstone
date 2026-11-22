@@ -4,6 +4,7 @@ const {
   restoreCoilsForOrderInTx,
   emitCoilInventoryUpdates
 } = require("../../services/coilInventoryService");
+const { lockOrderRowById } = require("../../utils/concurrencyHelper");
 
 
 const getOrders = async (req, res) => {
@@ -95,16 +96,26 @@ const updateOrderStatus = async (req, res) => {
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
     if (estimatedDeliveryDate !== undefined) updateData.estimatedDeliveryDate = estimatedDeliveryDate ? new Date(estimatedDeliveryDate) : null;
 
-    const normalizedPrevStatus = (existingOrder.status || "").trim().toLowerCase();
+    const orderId = parseInt(id, 10);
     const normalizedNextStatus = (status || "").trim().toLowerCase();
-    const shouldRestoreCoils =
-      (normalizedNextStatus === "cancelled" || normalizedNextStatus === "rejected") &&
-      normalizedPrevStatus !== "cancelled" &&
-      normalizedPrevStatus !== "rejected";
 
     const { updatedOrder, restoredCoils } = await prisma.$transaction(async (tx) => {
+      // Lock the order row so concurrent admin/staff updates cannot overwrite each other or double-restore coils
+      const lockedOrder = await lockOrderRowById(tx, orderId);
+      if (!lockedOrder) {
+        const notFoundErr = new Error("Order not found");
+        notFoundErr.statusCode = 404;
+        throw notFoundErr;
+      }
+
+      const normalizedPrevStatus = (lockedOrder.status || "").trim().toLowerCase();
+      const shouldRestoreCoils =
+        (normalizedNextStatus === "cancelled" || normalizedNextStatus === "rejected") &&
+        normalizedPrevStatus !== "cancelled" &&
+        normalizedPrevStatus !== "rejected";
+
       const ord = await tx.order.update({
-        where: { id: parseInt(id) },
+        where: { id: orderId },
         data: updateData
       });
 

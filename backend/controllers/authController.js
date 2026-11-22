@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { validateRealisticEmail } = require("../utils/emailValidator");
 const { generateOtp, verifyOtpMatch } = require("../utils/otpHelper");
 const { consumeEmailSpamQuota, buildSpamPolicyErrorResponse } = require("../services/emailSpamPolicyService");
+const { lockUserRowById, isUniqueConstraintError } = require("../utils/concurrencyHelper");
 
 
 const register = async (req, res) => {
@@ -35,41 +36,46 @@ const register = async (req, res) => {
         const otp = generateOtp('REG');
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
-        await prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            email: normalizedEmail,
-            password: hashedPassword,
-            otpCode: otp,
-            otpExpiresAt,
-            lastOtpSentAt: new Date(),
-            customerProfile: {
-              upsert: {
-                create: { name, contactNumber, address, city, province, zipCode, avatarUrl: "/default-profile.png" },
-                update: { name, contactNumber, address, city, province, zipCode }
+        // Serialize account restoration and default address creation so simultaneous retries do not duplicate addresses
+        await prisma.$transaction(async (tx) => {
+          await lockUserRowById(tx, existingUser.id);
+
+          await tx.user.update({
+            where: { id: existingUser.id },
+            data: {
+              email: normalizedEmail,
+              password: hashedPassword,
+              otpCode: otp,
+              otpExpiresAt,
+              lastOtpSentAt: new Date(),
+              customerProfile: {
+                upsert: {
+                  create: { name, contactNumber, address, city, province, zipCode, avatarUrl: "/default-profile.png" },
+                  update: { name, contactNumber, address, city, province, zipCode }
+                }
               }
+            }
+          });
+
+          if (address && String(address).trim()) {
+            const existingAddress = await tx.address.findFirst({
+              where: { userId: existingUser.id }
+            });
+            if (!existingAddress) {
+              await tx.address.create({
+                data: {
+                  userId: existingUser.id,
+                  contactNumber: contactNumber || "09000000000",
+                  address: String(address).trim(),
+                  city: city ? String(city).trim() : "",
+                  province: province ? String(province).trim() : "Cavite",
+                  zipCode: zipCode ? String(zipCode).trim() : "4100",
+                  isDefault: true
+                }
+              });
             }
           }
         });
-
-        if (address && String(address).trim()) {
-          const existingAddress = await prisma.address.findFirst({
-            where: { userId: existingUser.id }
-          });
-          if (!existingAddress) {
-            await prisma.address.create({
-              data: {
-                userId: existingUser.id,
-                contactNumber: contactNumber || "09000000000",
-                address: String(address).trim(),
-                city: city ? String(city).trim() : "",
-                province: province ? String(province).trim() : "Cavite",
-                zipCode: zipCode ? String(zipCode).trim() : "4100",
-                isDefault: true
-              }
-            });
-          }
-        }
 
         let emailSent = true;
         let emailWarning = null;
@@ -166,6 +172,11 @@ const register = async (req, res) => {
       emailWarning
     });
   } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return res.status(409).json({
+        error: "An account with this email already exists. Please use a different email or sign in."
+      });
+    }
     console.error("Register Error:", error);
     res.status(500).json({ error: "Registration failed. Please try again." });
   }
@@ -183,8 +194,9 @@ const login = async (req, res) => {
   }
 
   try {
-    const user = await prisma.user.findUnique({ 
-      where: { email },
+    const normalizedEmail = (email || "").trim().toLowerCase();
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalizedEmail, mode: "insensitive" } },
       include: {
         customerProfile: true,
         adminProfile: true,
@@ -225,14 +237,18 @@ const login = async (req, res) => {
     }
 
     if (user.role === "customer") {
-      const isFirstLogin = user.otpCode === "FIRST_LOGIN";
-
-      if (isFirstLogin) {
-        // Skip redundant login OTP on the new customer's first login right after registration OTP verification
-        await prisma.user.update({
-          where: { id: user.id },
+      let consumedFirstLoginBypass = false;
+      if (user.otpCode === "FIRST_LOGIN") {
+        // Atomically claim the one-time first-login bypass so concurrent logins cannot reuse it
+        const firstLoginClaim = await prisma.user.updateMany({
+          where: { id: user.id, otpCode: "FIRST_LOGIN" },
           data: { otpCode: null, otpExpiresAt: null }
         });
+        consumedFirstLoginBypass = firstLoginClaim.count === 1;
+      }
+
+      if (consumedFirstLoginBypass) {
+        // Skip redundant login OTP on the new customer's first login right after registration OTP verification
       } else if (!otp) {
         // Enforce 10 emails / 5 min spam policy before sending login OTP
         const loginSpamCheck = consumeEmailSpamQuota(user.email, "login_otp");
@@ -267,65 +283,119 @@ const login = async (req, res) => {
         if (new Date() > new Date(user.otpExpiresAt)) {
           return res.status(400).json({ error: "OTP has expired. Please log in again." });
         }
-        
-        await prisma.user.update({
-          where: { id: user.id },
+
+        // Consume the login OTP atomically so simultaneous requests cannot replay the same code
+        const otpClaim = await prisma.user.updateMany({
+          where: {
+            id: user.id,
+            otpCode: user.otpCode,
+            otpExpiresAt: { gt: new Date() }
+          },
           data: { otpCode: null, otpExpiresAt: null }
         });
+        if (otpClaim.count === 0) {
+          return res.status(400).json({ error: "This verification code has already been used or expired. Please request a new code." });
+        }
       }
     }
 
     let sessionToken = null;
     if (user.role === "admin" || user.role === "sales" || user.role === "owner" || user.role === "superadmin" || user.role === "super_admin" || user.role === "finance" || user.role === "logistic") {
-      
-      const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
-      await prisma.userSession.updateMany({
-        where: { userId: user.id, isActive: true, lastActive: { lt: twelveHoursAgo } },
-        data: { isActive: false, loggedOutAt: new Date() }
-      });
+      const crypto = require("crypto");
+      const ipAddress = req.ip || req.connection.remoteAddress || "Unknown IP";
+      const userAgent = req.headers['user-agent'] || "Unknown Device";
 
-      let activeSessionsCount = await prisma.userSession.count({
-        where: { userId: user.id, isActive: true }
-      });
+      // Serialize staff session limit checks, OTP verification, and session creation per user row
+      const staffSessionOutcome = await prisma.$transaction(async (tx) => {
+        const lockedUser = await lockUserRowById(tx, user.id);
 
-      const setting = await prisma.systemSetting.findUnique({ where: { key: "max_sales_devices" } });
-      const maxDevices = setting ? parseInt(setting.value, 10) : 3;
-
-      if (activeSessionsCount >= maxDevices && user.role !== "superadmin" && user.role !== "super_admin") {
-        
-        const excessCount = activeSessionsCount - maxDevices + 1; 
-        const oldestSessions = await prisma.userSession.findMany({
-          where: { userId: user.id, isActive: true },
-          orderBy: { lastActive: 'asc' },
-          take: excessCount
+        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+        await tx.userSession.updateMany({
+          where: { userId: user.id, isActive: true, lastActive: { lt: twelveHoursAgo } },
+          data: { isActive: false, loggedOutAt: new Date() }
         });
 
-        if (oldestSessions.length > 0) {
-          const sessionIdsToInvalidate = oldestSessions.map(s => s.id);
-          await prisma.userSession.updateMany({
-            where: { id: { in: sessionIdsToInvalidate } },
-            data: { isActive: false, loggedOutAt: new Date() }
+        let activeSessionsCount = await tx.userSession.count({
+          where: { userId: user.id, isActive: true }
+        });
+
+        const setting = await tx.systemSetting.findUnique({ where: { key: "max_sales_devices" } });
+        const maxDevices = setting ? parseInt(setting.value, 10) : 3;
+        const isSuperAdmin = user.role === "superadmin" || user.role === "super_admin";
+
+        if (activeSessionsCount >= maxDevices && !isSuperAdmin) {
+          const excessCount = activeSessionsCount - maxDevices + 1;
+          const oldestSessions = await tx.userSession.findMany({
+            where: { userId: user.id, isActive: true },
+            orderBy: { lastActive: 'asc' },
+            take: excessCount
           });
-          activeSessionsCount -= excessCount;
+
+          if (oldestSessions.length > 0) {
+            const sessionIdsToInvalidate = oldestSessions.map(s => s.id);
+            await tx.userSession.updateMany({
+              where: { id: { in: sessionIdsToInvalidate } },
+              data: { isActive: false, loggedOutAt: new Date() }
+            });
+            activeSessionsCount -= oldestSessions.length;
+          }
         }
-      }
 
-      if (activeSessionsCount > 0 && !otp && user.role !== "superadmin" && user.role !== "super_admin") {
-        const newOtp = generateOtp('LOG');
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); 
+        if (activeSessionsCount > 0 && !otp && !isSuperAdmin) {
+          const newOtp = generateOtp('LOG');
+          const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-        await prisma.user.update({
-          where: { id: user.id },
+          await tx.user.update({
+            where: { id: user.id },
+            data: {
+              otpCode: newOtp,
+              otpExpiresAt,
+              lastOtpSentAt: new Date()
+            }
+          });
+
+          return { requiresOtp: true, newOtp };
+        }
+
+        if (otp) {
+          if (!lockedUser?.otpCode || !verifyOtpMatch(lockedUser.otpCode, otp, 'LOG')) {
+            return { otpError: "Invalid OTP code" };
+          }
+          if (new Date() > new Date(lockedUser.otpExpiresAt)) {
+            return { otpError: "OTP has expired. Please log in again." };
+          }
+
+          await tx.user.update({
+            where: { id: user.id },
+            data: { otpCode: null, otpExpiresAt: null }
+          });
+        }
+
+        const generatedToken = crypto.randomUUID();
+        await tx.userSession.create({
           data: {
-            otpCode: newOtp,
-            otpExpiresAt,
-            lastOtpSentAt: new Date()
+            userId: user.id,
+            sessionToken: generatedToken,
+            deviceInfo: userAgent,
+            ipAddress: ipAddress
           }
         });
 
+        return {
+          requiresOtp: false,
+          sessionToken: generatedToken,
+          hadActiveSessions: activeSessionsCount > 0
+        };
+      });
+
+      if (staffSessionOutcome.otpError) {
+        return res.status(400).json({ error: staffSessionOutcome.otpError });
+      }
+
+      if (staffSessionOutcome.requiresOtp) {
         try {
           const { sendLoginOtpEmail } = require("../utils/emailService");
-          await sendLoginOtpEmail(user.email, newOtp);
+          await sendLoginOtpEmail(user.email, staffSessionOutcome.newOtp);
         } catch (emailError) {
           console.error("WARNING: OTP email failed to send (new device login):", emailError.message);
         }
@@ -333,35 +403,9 @@ const login = async (req, res) => {
         return res.status(200).json({ requiresOtp: true, message: "OTP sent to your email to verify new device login." });
       }
 
-      if (otp) {
-        if (!user.otpCode || !verifyOtpMatch(user.otpCode, otp, 'LOG')) {
-          return res.status(400).json({ error: "Invalid OTP code" });
-        }
-        if (new Date() > new Date(user.otpExpiresAt)) {
-          return res.status(400).json({ error: "OTP has expired. Please log in again." });
-        }
-        
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { otpCode: null, otpExpiresAt: null }
-        });
-      }
+      sessionToken = staffSessionOutcome.sessionToken;
 
-      const crypto = require("crypto");
-      sessionToken = crypto.randomUUID();
-      const ipAddress = req.ip || req.connection.remoteAddress || "Unknown IP";
-      const userAgent = req.headers['user-agent'] || "Unknown Device";
-
-      await prisma.userSession.create({
-        data: {
-          userId: user.id,
-          sessionToken,
-          deviceInfo: userAgent,
-          ipAddress: ipAddress
-        }
-      });
-
-      if (activeSessionsCount > 0) {
+      if (staffSessionOutcome.hadActiveSessions) {
         const io = req.app.get("io");
         if (io) {
           io.to(`user_${user.id}`).emit("new_device_login", {
@@ -711,10 +755,20 @@ const verifyOtp = async (req, res) => {
       updateData.deletedAt = null;
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
+    // Atomically verify the account and consume the registration OTP so duplicate submissions cannot replay it
+    const verifiedClaim = await prisma.user.updateMany({
+      where: {
+        id: user.id,
+        isEmailVerified: false,
+        otpCode: user.otpCode,
+        otpExpiresAt: { gt: new Date() }
+      },
       data: updateData
     });
+
+    if (verifiedClaim.count === 0) {
+      return res.status(400).json({ error: "Email is already verified or this verification code has expired." });
+    }
 
     res.status(200).json({ message: "Email verified successfully. You can now log in." });
   } catch (error) {
@@ -880,14 +934,23 @@ const resetPassword = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await prisma.user.update({
-      where: { id: user.id },
+    // Atomically update the password and consume the reset code so simultaneous requests cannot reuse it
+    const resetClaim = await prisma.user.updateMany({
+      where: {
+        id: user.id,
+        resetOtpCode: user.resetOtpCode,
+        resetOtpExpiresAt: { gt: new Date() }
+      },
       data: {
         password: hashedPassword,
         resetOtpCode: null,
         resetOtpExpiresAt: null,
       },
     });
+
+    if (resetClaim.count === 0) {
+      return res.status(400).json({ error: "This reset code has already been used or expired. Please request a new one." });
+    }
 
     res.status(200).json({ message: "Password has been reset successfully. You can now log in with your new password." });
   } catch (error) {

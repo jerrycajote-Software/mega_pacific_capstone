@@ -1,4 +1,9 @@
 const { notifyLogisticLowCoilStock } = require("./notificationManagerService");
+const {
+  lockCoilInventoryRowById,
+  lockCoilInventoryRowBySpec,
+  lockOrderRowById
+} = require("../utils/concurrencyHelper");
 
 const METERS_PER_COIL_ROLL = 4100;
 
@@ -104,13 +109,13 @@ const deductCoilsForOrderInTx = async (tx, { orderId, userId, items = [] }) => {
 
   const updates = [];
 
-  for (const demand of groupedDemands.values()) {
-    const coil = await tx.coilInventory.findFirst({
-      where: {
-        thickness: { contains: demand.thickness, mode: "insensitive" },
-        color: { equals: demand.color, mode: "insensitive" }
-      }
-    });
+  // Sort grouped demands deterministically so concurrent bulk orders always lock rows in the same order
+  const sortedDemands = Array.from(groupedDemands.entries())
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    .map(([, demand]) => demand);
+
+  for (const demand of sortedDemands) {
+    const coil = await lockCoilInventoryRowBySpec(tx, demand.thickness, demand.color);
 
     const previousMeters = resolveCoilAvailableMeters(coil);
     const previousCount = coil ? (coil.coilCount ?? computeRollCountFromMeters(previousMeters)) : 0;
@@ -182,6 +187,9 @@ const restoreCoilsForOrderInTx = async (tx, { orderId, staffUserId = null, reaso
   const parsedOrderId = parseInt(orderId, 10);
   if (Number.isNaN(parsedOrderId)) return [];
 
+  // Lock the order row first so simultaneous cancel/reject requests cannot both restore the same meters
+  await lockOrderRowById(tx, parsedOrderId);
+
   // Skip if this order's coil meters were already restored
   const alreadyRestoredCount = await tx.coilInventoryLog.count({
     where: {
@@ -195,7 +203,8 @@ const restoreCoilsForOrderInTx = async (tx, { orderId, staffUserId = null, reaso
     where: {
       orderId: parsedOrderId,
       actionType: "deduction"
-    }
+    },
+    orderBy: { coilId: "asc" }
   });
 
   if (!deductionLogs || deductionLogs.length === 0) return [];
@@ -206,9 +215,8 @@ const restoreCoilsForOrderInTx = async (tx, { orderId, staffUserId = null, reaso
     const metersToRestore = roundMeters(Math.abs(Number(log.metersDeducted) || 0));
     if (metersToRestore <= 0) continue;
 
-    const coil = await tx.coilInventory.findUnique({
-      where: { id: log.coilId }
-    });
+    // Lock the coil row before adding restored meters back
+    const coil = await lockCoilInventoryRowById(tx, log.coilId);
     if (!coil) continue;
 
     const previousMeters = resolveCoilAvailableMeters(coil);

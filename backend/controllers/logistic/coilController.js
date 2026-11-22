@@ -1,6 +1,10 @@
 const prisma = require("../../config/db");
 const { notifyLogisticLowCoilStock } = require("../../services/notificationManagerService");
 const {
+  lockCoilInventoryRowById,
+  isUniqueConstraintError
+} = require("../../utils/concurrencyHelper");
+const {
   METERS_PER_COIL_ROLL,
   roundMeters,
   resolveCoilAvailableMeters,
@@ -135,28 +139,30 @@ const deductCoil = async (req, res) => {
       return res.status(400).json({ success: false, error: "A valid positive integer number of coils (rolls) is required." });
     }
 
-    const coil = await prisma.coilInventory.findUnique({
-      where: { id }
-    });
-
-    if (!coil) {
-      return res.status(404).json({ success: false, error: "Coil inventory record not found" });
-    }
-
-    if (coil.coilCount < countToDeduct) {
-      return res.status(400).json({
-        success: false,
-        error: `Insufficient coil stock. Current available: ${coil.coilCount} roll(s), requested deduction: ${countToDeduct} roll(s).`
-      });
-    }
-
-    const previousMeters = resolveCoilAvailableMeters(coil);
-    const previousCount = computeRollCountFromMeters(previousMeters);
-    const metersToDeduct = roundMeters(countToDeduct * METERS_PER_COIL_ROLL);
-    const remainingMeters = roundMeters(Math.max(0, previousMeters - metersToDeduct));
-    const remainingCount = computeRollCountFromMeters(remainingMeters);
-
     const result = await prisma.$transaction(async (tx) => {
+      // Lock the coil row inside the transaction so concurrent deductions and orders stay accurate
+      const lockedCoil = await lockCoilInventoryRowById(tx, id);
+      if (!lockedCoil) {
+        const notFoundErr = new Error("Coil inventory record not found");
+        notFoundErr.statusCode = 404;
+        throw notFoundErr;
+      }
+
+      const previousMeters = resolveCoilAvailableMeters(lockedCoil);
+      const previousCount = computeRollCountFromMeters(previousMeters);
+
+      if (previousCount < countToDeduct) {
+        const stockErr = new Error(
+          `Insufficient coil stock. Current available: ${previousCount} roll(s), requested deduction: ${countToDeduct} roll(s).`
+        );
+        stockErr.statusCode = 400;
+        throw stockErr;
+      }
+
+      const metersToDeduct = roundMeters(countToDeduct * METERS_PER_COIL_ROLL);
+      const remainingMeters = roundMeters(Math.max(0, previousMeters - metersToDeduct));
+      const remainingCount = computeRollCountFromMeters(remainingMeters);
+
       const updatedCoil = await tx.coilInventory.update({
         where: { id },
         data: {
@@ -181,7 +187,7 @@ const deductCoil = async (req, res) => {
         }
       });
 
-      return { updatedCoil, log };
+      return { updatedCoil, log, coil: lockedCoil, remainingCount };
     });
 
     const newStatus = getCoilStockStatus(result.updatedCoil);
@@ -190,10 +196,10 @@ const deductCoil = async (req, res) => {
     if (io) {
       io.emit("coil_inventory_updated", {
         coilId: id,
-        thickness: coil.thickness,
-        color: coil.color,
-        coilCount: remainingCount,
-        remainingCount,
+        thickness: result.coil.thickness,
+        color: result.coil.color,
+        coilCount: result.remainingCount,
+        remainingCount: result.remainingCount,
         coilsDeducted: countToDeduct,
         status: newStatus
       });
@@ -202,10 +208,13 @@ const deductCoil = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Successfully deducted ${countToDeduct} coil roll(s) from ${coil.thickness} ${coil.color}.`,
-      data: result
+      message: `Successfully deducted ${countToDeduct} coil roll(s) from ${result.coil.thickness} ${result.coil.color}.`,
+      data: { updatedCoil: result.updatedCoil, log: result.log }
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, error: error.message });
+    }
     console.error("Failed to deduct coil:", error);
     res.status(500).json({ success: false, error: error.message || "Failed to process deduction" });
   }
@@ -223,21 +232,21 @@ const restockCoil = async (req, res) => {
       return res.status(400).json({ success: false, error: "A valid positive integer number of coils (rolls) to add is required." });
     }
 
-    const coil = await prisma.coilInventory.findUnique({
-      where: { id }
-    });
-
-    if (!coil) {
-      return res.status(404).json({ success: false, error: "Coil inventory record not found" });
-    }
-
-    const previousMeters = resolveCoilAvailableMeters(coil);
-    const previousCount = computeRollCountFromMeters(previousMeters);
-    const metersToAdd = roundMeters(countToAdd * METERS_PER_COIL_ROLL);
-    const remainingMeters = roundMeters(previousMeters + metersToAdd);
-    const remainingCount = computeRollCountFromMeters(remainingMeters);
-
     const result = await prisma.$transaction(async (tx) => {
+      // Lock the coil row inside the transaction so concurrent restocks and orders do not overwrite each other
+      const lockedCoil = await lockCoilInventoryRowById(tx, id);
+      if (!lockedCoil) {
+        const notFoundErr = new Error("Coil inventory record not found");
+        notFoundErr.statusCode = 404;
+        throw notFoundErr;
+      }
+
+      const previousMeters = resolveCoilAvailableMeters(lockedCoil);
+      const previousCount = computeRollCountFromMeters(previousMeters);
+      const metersToAdd = roundMeters(countToAdd * METERS_PER_COIL_ROLL);
+      const remainingMeters = roundMeters(previousMeters + metersToAdd);
+      const remainingCount = computeRollCountFromMeters(remainingMeters);
+
       const updatedCoil = await tx.coilInventory.update({
         where: { id },
         data: {
@@ -261,7 +270,7 @@ const restockCoil = async (req, res) => {
         }
       });
 
-      return { updatedCoil, log };
+      return { updatedCoil, log, coil: lockedCoil, remainingCount };
     });
 
     const newStatus = getCoilStockStatus(result.updatedCoil);
@@ -270,10 +279,10 @@ const restockCoil = async (req, res) => {
     if (io) {
       io.emit("coil_inventory_updated", {
         coilId: id,
-        thickness: coil.thickness,
-        color: coil.color,
-        coilCount: remainingCount,
-        remainingCount,
+        thickness: result.coil.thickness,
+        color: result.coil.color,
+        coilCount: result.remainingCount,
+        remainingCount: result.remainingCount,
         coilsAdded: countToAdd,
         status: newStatus
       });
@@ -281,10 +290,13 @@ const restockCoil = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Successfully restocked ${countToAdd} coil roll(s) for ${coil.thickness} ${coil.color}.`,
-      data: result
+      message: `Successfully restocked ${countToAdd} coil roll(s) for ${result.coil.thickness} ${result.coil.color}.`,
+      data: { updatedCoil: result.updatedCoil, log: result.log }
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, error: error.message });
+    }
     console.error("Failed to restock coil:", error);
     res.status(500).json({ success: false, error: error.message || "Failed to process restock" });
   }
@@ -446,6 +458,12 @@ const addCoil = async (req, res) => {
       alreadyExisted: existingColorNames
     });
   } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return res.status(409).json({
+        success: false,
+        error: "One or more of the selected coil specifications were just added by another staff member. Please refresh and try again."
+      });
+    }
     console.error("Failed to add coil specification:", error);
     res.status(500).json({ success: false, error: error.message || "Failed to add coil specification" });
   }

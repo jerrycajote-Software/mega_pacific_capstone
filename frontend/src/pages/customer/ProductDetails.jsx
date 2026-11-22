@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
@@ -597,6 +598,62 @@ const ProductDetails = () => {
     };
     fetchCoilAvailability();
   }, []);
+
+  // Listen for live catalog and discount updates so product prices refresh without resetting user selections
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL || '';
+    const socket = io(API_URL);
+
+    const handleCatalogUpdate = async (payload) => {
+      const affectsCurrentProduct =
+        !payload?.productId ||
+        Number(payload.productId) === Number(id) ||
+        payload?.action === 'global_discount_updated';
+
+      if (!affectsCurrentProduct) return;
+
+      try {
+        const res = await axios.get(`${API_URL}/api/customer/products/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.data?.success || !res.data?.data) return;
+
+        const refreshedProduct = res.data.data;
+        if (refreshedProduct.isActive === false) {
+          setError('This pre-order product has been disabled by sales and is unavailable for ordering.');
+          setProduct(null);
+          return;
+        }
+
+        setProduct(refreshedProduct);
+        if (Array.isArray(refreshedProduct.coilInventory)) {
+          setCoilInventory(refreshedProduct.coilInventory);
+        }
+
+        const refreshedOptions = buildProductOptions(refreshedProduct);
+        setSelectedOption((prevOpt) => {
+          if (!prevOpt || refreshedOptions.length === 0) {
+            return getDefaultOption(refreshedOptions) || prevOpt;
+          }
+          const matched = refreshedOptions.find(
+            (opt) =>
+              (prevOpt.variantId && opt.variantId === prevOpt.variantId) ||
+              (prevOpt.thickness && opt.thickness && opt.thickness.toLowerCase() === prevOpt.thickness.toLowerCase()) ||
+              (prevOpt.name && opt.name === prevOpt.name)
+          );
+          return matched || getDefaultOption(refreshedOptions) || prevOpt;
+        });
+      } catch (err) {
+        console.warn('Live product price refresh skipped:', err?.message);
+      }
+    };
+
+    socket.on('product_catalog_updated', handleCatalogUpdate);
+    return () => {
+      socket.off('product_catalog_updated', handleCatalogUpdate);
+      socket.close();
+    };
+  }, [id, token]);
 
   // Synchronize 3D customized parameters when location state updates
   useEffect(() => {

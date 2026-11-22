@@ -138,14 +138,35 @@ const verifyPayment = async (req, res) => {
     const isDownpayment50 = isPartial50Order(existingOrder);
     const verifiedPaymentStatus = isDownpayment50 ? "50% Downpayment Paid" : "paid";
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
+    // Atomically transition from sales_approved to finance_verified so simultaneous verifications do not duplicate alerts
+    const claimed = await prisma.order.updateMany({
+      where: { id: orderId, status: "sales_approved" },
       data: {
         paymentStatus: verifiedPaymentStatus,
         status: "finance_verified",
         statusUpdatedAt: new Date()
       }
     });
+
+    if (claimed.count === 0) {
+      const latestOrder = await prisma.order.findUnique({ where: { id: orderId } });
+      if (latestOrder && (latestOrder.status || "").trim().toLowerCase() === "finance_verified") {
+        return res.status(200).json({
+          success: true,
+          data: {
+            ...latestOrder,
+            paymentSummary: buildOrderPaymentSummary(latestOrder)
+          },
+          message: "Payment is already verified and order forwarded to Logistics."
+        });
+      }
+      return res.status(409).json({
+        success: false,
+        error: `This order was already updated by another staff member (current status: ${latestOrder?.status || "unknown"}). Please refresh.`
+      });
+    }
+
+    const updatedOrder = await prisma.order.findUnique({ where: { id: orderId } });
 
     const io = req.app.get("io");
     if (io) {

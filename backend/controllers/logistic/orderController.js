@@ -144,6 +144,17 @@ const updateLogisticStatus = async (req, res) => {
     const isCompletingOrder = status === "completed" || status === "delivered";
     const needsBalanceCollection = isPartial50Order(existingOrder);
 
+    if (existingOrder.status === status && !(isCompletingOrder && needsBalanceCollection)) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...existingOrder,
+          paymentSummary: buildOrderPaymentSummary(existingOrder)
+        },
+        message: `Order #${existingOrder.id} is already marked as ${status.replace(/_/g, " ")}.`
+      });
+    }
+
     if (isCompletingOrder && needsBalanceCollection && !paymentProofImage && !existingOrder.paymentProofUrl) {
       return res.status(400).json({
         success: false,
@@ -180,9 +191,34 @@ const updateLogisticStatus = async (req, res) => {
       updateData.balanceConfirmedByName = req.user?.name || req.user?.email || "Logistics Staff";
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: parseInt(id) },
-      data: updateData,
+    const orderId = parseInt(id, 10);
+
+    // Atomically verify the order is still in the expected status before transitioning
+    const claimed = await prisma.order.updateMany({
+      where: { id: orderId, status: existingOrder.status },
+      data: updateData
+    });
+
+    if (claimed.count === 0) {
+      const latestOrder = await prisma.order.findUnique({ where: { id: orderId } });
+      if (latestOrder && latestOrder.status === status) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            ...latestOrder,
+            paymentSummary: buildOrderPaymentSummary(latestOrder)
+          },
+          message: `Order #${latestOrder.id} was already updated to ${status.replace(/_/g, " ")}.`
+        });
+      }
+      return res.status(409).json({
+        success: false,
+        error: `This order was already updated by another staff member (current status: ${latestOrder?.status || "unknown"}). Please refresh.`
+      });
+    }
+
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: orderId },
       include: {
         user: {
           select: {
