@@ -17,6 +17,7 @@ import {
   Divider
 } from '@mui/material';
 import { CustomCloseIcon } from '../icons';
+import { analyzeApplicationError } from '../../utils/errorSolutionAdvisor';
 
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Open' },
@@ -30,6 +31,13 @@ const SOURCE_LABELS = {
   api_error: 'Server / API Error',
   backend_error: 'Backend Error',
   user_reported: 'User Reported'
+};
+
+// Extract the first project file path from the stored stack trace for quick Admin debugging
+const extractPrimarySourceFile = (stack) => {
+  if (!stack) return null;
+  const match = String(stack).match(/((?:frontend\/src|backend)\/[^()\s]+:\d+(?::\d+)?(?:\s*\([^)]+\))?)/i);
+  return match ? match[1] : null;
 };
 
 // Detailed Admin modal for inspecting full error trace diagnostics and updating resolution status
@@ -58,15 +66,32 @@ const ErrorReportDetailModal = ({ open, onClose, report, onUpdated }) => {
 
   const handleCopyFullTrace = async () => {
     if (!report) return;
+    const primarySource = extractPrimarySourceFile(report.stackTrace);
+    const liveDiagnosis = analyzeApplicationError({
+      source: report.source,
+      errorMessage: report.errorMessage,
+      stackTrace: report.stackTrace,
+      componentStack: report.componentStack,
+      apiEndpoint: report.apiEndpoint,
+      httpStatus: report.httpStatus,
+      sourceFile: primarySource
+    });
+
     const summaryLines = [
       `Reference Code: ${report.traceId}`,
       `Portal / Role: ${report.portal} (${report.reporterRole})`,
       `Reporter: ${report.reporterName || 'Unknown'} <${report.reporterEmail || 'No email'}>`,
       `Page URL: ${report.pageUrl}`,
       report.apiEndpoint ? `Failed API: ${report.apiEndpoint} (HTTP ${report.httpStatus || 'N/A'})` : null,
+      primarySource ? `Problem Source File: ${primarySource}` : null,
       `Reported At: ${new Date(report.createdAt).toLocaleString('en-PH')}`,
       `User Note: ${report.userDescription || 'None'}`,
       `Error Message: ${report.errorMessage}`,
+      liveDiagnosis?.category ? `\nDiagnosis Category: ${liveDiagnosis.category}` : null,
+      liveDiagnosis?.summary ? `Likely Cause: ${liveDiagnosis.summary}` : null,
+      liveDiagnosis?.possibleSolutions?.length
+        ? `Possible Solutions:\n${liveDiagnosis.possibleSolutions.map((step, idx) => `  ${idx + 1}. ${step}`).join('\n')}`
+        : null,
       report.stackTrace ? `\nStack Trace:\n${report.stackTrace}` : null,
       report.componentStack ? `\nReact Component Stack:\n${report.componentStack}` : null
     ]
@@ -111,13 +136,18 @@ const ErrorReportDetailModal = ({ open, onClose, report, onUpdated }) => {
 
   if (!report) return null;
 
-  // Extract the first project file path from the stored stack trace for quick Admin debugging
-  const extractPrimarySourceFile = (stack) => {
-    if (!stack) return null;
-    const match = String(stack).match(/((?:frontend\/src|backend)\/[^()\s]+:\d+(?::\d+)?(?:\s*\([^)]+\))?)/i);
-    return match ? match[1] : null;
-  };
   const suspectedSourceFile = extractPrimarySourceFile(report.stackTrace);
+
+  // Compute automated plain-English diagnosis and step-by-step fix guidance for Admin staff
+  const automatedDiagnosis = analyzeApplicationError({
+    source: report.source,
+    errorMessage: report.errorMessage,
+    stackTrace: report.stackTrace,
+    componentStack: report.componentStack,
+    apiEndpoint: report.apiEndpoint,
+    httpStatus: report.httpStatus,
+    sourceFile: suspectedSourceFile
+  });
 
   return (
     <Dialog
@@ -245,6 +275,54 @@ const ErrorReportDetailModal = ({ open, onClose, report, onUpdated }) => {
             </Box>
           )}
         </Box>
+
+        {/* Automated Diagnosis & Possible Solutions (Admin-only) */}
+        {automatedDiagnosis && (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2.5,
+              bgcolor: 'var(--role-accent-soft, rgba(79, 70, 229, 0.08))',
+              border: '1px solid var(--role-accent-border, rgba(79, 70, 229, 0.28))'
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+              <Typography variant="subtitle2" fontWeight={800} sx={{ color: 'var(--text-primary)' }}>
+                Automated Diagnosis &amp; Possible Solutions
+              </Typography>
+              <Chip
+                label={automatedDiagnosis.category}
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.72rem',
+                  bgcolor: 'var(--bg-secondary)',
+                  color: 'var(--role-accent-text, #4338ca)',
+                  border: '1px solid var(--role-accent-border, rgba(79, 70, 229, 0.35))'
+                }}
+              />
+            </Box>
+
+            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--text-primary)', mb: 1.25 }}>
+              {automatedDiagnosis.summary}
+            </Typography>
+
+            {Array.isArray(automatedDiagnosis.possibleSolutions) && automatedDiagnosis.possibleSolutions.length > 0 && (
+              <Box component="ol" sx={{ m: 0, pl: 2.25, display: 'flex', flexDirection: 'column', gap: 0.65 }}>
+                {automatedDiagnosis.possibleSolutions.map((solution, index) => (
+                  <Typography
+                    key={index}
+                    component="li"
+                    variant="body2"
+                    sx={{ color: 'var(--text-primary)', lineHeight: 1.5, fontSize: '0.82rem' }}
+                  >
+                    {solution}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
 
         {/* End User Description */}
         <Box>

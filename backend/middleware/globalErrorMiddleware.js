@@ -1,7 +1,8 @@
 const {
   generateTraceId,
   logBackendErrorTrace,
-  logProcessFatalError
+  logProcessFatalError,
+  installConsoleErrorAdvisor
 } = require("../utils/terminalLogger");
 
 // Catch unhandled Express errors, log a full backend terminal trace, and return a safe JSON payload
@@ -33,8 +34,10 @@ const globalErrorMiddleware = (err, req, res, next) => {
   });
 };
 
-// Register process-level listeners so crashes outside HTTP routes are also traced in the terminal
+// Register process-level listeners and controller console.error diagnostics once on server startup
 const registerProcessErrorTracers = () => {
+  installConsoleErrorAdvisor();
+
   process.on("unhandledRejection", (reason) => {
     logProcessFatalError("unhandledRejection", reason);
   });

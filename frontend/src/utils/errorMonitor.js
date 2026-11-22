@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { analyzeApplicationError } from './errorSolutionAdvisor';
 
 export const ERROR_CAPTURED_EVENT = 'mega_pacific:error_captured';
 
@@ -63,29 +64,6 @@ export const extractProjectSourceFiles = ({ stackTrace = '', callerStack = '', c
     sourceFile: projectFrames[0] || null,
     sourceFiles: projectFrames
   };
-};
-
-// Provide a plain-English hint explaining the most likely cause and fix for common errors
-const buildDiagnosisHint = ({ source, errorMessage, apiEndpoint, httpStatus, sourceFile }) => {
-  const msg = String(errorMessage || '').toLowerCase();
-
-  if (source === 'api_error' && !httpStatus && msg.includes('network error')) {
-    const endpointHint = apiEndpoint ? ` (${apiEndpoint})` : '';
-    return `Cannot connect to the backend server${endpointHint}. Make sure the backend server is running on the URL configured in frontend/.env (VITE_API_URL) and that CORS/network access is reachable.`;
-  }
-  if (source === 'api_error' && httpStatus >= 500) {
-    return `The backend returned HTTP ${httpStatus} for ${apiEndpoint || 'this endpoint'}. Match the Reference Code in the backend terminal to inspect the exact backend controller file and line.`;
-  }
-  if (msg.includes('rendered more hooks') || msg.includes('rendered fewer hooks')) {
-    return 'React Rules of Hooks violation: a hook (useState/useEffect/useRef/useMemo) ran conditionally or after an early return statement.';
-  }
-  if (msg.includes('cannot read properties of undefined') || msg.includes('cannot read properties of null')) {
-    return `A null or undefined object property was accessed${sourceFile ? ` at ${sourceFile}` : ''}. Add optional chaining (?.) or a fallback default.`;
-  }
-  if (msg.includes('is not a function')) {
-    return `An undefined or non-function value was invoked${sourceFile ? ` at ${sourceFile}` : ''}. Check the import/export name or prop passed into the component.`;
-  }
-  return null;
 };
 
 // Safely read the current logged-in user profile from localStorage
@@ -205,13 +183,18 @@ export const captureFrontendError = ({
     componentStack
   });
 
-  const diagnosisHint = buildDiagnosisHint({
+  const diagnosis = analyzeApplicationError({
     source,
     errorMessage: cleanMessage,
+    stackTrace,
+    componentStack,
     apiEndpoint,
     httpStatus,
     sourceFile
   });
+  const diagnosisCategory = diagnosis?.category || null;
+  const diagnosisHint = diagnosis?.summary || null;
+  const possibleSolutions = Array.isArray(diagnosis?.possibleSolutions) ? diagnosis.possibleSolutions : [];
 
   // Prepend project caller frames to the stored stack trace so Admin and terminal logs show exact source files
   const mergedStackParts = [];
@@ -232,7 +215,9 @@ export const captureFrontendError = ({
       source,
       sourceFile,
       sourceFiles,
+      diagnosisCategory,
       diagnosisHint,
+      possibleSolutions,
       errorMessage: cleanMessage,
       stackTrace: combinedStackTrace,
       componentStack,
@@ -251,7 +236,9 @@ export const captureFrontendError = ({
     httpStatus,
     sourceFile,
     sourceFiles,
+    diagnosisCategory,
     diagnosisHint,
+    possibleSolutions,
     errorMessage: cleanMessage,
     stackTrace: combinedStackTrace,
     componentStack: componentStack ? String(componentStack).slice(0, 4000) : null,
@@ -276,8 +263,17 @@ export const captureFrontendError = ({
   if (record.apiEndpoint) {
     console.log('Failed API:', `${record.apiEndpoint}${record.httpStatus ? ` (HTTP ${record.httpStatus})` : ''}`);
   }
+  if (record.diagnosisCategory) {
+    console.log('Category:', record.diagnosisCategory);
+  }
   if (record.diagnosisHint) {
-    console.log('Likely Cause / Fix:', record.diagnosisHint);
+    console.log('Likely Cause:', record.diagnosisHint);
+  }
+  if (record.possibleSolutions.length > 0) {
+    console.log(
+      'Possible Solutions:\n' +
+        record.possibleSolutions.map((step, idx) => `  ${idx + 1}. ${step}`).join('\n')
+    );
   }
   if (record.stackTrace) {
     console.log('Stack Trace:\n', record.stackTrace);

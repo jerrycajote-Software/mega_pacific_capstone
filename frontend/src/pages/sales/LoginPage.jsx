@@ -11,7 +11,7 @@ const LoginPage = () => (
     redirectPath="/sales/dashboard"
     accessDeniedMessage="Access denied. Sales portal requires sales privileges."
     signInButtonLabel="Sign In"
-    accentTheme="green"
+    accentTheme="salesBlue"
   />
 );
 

@@ -210,6 +210,10 @@ const LogisticDashboardPage = () => {
             <Typography variant="h4" fontWeight={800} sx={{ color: 'text.primary', letterSpacing: '-0.02em', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
               Logistics Overview
             </Typography>
+            <span className="role-identity-pill">
+              <span className="role-identity-dot" />
+              Logistics Operations
+            </span>
             <Chip
               label={`Deliveries Active • ${data.kpi.onTimeRate || '98.8%'} On Time`}
               size="small"

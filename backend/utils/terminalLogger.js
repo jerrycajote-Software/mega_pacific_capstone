@@ -1,4 +1,8 @@
 const crypto = require("crypto");
+const {
+  analyzeBackendError,
+  readSourceCodeContext
+} = require("./errorSolutionAdvisor");
 
 const ANSI = {
   reset: "\x1b[0m",
@@ -136,6 +140,41 @@ const extractBackendSourceFile = (stackText) => {
   return null;
 };
 
+// Print exact source code lines around an error plus plain-English possible solutions
+const printCodeContextAndSolutions = ({ sourceFile, diagnosis, includeCodeContext = true, writeError = console.error }) => {
+  const snippet = includeCodeContext ? readSourceCodeContext(sourceFile) : null;
+  if (snippet && snippet.lines.length > 0) {
+    writeError(`${ANSI.yellow}  Code Context (${snippet.relativePath}:${snippet.targetLine}):${ANSI.reset}`);
+    for (const row of snippet.lines) {
+      const lineNumStr = String(row.lineNumber).padStart(4, " ");
+      if (row.isTarget) {
+        writeError(`${ANSI.red}${ANSI.bold}  >> ${lineNumStr} | ${row.content}${ANSI.reset}`);
+        if (snippet.targetColumn && snippet.targetColumn > 0) {
+          const caretOffset = " ".repeat(Math.min(snippet.targetColumn - 1, 120));
+          writeError(`${ANSI.yellow}${ANSI.bold}          | ${caretOffset}^${ANSI.reset}`);
+        }
+      } else {
+        writeError(`${ANSI.dim}     ${lineNumStr} | ${row.content}${ANSI.reset}`);
+      }
+    }
+  }
+
+  if (diagnosis) {
+    if (diagnosis.category) {
+      writeError(`${ANSI.cyan}${ANSI.bold}  Category   :${ANSI.reset} ${ANSI.cyan}${diagnosis.category}${ANSI.reset}`);
+    }
+    if (diagnosis.summary) {
+      writeError(`${ANSI.cyan}  Likely Fix :${ANSI.reset} ${diagnosis.summary}`);
+    }
+    if (Array.isArray(diagnosis.possibleSolutions) && diagnosis.possibleSolutions.length > 0) {
+      writeError(`${ANSI.green}${ANSI.bold}  Possible Solutions:${ANSI.reset}`);
+      diagnosis.possibleSolutions.forEach((step, idx) => {
+        writeError(`${ANSI.green}    ${idx + 1}. ${step}${ANSI.reset}`);
+      });
+    }
+  }
+};
+
 // Print a concise one-line request summary and expand full trace details for 5xx responses
 const logHttpRequest = ({
   traceId,
@@ -172,6 +211,12 @@ const logHttpRequest = ({
   if (statusCode >= 500) {
     const queryStr = formatCompactJson(query);
     const bodyStr = formatCompactJson(body);
+    const diagnosis = analyzeBackendError({
+      errorMessage,
+      httpStatus: statusCode,
+      route: `${method} ${url}`,
+      sourceFile
+    });
     console.error(`${ANSI.red}  Trace ID   :${ANSI.reset} ${traceId}`);
     if (sourceFile) {
       console.error(`${ANSI.yellow}${ANSI.bold}  File       :${ANSI.reset} ${ANSI.yellow}${ANSI.bold}${sourceFile}${ANSI.reset}`);
@@ -187,12 +232,13 @@ const logHttpRequest = ({
     if (bodyStr) {
       console.error(`${ANSI.red}  Body       :${ANSI.reset} ${bodyStr}`);
     }
+    printCodeContextAndSolutions({ sourceFile, diagnosis });
   } else if (statusCode >= 400 && errorMessage) {
     console.warn(`${ANSI.yellow}  Reason     :${ANSI.reset} ${errorMessage}`);
   }
 };
 
-// Print a complete backend exception trace including exact file and line stack frames
+// Print a complete backend exception trace including exact file, code snippet, and possible solutions
 const logBackendErrorTrace = ({ traceId, req, error, contextLabel = "UNHANDLED ROUTE ERROR" }) => {
   const time = formatTimestamp();
   const method = req?.method || "INTERNAL";
@@ -200,6 +246,12 @@ const logBackendErrorTrace = ({ traceId, req, error, contextLabel = "UNHANDLED R
   const queryStr = formatCompactJson(req?.query);
   const bodyStr = formatCompactJson(req?.body);
   const sourceFile = extractBackendSourceFile(error?.stack);
+  const diagnosis = analyzeBackendError({
+    error,
+    httpStatus: error?.statusCode || error?.status || 500,
+    route: `${method} ${url}`,
+    sourceFile
+  });
 
   console.error("");
   console.error(
@@ -220,6 +272,7 @@ const logBackendErrorTrace = ({ traceId, req, error, contextLabel = "UNHANDLED R
   if (bodyStr) {
     console.error(`${ANSI.red}  Body       :${ANSI.reset} ${bodyStr}`);
   }
+  printCodeContextAndSolutions({ sourceFile, diagnosis });
   if (error?.stack) {
     console.error(`${ANSI.red}  Stack Trace:${ANSI.reset}`);
     const stackLines = String(error.stack).split("\n").slice(0, 14);
@@ -230,7 +283,7 @@ const logBackendErrorTrace = ({ traceId, req, error, contextLabel = "UNHANDLED R
   console.error("");
 };
 
-// Print a forwarded frontend error in the backend terminal for unified tracing
+// Print a forwarded frontend error in the backend terminal with code context and suggested solutions
 const logFrontendErrorTrace = ({
   traceId,
   source,
@@ -240,7 +293,9 @@ const logFrontendErrorTrace = ({
   pageUrl,
   sourceFile,
   sourceFiles,
+  diagnosisCategory,
   diagnosisHint,
+  possibleSolutions,
   apiEndpoint,
   httpStatus,
   errorMessage,
@@ -248,6 +303,26 @@ const logFrontendErrorTrace = ({
   componentStack
 }) => {
   const time = formatTimestamp();
+  const fallbackDiagnosis =
+    !diagnosisHint && (!Array.isArray(possibleSolutions) || possibleSolutions.length === 0)
+      ? analyzeBackendError({
+          errorMessage,
+          stackTrace,
+          httpStatus,
+          route: apiEndpoint || pageUrl,
+          sourceFile
+        })
+      : null;
+
+  const resolvedDiagnosis = {
+    category: diagnosisCategory || fallbackDiagnosis?.category || null,
+    summary: diagnosisHint || fallbackDiagnosis?.summary || null,
+    possibleSolutions:
+      Array.isArray(possibleSolutions) && possibleSolutions.length > 0
+        ? possibleSolutions
+        : fallbackDiagnosis?.possibleSolutions || []
+  };
+
   console.error("");
   console.error(
     `${ANSI.bgMagenta}${ANSI.white}${ANSI.bold} FRONTEND ERROR TRACE ${ANSI.reset} ${ANSI.gray}[${time}]${ANSI.reset} ${ANSI.cyan}[${traceId}]${ANSI.reset}`
@@ -269,9 +344,11 @@ const logFrontendErrorTrace = ({
     );
   }
   console.error(`${ANSI.magenta}  Message    :${ANSI.reset} ${errorMessage || "Unknown frontend error"}`);
-  if (diagnosisHint) {
-    console.error(`${ANSI.cyan}  Likely Fix :${ANSI.reset} ${diagnosisHint}`);
-  }
+  printCodeContextAndSolutions({
+    sourceFile,
+    diagnosis: resolvedDiagnosis,
+    includeCodeContext: source !== "api_error"
+  });
   if (stackTrace) {
     console.error(`${ANSI.magenta}  Stack Trace:${ANSI.reset}`);
     const lines = String(stackTrace).split("\n").slice(0, 10);
@@ -318,6 +395,51 @@ const logProcessFatalError = (eventName, error) => {
   });
 };
 
+let isConsoleErrorAdvisorInstalled = false;
+
+// Automatically diagnose Error objects logged inside controller catch blocks via console.error
+const installConsoleErrorAdvisor = () => {
+  if (isConsoleErrorAdvisorInstalled) return;
+  isConsoleErrorAdvisorInstalled = true;
+
+  const rawConsoleError = console.error.bind(console);
+  let isDiagnosing = false;
+
+  console.error = (...args) => {
+    rawConsoleError(...args);
+    if (isDiagnosing) return;
+
+    const foundError = args.find((item) => item instanceof Error && item.stack);
+    if (!foundError) return;
+
+    const sourceFile = extractBackendSourceFile(foundError.stack);
+    const diagnosis = analyzeBackendError({
+      error: foundError,
+      sourceFile
+    });
+    if (!sourceFile && !diagnosis) return;
+
+    isDiagnosing = true;
+    try {
+      rawConsoleError(
+        `${ANSI.bgRed}${ANSI.white}${ANSI.bold} BACKEND ERROR DIAGNOSIS ${ANSI.reset} ${ANSI.gray}[${formatTimestamp()}]${ANSI.reset}`
+      );
+      if (sourceFile) {
+        rawConsoleError(`${ANSI.yellow}${ANSI.bold}  File       :${ANSI.reset} ${ANSI.yellow}${ANSI.bold}${sourceFile}${ANSI.reset}`);
+      }
+      printCodeContextAndSolutions({
+        sourceFile,
+        diagnosis,
+        includeCodeContext: true,
+        writeError: rawConsoleError
+      });
+      rawConsoleError("");
+    } finally {
+      isDiagnosing = false;
+    }
+  };
+};
+
 module.exports = {
   generateTraceId,
   sanitizeForLog,
@@ -326,5 +448,6 @@ module.exports = {
   logBackendErrorTrace,
   logFrontendErrorTrace,
   logUserErrorReportSubmitted,
-  logProcessFatalError
+  logProcessFatalError,
+  installConsoleErrorAdvisor
 };

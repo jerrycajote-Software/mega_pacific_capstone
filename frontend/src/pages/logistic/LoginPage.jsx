@@ -11,7 +11,7 @@ const LoginPage = () => (
     redirectPath="/logistic/dashboard"
     accessDeniedMessage="Access denied. Logistic portal requires logistic privileges."
     signInButtonLabel="Sign In"
-    accentTheme="green"
+    accentTheme="logisticOcean"
   />
 );
 

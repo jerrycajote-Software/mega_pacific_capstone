@@ -11,7 +11,7 @@ const LoginPage = () => (
     redirectPath="/finance/dashboard"
     accessDeniedMessage="Access denied. Finance portal requires finance privileges."
     signInButtonLabel="Sign In"
-    accentTheme="green"
+    accentTheme="financeNavy"
   />
 );
 

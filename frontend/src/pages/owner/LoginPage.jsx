@@ -12,7 +12,7 @@ const OwnerLoginPage = () => (
     accessDeniedMessage="Access denied. Owner portal requires owner privileges."
     signInButtonLabel="Sign In"
     signingInText="Authenticating…"
-    accentTheme="amber"
+    accentTheme="ownerGold"
   />
 );
 

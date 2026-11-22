@@ -1,12 +1,19 @@
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { analyzeApplicationError } from './src/utils/errorSolutionAdvisor.js'
+
+const FRONTEND_ROOT = path.dirname(fileURLToPath(import.meta.url))
 
 const ANSI = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
   dim: '\x1b[2m',
   red: '\x1b[31m',
+  green: '\x1b[32m',
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
   gray: '\x1b[90m',
@@ -14,10 +21,112 @@ const ANSI = {
   white: '\x1b[37m'
 }
 
-// Print browser runtime crashes and API failures directly inside the frontend Vite terminal
+// Safely read +/- 3 lines from a local frontend/src file so developers see exact line context in the Vite terminal
+const readFrontendCodeContext = (sourceFile, radius = 3) => {
+  if (!sourceFile) return null
+  const cleaned = String(sourceFile).replace(/\s*\([^)]*\)\s*$/, '').trim().replace(/\\/g, '/')
+  const match = cleaned.match(/(?:frontend\/)?(src\/[^:]+):(\d+)(?::(\d+))?/i)
+  if (!match) return null
+
+  const relPath = match[1]
+  const targetLine = Number(match[2])
+  const targetCol = match[3] ? Number(match[3]) : null
+  if (!Number.isInteger(targetLine) || targetLine < 1) return null
+
+  try {
+    const absPath = path.resolve(FRONTEND_ROOT, relPath)
+    if (!absPath.startsWith(FRONTEND_ROOT)) return null
+    if (!fs.existsSync(absPath) || !fs.statSync(absPath).isFile()) return null
+
+    const allLines = fs.readFileSync(absPath, 'utf8').split(/\r?\n/)
+    if (targetLine > allLines.length) return null
+
+    const startLine = Math.max(1, targetLine - radius)
+    const endLine = Math.min(allLines.length, targetLine + radius)
+    const lines = []
+    for (let current = startLine; current <= endLine; current += 1) {
+      lines.push({ lineNumber: current, content: allLines[current - 1], isTarget: current === targetLine })
+    }
+    return { relPath: `frontend/${relPath}`, targetLine, targetCol, lines }
+  } catch {
+    return null
+  }
+}
+
+const printFrontendSnippetAndSolutions = ({ sourceFile, category, summary, possibleSolutions, includeCodeContext = true }) => {
+  const snippet = includeCodeContext ? readFrontendCodeContext(sourceFile) : null
+  if (snippet && snippet.lines.length > 0) {
+    console.error(`${ANSI.yellow}  Code Context (${snippet.relPath}:${snippet.targetLine}):${ANSI.reset}`)
+    for (const row of snippet.lines) {
+      const lineNumStr = String(row.lineNumber).padStart(4, ' ')
+      if (row.isTarget) {
+        console.error(`${ANSI.red}${ANSI.bold}  >> ${lineNumStr} | ${row.content}${ANSI.reset}`)
+        if (snippet.targetCol && snippet.targetCol > 0) {
+          const caretOffset = ' '.repeat(Math.min(snippet.targetCol - 1, 120))
+          console.error(`${ANSI.yellow}${ANSI.bold}          | ${caretOffset}^${ANSI.reset}`)
+        }
+      } else {
+        console.error(`${ANSI.dim}     ${lineNumStr} | ${row.content}${ANSI.reset}`)
+      }
+    }
+  }
+  if (category) {
+    console.error(`${ANSI.cyan}${ANSI.bold}  Category   :${ANSI.reset} ${ANSI.cyan}${category}${ANSI.reset}`)
+  }
+  if (summary) {
+    console.error(`${ANSI.cyan}  Likely Fix :${ANSI.reset} ${summary}`)
+  }
+  if (Array.isArray(possibleSolutions) && possibleSolutions.length > 0) {
+    console.error(`${ANSI.green}${ANSI.bold}  Possible Solutions:${ANSI.reset}`)
+    possibleSolutions.forEach((step, idx) => {
+      console.error(`${ANSI.green}    ${idx + 1}. ${step}${ANSI.reset}`)
+    })
+  }
+}
+
+// Print browser runtime crashes, API failures, and Vite compile/syntax errors with code context and possible solutions
 const frontendTerminalTracePlugin = () => ({
   name: 'mega-pacific-frontend-terminal-trace',
   configureServer(server) {
+    // Intercept Vite compile and syntax errors sent to the browser overlay so possible fixes appear in the terminal
+    const originalWsSend = server.ws.send.bind(server.ws)
+    server.ws.send = (...args) => {
+      const [firstArg] = args
+      if (firstArg && typeof firstArg === 'object' && firstArg.type === 'error' && firstArg.err) {
+        const err = firstArg.err
+        const rawFile = err.loc?.file || err.id || ''
+        const normalizedFile = rawFile
+          ? rawFile.replace(/\\/g, '/').replace(/^.*?(src\/)/i, 'frontend/$1')
+          : null
+        const sourceFile =
+          normalizedFile && err.loc?.line
+            ? `${normalizedFile}:${err.loc.line}${err.loc?.column ? `:${err.loc.column}` : ''}`
+            : normalizedFile
+
+        const diagnosis = analyzeApplicationError({
+          source: 'frontend_compile',
+          errorMessage: err.message || 'Vite compile error',
+          stackTrace: err.stack || err.frame || '',
+          sourceFile
+        })
+
+        console.error('')
+        console.error(`${ANSI.bgRed}${ANSI.white}${ANSI.bold} FRONTEND COMPILE / SYNTAX DIAGNOSIS ${ANSI.reset}`)
+        if (sourceFile) {
+          console.error(`${ANSI.yellow}${ANSI.bold}  File       :${ANSI.reset} ${ANSI.yellow}${ANSI.bold}${sourceFile}${ANSI.reset}`)
+        }
+        console.error(`${ANSI.red}  Message    :${ANSI.reset} ${String(err.message || '').split('\n')[0]}`)
+        printFrontendSnippetAndSolutions({
+          sourceFile,
+          category: diagnosis?.category,
+          summary: diagnosis?.summary,
+          possibleSolutions: diagnosis?.possibleSolutions
+        })
+        console.error('')
+      }
+      return originalWsSend(...args)
+    }
+
     server.middlewares.use('/__client-log', (req, res, next) => {
       if (req.method !== 'POST') {
         return next()
@@ -66,9 +175,13 @@ const frontendTerminalTracePlugin = () => ({
             )
           }
           console.error(`${ANSI.red}  Message    :${ANSI.reset} ${payload.errorMessage || 'Unknown frontend error'}`)
-          if (payload.diagnosisHint) {
-            console.error(`${ANSI.cyan}  Likely Fix :${ANSI.reset} ${payload.diagnosisHint}`)
-          }
+          printFrontendSnippetAndSolutions({
+            sourceFile: payload.sourceFile,
+            category: payload.diagnosisCategory,
+            summary: payload.diagnosisHint,
+            possibleSolutions: payload.possibleSolutions,
+            includeCodeContext: payload.source !== 'api_error'
+          })
           if (payload.stackTrace) {
             console.error(`${ANSI.red}  Stack Trace:${ANSI.reset}`)
             String(payload.stackTrace)

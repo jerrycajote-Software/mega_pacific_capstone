@@ -84,7 +84,7 @@ const DashboardPage = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '65vh', gap: 16 }}>
-        <CircularProgress size={42} sx={{ color: '#4f772d' }} />
+        <CircularProgress size={42} color="primary" />
         <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Loading administrative metrics...</span>
       </div>
     );
@@ -115,18 +115,22 @@ const DashboardPage = () => {
     <div style={{ padding: '1.75rem 2rem', maxWidth: 1400, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.75rem', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
               Backoffice Operations & Technical Support
             </h1>
+            <span className="role-identity-pill">
+              <span className="role-identity-dot" />
+              System Administration
+            </span>
             <span style={{
               fontSize: '0.7rem',
               fontWeight: 700,
               padding: '3px 8px',
               borderRadius: 6,
-              background: 'rgba(79,119,45,0.15)',
-              color: '#4f772d',
-              border: '1px solid rgba(79,119,45,0.3)',
+              background: 'var(--green-glow)',
+              color: 'var(--green)',
+              border: '1px solid var(--green-border)',
               textTransform: 'uppercase'
             }}>
               Live System

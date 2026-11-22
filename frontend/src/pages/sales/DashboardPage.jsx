@@ -90,7 +90,7 @@ const SalesDashboard = () => {
           height: 44,
           borderRadius: '50%',
           border: '3px solid var(--border-light)',
-          borderTopColor: 'var(--green)',
+          borderTopColor: 'var(--role-accent)',
           animation: 'spin 0.8s linear infinite'
         }} />
         <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)' }}>
@@ -133,21 +133,17 @@ const SalesDashboard = () => {
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '3px 10px',
-              borderRadius: 9999,
-              background: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid rgba(34, 197, 94, 0.25)',
-              color: 'var(--green)',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase'
+            <h1 style={{
+              margin: 0,
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.025em'
             }}>
-            
+              {getGreeting()}, {user?.name?.split(' ')[0] || 'Sales Rep'}!
+            </h1>
+            <span className="role-identity-pill">
+              <span className="role-identity-dot" />
               Sales Operations
             </span>
             <span style={{
@@ -163,15 +159,6 @@ const SalesDashboard = () => {
             </span>
           </div>
 
-          <h1 style={{
-            margin: 0,
-            fontSize: '1.75rem',
-            fontWeight: 800,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.025em'
-          }}>
-            {getGreeting()}, {user?.name?.split(' ')[0] || 'Sales Rep'}!
-          </h1>
           <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             {' • '}
@@ -196,7 +183,7 @@ const SalesDashboard = () => {
               cursor: 'pointer',
               transition: 'all 0.18s ease'
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--role-accent)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
           >
             
@@ -219,7 +206,7 @@ const SalesDashboard = () => {
               cursor: 'pointer',
               transition: 'all 0.18s ease'
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#8b5cf6'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--role-accent)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-light)'; }}
           >
             

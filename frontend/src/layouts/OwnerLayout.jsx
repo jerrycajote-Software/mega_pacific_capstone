@@ -82,10 +82,11 @@ const OwnerLayout = () => {
             <Link to="/owner/dashboard" className="sidebar-brand-link">
               <div className="sidebar-brand-full">
                 <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontSize: '20px', letterSpacing: '0.04em', lineHeight: 1 }}>
-                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #3a4fd4' }}>MEGA</span>
-                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px #5b6ee8' }}>PACIFIC</span>
+                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px var(--role-accent-strong)' }}>MEGA</span>
+                  <span style={{ color: 'var(--text-primary)', WebkitTextStroke: '1px var(--role-accent)' }}>PACIFIC</span>
                 </div>
-                <div style={{ color: '#7a90e8', fontSize: '9px', fontWeight: 800, letterSpacing: '0.18em', marginTop: '4px', fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--role-accent-text)', fontSize: '9px', fontWeight: 800, letterSpacing: '0.18em', marginTop: '5px', fontFamily: 'Arial, sans-serif' }}>
+                  <span className="role-identity-dot" style={{ width: 6, height: 6 }} />
                   OWNER DASHBOARD
                 </div>
               </div>
@@ -101,7 +102,7 @@ const OwnerLayout = () => {
         <div className="sidebar-header-box">
           <div className="sidebar-header-content">
             
-            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#f59e0b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--role-accent-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user?.name || 'Owner'}
             </div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -133,32 +134,10 @@ const OwnerLayout = () => {
                 <NavLink
                   to={item.path}
                   data-active={isTabActive ? "true" : undefined}
-                  className={({ isActive }) => `nav-link${isActive || isTabActive ? ' active' : ''}`}
-                  style={({ isActive }) => {
-                    const active = isActive || isTabActive;
-                    if (!active) return undefined;
-                    return isDark ? {
-                      borderRadius: '12px',
-                      background: 'linear-gradient(90deg, rgba(245, 158, 11, 0.32) 0%, rgba(217, 119, 6, 0.18) 60%, rgba(245, 158, 11, 0.08) 100%)',
-                      color: '#ffffff',
-                      border: '1.5px solid rgba(251, 191, 36, 0.75)',
-                      boxShadow: '0 4px 18px rgba(245, 158, 11, 0.35)',
-                      fontWeight: 700,
-                    } : {
-                      borderRadius: '12px',
-                      background: '#fef3c7',
-                      color: '#92400e',
-                      border: '1.5px solid #f59e0b',
-                      boxShadow: '0 4px 14px rgba(245, 158, 11, 0.28)',
-                      fontWeight: 700,
-                    };
-                  }}
+                  className={`nav-link${isTabActive ? ' active' : ''}`}
                 >
                   <span className="nav-icon" style={{ color: 'inherit' }}>{item.icon}</span>
-                  <span
-                    className="sidebar-nav-label"
-                    style={isTabActive ? { fontWeight: 750, color: isDark ? '#ffffff' : '#92400e' } : undefined}
-                  >
+                  <span className="sidebar-nav-label">
                     {item.name}
                   </span>
                   {item.path === '/owner/admin-support' && unreadAdminReplies > 0 && (
