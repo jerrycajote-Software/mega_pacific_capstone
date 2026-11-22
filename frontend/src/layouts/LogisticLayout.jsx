@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -7,6 +7,7 @@ import {
   CustomDashboardIcon,
   CustomDeliveriesIcon,
   CustomCoilInventoryIcon,
+  CustomSupportIcon,
   CustomNavToggleIcon,
   CustomLogoutIcon as LogoutIcon,
   CustomLightModeIcon as LightModeIcon,
@@ -19,13 +20,15 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
 import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
+import { useStaffSupportUnreadBadge } from '../hooks/useStaffSupportUnreadBadge';
 import { Tooltip } from '@mui/material';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
-  { name: 'Dashboard',       path: '/logistic/dashboard',   icon: <CustomDashboardIcon size={20} /> },
-  { name: 'Deliveries',      path: '/logistic/deliveries',  icon: <CustomDeliveriesIcon size={20} /> },
-  { name: 'Coil Inventory',  path: '/logistic/products',    icon: <CustomCoilInventoryIcon size={20} /> },
+  { name: 'Dashboard',       path: '/logistic/dashboard',     icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Deliveries',      path: '/logistic/deliveries',    icon: <CustomDeliveriesIcon size={20} /> },
+  { name: 'Coil Inventory',  path: '/logistic/products',      icon: <CustomCoilInventoryIcon size={20} /> },
+  { name: 'Message Admin',   path: '/logistic/admin-support', icon: <CustomSupportIcon size={20} /> },
 ];
 
 const LogisticLayout = () => {
@@ -96,6 +99,13 @@ const LogisticLayout = () => {
     };
   }, []);
 
+  const { unreadCount: unreadAdminReplies } = useStaffSupportUnreadBadge(user);
+
+  const logisticExtraEvents = useMemo(() => ({
+    staff_support_reply: (payload) => payload,
+    staff_support_status_updated: (payload) => payload
+  }), []);
+
   const {
     activeNotification,
     permissionFeedback,
@@ -106,6 +116,7 @@ const LogisticLayout = () => {
     user,
     rooms: ['logistic'],
     primaryEvent: 'logistic_notification',
+    extraEvents: logisticExtraEvents,
     reminderStorageKey: user?.id ? `megapacific_logistic_reminded_${user.id}` : null,
     fetchPendingReminder: fetchLogisticReminders
   });
@@ -225,6 +236,11 @@ const LogisticLayout = () => {
                   >
                     {item.name}
                   </span>
+                  {item.path === '/logistic/admin-support' && unreadAdminReplies > 0 && (
+                    <span style={{ marginLeft: 'auto', minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: '#ef4444', color: '#ffffff', fontSize: '0.7rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {unreadAdminReplies > 99 ? '99+' : unreadAdminReplies}
+                    </span>
+                  )}
                 </NavLink>
               </Tooltip>
             );

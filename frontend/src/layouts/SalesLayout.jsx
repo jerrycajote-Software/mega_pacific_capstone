@@ -20,11 +20,12 @@ import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
 import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
+import { useStaffSupportUnreadBadge } from '../hooks/useStaffSupportUnreadBadge';
 import { Tooltip } from '@mui/material';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-// Sales portal sidebar navigation items including the dedicated Business Sales Target view
+// Sales portal sidebar navigation items including the dedicated Business Sales Target and Message Admin views
 const navItems = [
   { name: 'Dashboard',             path: '/sales/dashboard',          icon: <CustomDashboardIcon size={20} /> },
   { name: 'Pre-Order Products',    path: '/sales/pre-order-products', icon: <CustomPreOrderIcon size={20} /> },
@@ -33,6 +34,7 @@ const navItems = [
   { name: 'Reviews',               path: '/sales/reviews',            icon: <CustomReviewsIcon size={20} /> },
   { name: 'Support',               path: '/sales/customer-service',   icon: <CustomSupportIcon size={20} /> },
   { name: 'Business Sales Target', path: '/sales/sales-target',       icon: <CustomSalesTargetIcon size={20} /> },
+  { name: 'Message Admin',         path: '/sales/admin-support',      icon: <CustomSupportIcon size={20} /> },
 ];
 
 const SalesLayout = () => {
@@ -134,8 +136,12 @@ const SalesLayout = () => {
       url: '/sales/sales-target',
       actionLabel: 'View Target',
       tag: 'sales-quota-updated'
-    })
+    }),
+    staff_support_reply: (payload) => payload,
+    staff_support_status_updated: (payload) => payload
   }), []);
+
+  const { unreadCount: unreadAdminReplies } = useStaffSupportUnreadBadge(user);
 
   const {
     activeNotification,
@@ -261,6 +267,11 @@ const SalesLayout = () => {
                   >
                     {item.name}
                   </span>
+                  {item.path === '/sales/admin-support' && unreadAdminReplies > 0 && (
+                    <span style={{ marginLeft: 'auto', minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: '#ef4444', color: '#ffffff', fontSize: '0.7rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {unreadAdminReplies > 99 ? '99+' : unreadAdminReplies}
+                    </span>
+                  )}
                 </NavLink>
               </Tooltip>
             );

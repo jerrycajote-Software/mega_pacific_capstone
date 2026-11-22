@@ -26,6 +26,8 @@ import SalesManagement from './pages/admin/SalesManagement';
 import ReviewManagement from './pages/admin/ReviewManagement';
 import AdminSettingsPage from './pages/admin/SettingsPage';
 import AdminErrorReportsPage from './pages/admin/ErrorReportsPage';
+import AdminStaffMessagesPage from './pages/admin/StaffMessagesPage';
+import StaffAdminChatPage from './pages/shared/StaffAdminChatPage';
 import GlobalErrorAlertHost from './components/GlobalErrorAlertHost';
 
 
@@ -274,6 +276,7 @@ const App = () => {
           <Route index element={<Navigate to="/owner/dashboard" replace />} />
           <Route path="dashboard" element={<OwnerDashboardPage />} />
           <Route path="sales-quota" element={<OwnerSalesQuotaPage />} />
+          <Route path="admin-support" element={<StaffAdminChatPage />} />
         </Route>
 
         <Route path="/admin" element={
@@ -290,6 +293,7 @@ const App = () => {
           <Route path="users" element={<UserManagement />} />
           <Route path="accounts" element={<SalesManagement />} />
           <Route path="reviews" element={<ReviewManagement />} />
+          <Route path="staff-messages" element={<AdminStaffMessagesPage />} />
           <Route path="error-reports" element={<AdminErrorReportsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
@@ -317,6 +321,7 @@ const App = () => {
           <Route path="reviews" element={<SalesReviews />} />
           <Route path="customer-service" element={<SalesCustomerService />} />
           <Route path="sales-target" element={<SalesTargetPage />} />
+          <Route path="admin-support" element={<StaffAdminChatPage />} />
         </Route>
 
         <Route path="/finance-1megapacific/login" element={<GuestRoute><FinanceLoginPage /></GuestRoute>} />
@@ -331,6 +336,7 @@ const App = () => {
           <Route path="payments" element={<FinancePaymentsPage />} />
           <Route path="refunds" element={<FinanceRefundsPage />} />
           <Route path="reports" element={<FinanceReportsPage />} />
+          <Route path="admin-support" element={<StaffAdminChatPage />} />
         </Route>
 
         <Route path="/logistic-1megapacific/login" element={<GuestRoute><LogisticLoginPage /></GuestRoute>} />
@@ -343,6 +349,7 @@ const App = () => {
           <Route path="dashboard" element={<LogisticDashboardPage />} />
           <Route path="deliveries" element={<LogisticDeliveriesPage />} />
           <Route path="products" element={<LogisticProductsPage />} />
+          <Route path="admin-support" element={<StaffAdminChatPage />} />
         </Route>
 
         <Route path="/superadmin-0megapacific/login" element={<GuestRoute><SuperAdminLoginPage /></GuestRoute>} />

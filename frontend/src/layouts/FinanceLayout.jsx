@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -7,6 +7,7 @@ import {
   CustomPaymentIcon,
   CustomRefundsIcon,
   CustomReportsIcon,
+  CustomSupportIcon,
   CustomNavToggleIcon,
   CustomLogoutIcon as LogoutIcon,
   CustomLightModeIcon as LightModeIcon,
@@ -19,15 +20,17 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
 import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
+import { useStaffSupportUnreadBadge } from '../hooks/useStaffSupportUnreadBadge';
 import { Tooltip } from '@mui/material';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
-  { name: 'Dashboard',  path: '/finance/dashboard',  icon: <CustomDashboardIcon size={20} /> },
-  { name: 'Expenses',   path: '/finance/expenses',   icon: <CustomExpensesIcon size={20} /> },
-  { name: 'Payments',   path: '/finance/payments',   icon: <CustomPaymentIcon size={20} /> },
-  { name: 'Refunds',    path: '/finance/refunds',    icon: <CustomRefundsIcon size={20} /> },
-  { name: 'Reports',    path: '/finance/reports',    icon: <CustomReportsIcon size={20} /> },
+  { name: 'Dashboard',     path: '/finance/dashboard',     icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Expenses',      path: '/finance/expenses',      icon: <CustomExpensesIcon size={20} /> },
+  { name: 'Payments',      path: '/finance/payments',      icon: <CustomPaymentIcon size={20} /> },
+  { name: 'Refunds',       path: '/finance/refunds',       icon: <CustomRefundsIcon size={20} /> },
+  { name: 'Reports',       path: '/finance/reports',       icon: <CustomReportsIcon size={20} /> },
+  { name: 'Message Admin', path: '/finance/admin-support', icon: <CustomSupportIcon size={20} /> },
 ];
 
 const FinanceLayout = () => {
@@ -89,6 +92,13 @@ const FinanceLayout = () => {
     };
   }, []);
 
+  const { unreadCount: unreadAdminReplies } = useStaffSupportUnreadBadge(user);
+
+  const financeExtraEvents = useMemo(() => ({
+    staff_support_reply: (payload) => payload,
+    staff_support_status_updated: (payload) => payload
+  }), []);
+
   const {
     activeNotification,
     permissionFeedback,
@@ -99,6 +109,7 @@ const FinanceLayout = () => {
     user,
     rooms: ['finance'],
     primaryEvent: 'finance_notification',
+    extraEvents: financeExtraEvents,
     reminderStorageKey: user?.id ? `megapacific_finance_reminded_${user.id}` : null,
     fetchPendingReminder: fetchFinanceReminders
   });
@@ -210,6 +221,11 @@ const FinanceLayout = () => {
                   >
                     {item.name}
                   </span>
+                  {item.path === '/finance/admin-support' && unreadAdminReplies > 0 && (
+                    <span style={{ marginLeft: 'auto', minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: '#ef4444', color: '#ffffff', fontSize: '0.7rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {unreadAdminReplies > 99 ? '99+' : unreadAdminReplies}
+                    </span>
+                  )}
                 </NavLink>
               </Tooltip>
             );
