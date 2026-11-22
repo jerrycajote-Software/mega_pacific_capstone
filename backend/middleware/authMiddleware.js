@@ -34,6 +34,9 @@ const verifyToken = async (req, res, next) => {
       if (session.user.status === 'suspended') {
         return res.status(403).json({ error: "account_suspended", message: "Your account has been disabled." });
       }
+      if (session.user.status === 'deleted') {
+        return res.status(403).json({ error: "account_deleted", message: "Your account has been deleted as requested." });
+      }
 
       await prisma.userSession.update({
         where: { id: session.id },
@@ -44,6 +47,9 @@ const verifyToken = async (req, res, next) => {
       if (!user) return res.status(401).json({ error: "User not found." });
       if (user.status === 'suspended') {
         return res.status(403).json({ error: "account_suspended", message: "Your account has been disabled." });
+      }
+      if (user.status === 'deleted') {
+        return res.status(403).json({ error: "account_deleted", message: "Your account has been deleted as requested." });
       }
     }
 

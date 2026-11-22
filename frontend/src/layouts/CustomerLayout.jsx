@@ -20,7 +20,7 @@ import { io } from 'socket.io-client';
 
 const CustomerLayoutContent = () => {
   usePreventBackToLogin();
-  const { user } = useAuth();
+  const { user, triggerAccountDeletedNotice } = useAuth();
   const navigate = useNavigate();
   const [pickupNotification, setPickupNotification] = useState(null);
   const [refundNotification, setRefundNotification] = useState(null);
@@ -44,6 +44,11 @@ const CustomerLayoutContent = () => {
       setRefundNotification(data);
     });
 
+    // Immediately sign out the customer when Admin approves their account deletion request
+    socket.on('account_deleted', (data) => {
+      triggerAccountDeletedNotice?.(data?.message);
+    });
+
     // Listen to unified customer lifecycle notifications (Chrome, Edge, Safari)
     socket.on('customer_notification', (payload) => {
       if (!payload) return;
@@ -60,7 +65,7 @@ const CustomerLayoutContent = () => {
     });
 
     return () => socket.close();
-  }, [user?.id]);
+  }, [user?.id, triggerAccountDeletedNotice]);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
@@ -138,7 +143,7 @@ const CustomerLayoutContent = () => {
               }}
               sx={{ fontWeight: 800, textTransform: 'none', bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } }}
             >
-              View Order
+              {liveOrderAlert?.actionLabel || 'View Order'}
             </Button>
           }
         >

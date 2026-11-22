@@ -39,6 +39,8 @@ const AdminLayout = () => {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [openErrorReportsCount, setOpenErrorReportsCount] = useState(0);
   const [incomingErrorAlert, setIncomingErrorAlert] = useState(null);
+  const [pendingDeletionRequestsCount, setPendingDeletionRequestsCount] = useState(0);
+  const [incomingDeletionAlert, setIncomingDeletionAlert] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
   });
@@ -59,6 +61,22 @@ const AdminLayout = () => {
     }
   }, []);
 
+  const fetchPendingDeletionRequestsCount = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('appToken');
+      if (!token) return;
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.get(`${API_URL}/api/admin/account-deletion-requests?status=pending`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.summary) {
+        setPendingDeletionRequestsCount(res.data.summary.pending || 0);
+      }
+    } catch {
+      // Ignore silent badge refresh failures
+    }
+  }, []);
+
   const handleToggleSidebarNavigation = () => {
     setIsSidebarCollapsed((prev) => {
       const nextState = !prev;
@@ -70,6 +88,7 @@ const AdminLayout = () => {
   React.useEffect(() => {
     if (!user) return;
     fetchOpenErrorReportsCount();
+    fetchPendingDeletionRequestsCount();
 
     const API_URL = import.meta.env.VITE_API_URL || '';
     const socket = io(API_URL, {
@@ -94,10 +113,25 @@ const AdminLayout = () => {
       fetchOpenErrorReportsCount();
     });
 
+    socket.on("admin_deletion_request_created", (payload) => {
+      const request = payload?.request;
+      setPendingDeletionRequestsCount((prev) => prev + 1);
+      if (request) {
+        setIncomingDeletionAlert({
+          customerName: request.customerName || request.customerEmail || 'A customer',
+          customerEmail: request.customerEmail || ''
+        });
+      }
+    });
+
+    socket.on("admin_deletion_request_updated", () => {
+      fetchPendingDeletionRequestsCount();
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [user, fetchOpenErrorReportsCount]);
+  }, [user, fetchOpenErrorReportsCount, fetchPendingDeletionRequestsCount]);
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
@@ -211,6 +245,26 @@ const AdminLayout = () => {
                   >
                     {item.name}
                   </span>
+                  {item.path === '/admin/users' && pendingDeletionRequestsCount > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        minWidth: 20,
+                        height: 20,
+                        padding: '0 6px',
+                        borderRadius: 999,
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {pendingDeletionRequestsCount > 99 ? '99+' : pendingDeletionRequestsCount}
+                    </span>
+                  )}
                   {item.path === '/admin/error-reports' && openErrorReportsCount > 0 && (
                     <span
                       style={{
@@ -275,6 +329,35 @@ const AdminLayout = () => {
           </ErrorBoundary>
         </div>
       </div>
+
+      <Snackbar
+        open={Boolean(incomingDeletionAlert)}
+        autoHideDuration={9000}
+        onClose={() => setIncomingDeletionAlert(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ mt: incomingErrorAlert ? 8 : 0 }}
+      >
+        <Alert
+          severity="warning"
+          variant="filled"
+          onClose={() => setIncomingDeletionAlert(null)}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => {
+                setIncomingDeletionAlert(null);
+                navigate('/admin/users?tab=deletion-requests');
+              }}
+              sx={{ fontWeight: 800, textTransform: 'none' }}
+            >
+              Review Request
+            </Button>
+          }
+        >
+          New account deletion request from {incomingDeletionAlert?.customerName || 'a customer'}
+        </Alert>
+      </Snackbar>
 
       <Snackbar
         open={Boolean(incomingErrorAlert)}
