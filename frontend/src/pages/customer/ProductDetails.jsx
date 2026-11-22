@@ -43,6 +43,7 @@ import {
   MIN_PREORDER_LENGTH_METERS
 } from '../../constants/roofingSpecs';
 import { isCoilInStock, getFirstInStockColor } from '../../utils/coilAvailability';
+import { isSameOrderItem, mergeOrderItemIntoList, mergeOrderItems } from '../../utils/orderItemMerger';
 
 const DEFAULT_SPEC_EXPLANATIONS = {
   effectiveWidth: 'The actual width covered on your roof after overlapping adjacent sheets.',
@@ -756,20 +757,6 @@ const ProductDetails = () => {
     }
   };
 
-  const handleAddAdditionalProduct = (newItem) => {
-    setAdditionalItems(prev => [
-      ...prev,
-      {
-        ...newItem,
-        orderItemId: `added-${newItem.product?.id || Date.now()}-${Date.now()}`
-      }
-    ]);
-  };
-
-  const handleRemoveAdditionalProduct = (indexToRemove) => {
-    setAdditionalItems(prev => prev.filter((_, idx) => idx !== indexToRemove));
-  };
-
   const productOptions = useMemo(() => buildProductOptions(product), [product]);
   const availableColorsList = useMemo(() => {
     return product?.colors && product.colors.length > 0 ? product.colors : ROOFING_COLORS.map(c => c.name);
@@ -869,6 +856,31 @@ const ProductDetails = () => {
     };
   };
 
+  // Combine matching products by summing quantity and recalculating totals
+  const handleAddAdditionalProduct = (newItem) => {
+    const incomingQty = Math.max(1, parseInt(newItem?.quantity, 10) || 1);
+    const currentPrimaryItem = buildCurrentItem();
+
+    if (isSameOrderItem(currentPrimaryItem, newItem)) {
+      setQuantity((prevQty) => {
+        const baseQty = Math.max(0, parseInt(prevQty, 10) || 0);
+        const combinedQty = baseQty + incomingQty;
+        return !isPreOrder && activeStock > 0 ? Math.min(activeStock, combinedQty) : combinedQty;
+      });
+      return;
+    }
+
+    const itemWithId = {
+      ...newItem,
+      orderItemId: newItem?.orderItemId || `added-${newItem?.product?.id || Date.now()}-${Date.now()}`
+    };
+    setAdditionalItems((prev) => mergeOrderItemIntoList(prev, itemWithId));
+  };
+
+  const handleRemoveAdditionalProduct = (indexToRemove) => {
+    setAdditionalItems((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleProceedToCheckout = () => {
     if (hasOptions && !selectedOption) {
       alert('Please select a product option before proceeding.');
@@ -883,16 +895,22 @@ const ProductDetails = () => {
       const primaryItem = buildCurrentItem();
 
       if (additionalItems.length > 0) {
-        const allItems = [primaryItem, ...additionalItems];
+        const allItems = mergeOrderItems([primaryItem, ...additionalItems]);
         const combinedTotal = allItems.reduce((acc, itm) => acc + (itm.total || 0), 0);
 
-        navigate('/checkout', {
-          state: {
-            isBulk: true,
-            items: allItems,
-            total: combinedTotal
-          }
-        });
+        if (allItems.length === 1) {
+          navigate('/checkout', {
+            state: allItems[0]
+          });
+        } else {
+          navigate('/checkout', {
+            state: {
+              isBulk: true,
+              items: allItems,
+              total: combinedTotal
+            }
+          });
+        }
       } else {
         navigate('/checkout', {
           state: primaryItem

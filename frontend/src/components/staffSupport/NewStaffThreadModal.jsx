@@ -208,7 +208,7 @@ const NewStaffThreadModal = ({ open, submitting, serverError, onCloseModal, onCr
                 setSubject(e.target.value);
                 if (localError) setLocalError('');
               }}
-              placeholder="ex. Delivery status button is not saving, or Request for weekly PDF export"
+              placeholder="ex. Delivery status button is not saving"
               disabled={submitting}
               style={{
                 width: '100%',

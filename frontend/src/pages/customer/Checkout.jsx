@@ -55,6 +55,7 @@ import {
   isNetworkDisconnectError
 } from '../../utils/pendingPaymentRecovery';
 import { useCheckoutLivePrices } from '../../hooks/useCheckoutLivePrices';
+import { mergeOrderItemIntoList, mergeOrderItems } from '../../utils/orderItemMerger';
 
 
 const Checkout = () => {
@@ -66,10 +67,11 @@ const Checkout = () => {
   let initialOrderItems = [];
   
   if (state.isBulk && state.items) {
-    initialOrderItems = state.items.map((item, idx) => ({
+    const normalizedBulkItems = state.items.map((item, idx) => ({
       ...item,
       orderItemId: item.orderItemId || item.id || `bulk-${item.product?.id || item.productId}-${item.variantId || 'base'}-${idx}-${Date.now()}`
     }));
+    initialOrderItems = mergeOrderItems(normalizedBulkItems);
   } else if (state.isSingle && state.item) {
     const singleItm = {
       ...state.item,
@@ -162,25 +164,7 @@ const Checkout = () => {
   };
 
   const handleAddProductToOrder = (newItem) => {
-    setOrderItems(prev => {
-      const existingIdx = prev.findIndex(item =>
-        item.product?.id === newItem.product?.id &&
-        (item.variant?.id || item.variantId || null) === (newItem.variant?.id || newItem.variantId || null) &&
-        Number(item.customLength || 0) === Number(newItem.customLength || 0) &&
-        (item.color || '') === (newItem.color || '') &&
-        (item.thickness || '') === (newItem.thickness || '')
-      );
-
-      if (existingIdx > -1) {
-        const updated = [...prev];
-        updated[existingIdx] = {
-          ...updated[existingIdx],
-          quantity: updated[existingIdx].quantity + newItem.quantity
-        };
-        return updated;
-      }
-      return [...prev, newItem];
-    });
+    setOrderItems((prev) => mergeOrderItemIntoList(prev, newItem));
   };
 
   const handleOpenAddModal = (productId = null) => {

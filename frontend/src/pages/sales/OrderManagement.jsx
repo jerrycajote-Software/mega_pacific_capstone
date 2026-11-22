@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import {
   CustomSearchIcon as SearchIcon,
@@ -8,7 +8,22 @@ import {
 } from '../../components/icons';
 import { generateReceiptPDF } from '../../utils/documentGenerator';
 import CustomMessageDialog from '../../components/CustomMessageDialog';
+import OrderStatusFilterSelect from '../../components/OrderStatusFilterSelect';
 import { useCustomDialog } from '../../hooks/useCustomDialog';
+
+const SALES_STATUS_FILTERS = [
+  { value: 'all', label: 'All Statuses', dotColor: null, matches: () => true },
+  { value: 'pending', label: 'Pending', dotColor: '#f59e0b', matches: (s) => s === 'pending' },
+  { value: 'sales_approved', label: 'Sales Approved', dotColor: '#8b5cf6', matches: (s) => s === 'sales_approved' },
+  { value: 'finance_verified', label: 'Finance Verified', dotColor: '#8b5cf6', matches: (s) => s === 'finance_verified' },
+  { value: 'processing', label: 'Processing', dotColor: '#3b82f6', matches: (s) => s === 'processing' },
+  { value: 'shipped', label: 'Shipped', dotColor: '#3b82f6', matches: (s) => s === 'shipped' },
+  { value: 'out_for_delivery', label: 'Out for Delivery', dotColor: '#3b82f6', matches: (s) => s === 'out_for_delivery' },
+  { value: 'ready_for_pickup', label: 'Ready for Pick-up', dotColor: '#3b82f6', matches: (s) => s === 'ready_for_pickup' },
+  { value: 'completed', label: 'Completed', dotColor: '#22c55e', matches: (s) => s === 'completed' || s === 'delivered' },
+  { value: 'rejected', label: 'Rejected', dotColor: '#ef4444', matches: (s) => s === 'rejected' },
+  { value: 'cancelled', label: 'Cancelled', dotColor: '#ef4444', matches: (s) => s === 'cancelled' || s === 'canceled' }
+];
 
 const StatusBadge = ({ status }) => {
   const s = status ? status.toLowerCase() : '';
@@ -30,6 +45,7 @@ const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [processingId, setProcessingId] = useState(null);
 
@@ -176,10 +192,34 @@ const OrderManagement = () => {
     setSelectedOrder(order);
   };
 
-  const filteredOrders = orders.filter(o => 
-    o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    o.customerName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleChangeStatusFilter = (nextStatus) => {
+    setStatusFilter(nextStatus);
+  };
+
+  // Count orders per status option so the dropdown displays live totals
+  const statusCounts = useMemo(() => {
+    return SALES_STATUS_FILTERS.reduce((counts, option) => {
+      counts[option.value] = orders.filter((o) =>
+        option.matches((o.orderStatus || '').toLowerCase())
+      ).length;
+      return counts;
+    }, {});
+  }, [orders]);
+
+  const activeStatusOption =
+    SALES_STATUS_FILTERS.find((opt) => opt.value === statusFilter) || SALES_STATUS_FILTERS[0];
+
+  const filteredOrders = useMemo(() => {
+    const query = searchTerm.toLowerCase();
+    return orders.filter((o) => {
+      const matchesSearch =
+        o.id.toLowerCase().includes(query) ||
+        o.customerName.toLowerCase().includes(query);
+
+      if (!matchesSearch) return false;
+      return activeStatusOption.matches((o.orderStatus || '').toLowerCase());
+    });
+  }, [orders, searchTerm, activeStatusOption]);
 
   return (
     <div style={{ padding: '2rem 2.5rem', color: 'var(--text-primary)' }}>
@@ -189,14 +229,26 @@ const OrderManagement = () => {
       </div>
 
       <div style={{ background: 'var(--bg-secondary)', borderRadius: 16, border: '1px solid var(--border)', padding: '1.5rem' }}>
-        <div style={{ marginBottom: '1rem', position: 'relative', width: '300px' }}>
-          <SearchIcon sx={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 18 }} />
-          <input 
-            type="text" 
-            placeholder="Search orders..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%', padding: '10px 10px 10px 40px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none' }}
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: '300px' }}>
+            <SearchIcon sx={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 18 }} />
+            <input 
+              type="text" 
+              placeholder="Search orders..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: '100%', minHeight: '40px', padding: '9px 10px 9px 40px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <OrderStatusFilterSelect
+            value={statusFilter}
+            onChange={handleChangeStatusFilter}
+            options={SALES_STATUS_FILTERS}
+            counts={statusCounts}
+            ariaLabel="Filter sales orders by status"
+            height={40}
+            borderRadius="8px"
           />
         </div>
 
