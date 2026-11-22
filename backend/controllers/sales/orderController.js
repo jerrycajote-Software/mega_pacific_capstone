@@ -116,13 +116,31 @@ const approveOrder = async (req, res) => {
       });
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
+    // Atomically claim the pending order so concurrent approve/reject clicks cannot overwrite each other
+    const claimed = await prisma.order.updateMany({
+      where: { id: orderId, status: "pending" },
       data: {
         status: "sales_approved",
         statusUpdatedAt: new Date()
       }
     });
+
+    if (claimed.count === 0) {
+      const latestOrder = await prisma.order.findUnique({ where: { id: orderId } });
+      if (latestOrder && (latestOrder.status || "").trim().toLowerCase() === "sales_approved") {
+        return res.status(200).json({
+          success: true,
+          data: latestOrder,
+          message: "Order is already approved by sales and forwarded to Finance."
+        });
+      }
+      return res.status(409).json({
+        success: false,
+        error: `This order was already updated by another staff member (current status: ${latestOrder?.status || "unknown"}). Please refresh.`
+      });
+    }
+
+    const updatedOrder = await prisma.order.findUnique({ where: { id: orderId } });
     
     const io = req.app.get("io");
     if (io) {
@@ -178,9 +196,10 @@ const rejectOrder = async (req, res) => {
       refundableAmount = 0;
     }
 
-    const { updatedOrder, refund, restoredCoils } = await prisma.$transaction(async (tx) => {
-      const ord = await tx.order.update({
-        where: { id: orderId },
+    const txOutcome = await prisma.$transaction(async (tx) => {
+      // Atomically claim the pending order inside the transaction so simultaneous approve/reject actions cannot collide
+      const claimed = await tx.order.updateMany({
+        where: { id: orderId, status: "pending" },
         data: {
           status: "rejected",
           paymentStatus: refundableAmount > 0 ? "refund_pending" : existingOrder.paymentStatus,
@@ -188,6 +207,13 @@ const rejectOrder = async (req, res) => {
           notes: reason ? `${existingOrder.notes ? existingOrder.notes + ' | ' : ''}Rejection Reason: ${reason}` : existingOrder.notes
         }
       });
+
+      if (claimed.count === 0) {
+        const latestOrder = await tx.order.findUnique({ where: { id: orderId } });
+        return { conflict: true, latestOrder };
+      }
+
+      const ord = await tx.order.findUnique({ where: { id: orderId } });
 
       const ref = await tx.refund.upsert({
         where: { orderId: orderId },
@@ -213,8 +239,25 @@ const rejectOrder = async (req, res) => {
         reason: `Restored coil length from rejected Order #ORD-${String(orderId).padStart(3, "0")}${reason ? ` (${reason})` : ""}`
       });
 
-      return { updatedOrder: ord, refund: ref, restoredCoils: restored };
+      return { conflict: false, updatedOrder: ord, refund: ref, restoredCoils: restored };
     });
+
+    if (txOutcome.conflict) {
+      const latestStatus = (txOutcome.latestOrder?.status || "").trim().toLowerCase();
+      if (latestStatus === "rejected") {
+        return res.status(200).json({
+          success: true,
+          data: txOutcome.latestOrder,
+          message: "Order is already rejected and recorded in Finance."
+        });
+      }
+      return res.status(409).json({
+        success: false,
+        error: `This order was already updated by another staff member (current status: ${txOutcome.latestOrder?.status || "unknown"}). Please refresh.`
+      });
+    }
+
+    const { updatedOrder, refund, restoredCoils } = txOutcome;
 
     const io = req.app.get("io");
     if (io) {

@@ -151,11 +151,18 @@ const getRefundStats = async (req, res) => {
 
 const processRefund = async (req, res) => {
   const { id } = req.params;
+  const refundId = parseInt(id, 10);
   const { transactionReference, notes, returnMethod, amount } = req.body || {};
+
+  if (Number.isNaN(refundId)) {
+    return res.status(400).json({ success: false, error: "Invalid refund ID specified." });
+  }
+
+  let lockClaimed = false;
 
   try {
     const refund = await prisma.refund.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: refundId },
       include: {
         order: {
           include: {
@@ -178,6 +185,37 @@ const processRefund = async (req, res) => {
     if (refund.status === "completed") {
       return res.status(400).json({ success: false, error: "This refund has already been processed" });
     }
+
+    if (refund.status === "processing") {
+      return res.status(409).json({
+        success: false,
+        error: "This refund is currently being processed by another Finance staff member. Please wait a moment and refresh."
+      });
+    }
+
+    const financeUserId = req.user?.userId || req.user?.id || null;
+
+    // Atomically claim the pending refund before calling external payment APIs to prevent double payouts
+    const claimResult = await prisma.refund.updateMany({
+      where: { id: refundId, status: "pending" },
+      data: {
+        status: "processing",
+        processedBy: financeUserId
+      }
+    });
+
+    if (claimResult.count === 0) {
+      const latestRefund = await prisma.refund.findUnique({ where: { id: refundId } });
+      if (latestRefund?.status === "completed") {
+        return res.status(400).json({ success: false, error: "This refund has already been processed" });
+      }
+      return res.status(409).json({
+        success: false,
+        error: "This refund is already being processed or was updated by another Finance staff member. Please refresh."
+      });
+    }
+
+    lockClaimed = true;
 
     const finalAmount = amount !== undefined && !isNaN(parseFloat(amount))
       ? parseFloat(amount)
@@ -216,6 +254,12 @@ const processRefund = async (req, res) => {
             finalNotes = `Direct GCash Refund Disbursed for PayMongo QR Ph (${paymongoLinked.id})`;
           }
         } else {
+          // Release the processing lock so Finance can retry after resolving the PayMongo error
+          await prisma.refund.updateMany({
+            where: { id: refundId, status: "processing" },
+            data: { status: "pending", processedBy: null }
+          });
+          lockClaimed = false;
           console.warn("[PAYMONGO REFUND API WARNING]:", errMsg);
           return res.status(400).json({
             success: false,
@@ -226,11 +270,10 @@ const processRefund = async (req, res) => {
     }
 
     const processedAt = new Date();
-    const financeUserId = req.user?.id || null;
 
     const { updatedRefund, updatedOrder } = await prisma.$transaction(async (tx) => {
       const ref = await tx.refund.update({
-        where: { id: parseInt(id) },
+        where: { id: refundId },
         data: {
           status: "completed",
           amount: finalAmount,
@@ -249,20 +292,29 @@ const processRefund = async (req, res) => {
         }
       });
 
-      const expenseRef = `EXP-REF-${refund.id}-${Date.now().toString().slice(-4)}`;
-      await tx.expense.create({
-        data: {
+      // Use a deterministic reference per refund ID so duplicate refund expense rows are impossible
+      const expenseRef = `EXP-REF-${refund.id}`;
+      await tx.expense.upsert({
+        where: { reference: expenseRef },
+        create: {
           reference: expenseRef,
           category: "Refund",
           description: `Customer refund for order #ORD-${String(refund.orderId).padStart(3, "0")} via ${finalMethod}`,
           amount: finalAmount,
           status: "Approved",
           date: processedAt
+        },
+        update: {
+          amount: finalAmount,
+          description: `Customer refund for order #ORD-${String(refund.orderId).padStart(3, "0")} via ${finalMethod}`,
+          date: processedAt
         }
       });
 
       return { updatedRefund: ref, updatedOrder: ord };
     });
+
+    lockClaimed = false;
 
     const io = req.app.get("io");
     const orderNumStr = `#ORD-${String(refund.orderId).padStart(3, "0")}`;
@@ -313,6 +365,14 @@ const processRefund = async (req, res) => {
       message: "Refund processed successfully and customer notified."
     });
   } catch (error) {
+    if (lockClaimed) {
+      await prisma.refund.updateMany({
+        where: { id: refundId, status: "processing" },
+        data: { status: "pending", processedBy: null }
+      }).catch((revertErr) => {
+        console.error("Failed to release refund processing lock:", revertErr);
+      });
+    }
     console.error("Failed to process refund:", error);
     res.status(500).json({ success: false, error: "Failed to process refund" });
   }

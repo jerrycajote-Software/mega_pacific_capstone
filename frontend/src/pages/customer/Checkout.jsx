@@ -54,6 +54,7 @@ import {
   clearPendingPaymentRecovery,
   isNetworkDisconnectError
 } from '../../utils/pendingPaymentRecovery';
+import { useCheckoutLivePrices } from '../../hooks/useCheckoutLivePrices';
 
 
 const Checkout = () => {
@@ -497,10 +498,41 @@ const Checkout = () => {
 
   const clientRequestIdRef = useRef(generateCheckoutRequestId());
   const pendingVerifiedPaymentRef = useRef(null);
+  const paymongoQrModalOpenRef = useRef(false);
+  const [qrClosedDueToPriceChange, setQrClosedDueToPriceChange] = useState(false);
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine === false : false
   );
   const [recoveringPendingPayment, setRecoveringPendingPayment] = useState(false);
+
+  useEffect(() => {
+    paymongoQrModalOpenRef.current = paymongoQrModalOpen;
+  }, [paymongoQrModalOpen]);
+
+  // Keep checkout item prices and discounts synchronized in real time when Sales updates the catalog
+  const {
+    priceUpdateNotice,
+    isRefreshingPrices,
+    refreshLivePrices,
+    dismissPriceUpdateNotice
+  } = useCheckoutLivePrices({
+    orderItems,
+    setOrderItems,
+    token,
+    disabled: Boolean(success),
+    onPricesChanged: () => {
+      // Close any open unpaid PayMongo QR session so the customer generates a fresh QR for the new amount
+      if (paymongoQrModalOpenRef.current && !pendingVerifiedPaymentRef.current) {
+        setPaymongoQrModalOpen(false);
+        clearPendingPaymentRecovery();
+        setQrClosedDueToPriceChange(true);
+      } else {
+        setQrClosedDueToPriceChange(false);
+      }
+      // Rotate client request ID so the refreshed price submission is treated as a fresh intent
+      clientRequestIdRef.current = generateCheckoutRequestId();
+    }
+  });
 
   const buildOrderRequestConfig = (paymongoRefStr = null, paymongoIntentId = null) => {
     const paymentModeDescription = formData.paymentPlan === 'COD_50'
@@ -512,6 +544,7 @@ const Checkout = () => {
       paymentChannel: formData.paymentChannel,
       paymentMode: paymentModeDescription,
       shippingFee: shippingFee,
+      expectedItemsTotal: Math.round((orderTotal || 0) * 100) / 100,
       cardDetails: formData.paymentChannel === 'Card' ? {
         cardNumber: formData.cardNumber,
         cardExpiry: formData.cardExpiry,
@@ -619,6 +652,14 @@ const Checkout = () => {
             submit: 'Your internet connection dropped while sending your order. Once you reconnect, click Pay again — duplicate-order protection ensures you will not be ordered or charged twice.'
           });
         }
+      } else if (
+        err.response?.status === 409 &&
+        (err.response?.data?.code === 'PRICE_CHANGED' || err.response?.data?.details?.type === 'PRICE_CHANGED')
+      ) {
+        await refreshLivePrices({ silentIfUnchanged: false });
+        setErrors({
+          submit: 'Product prices or discounts were just updated. Your order summary has been refreshed — please review the updated total and click Pay again to confirm.'
+        });
       } else if (err.response?.status === 409 && err.response?.data?.details?.type === 'STOCK_ERROR') {
          const { itemName, available, requested, unit, message } = err.response.data.details;
          if (unit === 'meters') {
@@ -730,6 +771,16 @@ const Checkout = () => {
     }
 
     if (formData.paymentChannel === 'GCash' && gcashQrEnabled) {
+      // Check live prices before creating a PayMongo QR so the QR always matches the latest discount
+      const liveCheck = await refreshLivePrices({ silentIfUnchanged: true });
+      if (liveCheck.changed) {
+        setErrors({
+          submit: 'Product prices or discounts were just updated. Your total has been refreshed — please review the new amount and click Pay again to generate your updated GCash QR code.'
+        });
+        return;
+      }
+      setQrClosedDueToPriceChange(false);
+      setErrors({});
       setPaymongoQrModalOpen(true);
       return;
     }
@@ -1595,6 +1646,34 @@ const Checkout = () => {
               </Typography>
             </Box>
 
+            {priceUpdateNotice && (
+              <Alert
+                severity={priceUpdateNotice.direction === 'decreased' ? 'success' : 'info'}
+                onClose={() => {
+                  dismissPriceUpdateNotice();
+                  setQrClosedDueToPriceChange(false);
+                }}
+                sx={{ mb: 2, borderRadius: 2 }}
+              >
+                {priceUpdateNotice.direction === 'decreased' ? (
+                  <>
+                    <strong>Discount updated — your price dropped!</strong> Your item subtotal updated from{' '}
+                    <strong>₱{priceUpdateNotice.previousTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> to{' '}
+                    <strong>₱{priceUpdateNotice.updatedTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
+                  </>
+                ) : (
+                  <>
+                    <strong>Prices or discounts were just updated.</strong> Your item subtotal changed from{' '}
+                    <strong>₱{priceUpdateNotice.previousTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> to{' '}
+                    <strong>₱{priceUpdateNotice.updatedTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
+                  </>
+                )}
+                {qrClosedDueToPriceChange
+                  ? ' Your previous GCash QR code was closed so a new code will use the updated amount.'
+                  : ' Please review the updated summary before paying.'}
+              </Alert>
+            )}
+
             {isOffline && (
               <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
                 <strong>No internet connection.</strong> Please reconnect before submitting payment. Any completed GCash payment will be recovered automatically once you are back online.
@@ -1620,8 +1699,8 @@ const Checkout = () => {
               color="primary"
               fullWidth
               size="large"
-              disabled={isSubmitting}
-              startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : undefined}
+              disabled={isSubmitting || isRefreshingPrices}
+              startIcon={(isSubmitting || isRefreshingPrices) ? <CircularProgress size={18} color="inherit" /> : undefined}
               sx={{
                 py: 1.5,
                 borderRadius: 2.5,
