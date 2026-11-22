@@ -33,9 +33,14 @@ model User {
   addresses          Address[]
   sessions           UserSession[]
   coilInventoryLogs  CoilInventoryLog[]
-  refunds            Refund[]          @relation("CustomerRefunds")
-  processedRefunds   Refund[]          @relation("FinanceProcessedRefunds")
-  errorReports       ErrorReport[]     @relation("ReportedByUser")
+  refunds                  Refund[]                 @relation("CustomerRefunds")
+  processedRefunds         Refund[]                 @relation("FinanceProcessedRefunds")
+  errorReports             ErrorReport[]            @relation("ReportedByUser")
+  deletionRequests         AccountDeletionRequest[] @relation("CustomerDeletionRequests")
+  reviewedDeletionRequests AccountDeletionRequest[] @relation("AdminReviewedDeletionRequests")
+  staffSupportThreads      StaffSupportThread[]     @relation("StaffSupportAuthor")
+  resolvedSupportThreads   StaffSupportThread[]     @relation("AdminResolvedStaffSupport")
+  staffSupportMessages     StaffSupportMessage[]    @relation("StaffSupportMessageSender")
   
   customerProfile    CustomerProfile?
   adminProfile       AdminProfile?
@@ -427,5 +432,70 @@ model ErrorReport {
   @@index([status, createdAt])
   @@index([portal])
   @@index([traceId])
+}
+
+// Tracks customer-initiated account deletion requests and Admin approval decisions
+model AccountDeletionRequest {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation("CustomerDeletionRequests", fields: [userId], references: [id], onDelete: Cascade)
+  customerName  String?
+  customerEmail String
+  reason        String?
+  status        String    @default("pending") // pending, approved, rejected, cancelled
+  reviewedById  Int?
+  reviewedBy    User?     @relation("AdminReviewedDeletionRequests", fields: [reviewedById], references: [id], onDelete: SetNull)
+  adminNotes    String?
+  reviewedAt    DateTime?
+  cancelledAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+// Tracks internal support and feature-request conversations between operational staff and Admin
+model StaffSupportThread {
+  id                 Int                   @id @default(autoincrement())
+  staffId            Int
+  staff              User                  @relation("StaffSupportAuthor", fields: [staffId], references: [id], onDelete: Cascade)
+  staffRole          String                // logistic, finance, sales, owner
+  staffName          String?
+  staffEmail         String
+  category           String                @default("system_problem") // system_problem, feature_request, general_help
+  priority           String                @default("normal") // normal, urgent
+  subject            String
+  status             String                @default("open") // open, in_progress, resolved
+  lastMessageAt      DateTime              @default(now())
+  lastMessagePreview String?
+  staffUnreadCount   Int                   @default(0)
+  adminUnreadCount   Int                   @default(0)
+  resolvedById       Int?
+  resolvedBy         User?                 @relation("AdminResolvedStaffSupport", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt         DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  messages           StaffSupportMessage[]
+
+  @@index([staffId, lastMessageAt])
+  @@index([status, lastMessageAt])
+  @@index([staffRole, category])
+}
+
+// Individual text or screenshot messages inside a StaffSupportThread
+model StaffSupportMessage {
+  id         Int                @id @default(autoincrement())
+  threadId   Int
+  thread     StaffSupportThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId   Int
+  sender     User               @relation("StaffSupportMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderRole String
+  senderName String?
+  content    String
+  imageUrl   String?
+  createdAt  DateTime           @default(now())
+
+  @@index([threadId, createdAt])
 }
 
