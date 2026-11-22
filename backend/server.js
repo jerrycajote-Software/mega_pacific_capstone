@@ -55,6 +55,7 @@ const errorReportRoutes = require("./routes/errorReportRoutes");
 const adminErrorReportRoutes = require("./routes/admin/errorReportRoutes");
 const customerAccountDeletionRoutes = require("./routes/customer/accountDeletionRoutes");
 const adminAccountDeletionRoutes = require("./routes/admin/accountDeletionRoutes");
+const staffSupportRoutes = require("./routes/staffSupportRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/owner", ownerRoutes);
@@ -89,6 +90,7 @@ app.use("/api/error-reports", errorReportRoutes);
 app.use("/api/admin/error-reports", adminErrorReportRoutes);
 app.use("/api/customer/account-deletion", customerAccountDeletionRoutes);
 app.use("/api/admin/account-deletion-requests", adminAccountDeletionRoutes);
+app.use("/api/staff-support", staffSupportRoutes);
 
 app.get("/", (req, res) => {
   res.send("Mega Pacific Backend is running!");

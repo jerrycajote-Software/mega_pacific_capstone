@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomDashboardIcon,
   CustomSalesTargetIcon,
+  CustomSupportIcon,
   CustomNavToggleIcon,
   CustomLogoutIcon as LogoutIcon,
   CustomLightModeIcon as LightModeIcon,
@@ -13,12 +14,15 @@ import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import ErrorBoundary from '../components/ErrorBoundary';
+import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
+import { useStaffSupportUnreadBadge } from '../hooks/useStaffSupportUnreadBadge';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
-// Primary sidebar tabs for the Owner overview and business sales quota management
+// Primary sidebar tabs for the Owner overview, business sales quota, and Admin messaging
 const navItems = [
-  { name: 'Dashboard',            path: '/owner/dashboard',   icon: <CustomDashboardIcon size={20} /> },
-  { name: 'Business Sales Quota', path: '/owner/sales-quota', icon: <CustomSalesTargetIcon size={20} /> },
+  { name: 'Dashboard',            path: '/owner/dashboard',     icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Business Sales Quota', path: '/owner/sales-quota',   icon: <CustomSalesTargetIcon size={20} /> },
+  { name: 'Message Admin',        path: '/owner/admin-support', icon: <CustomSupportIcon size={20} /> },
 ];
 
 const OwnerLayout = () => {
@@ -29,8 +33,19 @@ const OwnerLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [ownerNotification, setOwnerNotification] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
+  });
+
+  const handleIncomingOwnerSupportUpdate = useCallback((payload) => {
+    if (payload) {
+      setOwnerNotification(payload);
+    }
+  }, []);
+
+  const { unreadCount: unreadAdminReplies } = useStaffSupportUnreadBadge(user, {
+    onIncomingReply: handleIncomingOwnerSupportUpdate
   });
 
   const handleToggleSidebarNavigation = () => {
@@ -146,6 +161,11 @@ const OwnerLayout = () => {
                   >
                     {item.name}
                   </span>
+                  {item.path === '/owner/admin-support' && unreadAdminReplies > 0 && (
+                    <span style={{ marginLeft: 'auto', minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, background: '#ef4444', color: '#ffffff', fontSize: '0.7rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {unreadAdminReplies > 99 ? '99+' : unreadAdminReplies}
+                    </span>
+                  )}
                 </NavLink>
               </Tooltip>
             );
@@ -200,6 +220,13 @@ const OwnerLayout = () => {
           }}
         />
       )}
+
+      <PortalNotificationAlerts
+        activeNotification={ownerNotification}
+        onCloseNotification={() => setOwnerNotification(null)}
+        permissionFeedback={null}
+        onClosePermissionFeedback={() => {}}
+      />
     </div>
   );
 };

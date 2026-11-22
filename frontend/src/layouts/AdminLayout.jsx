@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import axios from 'axios';
 
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -6,6 +6,7 @@ import {
   CustomDashboardIcon,
   CustomUsersIcon,
   CustomStaffManagementIcon,
+  CustomSupportIcon,
   CustomAdminSecurityFlagsIcon,
   CustomSettingsIcon,
   CustomNavToggleIcon,
@@ -13,18 +14,21 @@ import {
   CustomLightModeIcon as LightModeIcon,
   CustomDarkModeIcon as DarkModeIcon
 } from '../components/icons';
-import { Tooltip, Snackbar, Alert, Button } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useAdminTheme } from '../context/ThemeContext';
 import LogoutConfirmModal from '../components/LogoutConfirmModal';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { io } from 'socket.io-client';
+import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
+import { usePortalNotificationManager } from '../hooks/usePortalNotificationManager';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
 const navItems = [
   { name: 'Dashboard', path: '/admin/dashboard', icon: <CustomDashboardIcon size={20} /> },
   { name: 'Users', path: '/admin/users', icon: <CustomUsersIcon size={20} /> },
   { name: 'Staff Management', path: '/admin/accounts', icon: <CustomStaffManagementIcon size={20} /> },
+  { name: 'Staff Messages', path: '/admin/staff-messages', icon: <CustomSupportIcon size={20} /> },
   { name: 'Error Reports', path: '/admin/error-reports', icon: <CustomAdminSecurityFlagsIcon size={20} /> },
   { name: 'Settings', path: '/admin/settings', icon: <CustomSettingsIcon size={20} /> },
 ];
@@ -38,9 +42,8 @@ const AdminLayout = () => {
   const location = useLocation();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [openErrorReportsCount, setOpenErrorReportsCount] = useState(0);
-  const [incomingErrorAlert, setIncomingErrorAlert] = useState(null);
   const [pendingDeletionRequestsCount, setPendingDeletionRequestsCount] = useState(0);
-  const [incomingDeletionAlert, setIncomingDeletionAlert] = useState(null);
+  const [unreadStaffMessagesCount, setUnreadStaffMessagesCount] = useState(0);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('mega_admin_sidebar_collapsed') === 'true';
   });
@@ -48,32 +51,48 @@ const AdminLayout = () => {
   const fetchOpenErrorReportsCount = useCallback(async () => {
     try {
       const token = localStorage.getItem('appToken');
-      if (!token) return;
+      if (!token) return 0;
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/admin/error-reports?status=open`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.data?.summary) {
-        setOpenErrorReportsCount(res.data.summary.open || 0);
-      }
+      const count = res.data?.summary?.open || 0;
+      setOpenErrorReportsCount(count);
+      return count;
     } catch {
-      // Ignore silent badge refresh failures
+      return 0;
     }
   }, []);
 
   const fetchPendingDeletionRequestsCount = useCallback(async () => {
     try {
       const token = localStorage.getItem('appToken');
-      if (!token) return;
+      if (!token) return 0;
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/admin/account-deletion-requests?status=pending`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.data?.summary) {
-        setPendingDeletionRequestsCount(res.data.summary.pending || 0);
-      }
+      const count = res.data?.summary?.pending || 0;
+      setPendingDeletionRequestsCount(count);
+      return count;
     } catch {
-      // Ignore silent badge refresh failures
+      return 0;
+    }
+  }, []);
+
+  const fetchUnreadStaffMessagesCount = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('appToken');
+      if (!token) return 0;
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await axios.get(`${API_URL}/api/staff-support/unread-summary`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const count = res.data?.data?.unreadMessages || 0;
+      setUnreadStaffMessagesCount(count);
+      return count;
+    } catch {
+      return 0;
     }
   }, []);
 
@@ -85,53 +104,132 @@ const AdminLayout = () => {
     });
   };
 
-  React.useEffect(() => {
-    if (!user) return;
+  // Load initial sidebar badge counts when Admin signs in
+  useEffect(() => {
+    if (!user?.id) return;
     fetchOpenErrorReportsCount();
     fetchPendingDeletionRequestsCount();
+    fetchUnreadStaffMessagesCount();
+  }, [user?.id, fetchOpenErrorReportsCount, fetchPendingDeletionRequestsCount, fetchUnreadStaffMessagesCount]);
 
-    const API_URL = import.meta.env.VITE_API_URL || '';
-    const socket = io(API_URL, {
-      auth: { user }
-    });
+  // Remind Admin once per session about unread staff messages, deletion requests, and open error reports
+  const fetchAdminReminders = useCallback(async () => {
+    const [unreadStaff, pendingDeletions, openErrors] = await Promise.all([
+      fetchUnreadStaffMessagesCount(),
+      fetchPendingDeletionRequestsCount(),
+      fetchOpenErrorReportsCount()
+    ]);
 
-    socket.emit("join_room", "admin");
+    const parts = [];
+    if (unreadStaff > 0) {
+      parts.push(`${unreadStaff} unread staff ${unreadStaff === 1 ? 'message' : 'messages'}`);
+    }
+    if (pendingDeletions > 0) {
+      parts.push(`${pendingDeletions} account deletion ${pendingDeletions === 1 ? 'request' : 'requests'}`);
+    }
+    if (openErrors > 0) {
+      parts.push(`${openErrors} open error ${openErrors === 1 ? 'report' : 'reports'}`);
+    }
 
-    socket.on("admin_error_report_created", (payload) => {
-      const report = payload?.report;
-      setOpenErrorReportsCount((prev) => prev + 1);
-      if (report) {
-        setIncomingErrorAlert({
-          traceId: report.traceId,
-          portal: report.portal,
-          reporterName: report.reporterName || report.reporterRole
-        });
-      }
-    });
+    if (parts.length === 0) return null;
 
-    socket.on("admin_error_report_updated", () => {
-      fetchOpenErrorReportsCount();
-    });
+    let targetUrl = '/admin/staff-messages';
+    let actionLabel = 'Open Staff Messages';
+    if (unreadStaff === 0 && pendingDeletions > 0) {
+      targetUrl = '/admin/users?tab=deletion-requests';
+      actionLabel = 'Review Requests';
+    } else if (unreadStaff === 0 && pendingDeletions === 0 && openErrors > 0) {
+      targetUrl = '/admin/error-reports';
+      actionLabel = 'View Reports';
+    }
 
-    socket.on("admin_deletion_request_created", (payload) => {
-      const request = payload?.request;
-      setPendingDeletionRequestsCount((prev) => prev + 1);
-      if (request) {
-        setIncomingDeletionAlert({
-          customerName: request.customerName || request.customerEmail || 'A customer',
-          customerEmail: request.customerEmail || ''
-        });
-      }
-    });
-
-    socket.on("admin_deletion_request_updated", () => {
-      fetchPendingDeletionRequestsCount();
-    });
-
-    return () => {
-      socket.disconnect();
+    return {
+      title: 'Admin Action Reminder',
+      body: `Needs attention: ${parts.join(', ')}.`,
+      severity: openErrors > 0 || pendingDeletions > 0 ? 'warning' : 'info',
+      url: targetUrl,
+      actionLabel,
+      tag: 'admin-session-reminder'
     };
-  }, [user, fetchOpenErrorReportsCount, fetchPendingDeletionRequestsCount]);
+  }, [fetchUnreadStaffMessagesCount, fetchPendingDeletionRequestsCount, fetchOpenErrorReportsCount]);
+
+  // Map incoming Admin Socket.IO events to browser desktop alerts, in-app Snackbars, and badge updates
+  const adminExtraEvents = useMemo(() => ({
+    admin_staff_support_created: (payload) => {
+      fetchUnreadStaffMessagesCount();
+      if (!payload?.thread) return null;
+      return {
+        title: payload.title || 'New Staff Message',
+        body: payload.body || payload.thread.subject,
+        severity: payload.severity || 'warning',
+        url: payload.url || `/admin/staff-messages?threadId=${payload.thread.id}`,
+        actionLabel: 'Open Chat',
+        tag: `admin-staff-thread-${payload.thread.id}`
+      };
+    },
+    admin_staff_support_updated: (payload) => {
+      fetchUnreadStaffMessagesCount();
+      if (!payload?.isNewStaffMessage || !payload?.thread) return null;
+      return {
+        title: payload.title || 'New Staff Reply',
+        body: payload.body || payload.thread.subject,
+        severity: 'info',
+        url: payload.url || `/admin/staff-messages?threadId=${payload.thread.id}`,
+        actionLabel: 'Open Chat',
+        tag: `admin-staff-reply-${payload.thread.id}-${payload.message?.id || Date.now()}`
+      };
+    },
+    admin_deletion_request_created: (payload) => {
+      fetchPendingDeletionRequestsCount();
+      const request = payload?.request;
+      if (!request) return null;
+      const customerLabel = request.customerName || request.customerEmail || 'A customer';
+      return {
+        title: 'New Account Deletion Request',
+        body: `${customerLabel} requested account deletion and is waiting for your review.`,
+        severity: 'warning',
+        url: '/admin/users?tab=deletion-requests',
+        actionLabel: 'Review Request',
+        tag: `admin-deletion-request-${request.id || Date.now()}`
+      };
+    },
+    admin_deletion_request_updated: () => {
+      fetchPendingDeletionRequestsCount();
+      return null;
+    },
+    admin_error_report_created: (payload) => {
+      fetchOpenErrorReportsCount();
+      const report = payload?.report;
+      if (!report) return null;
+      return {
+        title: `New Error Report (${report.traceId || 'Trace'})`,
+        body: `Reported from the ${report.portal || 'user'} portal by ${report.reporterName || report.reporterRole || 'a user'}.`,
+        severity: 'error',
+        url: '/admin/error-reports',
+        actionLabel: 'View Report',
+        tag: `admin-error-report-${report.id || Date.now()}`
+      };
+    },
+    admin_error_report_updated: () => {
+      fetchOpenErrorReportsCount();
+      return null;
+    }
+  }), [fetchUnreadStaffMessagesCount, fetchPendingDeletionRequestsCount, fetchOpenErrorReportsCount]);
+
+  const {
+    activeNotification,
+    permissionFeedback,
+    setPermissionFeedback,
+    handleCloseNotification,
+    handleClosePermissionFeedback
+  } = usePortalNotificationManager({
+    user,
+    rooms: ['admin'],
+    primaryEvent: 'admin_notification',
+    extraEvents: adminExtraEvents,
+    reminderStorageKey: user?.id ? `megapacific_admin_reminded_${user.id}` : null,
+    fetchPendingReminder: fetchAdminReminders
+  });
 
   const handleLogout = () => {
     setIsLogoutOpen(true);
@@ -265,6 +363,26 @@ const AdminLayout = () => {
                       {pendingDeletionRequestsCount > 99 ? '99+' : pendingDeletionRequestsCount}
                     </span>
                   )}
+                  {item.path === '/admin/staff-messages' && unreadStaffMessagesCount > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        minWidth: 20,
+                        height: 20,
+                        padding: '0 6px',
+                        borderRadius: 999,
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {unreadStaffMessagesCount > 99 ? '99+' : unreadStaffMessagesCount}
+                    </span>
+                  )}
                   {item.path === '/admin/error-reports' && openErrorReportsCount > 0 && (
                     <span
                       style={{
@@ -324,68 +442,26 @@ const AdminLayout = () => {
 
       <div className={`admin-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="admin-content">
+          <NotificationPermissionBanner
+            bannerKey="megapacific_admin_banner_dismissed"
+            sx={{ mx: { xs: 2, md: 5 }, mt: 2, mb: 0 }}
+            title="Turn On Live Admin System Alerts"
+            description="Allow browser alerts in Chrome, Edge, or Safari to get notified right away when staff send new messages, customers request account deletion, or error reports arrive."
+            deniedDescription="To receive live Admin pop-ups in Chrome, Edge, or Safari, allow notifications for this website in your browser address bar settings."
+            sampleNotification={{
+              title: 'Mega Pacific Admin Alerts Active',
+              body: 'You will now receive instant browser alerts for Staff Messages, Account Deletion Requests, and Error Reports.',
+              url: '/admin/staff-messages',
+              tag: 'megapacific-admin-test'
+            }}
+            onStatusFeedback={(message, severity) => setPermissionFeedback({ message, severity })}
+          />
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>
         </div>
       </div>
 
-      <Snackbar
-        open={Boolean(incomingDeletionAlert)}
-        autoHideDuration={9000}
-        onClose={() => setIncomingDeletionAlert(null)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ mt: incomingErrorAlert ? 8 : 0 }}
-      >
-        <Alert
-          severity="warning"
-          variant="filled"
-          onClose={() => setIncomingDeletionAlert(null)}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => {
-                setIncomingDeletionAlert(null);
-                navigate('/admin/users?tab=deletion-requests');
-              }}
-              sx={{ fontWeight: 800, textTransform: 'none' }}
-            >
-              Review Request
-            </Button>
-          }
-        >
-          New account deletion request from {incomingDeletionAlert?.customerName || 'a customer'}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={Boolean(incomingErrorAlert)}
-        autoHideDuration={8000}
-        onClose={() => setIncomingErrorAlert(null)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          severity="error"
-          variant="filled"
-          onClose={() => setIncomingErrorAlert(null)}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => {
-                setIncomingErrorAlert(null);
-                navigate('/admin/error-reports');
-              }}
-              sx={{ fontWeight: 800, textTransform: 'none' }}
-            >
-              View Report
-            </Button>
-          }
-        >
-          New error report from {incomingErrorAlert?.portal || 'user'} ({incomingErrorAlert?.traceId})
-        </Alert>
-      </Snackbar>
       {isLogoutOpen && (
         <LogoutConfirmModal
           onClose={() => setIsLogoutOpen(false)}
@@ -396,6 +472,13 @@ const AdminLayout = () => {
           }}
         />
       )}
+
+      <PortalNotificationAlerts
+        activeNotification={activeNotification}
+        onCloseNotification={handleCloseNotification}
+        permissionFeedback={permissionFeedback}
+        onClosePermissionFeedback={handleClosePermissionFeedback}
+      />
     </div>
   );
 };

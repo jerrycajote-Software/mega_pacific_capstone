@@ -520,6 +520,94 @@ const notifyCustomerDeletionRejected = async ({ io, userId, customerEmail, custo
   }
 };
 
+// Notify Admin when Logistics, Finance, Sales, or Owner opens a new Staff Support conversation
+const notifyAdminNewStaffSupportThread = ({ io, thread }) => {
+  if (!io || !thread) return;
+  const deptLabel = String(thread.staffRole || "staff").toUpperCase();
+  const categoryLabel =
+    thread.category === "feature_request"
+      ? "Feature Request"
+      : thread.category === "general_help"
+        ? "General Help"
+        : "System Problem";
+
+  emitPortalSocketNotification(io, "admin", "admin_staff_support_created", {
+    thread,
+    title: `New ${categoryLabel} (${deptLabel})`,
+    body: `${thread.staffName || thread.staffEmail}: ${thread.subject}`,
+    url: `/admin/staff-messages?threadId=${thread.id}`,
+    actionLabel: "Open Chat",
+    severity: thread.priority === "urgent" ? "error" : "warning"
+  });
+};
+
+// Notify Admin when a staff member sends a follow-up message in an existing thread
+const notifyAdminStaffSupportReply = ({ io, thread, message }) => {
+  if (!io || !thread) return;
+  emitPortalSocketNotification(io, "admin", "admin_staff_support_updated", {
+    thread,
+    message,
+    isNewStaffMessage: true,
+    title: `New Reply from ${thread.staffName || thread.staffEmail}`,
+    body: message?.content || "Sent a screenshot attachment",
+    url: `/admin/staff-messages?threadId=${thread.id}`,
+    actionLabel: "Open Chat",
+    severity: "info"
+  });
+};
+
+// Resolve the portal URL path for a given staff role
+const resolveStaffSupportPath = (role) => {
+  const normalized = String(role || "").toLowerCase();
+  if (normalized === "logistic") return "/logistic/admin-support";
+  if (normalized === "finance") return "/finance/admin-support";
+  if (normalized === "sales") return "/sales/admin-support";
+  if (normalized === "owner") return "/owner/admin-support";
+  return "/";
+};
+
+// Notify the staff member in real time when Admin replies to their conversation
+const notifyStaffAdminSupportReply = ({ io, thread, message }) => {
+  if (!io || !thread?.staffId) return;
+  const targetUrl = `${resolveStaffSupportPath(thread.staffRole)}?threadId=${thread.id}`;
+  io.to(`user_${thread.staffId}`).emit("staff_support_reply", {
+    threadId: thread.id,
+    thread,
+    message,
+    title: `Admin Replied: ${thread.subject}`,
+    body: message?.content || "Admin sent a screenshot attachment.",
+    url: targetUrl,
+    actionLabel: "Open Chat",
+    severity: "info"
+  });
+};
+
+// Notify Admin and the staff member when Admin changes the conversation status
+const notifyStaffSupportStatusChanged = ({ io, thread }) => {
+  if (!io || !thread) return;
+  const statusLabel =
+    thread.status === "resolved"
+      ? "Resolved"
+      : thread.status === "in_progress"
+        ? "In Progress"
+        : "Open";
+
+  io.to("admin").emit("admin_staff_support_updated", { thread });
+  io.to(`staff_support_thread_${thread.id}`).emit("staff_support_status_updated", { thread });
+
+  if (thread.staffId) {
+    io.to(`user_${thread.staffId}`).emit("staff_support_status_updated", {
+      threadId: thread.id,
+      thread,
+      title: `Support Thread Marked ${statusLabel}`,
+      body: `"${thread.subject}" was updated to ${statusLabel} by the Administrator.`,
+      url: `${resolveStaffSupportPath(thread.staffRole)}?threadId=${thread.id}`,
+      actionLabel: "View Thread",
+      severity: thread.status === "resolved" ? "success" : "info"
+    });
+  }
+};
+
 module.exports = {
   notifyOrderPlaced,
   notifyOrderOutForDelivery,
@@ -537,5 +625,9 @@ module.exports = {
   notifySalesNewReview,
   notifyAdminNewDeletionRequest,
   notifyCustomerDeletionApproved,
-  notifyCustomerDeletionRejected
+  notifyCustomerDeletionRejected,
+  notifyAdminNewStaffSupportThread,
+  notifyAdminStaffSupportReply,
+  notifyStaffAdminSupportReply,
+  notifyStaffSupportStatusChanged
 };
