@@ -36,10 +36,6 @@ import { toast } from 'react-hot-toast';
 import { usePreventBackToLogin } from '../../hooks/usePreventBackToLogin';
 import { getStoredAuthToken } from '../../context/AuthContext';
 import {
-  CustomLogisticReadyToShipIcon,
-  CustomLogisticOutForDeliveryIcon,
-  CustomLogisticCompletedTodayIcon,
-  CustomLogisticStorePickupIcon,
   CustomLocationOnIcon,
   CustomLocalShippingIcon
 } from '../../components/icons';
@@ -153,52 +149,60 @@ const LogisticDashboardPage = () => {
       badge: 'Action Needed',
       sub: 'Waiting for driver pickup',
       color: '#F59E0B',
-      bg: 'rgba(245, 158, 11, 0.1)',
-      borderColor: 'rgba(245, 158, 11, 0.25)',
+      lightValueColor: '#B45309',
+      darkValueColor: '#FBBF24',
+      hoverLightValueColor: '#92400E',
+      hoverDarkValueColor: '#FDE68A',
+      hoverGlow: 'rgba(245, 158, 11, 0.32)',
       badgeBg: 'rgba(245, 158, 11, 0.12)',
-      badgeColor: '#b45309',
-      darkBadgeColor: '#fbbf24',
-      badgeBorder: 'rgba(245, 158, 11, 0.28)',
-      IconComponent: CustomLogisticReadyToShipIcon
+      badgeColor: '#B45309',
+      darkBadgeColor: '#FBBF24',
+      badgeBorder: 'rgba(245, 158, 11, 0.28)'
     },
     {
       value: data.kpi.outForDelivery || 0,
       badge: 'On the Way',
       sub: 'Delivering to the customer',
       color: '#2563EB',
-      bg: 'rgba(37, 99, 235, 0.1)',
-      borderColor: 'rgba(37, 99, 235, 0.25)',
+      lightValueColor: '#1D4ED8',
+      darkValueColor: '#60A5FA',
+      hoverLightValueColor: '#1E40AF',
+      hoverDarkValueColor: '#93C5FD',
+      hoverGlow: 'rgba(37, 99, 235, 0.32)',
       badgeBg: 'rgba(37, 99, 235, 0.12)',
-      badgeColor: '#1d4ed8',
-      darkBadgeColor: '#60a5fa',
-      badgeBorder: 'rgba(37, 99, 235, 0.28)',
-      IconComponent: CustomLogisticOutForDeliveryIcon
+      badgeColor: '#1D4ED8',
+      darkBadgeColor: '#60A5FA',
+      badgeBorder: 'rgba(37, 99, 235, 0.28)'
     },
     {
       value: data.kpi.completedToday || 0,
       badge: 'Completed Today',
       sub: 'Received by customers today',
       color: '#10B981',
-      bg: 'rgba(16, 185, 129, 0.1)',
-      borderColor: 'rgba(16, 185, 129, 0.25)',
+      lightValueColor: '#047857',
+      darkValueColor: '#34D399',
+      hoverLightValueColor: '#065F46',
+      hoverDarkValueColor: '#6EE7B7',
+      hoverGlow: 'rgba(16, 185, 129, 0.32)',
       badgeBg: 'rgba(16, 185, 129, 0.12)',
       badgeColor: '#047857',
-      darkBadgeColor: '#34d399',
-      badgeBorder: 'rgba(16, 185, 129, 0.28)',
-      IconComponent: CustomLogisticCompletedTodayIcon
+      darkBadgeColor: '#34D399',
+      badgeBorder: 'rgba(16, 185, 129, 0.28)'
     },
     {
       value: data.kpi.pendingPickups || 0,
       badge: 'Store Pickup',
       sub: 'Pending store pickup',
       color: '#8B5CF6',
-      bg: 'rgba(139, 92, 246, 0.1)',
-      borderColor: 'rgba(139, 92, 246, 0.25)',
+      lightValueColor: '#6D28D9',
+      darkValueColor: '#A78BFA',
+      hoverLightValueColor: '#5B21B6',
+      hoverDarkValueColor: '#C4B5FD',
+      hoverGlow: 'rgba(139, 92, 246, 0.32)',
       badgeBg: 'rgba(139, 92, 246, 0.12)',
-      badgeColor: '#6d28d9',
-      darkBadgeColor: '#a78bfa',
-      badgeBorder: 'rgba(139, 92, 246, 0.28)',
-      IconComponent: CustomLogisticStorePickupIcon
+      badgeColor: '#6D28D9',
+      darkBadgeColor: '#A78BFA',
+      badgeBorder: 'rgba(139, 92, 246, 0.28)'
     }
   ];
 
@@ -245,9 +249,7 @@ const LogisticDashboardPage = () => {
       </Box>
 
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
-        {kpis.map((kpi, idx) => {
-          const IconComponent = kpi.IconComponent;
-          return (
+        {kpis.map((kpi, idx) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
               <Paper
                 elevation={0}
@@ -263,33 +265,24 @@ const LogisticDashboardPage = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  gap: 1.75,
+                  gap: 1.5,
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                   boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
                   '&:hover': {
                     transform: 'translateY(-2px)',
                     boxShadow: '0 10px 24px -8px rgba(15, 23, 42, 0.12)',
-                    borderColor: kpi.color
+                    borderColor: kpi.color,
+                    '& .mpi-log-kpi-value': {
+                      color: (theme) => theme.palette.mode === 'dark' ? kpi.hoverDarkValueColor : kpi.hoverLightValueColor,
+                      textShadow: (theme) => theme.palette.mode === 'dark'
+                        ? `0 0 18px ${kpi.hoverGlow}`
+                        : `0 2px 12px ${kpi.hoverGlow}`,
+                      transform: 'translateX(2px)'
+                    }
                   }
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: '12px',
-                      bgcolor: kpi.bg,
-                      border: '1px solid',
-                      borderColor: kpi.borderColor,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <IconComponent size={24} />
-                  </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
                   <Chip
                     label={kpi.badge}
                     size="small"
@@ -309,12 +302,14 @@ const LogisticDashboardPage = () => {
                 <Typography
                   variant="h3"
                   fontWeight={800}
+                  className="mpi-log-kpi-value"
                   sx={{
-                    color: 'text.primary',
+                    color: (theme) => theme.palette.mode === 'dark' ? kpi.darkValueColor : kpi.lightValueColor,
                     fontSize: { xs: '2rem', md: '2.25rem' },
                     letterSpacing: '-0.025em',
                     fontVariantNumeric: 'tabular-nums',
-                    lineHeight: 1.1
+                    lineHeight: 1.1,
+                    transition: 'color 0.22s ease, text-shadow 0.22s ease, transform 0.22s ease'
                   }}
                 >
                   {kpi.value}
@@ -346,8 +341,7 @@ const LogisticDashboardPage = () => {
                 </Box>
               </Paper>
             </Grid>
-          );
-        })}
+        ))}
       </Grid>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>

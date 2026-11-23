@@ -4,7 +4,7 @@ import './customIcons.css';
 /**
  * CustomAdminCustomersIcon
  * Full-color animated SVG icon for Admin Dashboard & User Management "Registered Customers" KPI card.
- * Features an interconnected multi-tier customer directory network, primary executive avatar,
+ * Features an interconnected multi-tier customer accounts network, primary executive avatar,
  * and pulsating sapphire telemetry synchronization beacon.
  */
 const CustomAdminCustomersIcon = ({ size = 26, className = '' }) => {
@@ -74,7 +74,7 @@ const CustomAdminCustomersIcon = ({ size = 26, className = '' }) => {
         <path d="M 14 17.5 L 16 20.5 L 18 17.5" stroke="#ffffff" strokeWidth="0.8" fill="none" opacity="0.8" />
       </g>
 
-      {/* Directory Synchronization Telemetry Beacon */}
+      {/* Account sync status indicator */}
       <g className="mpi-adm-cust-beacon">
         <circle cx="25" cy="7" r="3" fill="#38bdf8" stroke="#ffffff" strokeWidth="0.8" />
         <circle cx="25" cy="7" r="1.2" fill="#ffffff" />

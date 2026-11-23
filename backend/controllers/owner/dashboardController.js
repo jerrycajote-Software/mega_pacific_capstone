@@ -5,6 +5,10 @@ const {
   getCollectedRevenueAmount,
   getPendingBalanceAmount
 } = require("../../services/paymentCalculationService");
+const {
+  roundCurrency,
+  computeProfitSummary
+} = require("../../services/financialSummaryService");
 
 // Fetch all business summary statistics for the Owner dashboard, including the sales quota
 const getOwnerDashboardStats = async (req, res) => {
@@ -27,16 +31,25 @@ const getOwnerDashboardStats = async (req, res) => {
     const pendingBalanceTotal = completedOrders.reduce((sum, order) => sum + getPendingBalanceAmount(order), 0);
     const pending50OrdersCount = completedOrders.filter(isPartial50Order).length;
 
-    
+    // Fetch approved company expenses so Owner can monitor true net profit
+    const approvedExpenses = await prisma.expense.findMany({
+      where: { status: "Approved" },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }]
+    });
+    const profitSummary = computeProfitSummary({
+      totalRevenue,
+      expenses: approvedExpenses
+    });
+
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
-    
+
     const chartDataMap = {};
     for (let i = 0; i < 30; i++) {
       const d = new Date(thirtyDaysAgo);
       d.setDate(d.getDate() + i);
       const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      chartDataMap[dateStr] = 0;
+      chartDataMap[dateStr] = { revenue: 0, expenses: 0 };
     }
 
     completedOrders.forEach(order => {
@@ -44,15 +57,31 @@ const getOwnerDashboardStats = async (req, res) => {
       if (orderDate >= thirtyDaysAgo) {
         const dateStr = orderDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
         if (chartDataMap[dateStr] !== undefined) {
-          chartDataMap[dateStr] += getCollectedRevenueAmount(order);
+          chartDataMap[dateStr].revenue += getCollectedRevenueAmount(order);
         }
       }
     });
 
-    const revenueChartData = Object.keys(chartDataMap).map(key => ({
-      date: key,
-      revenue: chartDataMap[key]
-    }));
+    approvedExpenses.forEach(expense => {
+      const expenseDate = new Date(expense.date || expense.createdAt);
+      if (expenseDate >= thirtyDaysAgo) {
+        const dateStr = expenseDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        if (chartDataMap[dateStr] !== undefined) {
+          chartDataMap[dateStr].expenses += Number(expense.amount) || 0;
+        }
+      }
+    });
+
+    const revenueChartData = Object.keys(chartDataMap).map(key => {
+      const dailyRevenue = roundCurrency(chartDataMap[key].revenue);
+      const dailyExpenses = roundCurrency(chartDataMap[key].expenses);
+      return {
+        date: key,
+        revenue: dailyRevenue,
+        expenses: dailyExpenses,
+        netProfit: roundCurrency(dailyRevenue - dailyExpenses)
+      };
+    });
 
     const recentOrdersData = await prisma.order.findMany({
       where: { status: "pending" },
@@ -152,6 +181,8 @@ const getOwnerDashboardStats = async (req, res) => {
     const totalVariants = await prisma.coilInventory.count();
     const coils = await prisma.coilInventory.findMany();
     const totalRolls = coils.reduce((sum, c) => sum + (c.coilCount != null ? c.coilCount : 0), 0);
+    const totalAvailableMeters = coils.reduce((sum, c) => sum + (Number(c.availableMeters) || 0), 0);
+    const uniqueColorCount = new Set(coils.map((c) => c.color).filter(Boolean)).size;
     const lowCoils = coils.filter(c => (c.coilCount != null ? c.coilCount : 0) <= (c.minAlertCount || 1) && (c.coilCount != null ? c.coilCount : 0) > 0);
     const criticalCoils = coils.filter(c => (c.coilCount != null ? c.coilCount : 0) === 0);
 
@@ -166,19 +197,43 @@ const getOwnerDashboardStats = async (req, res) => {
         totals: {
           revenue: `₱${totalRevenue.toLocaleString()}`,
           rawRevenue: totalRevenue,
+          totalExpenses: `₱${profitSummary.totalExpenses.toLocaleString()}`,
+          rawTotalExpenses: profitSummary.totalExpenses,
+          netProfit: `₱${profitSummary.netProfit.toLocaleString()}`,
+          rawNetProfit: profitSummary.netProfit,
+          profitMargin: profitSummary.profitMargin,
+          expenseRatio: profitSummary.expenseRatio,
+          expensesCount: profitSummary.expensesCount,
+          expenseCategoriesCount: profitSummary.expenseCategoriesCount,
           pendingBalanceTotal: `₱${pendingBalanceTotal.toLocaleString()}`,
           rawPendingBalanceTotal: pendingBalanceTotal,
           pending50OrdersCount,
           inventoryValue: `₱${totalInventoryValue.toLocaleString()}`,
+          rawInventoryValue: totalInventoryValue,
           products: totalProducts,
           orders: totalOrders,
           users: totalUsers,
           avgOrderValue: `₱${Math.round(avgOrderValue).toLocaleString()}`,
+          rawAvgOrderValue: avgOrderValue,
           rawCoilMeters: `${totalRolls} Coils`
+        },
+        expenseSummary: {
+          categoryBreakdown: profitSummary.categoryBreakdown,
+          recentExpenses: approvedExpenses.slice(0, 5).map(e => ({
+            id: e.id,
+            reference: e.reference || `EXP-${e.id}`,
+            category: e.category || "Operations",
+            description: e.description || "Company expense",
+            amount: roundCurrency(e.amount),
+            status: e.status || "Approved",
+            date: e.date || e.createdAt
+          }))
         },
         coilHealth: {
           totalCoils: totalRolls,
           totalVariants,
+          uniqueColorCount,
+          totalAvailableMeters,
           totalCoilMeters: totalRolls,
           lowCount: lowCoils.length,
           criticalCount: criticalCoils.length,

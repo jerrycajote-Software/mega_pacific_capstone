@@ -601,7 +601,7 @@ const SuperAdminDashboardPage = () => {
       badge: 'Management Core',
       icon: <Shield className="w-6 h-6" />,
       route: '/admin',
-      description: 'Backoffice management portal for customer directory, staff clearance, system settings, and operational oversight.',
+      description: 'Backoffice management portal for customer accounts, staff clearance, system settings, and operational oversight.',
     },
     {
       key: 'sales_portal_status',

@@ -7,24 +7,15 @@ import { fetchAdminDeletionRequests } from '../../services/accountDeletionApi';
 import {
   CustomAdminCustomersIcon,
   CustomAdminUserAccountIcon,
-  CustomAdminStaffIcon,
   CustomAdminSuspendedIcon,
   CustomSearchIcon as SearchIcon,
   CustomFilterListIcon as FilterListIcon,
-  CustomAdminPanelSettingsIcon as AdminPanelSettingsIcon,
-  CustomAccountCircleIcon as AccountCircleIcon,
-  CustomBadgeIcon as BadgeIcon,
-  CustomCheckCircleIcon as CheckCircleIcon,
-  CustomCancelIcon as CancelIcon,
   CustomMailIcon as MailIcon,
   CustomPhoneIcon as PhoneIcon,
   CustomLocationOnIcon as LocationOnIcon,
   CustomChevronLeftIcon as ChevronLeftIcon,
   CustomChevronRightIcon as ChevronRightIcon,
-  CustomWarningIcon as WarningIcon,
-  CustomPeopleIcon as PeopleIcon,
-  CustomBlockIcon as BlockIcon,
-  CustomCheckIcon as CheckIcon
+  CustomWarningIcon as WarningIcon
 } from '../../components/icons';
 
 
@@ -47,25 +38,24 @@ const td = {
   borderBottom: '1px solid var(--border-light)',
 };
 
-const roleStyles = {
-  customer: { label: 'Customer', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: AccountCircleIcon },
-  sales: { label: 'Sales', color: '#10b981', bg: 'rgba(16,185,129,0.12)', icon: BadgeIcon },
-  logistic: { label: 'Logistic', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: BadgeIcon },
-  finance: { label: 'Finance', color: '#06b6d4', bg: 'rgba(6,182,212,0.12)', icon: BadgeIcon },
-  admin: { label: 'Admin', color: '#6366f1', bg: 'rgba(99,102,241,0.12)', icon: AdminPanelSettingsIcon },
-  owner: { label: 'Owner', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: AdminPanelSettingsIcon },
-};
-
 const UserManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') === 'deletion-requests' ? 'deletion-requests' : 'accounts';
+  const rawStatusParam = searchParams.get('status');
+  const filterStatus =
+    rawStatusParam === 'active' || rawStatusParam === 'suspended' || rawStatusParam === 'deleted'
+      ? rawStatusParam
+      : 'All';
+  const rawVerificationParam = searchParams.get('verification');
+  const filterVerification =
+    rawVerificationParam === 'verified' || rawVerificationParam === 'pending_otp'
+      ? rawVerificationParam
+      : 'All';
 
   const [users, setUsers] = useState([]);
   const [pendingDeletionCount, setPendingDeletionCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('All');
-  const [filterStatus, setFilterStatus] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null, actionText: '', newStatus: '' });
@@ -86,13 +76,14 @@ const UserManagement = () => {
       const token = localStorage.getItem('appToken');
       const API_URL = import.meta.env.VITE_API_URL || '';
       const res = await axios.get(`${API_URL}/api/admin/users`, {
+        params: { role: 'customer' },
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
         setUsers(res.data.data);
       }
     } catch (err) {
-      console.error('Failed to fetch users', err);
+      console.error('Failed to fetch customer accounts', err);
     } finally {
       setLoading(false);
     }
@@ -119,6 +110,30 @@ const UserManagement = () => {
     }
   };
 
+  // Sync the account status filter with the URL query string so dashboard drill-downs stay bookmarked
+  const handleFilterStatusChange = (nextStatus) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextStatus === 'All') {
+      nextParams.delete('status');
+    } else {
+      nextParams.set('status', nextStatus);
+    }
+    setSearchParams(nextParams);
+    setCurrentPage(1);
+  };
+
+  // Sync the email verification filter with the URL query string so dashboard drill-downs stay bookmarked
+  const handleFilterVerificationChange = (nextVerification) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextVerification === 'All') {
+      nextParams.delete('verification');
+    } else {
+      nextParams.set('verification', nextVerification);
+    }
+    setSearchParams(nextParams);
+    setCurrentPage(1);
+  };
+
   const handleToggleStatusClick = (user) => {
     const newStatus = user.status === 'active' ? 'suspended' : 'active';
     const actionText = user.status === 'active' ? 'suspend' : 'activate';
@@ -142,49 +157,60 @@ const UserManagement = () => {
     }
   };
 
-  const metrics = useMemo(() => {
-    const all = Array.isArray(users) ? users : [];
-    return {
-      total: all.length,
-      customers: all.filter(u => u.role === 'customer').length,
-      staff: all.filter(u => u.role !== 'customer').length,
-      suspended: all.filter(u => u.status === 'suspended').length
-    };
+  // Keep only customer accounts for KPI metrics and table display
+  const customerUsers = useMemo(() => {
+    return (Array.isArray(users) ? users : []).filter(
+      (user) => (user?.role || '').toLowerCase() === 'customer'
+    );
   }, [users]);
 
+  const metrics = useMemo(() => {
+    return {
+      totalCustomers: customerUsers.length,
+      activeCustomers: customerUsers.filter((u) => u.status === 'active').length,
+      suspendedCustomers: customerUsers.filter((u) => u.status === 'suspended').length
+    };
+  }, [customerUsers]);
+
   const filteredUsers = useMemo(() => {
-    return (Array.isArray(users) ? users : []).filter(user => {
+    return customerUsers.filter((user) => {
       const name = user?.name || '';
       const email = user?.email || '';
       const phone = user?.contactNumber || '';
-      const role = user?.role || '';
-      const status = user?.status || '';
+      const status = (user?.status || '').toLowerCase();
+      const isVerified = Boolean(user?.isEmailVerified);
       const q = searchTerm.toLowerCase();
 
-      const matchesSearch = 
+      const matchesSearch =
         !q ||
         name.toLowerCase().includes(q) ||
         email.toLowerCase().includes(q) ||
         phone.includes(q);
 
-      const matchesRole = filterRole === 'All' || role.toLowerCase() === filterRole.toLowerCase();
-      const matchesStatus = filterStatus === 'All' || status.toLowerCase() === filterStatus.toLowerCase();
+      const matchesStatus = filterStatus === 'All' || status === filterStatus.toLowerCase();
 
-      return matchesSearch && matchesRole && matchesStatus;
+      // Match the Admin Dashboard KPI definition by excluding soft-deleted accounts from verification buckets
+      const matchesVerification =
+        filterVerification === 'All' ||
+        (filterVerification === 'verified' && isVerified && status !== 'deleted') ||
+        (filterVerification === 'pending_otp' && !isVerified && status !== 'deleted');
+
+      return matchesSearch && matchesStatus && matchesVerification;
     });
-  }, [users, searchTerm, filterRole, filterStatus]);
+  }, [customerUsers, searchTerm, filterStatus, filterVerification]);
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
+    const start = (safeCurrentPage - 1) * itemsPerPage;
     return filteredUsers.slice(start, start + itemsPerPage);
-  }, [filteredUsers, currentPage, itemsPerPage]);
+  }, [filteredUsers, safeCurrentPage, itemsPerPage]);
 
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '65vh', gap: 16 }}>
         <CircularProgress size={40} sx={{ color: '#4f772d' }} />
-        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Loading customer directory...</span>
+        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Loading customer accounts...</span>
       </div>
     );
   }
@@ -270,13 +296,13 @@ const UserManagement = () => {
       ) : (
         <>
 
-      {/* Metric Cards Bar */}
+      {/* Customer KPI summary cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '1rem'
       }}>
-        {/* Total Registered */}
+        {/* Customer Accounts */}
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
@@ -302,12 +328,12 @@ const UserManagement = () => {
             <CustomAdminCustomersIcon size={26} />
           </div>
           <div>
-            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.total}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>Total Registered</div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.totalCustomers}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>Customer Accounts</div>
           </div>
         </div>
 
-        {/* Customer Accounts */}
+        {/* Active Accounts */}
         <div className="mpi-admin-kpi-card" style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-light)',
@@ -333,39 +359,8 @@ const UserManagement = () => {
             <CustomAdminUserAccountIcon size={26} />
           </div>
           <div>
-            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.customers}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>Customer Accounts</div>
-          </div>
-        </div>
-
-        {/* Operational Roles */}
-        <div className="mpi-admin-kpi-card" style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-light)',
-          borderRadius: 14,
-          padding: '1.15rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          boxShadow: '0 4px 18px -6px rgba(0,0,0,0.1)'
-        }}>
-          <div className="mpi-admin-badge" style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            background: 'rgba(79,119,45,0.09)',
-            border: '1px solid rgba(79,119,45,0.22)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(79,119,45,0.12)'
-          }}>
-            <CustomAdminStaffIcon size={26} />
-          </div>
-          <div>
-            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.staff}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>Operational Roles</div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{metrics.activeCustomers}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>Active Accounts</div>
           </div>
         </div>
 
@@ -384,26 +379,26 @@ const UserManagement = () => {
             width: 44,
             height: 44,
             borderRadius: 12,
-            background: metrics.suspended > 0 ? 'rgba(239,68,68,0.09)' : 'rgba(16,185,129,0.08)',
-            border: `1px solid ${metrics.suspended > 0 ? 'rgba(239,68,68,0.22)' : 'rgba(16,185,129,0.2)'}`,
+            background: metrics.suspendedCustomers > 0 ? 'rgba(239,68,68,0.09)' : 'rgba(16,185,129,0.08)',
+            border: `1px solid ${metrics.suspendedCustomers > 0 ? 'rgba(239,68,68,0.22)' : 'rgba(16,185,129,0.2)'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            boxShadow: `0 2px 8px ${metrics.suspended > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)'}`
+            boxShadow: `0 2px 8px ${metrics.suspendedCustomers > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)'}`
           }}>
-            <CustomAdminSuspendedIcon size={26} isSuspended={metrics.suspended > 0} />
+            <CustomAdminSuspendedIcon size={26} isSuspended={metrics.suspendedCustomers > 0} />
           </div>
           <div>
-            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: metrics.suspended > 0 ? '#ef4444' : 'var(--text-primary)', lineHeight: 1.1 }}>
-              {metrics.suspended}
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: metrics.suspendedCustomers > 0 ? '#ef4444' : 'var(--text-primary)', lineHeight: 1.1 }}>
+              {metrics.suspendedCustomers}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>Suspended Accounts</div>
           </div>
         </div>
       </div>
 
-      {/* Search & Filters Toolbar */}
+      {/* Search and status filter toolbar */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -438,61 +433,96 @@ const UserManagement = () => {
           </div>
 
           <div style={{ position: 'relative' }}>
-            <FilterListIcon sx={{ fontSize: 16, color: 'var(--text-muted)', position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+            <FilterListIcon sx={{
+              fontSize: 16,
+              color: filterStatus === 'suspended' ? '#ef4444' : filterStatus === 'active' ? '#22c55e' : 'var(--text-muted)',
+              position: 'absolute',
+              left: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none'
+            }} />
             <select
-              value={filterRole}
-              onChange={(e) => { setFilterRole(e.target.value); setCurrentPage(1); }}
+              aria-label="Filter customer accounts by status"
+              value={filterStatus}
+              onChange={(e) => handleFilterStatusChange(e.target.value)}
               style={{
                 appearance: 'none',
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-light)',
-                padding: '9px 32px 9px 34px',
+                background: filterStatus === 'suspended'
+                  ? 'rgba(239,68,68,0.1)'
+                  : filterStatus === 'active'
+                    ? 'rgba(34,197,94,0.1)'
+                    : 'var(--bg-primary)',
+                border: `1px solid ${
+                  filterStatus === 'suspended'
+                    ? 'rgba(239,68,68,0.4)'
+                    : filterStatus === 'active'
+                      ? 'rgba(34,197,94,0.4)'
+                      : 'var(--border-light)'
+                }`,
+                padding: '9px 24px 9px 34px',
                 borderRadius: 10,
-                color: 'var(--text-primary)',
+                color: filterStatus === 'suspended'
+                  ? '#ef4444'
+                  : filterStatus === 'active'
+                    ? '#22c55e'
+                    : 'var(--text-primary)',
                 fontSize: '0.82rem',
                 fontWeight: 600,
                 outline: 'none',
                 cursor: 'pointer'
               }}
             >
-              <option value="All">All Roles</option>
-              <option value="customer">Customer</option>
-              <option value="sales">Sales</option>
-              <option value="logistic">Logistic</option>
-              <option value="finance">Finance</option>
-              <option value="admin">Admin</option>
+              <option value="All" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>All Statuses</option>
+              <option value="active" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Active Only</option>
+              <option value="suspended" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Suspended Only</option>
+              <option value="deleted" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Deleted Only</option>
             </select>
           </div>
 
           <select
-            value={filterStatus}
-            onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+            aria-label="Filter customer accounts by email verification"
+            value={filterVerification}
+            onChange={(e) => handleFilterVerificationChange(e.target.value)}
             style={{
               appearance: 'none',
-              background: 'var(--bg-primary)',
-              border: '1px solid var(--border-light)',
+              background: filterVerification === 'pending_otp'
+                ? 'rgba(245,158,11,0.1)'
+                : filterVerification === 'verified'
+                  ? 'rgba(34,197,94,0.1)'
+                  : 'var(--bg-primary)',
+              border: `1px solid ${
+                filterVerification === 'pending_otp'
+                  ? 'rgba(245,158,11,0.4)'
+                  : filterVerification === 'verified'
+                    ? 'rgba(34,197,94,0.4)'
+                    : 'var(--border-light)'
+              }`,
               padding: '9px 18px',
               borderRadius: 10,
-              color: 'var(--text-primary)',
+              color: filterVerification === 'pending_otp'
+                ? '#f59e0b'
+                : filterVerification === 'verified'
+                  ? '#22c55e'
+                  : 'var(--text-primary)',
               fontSize: '0.82rem',
               fontWeight: 600,
               outline: 'none',
               cursor: 'pointer'
             }}
           >
-            <option value="All">All Statuses</option>
-            <option value="active">Active Only</option>
-            <option value="suspended">Suspended Only</option>
-            <option value="deleted">Deleted Only</option>
+            <option value="All" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>All Verification</option>
+            <option value="verified" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Verified Only</option>
+            <option value="pending_otp" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>Pending OTP Only</option>
           </select>
         </div>
 
         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          Showing <strong>{filteredUsers.length}</strong> matching accounts
+          Showing <strong>{filteredUsers.length}</strong> matching customer accounts
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Customer accounts table */}
       <div style={{
         background: 'var(--bg-secondary)',
         borderRadius: 16,
@@ -504,10 +534,10 @@ const UserManagement = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr>
-                <th style={{ ...th, minWidth: 200 }}>User Profile</th>
+                <th style={{ ...th, minWidth: 200 }}>Customer Profile</th>
                 <th style={{ ...th, minWidth: 220 }}>Contact Info</th>
                 <th style={{ ...th, minWidth: 220, whiteSpace: 'nowrap' }}>Registered Location</th>
-                <th style={{ ...th, minWidth: 110, whiteSpace: 'nowrap' }}>Role</th>
+                <th style={{ ...th, minWidth: 140, whiteSpace: 'nowrap' }}>Email Verification</th>
                 <th style={{ ...th, minWidth: 120, whiteSpace: 'nowrap' }}>Account Status</th>
                 <th style={{ ...th, minWidth: 130, whiteSpace: 'nowrap' }}>Registered Date</th>
                 <th style={{ ...th, minWidth: 120, textAlign: 'right', whiteSpace: 'nowrap' }}>Access Control</th>
@@ -517,15 +547,14 @@ const UserManagement = () => {
               {paginatedUsers.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ padding: '3.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No users found matching your search or filters.
+                    No customer accounts found matching your search or filter.
                   </td>
                 </tr>
               ) : (
                 paginatedUsers.map(user => {
-                  const roleConfig = roleStyles[user.role?.toLowerCase()] || roleStyles.customer;
-                  const RoleIcon = roleConfig.icon;
                   const isActive = user.status === 'active';
                   const isDeleted = user.status === 'deleted';
+                  const isEmailVerified = Boolean(user?.isEmailVerified);
 
                   return (
                     <tr
@@ -540,8 +569,8 @@ const UserManagement = () => {
                             width: 36,
                             height: 36,
                             borderRadius: '50%',
-                            background: roleConfig.bg,
-                            color: roleConfig.color,
+                            background: 'rgba(59,130,246,0.12)',
+                            color: '#3b82f6',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -549,7 +578,7 @@ const UserManagement = () => {
                             fontSize: '0.9rem',
                             flexShrink: 0
                           }}>
-                            {(user?.name || 'U').charAt(0).toUpperCase()}
+                            {(user?.name || 'C').charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.88rem' }}>
@@ -582,21 +611,27 @@ const UserManagement = () => {
                         </div>
                       </td>
 
-                      <td style={td}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 5,
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          background: roleConfig.bg,
-                          color: roleConfig.color,
-                          fontSize: '0.74rem',
-                          fontWeight: 700
-                        }}>
-                          <RoleIcon sx={{ fontSize: 13 }} />
-                          <span>{roleConfig.label}</span>
-                        </span>
+                      <td style={{ ...td, whiteSpace: 'nowrap' }}>
+                        {isDeleted ? (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                            —
+                          </span>
+                        ) : (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            background: isEmailVerified ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.12)',
+                            color: isEmailVerified ? '#22c55e' : '#f59e0b',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {isEmailVerified ? '✓ Verified' : 'Pending OTP'}
+                          </span>
+                        )}
                       </td>
 
                       <td style={td}>
@@ -671,23 +706,23 @@ const UserManagement = () => {
             gap: 12
           }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Showing <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</strong> of <strong>{filteredUsers.length}</strong> accounts
+              Showing <strong>{(safeCurrentPage - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(safeCurrentPage * itemsPerPage, filteredUsers.length)}</strong> of <strong>{filteredUsers.length}</strong> customer accounts
             </span>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(Math.max(1, safeCurrentPage - 1))}
+                disabled={safeCurrentPage === 1}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: 'var(--bg-primary)',
                   border: '1px solid var(--border-light)',
-                  color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                  color: safeCurrentPage === 1 ? 'var(--text-muted)' : 'var(--text-primary)',
                   padding: '6px',
                   borderRadius: 8,
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                  opacity: currentPage === 1 ? 0.4 : 1
+                  cursor: safeCurrentPage === 1 ? 'not-allowed' : 'pointer',
+                  opacity: safeCurrentPage === 1 ? 0.4 : 1
                 }}
               >
                 <ChevronLeftIcon sx={{ fontSize: 16 }} />
@@ -697,10 +732,10 @@ const UserManagement = () => {
                   key={idx}
                   onClick={() => setCurrentPage(idx + 1)}
                   style={{
-                    background: currentPage === idx + 1 ? 'linear-gradient(135deg, #4f772d, #3d5c22)' : 'var(--bg-primary)',
-                    border: `1px solid ${currentPage === idx + 1 ? '#4f772d' : 'var(--border-light)'}`,
+                    background: safeCurrentPage === idx + 1 ? 'linear-gradient(135deg, #4f772d, #3d5c22)' : 'var(--bg-primary)',
+                    border: `1px solid ${safeCurrentPage === idx + 1 ? '#4f772d' : 'var(--border-light)'}`,
                     color: '#fff',
-                    fontWeight: currentPage === idx + 1 ? 800 : 500,
+                    fontWeight: safeCurrentPage === idx + 1 ? 800 : 500,
                     width: 30,
                     height: 30,
                     borderRadius: 8,
@@ -715,19 +750,19 @@ const UserManagement = () => {
                 </button>
               ))}
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(Math.min(totalPages, safeCurrentPage + 1))}
+                disabled={safeCurrentPage === totalPages}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: 'var(--bg-primary)',
                   border: '1px solid var(--border-light)',
-                  color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
+                  color: safeCurrentPage === totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
                   padding: '6px',
                   borderRadius: 8,
-                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                  opacity: currentPage === totalPages ? 0.4 : 1
+                  cursor: safeCurrentPage === totalPages ? 'not-allowed' : 'pointer',
+                  opacity: safeCurrentPage === totalPages ? 0.4 : 1
                 }}
               >
                 <ChevronRightIcon sx={{ fontSize: 16 }} />

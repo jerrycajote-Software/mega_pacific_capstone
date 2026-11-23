@@ -78,6 +78,7 @@ const DashboardPage = () => {
     newCustomersThisWeek: 0,
     activeCustomers: 0,
     suspendedCustomers: 0,
+    pendingDeletionRequests: 0,
     verifiedCustomers: 0,
     unverifiedCustomers: 0,
     verificationRate: 100,
@@ -87,6 +88,21 @@ const DashboardPage = () => {
   };
 
   const recentCustomers = data?.recentCustomers || [];
+
+  // Open User Management pre-filtered to customer accounts waiting for email OTP verification
+  const handleViewPendingOtpCustomers = () => {
+    navigate('/admin/users?verification=pending_otp');
+  };
+
+  // Open User Management pre-filtered to suspended customer accounts
+  const handleViewSuspendedCustomers = () => {
+    navigate('/admin/users?status=suspended');
+  };
+
+  // Open User Management directly on the customer account deletion requests tab
+  const handleViewDeletionRequests = () => {
+    navigate('/admin/users?tab=deletion-requests');
+  };
 
   return (
     <div style={{ padding: '1.75rem 2rem', maxWidth: 1400, margin: '0 auto' }}>
@@ -237,9 +253,31 @@ const DashboardPage = () => {
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
             {kpi.verificationRate}%
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ color: '#10b981', fontWeight: 700 }}>{kpi.verifiedCustomers} verified</span>
-            <span style={{ color: 'var(--text-muted)' }}>• {kpi.unverifiedCustomers} pending OTP</span>
+            <span style={{ color: 'var(--text-muted)' }}>•</span>
+            <button
+              type="button"
+              onClick={handleViewPendingOtpCustomers}
+              title="View all customer accounts pending email OTP verification"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                padding: 0,
+                background: 'none',
+                border: 'none',
+                color: kpi.unverifiedCustomers > 0 ? '#f59e0b' : 'var(--text-muted)',
+                fontSize: '0.75rem',
+                fontWeight: kpi.unverifiedCustomers > 0 ? 700 : 500,
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                {kpi.unverifiedCustomers} pending OTP
+              </span>
+              <ChevronRightIcon sx={{ fontSize: 14 }} />
+            </button>
           </div>
         </div>
 
@@ -274,11 +312,52 @@ const DashboardPage = () => {
           <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
             {kpi.flagsCount}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: '0.75rem' }}>
-            <span style={{ color: kpi.suspendedCustomers > 0 ? '#ef4444' : '#22c55e', fontWeight: 700 }}>
-              {kpi.suspendedCustomers} suspended
-            </span>
-            <span style={{ color: 'var(--text-muted)' }}>• 0 critical vulnerabilities</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleViewSuspendedCustomers}
+              title="View all suspended customer accounts"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                padding: 0,
+                background: 'none',
+                border: 'none',
+                color: kpi.suspendedCustomers > 0 ? '#ef4444' : '#22c55e',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                {kpi.suspendedCustomers} suspended
+              </span>
+              <ChevronRightIcon sx={{ fontSize: 14 }} />
+            </button>
+            <span style={{ color: 'var(--text-muted)' }}>•</span>
+            <button
+              type="button"
+              onClick={handleViewDeletionRequests}
+              title="Review pending customer account deletion requests"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                padding: 0,
+                background: 'none',
+                border: 'none',
+                color: kpi.pendingDeletionRequests > 0 ? '#f59e0b' : 'var(--text-muted)',
+                fontSize: '0.75rem',
+                fontWeight: kpi.pendingDeletionRequests > 0 ? 700 : 500,
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                {kpi.pendingDeletionRequests} deletion {kpi.pendingDeletionRequests === 1 ? 'request' : 'requests'}
+              </span>
+              <ChevronRightIcon sx={{ fontSize: 14 }} />
+            </button>
           </div>
         </div>
       </div>
@@ -313,7 +392,7 @@ const DashboardPage = () => {
               cursor: 'pointer'
             }}
           >
-            <span>View Full Directory</span>
+            <span>View All Customers</span>
             <ChevronRightIcon sx={{ fontSize: 16 }} />
           </button>
         </div>

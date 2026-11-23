@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { NavLink, Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomDashboardIcon,
+  CustomExpensesIcon,
   CustomSalesTargetIcon,
   CustomSupportIcon,
   CustomNavToggleIcon,
@@ -18,9 +19,10 @@ import PortalNotificationAlerts from '../components/PortalNotificationAlerts';
 import { useStaffSupportUnreadBadge } from '../hooks/useStaffSupportUnreadBadge';
 import { usePreventBackToLogin } from '../hooks/usePreventBackToLogin';
 
-// Primary sidebar tabs for the Owner overview, business sales quota, and Admin messaging
+// Primary sidebar tabs for the Owner overview, expenses and profit audit, business sales quota, and Admin messaging
 const navItems = [
   { name: 'Dashboard',            path: '/owner/dashboard',     icon: <CustomDashboardIcon size={20} /> },
+  { name: 'Expenses & Profit',    path: '/owner/expenses',      icon: <CustomExpensesIcon size={20} /> },
   { name: 'Business Sales Quota', path: '/owner/sales-quota',   icon: <CustomSalesTargetIcon size={20} /> },
   { name: 'Message Admin',        path: '/owner/admin-support', icon: <CustomSupportIcon size={20} /> },
 ];

@@ -13,9 +13,15 @@ const getUsers = async (req, res) => {
       rolesToExclude.push('owner');
     }
 
+    // Support optional role filtering (ex. ?role=customer) while enforcing role exclusions
+    const requestedRole = typeof req.query.role === "string" ? req.query.role.trim().toLowerCase() : "";
+    if (requestedRole && rolesToExclude.includes(requestedRole)) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
     const users = await prisma.user.findMany({
       where: {
-        role: { notIn: rolesToExclude },
+        role: requestedRole || { notIn: rolesToExclude },
         id: { not: req.user.userId }
       },
       orderBy: { createdAt: "desc" },

@@ -147,6 +147,8 @@ const SalesManagement = () => {
   };
 
   const toggleStatusClick = (emp) => {
+    // Prevent non-Super Admin users from suspending or toggling the Owner account status
+    if (emp.role === 'owner' && !isSuperAdmin) return;
     const newStatus = emp.status === 'active' ? 'suspended' : 'active';
     const actionText = emp.status === 'pending' ? 'verify' : (newStatus === 'suspended' ? 'deactivate' : 'activate');
     setConfirmModal({ isOpen: true, emp, actionText, newStatus });
@@ -189,7 +191,7 @@ const SalesManagement = () => {
              Staff Management
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            Manage operational staff accounts for sales, logistics, and finance.
+            Manage internal accounts for the owner, sales, logistics, and finance.
           </p>
         </div>
       </div>
@@ -220,12 +222,16 @@ const SalesManagement = () => {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   {salesList.length === 0 ? 'No accounts yet.' : 'No accounts match your search.'}
                 </td>
               </tr>
             ) : (
-              filtered.map(emp => (
+              filtered.map(emp => {
+                const isOwnerAccount = emp.role === 'owner';
+                const canToggleStatus = !isOwnerAccount || isSuperAdmin;
+
+                return (
                 <tr key={emp.id}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -233,7 +239,21 @@ const SalesManagement = () => {
                 >
                   <td style={td}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, #4f772d, #3d5c22)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '1rem', flexShrink: 0 }}>
+                      <div style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: '50%',
+                        background: isOwnerAccount
+                          ? 'linear-gradient(135deg, #d97706, #b45309)'
+                          : 'linear-gradient(135deg, #4f772d, #3d5c22)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        flexShrink: 0
+                      }}>
                         {emp.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -245,7 +265,12 @@ const SalesManagement = () => {
                     </div>
                   </td>
                   <td style={td}>
-                    <span style={{ textTransform: 'capitalize', fontSize: '0.82rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                    <span style={{
+                      textTransform: 'capitalize',
+                      fontSize: '0.82rem',
+                      color: isOwnerAccount ? '#f59e0b' : 'var(--text-primary)',
+                      fontWeight: isOwnerAccount ? 700 : 500
+                    }}>
                       {emp.role}
                     </span>
                   </td>
@@ -266,9 +291,16 @@ const SalesManagement = () => {
                     ) : (
                       <span
                         className={emp.status === 'active' ? 'badge-green' : 'badge-red'}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 99, cursor: 'pointer' }}
-                        onClick={() => toggleStatusClick(emp)}
-                        title="Click to toggle status"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '4px 8px',
+                          borderRadius: 99,
+                          cursor: canToggleStatus ? 'pointer' : 'default'
+                        }}
+                        onClick={canToggleStatus ? () => toggleStatusClick(emp) : undefined}
+                        title={canToggleStatus ? 'Click to toggle status' : 'Owner account status cannot be changed by Admin'}
                       >
                         {emp.status === 'active' ? <CheckCircleIcon sx={{ fontSize: 12 }} /> : <CancelIcon sx={{ fontSize: 12 }} />}
                         <span style={{ textTransform: 'capitalize' }}>{emp.status}</span>
@@ -304,41 +336,43 @@ const SalesManagement = () => {
                       <button
                         onClick={() => openEdit(emp)}
                         className="mpi-staff-edit-btn"
-                        title="Edit staff profile and contact details"
+                        title={isOwnerAccount ? 'Edit owner profile and contact details' : 'Edit staff profile and contact details'}
                       >
                         <EditIcon sx={{ fontSize: 15 }} /> Edit Profile
                       </button>
                       <button
                         onClick={() => openReset(emp)}
                         className="mpi-staff-reset-btn"
-                        title="Reset password for this staff account"
+                        title={isOwnerAccount ? 'Reset password for the owner account' : 'Reset password for this staff account'}
                       >
                         <LockResetIcon sx={{ fontSize: 15 }} /> Reset Password
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
-          onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
           <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth: 460, boxShadow: '0 32px 80px rgba(0,0,0,0.7)' }}>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
               <div>
                 <h3 style={{ margin: 0, fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem' }}>
-                  {modalMode === 'edit' ? 'Edit Staff Profile' : 'Reset Staff Password'}
+                  {modalMode === 'edit'
+                    ? (selectedSales?.role === 'owner' ? 'Edit Owner Profile' : 'Edit Staff Profile')
+                    : (selectedSales?.role === 'owner' ? 'Reset Owner Password' : 'Reset Staff Password')}
                 </h3>
                 <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   {modalMode === 'edit' ? 'Update name and contact number.' : `Reset password for ${selectedSales?.name}.`}
                 </p>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 8, padding: 6, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+              <button type="button" onClick={() => setShowModal(false)} aria-label="Close modal" style={{ background: 'none', border: '1px solid var(--border-light)', borderRadius: 8, padding: 6, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
                 <CloseIcon sx={{ fontSize: 15 }} />
               </button>
             </div>
@@ -411,14 +445,10 @@ const SalesManagement = () => {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '0 1.5rem 1.5rem' }}>
-                <button type="button" onClick={() => setShowModal(false)}
-                  style={{ padding: '0.6rem 1.2rem', borderRadius: 10, border: '1px solid var(--border-light)', background: 'transparent', color: 'var(--text-muted)', fontSize: '0.84rem', cursor: 'pointer' }}>
-                  Cancel
-                </button>
                 <button type="submit" disabled={saving}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '0.6rem 1.4rem', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #4f772d, #3d5c22)', color: '#fff', fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
                   {saving ? <CircularProgress size={14} thickness={5} sx={{ color: '#fff' }} /> : null}
-                  {modalMode === 'edit' ? 'Save Changes' : 'Confirm Reset'}
+                  {modalMode === 'edit' ? 'Save Profile Changes' : 'Confirm Password Reset'}
                 </button>
               </div>
             </form>

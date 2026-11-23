@@ -5,12 +5,13 @@ const { validateRealisticEmail } = require("../../utils/emailValidator");
 
 const getAccounts = async (req, res) => {
   try {
-    const rolesToInclude = ["sales", "logistic", "finance"];
+    // Include the owner account alongside operational staff so Admin can assist with owner profile edits and password resets
+    const rolesToInclude = ["owner", "sales", "logistic", "finance"];
     const isSuperAdmin = req.user.role === 'superadmin' || req.user.role === 'super_admin';
     if (req.user.role === 'owner') {
       rolesToInclude.push('admin');
     } else if (isSuperAdmin) {
-      rolesToInclude.push('admin', 'owner', 'super_admin', 'superadmin');
+      rolesToInclude.push('admin', 'super_admin', 'superadmin');
     }
 
     const accounts = await prisma.user.findMany({
@@ -226,6 +227,23 @@ const updateAccount = async (req, res) => {
       }
     }
 
+    const isSuperAdmin = req.user.role === 'superadmin' || req.user.role === 'super_admin';
+    if (status && status !== 'active') {
+      const targetUser = await prisma.user.findUnique({
+        where: { id: parseInt(id, 10) },
+        select: { role: true }
+      });
+      if (!targetUser) {
+        return res.status(404).json({ success: false, error: "Account not found." });
+      }
+      if (targetUser.role === 'super_admin' || targetUser.role === 'superadmin') {
+        return res.status(403).json({ success: false, error: "Developer Super Admin accounts cannot be suspended." });
+      }
+      if (targetUser.role === 'owner' && !isSuperAdmin) {
+        return res.status(403).json({ success: false, error: "Only Super Admin can suspend or deactivate the Owner account." });
+      }
+    }
+
     const account = await prisma.user.update({
       where: { id: parseInt(id) },
       data: {
@@ -248,7 +266,17 @@ const updateAccount = async (req, res) => {
       const role = account.role;
       if (role === 'admin') await prisma.adminProfile.update({ where: { userId: account.id }, data: profileUpdate }).catch(() => {});
       else if (role === 'super_admin') await prisma.superAdminProfile.update({ where: { userId: account.id }, data: profileUpdate }).catch(() => {});
-      else if (role === 'owner') await prisma.ownerProfile.update({ where: { userId: account.id }, data: profileUpdate }).catch(() => {});
+      else if (role === 'owner') {
+        await prisma.ownerProfile.upsert({
+          where: { userId: account.id },
+          update: profileUpdate,
+          create: {
+            userId: account.id,
+            name: profileUpdate.name || account.email.split('@')[0],
+            contactNumber: profileUpdate.contactNumber ?? null,
+          },
+        });
+      }
       else if (role === 'sales') await prisma.salesProfile.update({ where: { userId: account.id }, data: profileUpdate }).catch(() => {});
       else if (role === 'logistic') await prisma.logisticProfile.update({ where: { userId: account.id }, data: profileUpdate }).catch(() => {});
       else if (role === 'finance') await prisma.financeProfile.update({ where: { userId: account.id }, data: profileUpdate }).catch(() => {});
@@ -288,6 +316,10 @@ const resetAccountPassword = async (req, res) => {
     if (!targetUser) {
       return res.status(404).json({ success: false, error: "Target user not found." });
     }
+    const isSuperAdmin = req.user.role === 'superadmin' || req.user.role === 'super_admin';
+    if ((targetUser.role === 'super_admin' || targetUser.role === 'superadmin') && !isSuperAdmin) {
+      return res.status(403).json({ success: false, error: "Only Super Admin can reset a Super Admin password." });
+    }
     const isSamePassword = await bcrypt.compare(newPassword, targetUser.password);
     if (isSamePassword) {
       return res.status(400).json({ success: false, error: "New password cannot be the same as the current password." });
@@ -321,8 +353,12 @@ const updateAccountStatus = async (req, res) => {
     if (!targetUser) {
       return res.status(404).json({ success: false, error: "Account not found." });
     }
+    const isSuperAdmin = req.user.role === 'superadmin' || req.user.role === 'super_admin';
     if ((targetUser.role === 'super_admin' || targetUser.role === 'superadmin') && status === 'suspended') {
       return res.status(403).json({ success: false, error: "Developer Super Admin accounts cannot be suspended." });
+    }
+    if (targetUser.role === 'owner' && status === 'suspended' && !isSuperAdmin) {
+      return res.status(403).json({ success: false, error: "Only Super Admin can suspend or deactivate the Owner account." });
     }
 
     if (status === 'active') {
