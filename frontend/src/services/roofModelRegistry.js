@@ -55,6 +55,11 @@ export const has3DModel = (productName) => {
   );
 };
 
+// Check whether the product has dedicated single-profile models in the Fixed 3D Viewer
+export const hasFixed3DModel = (productName) => {
+  return has3DModel(productName);
+};
+
 export const isProduct3DSupported = (productName) => {
   return has3DModel(productName);
 };
@@ -702,6 +707,34 @@ export const STUDIO_HOUSE_ARCHITECTURES = [
     maxCameraDistance: 36,
   },
 ];
+
+// Find the matching 3D Customization roof profile metadata for a catalog product name
+export const getStudioRoofProfileByName = (productName) => {
+  if (!productName) return null;
+  return STUDIO_ROOF_PROFILES.find((profile) => profile.matcher(productName)) || null;
+};
+
+// Find a 3D Customization roof profile by its registry ID
+export const getStudioRoofProfileById = (roofId) => {
+  if (!roofId) return null;
+  return STUDIO_ROOF_PROFILES.find((profile) => profile.id === roofId) || null;
+};
+
+// Find a residential house architecture by its registry ID
+export const getStudioHouseById = (houseId) => {
+  if (!houseId) return null;
+  return STUDIO_HOUSE_ARCHITECTURES.find((house) => house.id === houseId) || null;
+};
+
+// Check whether the product is supported inside the full-screen 3D Customization workspace
+export const hasStudio3DModel = (productName) => {
+  return Boolean(getStudioRoofProfileByName(productName));
+};
+
+// Check whether the product supports either Fixed 3D Model view or 3D Customization
+export const hasAny3DModel = (productName) => {
+  return hasFixed3DModel(productName) || hasStudio3DModel(productName);
+};
 
 // Return only allowed studio roof profiles that have an active Pre-Order product in catalog
 export const getAvailableStudioRoofs = (activeProducts = []) => {

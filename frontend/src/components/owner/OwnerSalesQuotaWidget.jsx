@@ -163,7 +163,7 @@ const OwnerSalesQuotaWidget = ({ salesQuota, onQuotaUpdated }) => {
           }}
         >
           <div style={{ fontSize: '0.82rem', color: 'var(--text-primary)' }}>
-            <strong style={{ color: isLightMode ? '#b45309' : '#f59e0b' }}>Directive to Sales Staff: </strong>
+            <strong style={{ color: isLightMode ? '#b45309' : '#f59e0b' }}>Direct to Sales Staff: </strong>
             {salesQuota?.noteToSales || 'No message added yet for the Sales team.'}
           </div>
           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
