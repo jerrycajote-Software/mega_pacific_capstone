@@ -22,6 +22,9 @@ const getDashboardStats = async (req, res) => {
     const suspendedCustomers = await prisma.user.count({
       where: { role: "customer", status: "suspended" }
     });
+    const pendingDeletionRequests = await prisma.accountDeletionRequest.count({
+      where: { status: "pending" }
+    });
     const verifiedCustomers = await prisma.user.count({
       where: {
         role: "customer",
@@ -121,12 +124,13 @@ const getDashboardStats = async (req, res) => {
           newCustomersThisWeek,
           activeCustomers,
           suspendedCustomers,
+          pendingDeletionRequests,
           verifiedCustomers,
           unverifiedCustomers,
           verificationRate,
           totalStaff,
           activeStaff,
-          flagsCount: suspendedCustomers + unverifiedCustomers
+          flagsCount: suspendedCustomers + pendingDeletionRequests
         },
         staffMembers,
         recentCustomers,

@@ -27,10 +27,6 @@ import {
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import {
-  CustomFinanceRevenueIcon,
-  CustomFinancePendingIcon,
-  CustomFinanceExpensesIcon,
-  CustomFinanceNetIncomeIcon,
   CustomAccountBalanceIcon,
   CustomReceiptLongIcon,
   CustomCashIcon,
@@ -230,76 +226,101 @@ const FinanceDashboardPage = () => {
     );
   }
 
+  // Format peso totals consistently with two decimal places for clean ledger alignment
+  const formatPesoAmount = (amount) =>
+    `₱${Number(amount || 0).toLocaleString('en-PH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+
+  const pendingPaymentsCount = Number(data.kpi.pendingPayments || 0);
+  const pendingBalanceAmount = Number(data.kpi.pendingBalanceTotal || 0);
+  const hasPendingActions = pendingPaymentsCount > 0 || pendingBalanceAmount > 0;
+
   const kpis = [
     {
       label: 'Collected Revenue',
-      value: `₱${(data.kpi.totalRevenue || 0).toLocaleString()}`,
+      value: formatPesoAmount(data.kpi.totalRevenue),
       badge: `${data.kpi.paidOrdersCount || 0} Full Paid Orders`,
-      trend: (data.kpi.pendingBalanceTotal || 0) > 0
-        ? `Pending 50%: ₱${Number(data.kpi.pendingBalanceTotal).toLocaleString()}`
+      trend: pendingBalanceAmount > 0
+        ? `Pending 50%: ${formatPesoAmount(pendingBalanceAmount)}`
         : 'All verified payments collected',
       color: '#10B981',
-      bg: 'rgba(16, 185, 129, 0.08)',
-      borderColor: 'rgba(16, 185, 129, 0.25)',
+      lightValueColor: '#047857',
+      darkValueColor: '#34D399',
+      hoverLightValueColor: '#065F46',
+      hoverDarkValueColor: '#6EE7B7',
+      hoverGlow: 'rgba(16, 185, 129, 0.32)',
       badgeBg: 'rgba(16, 185, 129, 0.1)',
-      badgeColor: '#059669',
+      badgeColor: '#047857',
+      darkBadgeColor: '#34D399',
       badgeBorder: 'rgba(16, 185, 129, 0.25)',
       glowShadow: 'rgba(16, 185, 129, 0.22)',
       lightGlow: 'rgba(16, 185, 129, 0.04)',
-      darkGlow: 'rgba(16, 185, 129, 0.08)',
-      IconComponent: CustomFinanceRevenueIcon
+      darkGlow: 'rgba(16, 185, 129, 0.08)'
     },
     {
       label: 'Pending 50% & Bank Checks',
-      value: `${data.kpi.pendingPayments || 0}`,
-      badge: (data.kpi.pendingBalanceTotal || 0) > 0
-        ? `₱${Number(data.kpi.pendingBalanceTotal).toLocaleString()} Pending`
-        : 'Action Required',
-      trend: (data.kpi.pending50OrdersCount || 0) > 0
-        ? `${data.kpi.pending50OrdersCount} waiting on Logistics`
-        : 'Awaiting verification',
-      color: '#F59E0B',
-      bg: 'rgba(245, 158, 11, 0.08)',
-      borderColor: 'rgba(245, 158, 11, 0.25)',
-      badgeBg: 'rgba(245, 158, 11, 0.1)',
-      badgeColor: '#d97706',
-      badgeBorder: 'rgba(245, 158, 11, 0.25)',
-      glowShadow: 'rgba(245, 158, 11, 0.22)',
-      lightGlow: 'rgba(245, 158, 11, 0.04)',
-      darkGlow: 'rgba(245, 158, 11, 0.08)',
-      IconComponent: CustomFinancePendingIcon
+      value: `${pendingPaymentsCount}`,
+      badge: hasPendingActions
+        ? (pendingBalanceAmount > 0 ? `${formatPesoAmount(pendingBalanceAmount)} Pending` : 'Action Required')
+        : 'All Caught Up',
+      trend: hasPendingActions
+        ? ((data.kpi.pending50OrdersCount || 0) > 0
+            ? `${data.kpi.pending50OrdersCount} waiting on Logistics`
+            : 'Awaiting verification')
+        : 'No pending payments',
+      color: hasPendingActions ? '#F59E0B' : '#10B981',
+      lightValueColor: hasPendingActions ? '#B45309' : '#047857',
+      darkValueColor: hasPendingActions ? '#FBBF24' : '#34D399',
+      hoverLightValueColor: hasPendingActions ? '#92400E' : '#065F46',
+      hoverDarkValueColor: hasPendingActions ? '#FDE68A' : '#6EE7B7',
+      hoverGlow: hasPendingActions ? 'rgba(245, 158, 11, 0.32)' : 'rgba(16, 185, 129, 0.32)',
+      badgeBg: hasPendingActions ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+      badgeColor: hasPendingActions ? '#B45309' : '#047857',
+      darkBadgeColor: hasPendingActions ? '#FBBF24' : '#34D399',
+      badgeBorder: hasPendingActions ? 'rgba(245, 158, 11, 0.25)' : 'rgba(16, 185, 129, 0.25)',
+      glowShadow: hasPendingActions ? 'rgba(245, 158, 11, 0.22)' : 'rgba(16, 185, 129, 0.22)',
+      lightGlow: hasPendingActions ? 'rgba(245, 158, 11, 0.04)' : 'rgba(16, 185, 129, 0.04)',
+      darkGlow: hasPendingActions ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)'
     },
     {
       label: 'Total Expenses',
-      value: `₱${(data.kpi.totalExpenses || 0).toLocaleString()}`,
+      value: formatPesoAmount(data.kpi.totalExpenses),
       badge: `${data.expenseCategoryBreakdown?.length || 0} Categories`,
       trend: 'Approved expenses',
       color: '#EF4444',
-      bg: 'rgba(239, 68, 68, 0.08)',
-      borderColor: 'rgba(239, 68, 68, 0.25)',
+      lightValueColor: '#DC2626',
+      darkValueColor: '#F87171',
+      hoverLightValueColor: '#B91C1C',
+      hoverDarkValueColor: '#FCA5A5',
+      hoverGlow: 'rgba(239, 68, 68, 0.32)',
       badgeBg: 'rgba(239, 68, 68, 0.1)',
-      badgeColor: '#dc2626',
+      badgeColor: '#DC2626',
+      darkBadgeColor: '#F87171',
       badgeBorder: 'rgba(239, 68, 68, 0.25)',
       glowShadow: 'rgba(239, 68, 68, 0.22)',
       lightGlow: 'rgba(239, 68, 68, 0.04)',
-      darkGlow: 'rgba(239, 68, 68, 0.08)',
-      IconComponent: CustomFinanceExpensesIcon
+      darkGlow: 'rgba(239, 68, 68, 0.08)'
     },
     {
       label: 'Net Operating Income',
-      value: `₱${(data.kpi.netProfit || 0).toLocaleString()}`,
+      value: formatPesoAmount(data.kpi.netProfit),
       badge: `${data.kpi.profitMargin || 0}% Profit`,
       trend: 'Operating profit',
       color: '#2563EB',
-      bg: 'rgba(37, 99, 235, 0.08)',
-      borderColor: 'rgba(37, 99, 235, 0.25)',
+      lightValueColor: '#1D4ED8',
+      darkValueColor: '#60A5FA',
+      hoverLightValueColor: '#1E40AF',
+      hoverDarkValueColor: '#93C5FD',
+      hoverGlow: 'rgba(37, 99, 235, 0.32)',
       badgeBg: 'rgba(37, 99, 235, 0.1)',
-      badgeColor: '#2563eb',
+      badgeColor: '#1D4ED8',
+      darkBadgeColor: '#60A5FA',
       badgeBorder: 'rgba(37, 99, 235, 0.25)',
       glowShadow: 'rgba(37, 99, 235, 0.22)',
       lightGlow: 'rgba(37, 99, 235, 0.04)',
-      darkGlow: 'rgba(37, 99, 235, 0.08)',
-      IconComponent: CustomFinanceNetIncomeIcon
+      darkGlow: 'rgba(37, 99, 235, 0.08)'
     }
   ];
 
@@ -326,9 +347,7 @@ const FinanceDashboardPage = () => {
       </Box>
 
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
-        {kpis.map((kpi, idx) => {
-          const IconComponent = kpi.IconComponent;
-          return (
+        {kpis.map((kpi, idx) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
               <Paper
                 elevation={0}
@@ -353,39 +372,23 @@ const FinanceDashboardPage = () => {
                     transform: 'translateY(-4px)',
                     boxShadow: `0 16px 32px -10px ${kpi.glowShadow}, 0 4px 12px rgba(0,0,0,0.04)`,
                     borderColor: kpi.color,
-                    '& .mpi-fin-icon-wrap': {
-                      transform: 'scale(1.08) rotate(2deg)',
-                      borderColor: kpi.color,
-                      boxShadow: `0 8px 18px -4px ${kpi.glowShadow}`
+                    '& .mpi-fin-kpi-value': {
+                      color: (theme) => theme.palette.mode === 'dark' ? kpi.hoverDarkValueColor : kpi.hoverLightValueColor,
+                      textShadow: (theme) => theme.palette.mode === 'dark'
+                        ? `0 0 18px ${kpi.hoverGlow}`
+                        : `0 2px 12px ${kpi.hoverGlow}`,
+                      transform: 'translateX(2px)'
                     }
                   }
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.2 }}>
-                  <Box
-                    className="mpi-fin-icon-wrap"
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 3,
-                      bgcolor: kpi.bg,
-                      border: '1.5px solid',
-                      borderColor: kpi.borderColor,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      boxShadow: `0 4px 12px ${kpi.glowShadow}`
-                    }}
-                  >
-                    <IconComponent size={28} />
-                  </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', mb: 1.75 }}>
                   <Chip
                     label={kpi.badge}
                     size="small"
                     sx={{
                       bgcolor: kpi.badgeBg,
-                      color: kpi.badgeColor,
+                      color: (theme) => theme.palette.mode === 'dark' ? kpi.darkBadgeColor : kpi.badgeColor,
                       border: '1px solid',
                       borderColor: kpi.badgeBorder,
                       fontWeight: 700,
@@ -401,13 +404,15 @@ const FinanceDashboardPage = () => {
                 <Box sx={{ my: 0.5, flexGrow: 1, display: 'flex', alignItems: 'center' }}>
                   <Typography
                     variant="h4"
+                    className="mpi-fin-kpi-value"
                     sx={{
                       fontWeight: 900,
-                      color: 'text.primary',
+                      color: (theme) => theme.palette.mode === 'dark' ? kpi.darkValueColor : kpi.lightValueColor,
                       letterSpacing: '-0.03em',
                       fontSize: { xs: '1.6rem', md: '1.85rem' },
                       fontVariantNumeric: 'tabular-nums',
-                      lineHeight: 1.15
+                      lineHeight: 1.15,
+                      transition: 'color 0.22s ease, text-shadow 0.22s ease, transform 0.22s ease'
                     }}
                   >
                     {kpi.value}
@@ -451,8 +456,7 @@ const FinanceDashboardPage = () => {
                 </Box>
               </Paper>
             </Grid>
-          );
-        })}
+        ))}
       </Grid>
 
       <DeliveryFleetRateControls

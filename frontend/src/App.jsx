@@ -15,6 +15,7 @@ import OwnerLayout from './layouts/OwnerLayout';
 
 import OwnerLoginPage from './pages/owner/LoginPage';
 import OwnerDashboardPage from './pages/owner/DashboardPage';
+import OwnerExpensesPage from './pages/owner/ExpensesPage';
 import OwnerSalesQuotaPage from './pages/owner/SalesQuotaPage';
 
 import AdminLoginPage from './pages/admin/LoginPage';
@@ -34,7 +35,6 @@ import GlobalErrorAlertHost from './components/GlobalErrorAlertHost';
 import SalesLoginPage from './pages/sales/LoginPage';
 import SalesDashboard from './pages/sales/DashboardPage';
 import SalesOrders from './pages/sales/OrderManagement';
-import SalesRecentOrders from './pages/sales/RecentOrdersPage';
 import SalesPreOrderProducts from './pages/sales/PreOrderProductsPage';
 import SalesCustomerService from './pages/sales/CustomerService';
 import SalesReviews from './pages/sales/ReviewManagement';
@@ -275,6 +275,7 @@ const App = () => {
         }>
           <Route index element={<Navigate to="/owner/dashboard" replace />} />
           <Route path="dashboard" element={<OwnerDashboardPage />} />
+          <Route path="expenses" element={<OwnerExpensesPage />} />
           <Route path="sales-quota" element={<OwnerSalesQuotaPage />} />
           <Route path="admin-support" element={<StaffAdminChatPage />} />
         </Route>
@@ -316,7 +317,7 @@ const App = () => {
           <Route path="dashboard" element={<SalesDashboard />} />
           <Route path="pre-order-products" element={<SalesPreOrderProducts />} />
           <Route path="orders" element={<SalesOrders />} />
-          <Route path="recent-orders" element={<SalesRecentOrders />} />
+          <Route path="recent-orders" element={<Navigate to="/sales/orders" replace />} />
           <Route path="inventory" element={<Navigate to="/sales/pre-order-products" replace />} />
           <Route path="reviews" element={<SalesReviews />} />
           <Route path="customer-service" element={<SalesCustomerService />} />

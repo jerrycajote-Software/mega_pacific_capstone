@@ -316,7 +316,7 @@ export const CustomPeopleIcon = (props) => {
   const { width, height, viewBox, className, style, resolvedColor, ...rest } = resolveCustomIconProps(props);
   const strokeColor = resolvedColor || '#2563eb';
   return (
-    <svg width={width} height={height} viewBox={viewBox} className={className} style={style} role="img" aria-label="Users Directory" {...rest}>
+    <svg width={width} height={height} viewBox={viewBox} className={className} style={style} role="img" aria-label="Customer Accounts" {...rest}>
       <circle cx="9" cy="7.5" r="3.5" stroke={strokeColor} strokeWidth="1.8" fill={strokeColor} fillOpacity="0.2" />
       <path d="M2.5 19C2.5 15.5 5.5 13.5 9 13.5C12.5 13.5 15.5 15.5 15.5 19" stroke={strokeColor} strokeWidth="1.8" strokeLinecap="round" fill={strokeColor} fillOpacity="0.15" />
       <circle cx="16.5" cy="7.5" r="2.8" stroke="#0ea5e9" strokeWidth="1.4" fill="#38bdf8" fillOpacity="0.2" />
