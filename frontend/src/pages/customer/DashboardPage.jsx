@@ -218,20 +218,21 @@ const DashboardPage = ({ showHero = true }) => {
       handleCloseHoverPreview();
       handleCloseMobilePreview();
 
-      const availableModels = getAvailable3DModelsForProduct(product.name);
-      if (availableModels.length > 0) {
-        setSelected3DModel(availableModels[0]);
-        setIs3DViewerModalOpen(true);
-        return;
-      }
-
-      // Route studio-only residential roofs directly to 3D Customization pre-selected to that roof
+      // Route all 7 residential studio roofs straight to 3D Customization with that roof auto-selected
       const studioRoof = getStudioRoofProfileByName(product.name);
       if (studioRoof) {
         const studioTarget = buildStudioReturnNavigation({
           roofId: studioRoof.id,
         });
         navigate(studioTarget.to, { state: studioTarget.state });
+        return;
+      }
+
+      // Open the Fixed 3D Modal for non-residential curved structures (ex. Mega Curved Roof)
+      const availableModels = getAvailable3DModelsForProduct(product.name);
+      if (availableModels.length > 0) {
+        setSelected3DModel(availableModels[0]);
+        setIs3DViewerModalOpen(true);
         return;
       }
 

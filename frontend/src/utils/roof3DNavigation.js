@@ -263,7 +263,21 @@ export const resolveProduct3DContext = ({ locationState, searchParams, productNa
     };
   }
 
-  // Catalog direct visit on one of the 4 Fixed 3D roofs (preserves existing Fixed 3D behavior)
+  // Catalog direct visit on any of the 7 residential roofs opens 3D Customization with that roof auto-selected
+  if (isStudioSupported) {
+    return {
+      origin: VIEWER_ORIGINS.CATALOG,
+      targetMode: VIEWER_ORIGINS.STUDIO,
+      isSupported: true,
+      studioHouse: null,
+      studioRoof,
+      fixedModelId: null,
+      buttonLabel: 'View in 3D',
+      tooltipText: `Open ${studioRoof.name} in 3D Customization across 6 house designs`,
+    };
+  }
+
+  // Catalog direct visit on fixed-only profiles (ex. Mega Curved Roof) opens the Fixed 3D Modal
   if (isFixedSupported) {
     return {
       origin: VIEWER_ORIGINS.CATALOG,
@@ -274,20 +288,6 @@ export const resolveProduct3DContext = ({ locationState, searchParams, productNa
       fixedModelId: null,
       buttonLabel: 'View in 3D',
       tooltipText: 'Preview and customize this roofing profile in 3D',
-    };
-  }
-
-  // Catalog direct visit on one of the 4 Studio-only roofs (opens 3D Customization pre-selected)
-  if (isStudioSupported) {
-    return {
-      origin: VIEWER_ORIGINS.CATALOG,
-      targetMode: VIEWER_ORIGINS.STUDIO,
-      isSupported: true,
-      studioHouse: null,
-      studioRoof,
-      fixedModelId: null,
-      buttonLabel: 'View in 3D Customization',
-      tooltipText: 'Open this roofing profile in 3D Customization across 6 house designs',
     };
   }
 
