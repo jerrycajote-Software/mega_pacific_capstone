@@ -27,7 +27,12 @@ import {
   isHermosaTile,
   isAguaCorr1220,
   getAvailable3DModelsForProduct,
+  getStudioRoofProfileByName,
 } from '../../services/roofModelRegistry';
+import {
+  buildProductNavigationFromFixed3D,
+  buildStudioReturnNavigation,
+} from '../../utils/roof3DNavigation';
 
 const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 
@@ -217,7 +222,20 @@ const DashboardPage = ({ showHero = true }) => {
       if (availableModels.length > 0) {
         setSelected3DModel(availableModels[0]);
         setIs3DViewerModalOpen(true);
-      } else if (product.id) {
+        return;
+      }
+
+      // Route studio-only residential roofs directly to 3D Customization pre-selected to that roof
+      const studioRoof = getStudioRoofProfileByName(product.name);
+      if (studioRoof) {
+        const studioTarget = buildStudioReturnNavigation({
+          roofId: studioRoof.id,
+        });
+        navigate(studioTarget.to, { state: studioTarget.state });
+        return;
+      }
+
+      if (product.id) {
         navigate(`/product/${product.id}`, { state: { autoOpen3D: true } });
       }
     },
@@ -508,9 +526,17 @@ const DashboardPage = ({ showHero = true }) => {
               initialLength={selected3DModel?.recommendedLength || 3.8}
               initialQuantity={selected3DModel?.totalSheets || 16}
               initialHouseModelId={selected3DModel?.id}
-              onNavigateToProduct={(prod, config) => {
+              onNavigateToProduct={(prod, config, targetUrl) => {
                 handleClose3DViewer();
-                navigate(`/product/${prod.id}`, { state: config });
+                const fallbackNav = buildProductNavigationFromFixed3D({
+                  productId: prod.id,
+                  fixedModelId: config?.fixedHouseModelId || selected3DModel?.id || null,
+                  color: config?.selectedColor || config?.color,
+                  thickness: config?.selectedThickness || config?.thickness,
+                  length: config?.selectedLength || config?.length,
+                  quantity: config?.selectedQuantity || config?.quantity,
+                });
+                navigate(targetUrl || fallbackNav.to, { state: config || fallbackNav.state });
               }}
             />
           </Suspense>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { useGLTF } from '@react-three/drei';
 import { Box, Typography, Button, Paper, CircularProgress, Alert, Stack } from '@mui/material';
@@ -16,6 +16,11 @@ import {
 import { ROOFING_COLORS, getColorHex } from '../../constants/roofingSpecs';
 import { DEFAULT_LAYER_VISIBILITY } from '../../constants/roofStructureSpecs';
 import { isCoilInStock, getFirstInStockColor } from '../../utils/coilAvailability';
+import {
+  buildProductNavigationFromStudio,
+  readStudioInitialSelection,
+  markStudioMobileNoticeConfirmed,
+} from '../../utils/roof3DNavigation';
 import { buildProductOptions } from './buildProductOptions';
 import useIsMobileBrowser from '../../hooks/useDeviceDetect';
 
@@ -42,10 +47,22 @@ const FULLSCREEN_SHELL_SX = {
 
 const RoofStudio3DPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobileBrowser();
   const orbitControlsRef = useRef(null);
   const allowNavigationRef = useRef(false);
   const lastFramedHouseRef = useRef('');
+
+  // Read incoming house, roof, and order selections once on mount for seamless return restoration
+  const initialSelectionRef = useRef(null);
+  if (initialSelectionRef.current === null) {
+    initialSelectionRef.current = readStudioInitialSelection({
+      locationState: location.state,
+      searchParams,
+    });
+  }
+  const initialSelection = initialSelectionRef.current;
 
   const [products, setProducts] = useState([]);
   const [coilInventory, setCoilInventory] = useState([]);
@@ -56,13 +73,15 @@ const RoofStudio3DPage = () => {
   const [webglSupported] = useState(() => checkWebGLSupport());
   const [error, setError] = useState('');
 
-  const [confirmedMobileProceed, setConfirmedMobileProceed] = useState(false);
-  const [selectedHouseId, setSelectedHouseId] = useState(STUDIO_HOUSE_ARCHITECTURES[0].id);
-  const [selectedRoofId, setSelectedRoofId] = useState(null);
-  const [currentThickness, setCurrentThickness] = useState('0.35mm');
-  const [currentColor, setCurrentColor] = useState('Marshall Dark Gray');
-  const [currentQty, setCurrentQty] = useState(STUDIO_HOUSE_ARCHITECTURES[0].totalSheets);
-  const [viewFullRoof, setViewFullRoof] = useState(true);
+  const [confirmedMobileProceed, setConfirmedMobileProceed] = useState(
+    () => initialSelection.skipMobilePrompt
+  );
+  const [selectedHouseId, setSelectedHouseId] = useState(initialSelection.houseId);
+  const [selectedRoofId, setSelectedRoofId] = useState(initialSelection.roofId);
+  const [currentThickness, setCurrentThickness] = useState(initialSelection.thickness);
+  const [currentColor, setCurrentColor] = useState(initialSelection.color);
+  const [currentQty, setCurrentQty] = useState(initialSelection.quantity);
+  const [viewFullRoof, setViewFullRoof] = useState(initialSelection.viewFullRoof);
 
   const [showSubstructure, setShowSubstructure] = useState(true);
   const [structurePanelOpen, setStructurePanelOpen] = useState(false);
@@ -404,22 +423,27 @@ const RoofStudio3DPage = () => {
     controls.update();
   };
 
-  // Navigate straight to the selected roof product page (ex. Hermosa Tile) with current selections
+  // Navigate straight to the selected roof product page with 3D Customization origin and selection context
   const handleNavigateToSelectedRoofProduct = () => {
     if (!activeRoofProduct?.id || !activeModel) return;
     allowNavigationRef.current = true;
-    navigate(`/product/${activeRoofProduct.id}`, {
-      state: {
-        selectedColor: currentColor,
-        selectedThickness: currentThickness,
-        selectedLength: activeModel.recommendedLength,
-        selectedQuantity: effectiveSheetQty,
-        color: currentColor,
-        thickness: currentThickness,
-        length: activeModel.recommendedLength,
-        quantity: effectiveSheetQty,
-      },
+    const productNavigation = buildProductNavigationFromStudio({
+      productId: activeRoofProduct.id,
+      houseId: selectedHouseId,
+      roofId: activeRoofEntry?.id,
+      color: currentColor,
+      thickness: currentThickness,
+      length: activeModel.recommendedLength,
+      quantity: effectiveSheetQty,
+      viewFullRoof,
     });
+    navigate(productNavigation.to, { state: productNavigation.state });
+  };
+
+  // Remember mobile notice confirmation so returning from the Product Page does not re-prompt
+  const handleConfirmMobileStudioProceed = () => {
+    markStudioMobileNoticeConfirmed();
+    setConfirmedMobileProceed(true);
   };
 
   if (!webglSupported) {
@@ -505,7 +529,7 @@ const RoofStudio3DPage = () => {
             Interactive 3D Customization runs best on desktop computers or high-spec tablets. Mobile browsers may experience slower frame rates.
           </Typography>
           <Stack spacing={1.5}>
-            <Button variant="contained" color="primary" fullWidth onClick={() => setConfirmedMobileProceed(true)} sx={{ fontWeight: 700, borderRadius: 2, textTransform: 'none' }}>
+            <Button variant="contained" color="primary" fullWidth onClick={handleConfirmMobileStudioProceed} sx={{ fontWeight: 700, borderRadius: 2, textTransform: 'none' }}>
               Continue to 3D Customization
             </Button>
             <Button variant="outlined" fullWidth onClick={handleExitStudio} sx={{ fontWeight: 700, borderRadius: 2, color: '#cbd5e1', borderColor: 'rgba(255,255,255,0.2)', textTransform: 'none' }}>

@@ -30,6 +30,7 @@ import {
 import { ROOFING_COLORS, getColorHex } from '../constants/roofingSpecs';
 import { DEFAULT_LAYER_VISIBILITY } from '../constants/roofStructureSpecs';
 import { isCoilInStock, getFirstInStockColor } from '../utils/coilAvailability';
+import { buildProductNavigationFromFixed3D } from '../utils/roof3DNavigation';
 import useIsMobileBrowser from '../hooks/useDeviceDetect';
 
 const CanvasLoader = ({ productName = '' }) => (
@@ -477,22 +478,20 @@ const Product3DViewerModal = ({
   };
 
   const handleNavigateToProductPage = () => {
-    const customizedConfig = {
-      selectedColor: currentColor,
-      selectedThickness: currentThickness,
-      selectedLength: currentLength,
-      selectedQuantity: effectiveSheetQty,
-      quantity: effectiveSheetQty,
+    const fixedNavigation = buildProductNavigationFromFixed3D({
+      productId: product?.id,
+      fixedModelId: matchedModel?.id || null,
       color: currentColor,
       thickness: currentThickness,
       length: currentLength,
-    };
+      quantity: effectiveSheetQty,
+    });
 
     if (onNavigateToProduct) {
-      onNavigateToProduct(product, customizedConfig);
+      onNavigateToProduct(product, fixedNavigation.state, fixedNavigation.to);
     } else if (product?.id) {
-      navigate(`/product/${product.id}`, {
-        state: customizedConfig,
+      navigate(fixedNavigation.to, {
+        state: fixedNavigation.state,
       });
     } else {
       navigate('/products');

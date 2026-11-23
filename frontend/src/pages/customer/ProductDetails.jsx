@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 import { buildProductOptions, getDefaultOption, isCustomLengthProfile } from './buildProductOptions';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
-import { has3DModel, isMegaCurvedRoof } from '../../services/roofModelRegistry';
+import Product3DOriginBanner from '../../components/products/Product3DOriginBanner';
+import { isMegaCurvedRoof } from '../../services/roofModelRegistry';
+import {
+  VIEWER_ORIGINS,
+  resolveProduct3DContext,
+  readProduct3DFallbackState,
+  buildStudioReturnNavigation,
+  matchStudioHouseByLength,
+} from '../../utils/roof3DNavigation';
 
 const Product3DViewerModal = lazy(() => import('../../components/Product3DViewerModal'));
 import {
@@ -481,6 +489,7 @@ const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { user, token } = useAuth();
 
   const [product, setProduct] = useState(null);
@@ -495,6 +504,18 @@ const ProductDetails = () => {
   const [coilInventory, setCoilInventory] = useState([]);
 
   const longDescRef = useRef(null);
+  const applied3DSyncKeyRef = useRef('');
+
+  // Recover incoming 3D configuration from router state or refresh-safe session backup
+  const incoming3DState = useMemo(
+    () =>
+      readProduct3DFallbackState({
+        productId: id,
+        locationState: location.state,
+        searchParams,
+      }),
+    [id, location.state, searchParams]
+  );
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -534,8 +555,8 @@ const ProductDetails = () => {
               .catch(err => console.warn('Coil availability fallback warning:', err));
           }
 
-          // Adopt 3D configuration if passed via location.state
-          const stateColor = location.state?.selectedColor || location.state?.color;
+          // Adopt 3D configuration if passed via router state or refresh-safe session backup
+          const stateColor = incoming3DState?.selectedColor || incoming3DState?.color;
           if (stateColor) {
             setSelectedColor(stateColor);
           } else if (productData.colors && productData.colors.length > 0) {
@@ -544,12 +565,12 @@ const ProductDetails = () => {
             setSelectedColor(productData.color);
           }
 
-          const stateQty = location.state?.selectedQuantity || location.state?.quantity;
+          const stateQty = incoming3DState?.selectedQuantity || incoming3DState?.quantity;
           if (stateQty && !isNaN(stateQty)) {
             setQuantity(Math.max(1, parseInt(stateQty, 10)));
           }
 
-          const stateLen = location.state?.selectedLength || location.state?.length;
+          const stateLen = incoming3DState?.selectedLength || incoming3DState?.length;
           if (stateLen && !isNaN(stateLen)) {
             setCustomLength(parseFloat(stateLen));
           } else if (isMegaCurvedRoof(productData?.name)) {
@@ -558,7 +579,7 @@ const ProductDetails = () => {
         
           const options = buildProductOptions(productData);
           const defaultOpt = getDefaultOption(options);
-          const stateThick = (location.state?.selectedThickness || location.state?.thickness || '').toLowerCase().trim();
+          const stateThick = (incoming3DState?.selectedThickness || incoming3DState?.thickness || '').toLowerCase().trim();
           if (stateThick && options.length > 0) {
             const matchedOpt = options.find((opt) =>
               (opt.thickness && opt.thickness.toLowerCase().trim() === stateThick) ||
@@ -656,26 +677,29 @@ const ProductDetails = () => {
     };
   }, [id, token]);
 
-  // Synchronize 3D customized parameters when location state updates
+  // Apply incoming 3D configuration once per navigation so live socket price updates never overwrite customer edits
   useEffect(() => {
-    if (!product || !location.state) return;
+    if (!product || !incoming3DState) return;
+    const syncKey = `${id}|${location.key}|${searchParams.toString()}`;
+    if (applied3DSyncKeyRef.current === syncKey) return;
+    applied3DSyncKeyRef.current = syncKey;
 
-    const stateColor = location.state.selectedColor || location.state.color;
+    const stateColor = incoming3DState.selectedColor || incoming3DState.color;
     if (stateColor) {
       setSelectedColor(stateColor);
     }
 
-    const stateQty = location.state.selectedQuantity || location.state.quantity;
+    const stateQty = incoming3DState.selectedQuantity || incoming3DState.quantity;
     if (stateQty && !isNaN(stateQty)) {
       setQuantity(Math.max(1, parseInt(stateQty, 10)));
     }
 
-    const stateLen = location.state.selectedLength || location.state.length;
+    const stateLen = incoming3DState.selectedLength || incoming3DState.length;
     if (stateLen && !isNaN(stateLen)) {
       setCustomLength(parseFloat(stateLen));
     }
 
-    const stateThick = (location.state.selectedThickness || location.state.thickness || '').toLowerCase().trim();
+    const stateThick = (incoming3DState.selectedThickness || incoming3DState.thickness || '').toLowerCase().trim();
     if (stateThick) {
       const options = buildProductOptions(product);
       const matchedOpt = options.find((opt) =>
@@ -686,26 +710,57 @@ const ProductDetails = () => {
         setSelectedOption(matchedOpt);
       }
     }
-  }, [location.state, product]);
+  }, [incoming3DState, product, id, location.key, searchParams]);
 
   const [additionalItems, setAdditionalItems] = useState([]);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [is3DViewerModalOpen, setIs3DViewerModalOpen] = useState(false);
   const [is3DUnavailableDialogOpen, setIs3DUnavailableDialogOpen] = useState(false);
 
-  const is3DSupported = useMemo(() => {
-    return Boolean(product?.name && has3DModel(product.name));
-  }, [product?.name]);
+  // Resolve whether this Product Page routes back to 3D Customization, opens Fixed 3D, or shows the notice
+  const viewer3DContext = useMemo(
+    () =>
+      resolveProduct3DContext({
+        locationState: incoming3DState,
+        searchParams,
+        productName: product?.name,
+      }),
+    [incoming3DState, searchParams, product?.name]
+  );
+
+  const is3DSupported = viewer3DContext.isSupported;
 
   useEffect(() => {
-    if (location.state?.autoOpen3D && is3DSupported) {
+    if (location.state?.autoOpen3D && viewer3DContext.targetMode === VIEWER_ORIGINS.FIXED) {
       setIs3DViewerModalOpen(true);
     }
-  }, [location.state?.autoOpen3D, is3DSupported]);
+  }, [location.state?.autoOpen3D, viewer3DContext.targetMode]);
 
-  const handleOpen3DViewer = () => {
-    if (!is3DSupported) {
+  // Return to 3D Customization carrying the exact house, roof, and any updated order selections
+  const handleReturnTo3DCustomization = () => {
+    const targetHouseId =
+      viewer3DContext.studioHouse?.id || matchStudioHouseByLength(isPerMeter ? customLength : 3.8);
+    const activeThickness =
+      selectedOption?.thickness || selectedOption?.name || product?.thickness || '0.35mm';
+    const studioTarget = buildStudioReturnNavigation({
+      houseId: targetHouseId,
+      roofId: viewer3DContext.studioRoof?.id,
+      color: selectedColor,
+      thickness: activeThickness,
+      quantity: parseInt(quantity, 10) || 1,
+      skipMobilePrompt: viewer3DContext.origin === VIEWER_ORIGINS.STUDIO,
+    });
+    navigate(studioTarget.to, { state: studioTarget.state });
+  };
+
+  // Route cleanly to either 3D Customization or the Fixed 3D Modal based on customer origin and product support
+  const handleOpen3DExperience = () => {
+    if (!viewer3DContext.isSupported) {
       setIs3DUnavailableDialogOpen(true);
+      return;
+    }
+    if (viewer3DContext.targetMode === VIEWER_ORIGINS.STUDIO) {
+      handleReturnTo3DCustomization();
       return;
     }
     setIs3DViewerModalOpen(true);
@@ -719,19 +774,21 @@ const ProductDetails = () => {
     setIs3DUnavailableDialogOpen(false);
   };
 
-  const handleNavigateToPicoRibIn3D = async () => {
+  // Launch 3D Customization when the customer clicks the CTA in the unavailable 3D notice dialog
+  const handleOpen3DCustomizationFromDialog = () => {
     setIs3DUnavailableDialogOpen(false);
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const res = await axios.get(`${API_URL}/api/customer/products`);
-      const allProducts = Array.isArray(res.data) ? res.data : (res.data?.products || []);
-      const pico = allProducts.find(p => p.name && has3DModel(p.name));
-      if (pico?.id) {
-        navigate(`/product/${pico.id}`, { state: { autoOpen3D: true } });
-      } else {
-        navigate('/products');
-      }
-    } catch {
+    navigate('/3d-customization');
+  };
+
+  // Navigate to catalog cleanly without bouncing back into the locked 3D Customization workspace
+  const handleBrowseAnotherProduct = () => {
+    if (viewer3DContext.origin === VIEWER_ORIGINS.STUDIO) {
+      navigate('/products');
+      return;
+    }
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
       navigate('/products');
     }
   };
@@ -981,18 +1038,19 @@ const ProductDetails = () => {
   return (
     <Container maxWidth="lg" sx={{ animation: 'fadeIn 0.5s ease-in-out', pb: { xs: 12, md: 10 }, pt: { xs: 2, md: 4 }, px: { xs: 2, sm: 3, md: 4 } }}>
       <Button 
-        onClick={() => {
-          if (window.history.state && window.history.state.idx > 0) {
-            navigate(-1);
-          } else {
-            navigate('/products');
-          }
-        }} 
-        sx={{ mb: { xs: 2, md: 4 }, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}
+        onClick={handleBrowseAnotherProduct}
+        sx={{ mb: { xs: 2, md: 3 }, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}
       >
         <i className="fi fi-rr-arrow-left" style={{ fontSize: '14px' }}></i>
         BROWSE ANOTHER PRODUCT
       </Button>
+
+      {/* Show active 3D Customization session badge when customer navigated here from /3d-customization */}
+      {viewer3DContext.origin === VIEWER_ORIGINS.STUDIO && (
+        <Product3DOriginBanner
+          houseShortLabel={viewer3DContext.studioHouse?.shortLabel || ''}
+        />
+      )}
 
       <Box 
         sx={{ 
@@ -1478,19 +1536,13 @@ const ProductDetails = () => {
                 )}
               </Box>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                <Tooltip
-                  title={
-                    !is3DSupported
-                      ? `3D model is not available for ${product?.name || 'this product'} (Available for Pico Rib 1220 and Mega Curved Roof)`
-                      : 'Preview and customize this roofing profile in 3D'
-                  }
-                >
+                <Tooltip title={viewer3DContext.tooltipText}>
                   <span>
                     <Button
                       variant="outlined"
                       color="primary"
                       size="large"
-                      onClick={handleOpen3DViewer}
+                      onClick={handleOpen3DExperience}
                       sx={{
                         width: { xs: '100%', sm: 'auto' },
                         minHeight: 48,
@@ -1508,7 +1560,7 @@ const ProductDetails = () => {
                         },
                       }}
                     >
-                      View in 3D
+                      {viewer3DContext.buttonLabel}
                     </Button>
                   </span>
                 </Tooltip>
@@ -1838,7 +1890,7 @@ const ProductDetails = () => {
               lineHeight: 1.5
             }}
           >
-            Our interactive 3D roof viewer is currently designed only for <strong>Pico Rib 1220</strong>, <strong>Mega Curved Roof</strong>, <strong>Hermosa Tile</strong>, and <strong>Agua Corr 1220</strong>.
+            Our 3D roof previews currently support <strong>Pico Rib 1220</strong>, <strong>Mega Curved Roof</strong>, <strong>Hermosa Tile</strong>, <strong>Agua Corr 1220</strong>, <strong>Mega Hi-Rib</strong>, <strong>Mega Twin Rib</strong>, <strong>Mega Six Ribs</strong>, and <strong>Mega S-Rib</strong>.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -1846,7 +1898,7 @@ const ProductDetails = () => {
             fullWidth
             variant="contained"
             color="primary"
-            onClick={handleNavigateToPicoRibIn3D}
+            onClick={handleOpen3DCustomizationFromDialog}
             sx={{
               borderRadius: 2,
               py: 1,
@@ -1859,7 +1911,7 @@ const ProductDetails = () => {
               }
             }}
           >
-            View Pico Rib 1220 in 3D
+            Open 3D Customization
           </Button>
           <Button
             fullWidth
