@@ -736,19 +736,24 @@ const ProductDetails = () => {
     }
   }, [location.state?.autoOpen3D, viewer3DContext.targetMode]);
 
-  // Return to 3D Customization carrying the exact house, roof, and any updated order selections
+  // Open or return to 3D Customization with the exact roof auto-selected and full-roof default when catalog Qty is 1
   const handleReturnTo3DCustomization = () => {
+    const isReturningFromStudio = viewer3DContext.origin === VIEWER_ORIGINS.STUDIO;
     const targetHouseId =
       viewer3DContext.studioHouse?.id || matchStudioHouseByLength(isPerMeter ? customLength : 3.8);
     const activeThickness =
       selectedOption?.thickness || selectedOption?.name || product?.thickness || '0.35mm';
+    const parsedQty = parseInt(quantity, 10) || 1;
+    const shouldUseFullRoofDefault = !isReturningFromStudio && parsedQty <= 1;
+
     const studioTarget = buildStudioReturnNavigation({
       houseId: targetHouseId,
       roofId: viewer3DContext.studioRoof?.id,
       color: selectedColor,
       thickness: activeThickness,
-      quantity: parseInt(quantity, 10) || 1,
-      skipMobilePrompt: viewer3DContext.origin === VIEWER_ORIGINS.STUDIO,
+      quantity: shouldUseFullRoofDefault ? null : parsedQty,
+      viewFullRoof: shouldUseFullRoofDefault ? true : undefined,
+      skipMobilePrompt: isReturningFromStudio,
     });
     navigate(studioTarget.to, { state: studioTarget.state });
   };

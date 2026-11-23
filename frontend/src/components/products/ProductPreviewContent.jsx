@@ -11,7 +11,7 @@ import {
 import { buildProductOptions, getDefaultOption } from '../../pages/customer/buildProductOptions';
 import { ROOFING_COLORS, getColorHex } from '../../constants/roofingSpecs';
 import { isCoilInStock, hasCoilStockForThickness } from '../../utils/coilAvailability';
-import { hasAny3DModel, hasFixed3DModel } from '../../services/roofModelRegistry';
+import { hasAny3DModel } from '../../services/roofModelRegistry';
 import { sanitizeProductHtml, getProductImageList } from '../../utils/productTextHelper';
 
 const DEFAULT_SPEC_HELP = {
@@ -35,9 +35,7 @@ export const ProductPreviewActions = ({
 }) => {
   if (!product) return null;
 
-  const isFixed3D = hasFixed3DModel(product?.name);
   const is3DSupported = hasAny3DModel(product?.name);
-  const preview3DLabel = isFixed3D ? 'View in 3D' : 'Customize in 3D';
 
   const handleNavigateToProductPage = (event) => {
     event?.stopPropagation();
@@ -81,7 +79,7 @@ export const ProductPreviewActions = ({
             '&:hover': { borderWidth: 1.5 },
           }}
         >
-          {preview3DLabel}
+          View in 3D
         </Button>
       )}
       <Button
