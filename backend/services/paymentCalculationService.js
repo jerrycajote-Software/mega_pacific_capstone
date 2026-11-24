@@ -122,6 +122,7 @@ const classifyPaymentChannel = (paymentMode) => {
   const normalized = raw.toLowerCase();
 
   if (!normalized) return "Cash on Delivery";
+  if (normalized.includes("paypal")) return "PayPal";
   if (normalized.includes("gcash")) return "GCash";
   if (normalized.includes("maya")) return "Maya";
   if (

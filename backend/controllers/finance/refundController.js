@@ -1,6 +1,8 @@
 const prisma = require("../../config/db");
 const { createPaymongoRefund, extractPaymongoIdFromPaymentMethod } = require("../../services/paymongoService");
+const { createPaypalRefund, extractPaypalCaptureIdFromPaymentMethod } = require("../../services/paypalService");
 const { notifyPaymentRefunded } = require("../../services/notificationManagerService");
+const { roundCurrency } = require("../../services/paymentCalculationService");
 
 
 const getRefunds = async (req, res) => {
@@ -217,9 +219,9 @@ const processRefund = async (req, res) => {
 
     lockClaimed = true;
 
-    const finalAmount = amount !== undefined && !isNaN(parseFloat(amount))
-      ? parseFloat(amount)
-      : refund.amount;
+    let finalAmount = amount !== undefined && !isNaN(parseFloat(amount))
+      ? roundCurrency(parseFloat(amount))
+      : roundCurrency(refund.amount);
 
     const finalMethod = returnMethod || refund.paymentMethod;
     let refNo = transactionReference && transactionReference.trim()
@@ -228,8 +230,38 @@ const processRefund = async (req, res) => {
 
     let paymongoRefundResult = null;
     let finalNotes = notes || null;
+    const paypalCaptureId = extractPaypalCaptureIdFromPaymentMethod(finalMethod);
     const paymongoLinked = extractPaymongoIdFromPaymentMethod(finalMethod);
-    if (paymongoLinked && finalAmount > 0) {
+
+    if (paypalCaptureId && finalAmount > 0) {
+      try {
+        const paypalRefundResult = await createPaypalRefund({
+          paymentMethodStr: finalMethod,
+          amountPhp: finalAmount,
+          noteToPayer: notes || `Refund for Order #ORD-${String(refund.orderId).padStart(3, "0")}`,
+          requestId: `mp-refund-${refund.id}-${paypalCaptureId}`
+        });
+        if (paypalRefundResult?.refundId) {
+          refNo = paypalRefundResult.refundId;
+        }
+        // Persist the exact PHP amount refunded by PayPal when adjusted for 1-2 centavo 50% split rounding
+        if (typeof paypalRefundResult?.refundedAmountPhp === "number" && paypalRefundResult.refundedAmountPhp > 0) {
+          finalAmount = paypalRefundResult.refundedAmountPhp;
+        }
+      } catch (ppErr) {
+        // Release the processing lock so Finance can retry after resolving the PayPal error
+        await prisma.refund.updateMany({
+          where: { id: refundId, status: "processing" },
+          data: { status: "pending", processedBy: null }
+        });
+        lockClaimed = false;
+        console.warn("[PAYPAL REFUND API WARNING]:", ppErr.message);
+        return res.status(400).json({
+          success: false,
+          error: `PayPal Refund API error: ${ppErr.message}`
+        });
+      }
+    } else if (paymongoLinked && finalAmount > 0) {
       try {
         paymongoRefundResult = await createPaymongoRefund({
           paymentMethodStr: finalMethod,

@@ -1,16 +1,22 @@
 const prisma = require("../../config/db");
 const { calculateDeliveryFee } = require("../../services/deliveryFeeService");
 const { validateRealisticEmail } = require("../../utils/emailValidator");
-const { buildOrderPaymentSummary } = require("../../services/paymentCalculationService");
+const { buildOrderPaymentSummary, roundCurrency } = require("../../services/paymentCalculationService");
 const { notifyOrderPlaced } = require("../../services/notificationManagerService");
 const {
   deductCoilsForOrderInTx,
   emitCoilInventoryUpdates
 } = require("../../services/coilInventoryService");
 const {
+  findGatewayPaymentClaim,
   findExistingOrderByIdempotency,
   recordOrderIdempotencyInTx
 } = require("../../services/orderIdempotencyService");
+const {
+  buildOrderGatewayIds,
+  assertCapturedAmountMatchesOrder,
+  verifyOrderGatewayPayment
+} = require("../../services/paypalVerificationService");
 
 const HARDCODED_SHIPPING_FEE = 100;
 
@@ -30,14 +36,122 @@ const hasCheckoutPriceMismatch = ({ expectedItemsTotal, liveItemsTotal, hasVerif
   return Math.abs(parsedExpected - liveItemsTotal) > 0.01;
 };
 
-const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, paymentChannel, paymongoReference, fulfillmentType = 'Delivery') => {
+// Compute the authoritative delivery fee on the server so client-sent shipping totals cannot be tampered
+const resolveServerShippingFee = async ({
+  fulfillmentType,
+  shippingProvince,
+  shippingCity,
+  itemsForShipping = [],
+  fallbackShippingFee
+}) => {
+  if (String(fulfillmentType || "").trim().toLowerCase() === "pickup") {
+    return 0;
+  }
+
+  if (shippingProvince && shippingCity) {
+    const feeCalc = await calculateDeliveryFee({
+      province: shippingProvince,
+      city: shippingCity,
+      items: itemsForShipping
+    });
+    return roundCurrency(feeCalc.totalDeliveryCharge);
+  }
+
+  const parsedFallback = parseFloat(fallbackShippingFee);
+  if (fallbackShippingFee !== undefined && !Number.isNaN(parsedFallback) && parsedFallback >= 0) {
+    return roundCurrency(parsedFallback);
+  }
+
+  return HARDCODED_SHIPPING_FEE;
+};
+
+// Pre-compute bulk item prices and delivery dimensions outside the DB transaction before calling PayPal
+const computeBulkOrderPrecheck = async (items) => {
+  let precheckItemsTotal = 0;
+  const shippingItems = [];
+
+  for (const item of items) {
+    const parsedProductId = parseInt(item.productId, 10);
+    const parsedVariantId = item.variantId ? parseInt(item.variantId, 10) : null;
+    const parsedQuantity = parseInt(item.quantity, 10);
+
+    if (Number.isNaN(parsedProductId) || Number.isNaN(parsedQuantity) || parsedQuantity < 1) {
+      throw new Error("Every order item must include a valid product and quantity of at least 1.");
+    }
+
+    const product = await prisma.product.findUnique({ where: { id: parsedProductId } });
+    if (!product) {
+      throw new Error(`Product ID ${item.productId} not found`);
+    }
+
+    let unitPrice = product.price;
+    let variantName = null;
+    if (parsedVariantId) {
+      const variant = await prisma.productVariant.findUnique({ where: { id: parsedVariantId } });
+      if (!variant) {
+        throw new Error(`Variant ID ${parsedVariantId} not found`);
+      }
+      unitPrice = variant.price;
+      variantName = variant.name;
+    }
+
+    const isCustomEligible = isCustomLengthProfile(product.type);
+    const isPreOrder = product.isPreOrder ?? true;
+    const customLength = (isCustomEligible && item.customLength)
+      ? Math.min(21.0, Math.max(0.5, parseFloat(item.customLength)))
+      : null;
+    const isPerMeterItem = isCustomEligible && (product.unit === "per meter" || product.unit === "meter" || isPreOrder);
+    const lengthMultiplier = (customLength && isPerMeterItem) ? customLength : 1;
+
+    precheckItemsTotal += Math.round(unitPrice * lengthMultiplier * parsedQuantity * 100) / 100;
+    shippingItems.push({
+      productId: parsedProductId,
+      variantId: parsedVariantId,
+      variantName,
+      name: product.name,
+      quantity: parsedQuantity
+    });
+  }
+
+  return {
+    precheckItemsTotal: roundCurrency(precheckItemsTotal),
+    shippingItems
+  };
+};
+
+const resolvePaymentInfo = (
+  paymentMode,
+  cardDetails,
+  gcashNumber,
+  paymentPlan,
+  paymentChannel,
+  paymongoReference,
+  fulfillmentType = 'Delivery',
+  paypalCaptureId = null,
+  paypalOrderId = null
+) => {
   const mode = (paymentMode || '').trim();
   const plan = paymentPlan || (mode.toLowerCase().includes('50%') || mode.toLowerCase().includes('cash on delivery') ? 'COD_50' : 'FULL_PAYMENT');
-  const channel = paymentChannel || (cardDetails && cardDetails.cardNumber ? 'Card' : gcashNumber ? 'GCash' : (mode.toLowerCase().includes('card') ? 'Card' : 'Card'));
+  const channel = paymentChannel || (
+    (paypalCaptureId || paypalOrderId) ? 'PayPal' :
+    (cardDetails && cardDetails.cardNumber) ? 'Card' :
+    gcashNumber ? 'GCash' :
+    (mode.toLowerCase().includes('paypal') ? 'PayPal' : 'Card')
+  );
   const isPickup = String(fulfillmentType || '').trim().toLowerCase() === 'pickup';
 
   let channelDetails = '';
-  if (channel === 'Card' || (cardDetails && cardDetails.cardNumber)) {
+  if (channel === 'PayPal' || paypalCaptureId || paypalOrderId) {
+    const cleanCapture = (paypalCaptureId || '').trim();
+    const cleanOrder = (paypalOrderId || '').trim();
+    if (cleanCapture) {
+      channelDetails = `PayPal (Capture ID: ${cleanCapture})`;
+    } else if (cleanOrder) {
+      channelDetails = `PayPal (Order ID: ${cleanOrder})`;
+    } else {
+      channelDetails = 'PayPal (Verified)';
+    }
+  } else if (channel === 'Card' || (cardDetails && cardDetails.cardNumber)) {
     const rawNumber = (cardDetails?.cardNumber || '').replace(/\D/g, '');
     let brand = 'Card';
     if (/^4/.test(rawNumber)) brand = 'Visa';
@@ -70,6 +184,13 @@ const resolvePaymentInfo = (paymentMode, cardDetails, gcashNumber, paymentPlan, 
     };
   }
 
+  if (channel === 'PayPal' || paypalCaptureId || paypalOrderId) {
+    return {
+      paymentMode: `PayPal - Full Payment (${channelDetails})`,
+      paymentStatus: 'paid'
+    };
+  }
+
   return {
     paymentMode: `Bank Transfer - Full Payment (${channelDetails})`,
     paymentStatus: 'paid'
@@ -89,6 +210,8 @@ const createOrder = async (req, res) => {
     gcashNumber,
     paymongoReference,
     paymentIntentId,
+    paypalOrderId,
+    paypalCaptureId,
     clientRequestId,
     fulfillmentType,
     customerEmail,
@@ -124,12 +247,24 @@ const createOrder = async (req, res) => {
     return res.status(401).json({ success: false, error: "User authentication required. Please log in again." });
   }
 
+  const parsedQuantity = parseInt(quantity, 10);
+  if (Number.isNaN(parsedQuantity) || parsedQuantity < 1) {
+    return res.status(400).json({ success: false, error: "Order quantity must be at least 1." });
+  }
+
+  let activeGatewayIds = buildOrderGatewayIds({
+    paymentIntentId,
+    paymongoReference,
+    paypalOrderId,
+    paypalCaptureId
+  });
+
   try {
     // Return already-created order if this is a retry after a network disconnect
     const existingDuplicateOrder = await findExistingOrderByIdempotency({
       userId: resolvedUserId,
       clientRequestId,
-      paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+      paymentIntentIds: activeGatewayIds
     });
     if (existingDuplicateOrder) {
       return res.status(200).json({
@@ -169,14 +304,14 @@ const createOrder = async (req, res) => {
         return res.status(404).json({ success: false, error: "Product variant not found" });
       }
 
-      if (!isPreOrder && (variant.status === "out_of_stock" || variant.stock < parseInt(quantity))) {
+      if (!isPreOrder && (variant.status === "out_of_stock" || variant.stock < parsedQuantity)) {
         return res.status(400).json({ success: false, error: "Insufficient stock for selected variant" });
       }
 
       unitPrice = variant.price;
       variantName = variant.name; 
     } else {
-      if (!isPreOrder && product.stock < parseInt(quantity)) {
+      if (!isPreOrder && product.stock < parsedQuantity) {
         return res.status(400).json({ success: false, error: "Insufficient stock" });
       }
       unitPrice = product.price;
@@ -199,17 +334,17 @@ const createOrder = async (req, res) => {
         return res.status(409).json({
           success: false,
           error: `The material ${cleanThick} with color finish "${color}" is not available in Coil Inventory.`,
-          details: { type: 'STOCK_ERROR', itemName: `${product.name} (${cleanThick} • ${color})`, available: 0, requested: quantity }
+          details: { type: 'STOCK_ERROR', itemName: `${product.name} (${cleanThick} • ${color})`, available: 0, requested: parsedQuantity }
         });
       }
     }
 
     const isPerMeter = isCustomEligible && (product.unit === "per meter" || product.unit === "meter" || isPreOrder);
     const lengthMultiplier = (customLength && isPerMeter) ? customLength : 1;
-    const itemsTotal = Math.round(unitPrice * lengthMultiplier * parseInt(quantity) * 100) / 100;
+    const itemsTotal = Math.round(unitPrice * lengthMultiplier * parsedQuantity * 100) / 100;
 
     // Guard against stale checkout screens when Sales updates a discount right before submission
-    const hasVerifiedPaymongoPayment = Boolean(paymentIntentId || paymongoReference);
+    const hasVerifiedPaymongoPayment = Boolean(paymentIntentId || paymongoReference || paypalCaptureId || paypalOrderId);
     if (hasCheckoutPriceMismatch({
       expectedItemsTotal: req.body.expectedItemsTotal,
       liveItemsTotal: itemsTotal,
@@ -226,31 +361,64 @@ const createOrder = async (req, res) => {
         }
       });
     }
-    let shippingFee = 0;
-    if (fulfillmentType !== 'Pickup') {
-      if (req.body.shippingFee !== undefined && !isNaN(parseFloat(req.body.shippingFee))) {
-        shippingFee = parseFloat(req.body.shippingFee);
-      } else if (shippingProvince && shippingCity) {
-        const feeCalc = await calculateDeliveryFee({
-          province: shippingProvince,
-          city: shippingCity,
-          items: [{ productId, variantId, quantity }]
-        });
-        shippingFee = feeCalc.totalDeliveryCharge;
-      } else {
-        shippingFee = HARDCODED_SHIPPING_FEE;
-      }
+
+    const shippingFee = await resolveServerShippingFee({
+      fulfillmentType,
+      shippingProvince,
+      shippingCity,
+      itemsForShipping: [
+        {
+          productId: parseInt(productId, 10),
+          variantId: parsedVariantId,
+          variantName,
+          name: product.name,
+          quantity: parsedQuantity
+        }
+      ],
+      fallbackShippingFee: req.body.shippingFee
+    });
+    const total = roundCurrency(itemsTotal + shippingFee);
+
+    // Verify payment capture status, PHP currency, and captured amount directly with the gateway
+    const verifiedPayment = await verifyOrderGatewayPayment({
+      userId: resolvedUserId,
+      orderTotalPhp: total,
+      paymentPlan,
+      paymentMode,
+      paypalOrderId,
+      paypalCaptureId,
+      paymentIntentId,
+      paymongoReference
+    });
+    activeGatewayIds = verifiedPayment.gatewayIntentIds;
+
+    // Re-check idempotency using authoritative gateway IDs in case client retried with a fresh request ID
+    const existingByVerifiedGateway = await findExistingOrderByIdempotency({
+      userId: resolvedUserId,
+      clientRequestId,
+      paymentIntentIds: activeGatewayIds
+    });
+    if (existingByVerifiedGateway) {
+      return res.status(200).json({
+        success: true,
+        duplicatePrevented: true,
+        data: {
+          ...existingByVerifiedGateway,
+          paymentSummary: buildOrderPaymentSummary(existingByVerifiedGateway)
+        }
+      });
     }
-    const total = itemsTotal + shippingFee;
 
     const { paymentMode: finalPaymentMode, paymentStatus: finalPaymentStatus } = resolvePaymentInfo(
       paymentMode,
       cardDetails,
       gcashNumber,
       paymentPlan,
-      paymentChannel,
-      paymongoReference,
-      fulfillmentType
+      verifiedPayment.provider === "PayPal" ? "PayPal" : paymentChannel,
+      verifiedPayment.verifiedPaymongoReference || paymongoReference,
+      fulfillmentType,
+      verifiedPayment.verifiedPaypalCaptureId,
+      verifiedPayment.verifiedPaypalOrderId
     );
 
     
@@ -334,7 +502,7 @@ const createOrder = async (req, res) => {
         orderId: order.id,
         userId: resolvedUserId,
         clientRequestId,
-        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+        paymentIntentIds: activeGatewayIds
       });
 
       return { order, coilUpdates: deductedCoils };
@@ -388,11 +556,20 @@ const createOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to create order:", error);
+    if (error.type === "PAYMENT_VERIFICATION_ERROR") {
+      return res.status(error.statusCode || 400).json({
+        success: false,
+        code: error.code,
+        error: error.message,
+        message: error.message,
+        ...(error.details ? { details: error.details } : {})
+      });
+    }
     if (error.code === "P2002") {
       const existingOrder = await findExistingOrderByIdempotency({
         userId: resolvedUserId,
         clientRequestId,
-        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+        paymentIntentIds: activeGatewayIds
       });
       if (existingOrder) {
         return res.status(200).json({
@@ -402,6 +579,15 @@ const createOrder = async (req, res) => {
             ...existingOrder,
             paymentSummary: buildOrderPaymentSummary(existingOrder)
           }
+        });
+      }
+      const claimedByAnother = await findGatewayPaymentClaim({ paymentIntentIds: activeGatewayIds });
+      if (claimedByAnother) {
+        return res.status(409).json({
+          success: false,
+          code: "PAYMENT_ALREADY_USED",
+          error: "This payment has already been used for another order.",
+          message: "This payment has already been used for another order."
         });
       }
     }
@@ -598,6 +784,8 @@ const createBulkOrder = async (req, res) => {
     gcashNumber,
     paymongoReference,
     paymentIntentId,
+    paypalOrderId,
+    paypalCaptureId,
     clientRequestId,
     fulfillmentType,
     customerEmail,
@@ -636,22 +824,19 @@ const createBulkOrder = async (req, res) => {
     return res.status(401).json({ success: false, error: "User authentication required. Please log in again." });
   }
 
-  const { paymentMode: finalPaymentMode, paymentStatus: finalPaymentStatus } = resolvePaymentInfo(
-    paymentMode,
-    cardDetails,
-    gcashNumber,
-    paymentPlan,
-    paymentChannel,
+  let activeGatewayIds = buildOrderGatewayIds({
+    paymentIntentId,
     paymongoReference,
-    fulfillmentType
-  );
+    paypalOrderId,
+    paypalCaptureId
+  });
 
   try {
     // Return already-created bulk order if this is a retry after a network disconnect
     const existingDuplicateBulkOrder = await findExistingOrderByIdempotency({
       userId: resolvedUserId,
       clientRequestId,
-      paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+      paymentIntentIds: activeGatewayIds
     });
     if (existingDuplicateBulkOrder) {
       return res.status(200).json({
@@ -664,6 +849,59 @@ const createBulkOrder = async (req, res) => {
       });
     }
 
+    // Pre-calculate item subtotal and authoritative delivery fee outside the DB transaction
+    const { precheckItemsTotal, shippingItems } = await computeBulkOrderPrecheck(items);
+    const shippingFee = await resolveServerShippingFee({
+      fulfillmentType,
+      shippingProvince,
+      shippingCity,
+      itemsForShipping: shippingItems,
+      fallbackShippingFee: req.body.shippingFee
+    });
+    const precheckTotal = roundCurrency(precheckItemsTotal + shippingFee);
+
+    // Verify payment capture status, PHP currency, and captured amount directly with the gateway
+    const verifiedPayment = await verifyOrderGatewayPayment({
+      userId: resolvedUserId,
+      orderTotalPhp: precheckTotal,
+      paymentPlan,
+      paymentMode,
+      paypalOrderId,
+      paypalCaptureId,
+      paymentIntentId,
+      paymongoReference
+    });
+    activeGatewayIds = verifiedPayment.gatewayIntentIds;
+
+    // Re-check idempotency using authoritative gateway IDs in case client retried with a fresh request ID
+    const existingBulkByVerifiedGateway = await findExistingOrderByIdempotency({
+      userId: resolvedUserId,
+      clientRequestId,
+      paymentIntentIds: activeGatewayIds
+    });
+    if (existingBulkByVerifiedGateway) {
+      return res.status(200).json({
+        success: true,
+        duplicatePrevented: true,
+        data: {
+          ...existingBulkByVerifiedGateway,
+          paymentSummary: buildOrderPaymentSummary(existingBulkByVerifiedGateway)
+        }
+      });
+    }
+
+    const { paymentMode: finalPaymentMode, paymentStatus: finalPaymentStatus } = resolvePaymentInfo(
+      paymentMode,
+      cardDetails,
+      gcashNumber,
+      paymentPlan,
+      verifiedPayment.provider === "PayPal" ? "PayPal" : paymentChannel,
+      verifiedPayment.verifiedPaymongoReference || paymongoReference,
+      fulfillmentType,
+      verifiedPayment.verifiedPaypalCaptureId,
+      verifiedPayment.verifiedPaypalOrderId
+    );
+
     const { order: newOrder, coilUpdates } = await prisma.$transaction(async (tx) => {
       let totalAmount = 0;
       const orderItemsData = [];
@@ -672,6 +910,10 @@ const createBulkOrder = async (req, res) => {
       for (const item of items) {
         const { productId, variantId, quantity } = item;
         const parsedVariantId = variantId ? parseInt(variantId) : null;
+        const parsedItemQty = parseInt(quantity, 10);
+        if (Number.isNaN(parsedItemQty) || parsedItemQty < 1) {
+          throw new Error("Every order item must have a quantity of at least 1.");
+        }
         
         const product = await tx.product.findUnique({ where: { id: parseInt(productId) } });
         if (!product) {
@@ -691,8 +933,8 @@ const createBulkOrder = async (req, res) => {
         if (parsedVariantId) {
           const variant = await tx.productVariant.findUnique({ where: { id: parsedVariantId } });
           if (!variant) throw new Error(`Variant ID ${parsedVariantId} not found`);
-          if (!isPreOrder && (variant.status === "out_of_stock" || variant.stock < parseInt(quantity))) {
-            throw { type: 'STOCK_ERROR', itemName: variant.name, available: variant.stock, requested: quantity };
+          if (!isPreOrder && (variant.status === "out_of_stock" || variant.stock < parsedItemQty)) {
+            throw { type: 'STOCK_ERROR', itemName: variant.name, available: variant.stock, requested: parsedItemQty };
           }
 
           unitPrice = variant.price;
@@ -700,35 +942,35 @@ const createBulkOrder = async (req, res) => {
 
           if (!isPreOrder) {
             const updated = await tx.productVariant.updateMany({
-              where: { id: parsedVariantId, stock: { gte: parseInt(quantity) } },
-              data: { stock: { decrement: parseInt(quantity) } }
+              where: { id: parsedVariantId, stock: { gte: parsedItemQty } },
+              data: { stock: { decrement: parsedItemQty } }
             });
             if (updated.count === 0) {
               const current = await tx.productVariant.findUnique({ where: { id: parsedVariantId } });
-              throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: quantity };
+              throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: parsedItemQty };
             }
           }
         } else {
-          if (!isPreOrder && product.stock < parseInt(quantity)) {
-            throw { type: 'STOCK_ERROR', itemName: product.name, available: product.stock, requested: quantity };
+          if (!isPreOrder && product.stock < parsedItemQty) {
+            throw { type: 'STOCK_ERROR', itemName: product.name, available: product.stock, requested: parsedItemQty };
           }
           unitPrice = product.price;
 
           if (!isPreOrder) {
             const updated = await tx.product.updateMany({
-              where: { id: parseInt(productId), stock: { gte: parseInt(quantity) } },
-              data: { stock: { decrement: parseInt(quantity) } }
+              where: { id: parseInt(productId), stock: { gte: parsedItemQty } },
+              data: { stock: { decrement: parsedItemQty } }
             });
             if (updated.count === 0) {
               const current = await tx.product.findUnique({ where: { id: parseInt(productId) } });
-              throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: quantity };
+              throw { type: 'STOCK_ERROR', itemName: current.name, available: current.stock, requested: parsedItemQty };
             }
           }
         }
 
         const isPerMeterItem = isCustomEligible && (product.unit === "per meter" || product.unit === "meter" || isPreOrder);
         const lengthMultiplier = (customLength && isPerMeterItem) ? customLength : 1;
-        totalAmount += Math.round(unitPrice * lengthMultiplier * parseInt(quantity) * 100) / 100;
+        totalAmount += Math.round(unitPrice * lengthMultiplier * parsedItemQty * 100) / 100;
 
         if (item.color) {
           coilDeductionItems.push({
@@ -739,7 +981,7 @@ const createBulkOrder = async (req, res) => {
             thickness: thickness || variantName || product.thickness,
             color: item.color,
             customLength,
-            quantity: parseInt(quantity),
+            quantity: parsedItemQty,
             isPerMeter: isPerMeterItem
           });
         }
@@ -748,7 +990,7 @@ const createBulkOrder = async (req, res) => {
           productId: parseInt(productId),
           variantId: parsedVariantId,
           variantName,
-          quantity: parseInt(quantity),
+          quantity: parsedItemQty,
           price: unitPrice,
           color: item.color || null,
           customLength,
@@ -757,7 +999,7 @@ const createBulkOrder = async (req, res) => {
       }
 
       const roundedItemsTotal = Math.round(totalAmount * 100) / 100;
-      const hasVerifiedPaymongoPayment = Boolean(paymentIntentId || paymongoReference);
+      const hasVerifiedPaymongoPayment = Boolean(paymentIntentId || paymongoReference || paypalCaptureId || paypalOrderId);
       if (hasCheckoutPriceMismatch({
         expectedItemsTotal: req.body.expectedItemsTotal,
         liveItemsTotal: roundedItemsTotal,
@@ -770,22 +1012,16 @@ const createBulkOrder = async (req, res) => {
         };
       }
 
-      let shippingFee = 0;
-      if (fulfillmentType !== 'Pickup') {
-        if (req.body.shippingFee !== undefined && !isNaN(parseFloat(req.body.shippingFee))) {
-          shippingFee = parseFloat(req.body.shippingFee);
-        } else if (shippingProvince && shippingCity) {
-          const feeCalc = await calculateDeliveryFee({
-            province: shippingProvince,
-            city: shippingCity,
-            items
-          });
-          shippingFee = feeCalc.totalDeliveryCharge;
-        } else {
-          shippingFee = HARDCODED_SHIPPING_FEE;
-        }
-      }
-      const finalTotal = totalAmount + shippingFee;
+      const finalTotal = roundCurrency(roundedItemsTotal + shippingFee);
+
+      // Re-verify captured amount against live transaction total in case prices increased mid-checkout
+      assertCapturedAmountMatchesOrder({
+        verifiedAmountPhp: verifiedPayment.verifiedAmountPhp,
+        orderTotalPhp: finalTotal,
+        paymentPlan,
+        paymentMode,
+        providerLabel: verifiedPayment.provider
+      });
 
       const order = await tx.order.create({
         data: {
@@ -823,7 +1059,7 @@ const createBulkOrder = async (req, res) => {
         orderId: order.id,
         userId: resolvedUserId,
         clientRequestId,
-        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+        paymentIntentIds: activeGatewayIds
       });
 
       return { order, coilUpdates: deductedCoils };
@@ -877,11 +1113,20 @@ const createBulkOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to create bulk order:", error);
+    if (error.type === "PAYMENT_VERIFICATION_ERROR") {
+      return res.status(error.statusCode || 400).json({
+        success: false,
+        code: error.code,
+        error: error.message,
+        message: error.message,
+        ...(error.details ? { details: error.details } : {})
+      });
+    }
     if (error.code === "P2002") {
       const existingOrder = await findExistingOrderByIdempotency({
         userId: resolvedUserId,
         clientRequestId,
-        paymentIntentId: paymentIntentId || (typeof paymongoReference === "string" && paymongoReference.startsWith("pi_") ? paymongoReference : null)
+        paymentIntentIds: activeGatewayIds
       });
       if (existingOrder) {
         return res.status(200).json({
@@ -891,6 +1136,15 @@ const createBulkOrder = async (req, res) => {
             ...existingOrder,
             paymentSummary: buildOrderPaymentSummary(existingOrder)
           }
+        });
+      }
+      const claimedByAnother = await findGatewayPaymentClaim({ paymentIntentIds: activeGatewayIds });
+      if (claimedByAnother) {
+        return res.status(409).json({
+          success: false,
+          code: "PAYMENT_ALREADY_USED",
+          error: "This payment has already been used for another order.",
+          message: "This payment has already been used for another order."
         });
       }
     }

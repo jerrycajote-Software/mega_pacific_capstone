@@ -4,12 +4,23 @@ const {
   createGcashQrPaymentSession,
   fetchPaymentIntentStatus
 } = require("../services/paymongoService");
+const {
+  getPaypalEnvironmentInfo,
+  isPaypalCheckoutEnabled,
+  createPaypalOrder,
+  capturePaypalOrder,
+  getPaypalOrderDetails
+} = require("../services/paypalService");
 
 const getPaymentGatewayConfig = async (req, res) => {
   try {
     const envInfo = getPaymongoEnvironmentInfo();
     const settingEnabled = await isPaymongoGcashQrEnabled();
     const gcashQrEnabled = Boolean(settingEnabled && envInfo.isConfigured);
+
+    const paypalEnv = getPaypalEnvironmentInfo();
+    const paypalSettingEnabled = await isPaypalCheckoutEnabled();
+    const paypalEnabled = Boolean(paypalSettingEnabled && paypalEnv.isConfigured);
 
     return res.status(200).json({
       success: true,
@@ -18,7 +29,12 @@ const getPaymentGatewayConfig = async (req, res) => {
         gcashQrEnabled,
         settingEnabled,
         isConfigured: envInfo.isConfigured,
-        mode: envInfo.mode
+        mode: envInfo.mode,
+        paypalEnabled,
+        paypalSettingEnabled,
+        paypalConfigured: paypalEnv.isConfigured,
+        paypalMode: paypalEnv.mode,
+        paypalClientId: paypalEnv.clientId
       }
     });
   } catch (error) {
@@ -26,6 +42,95 @@ const getPaymentGatewayConfig = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load payment gateway configuration."
+    });
+  }
+};
+
+// Create a PayPal Checkout order in Philippine Pesos for the current checkout total
+const initiatePaypalOrder = async (req, res) => {
+  try {
+    const settingEnabled = await isPaypalCheckoutEnabled();
+    if (!settingEnabled) {
+      return res.status(403).json({
+        success: false,
+        message: "PayPal checkout is currently disabled by the system administrator."
+      });
+    }
+
+    const { amountPhp, description, customerName, paymentPlan, customId } = req.body || {};
+    const orderSession = await createPaypalOrder({
+      amountPhp,
+      description,
+      customerName,
+      paymentPlan,
+      customId
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "PayPal checkout order created successfully.",
+      data: orderSession
+    });
+  } catch (error) {
+    console.error("PayPal order initiation error:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Unable to start PayPal checkout. Please try again."
+    });
+  }
+};
+
+// Capture an approved PayPal Checkout order on the server
+const capturePaypalOrderPayment = async (req, res) => {
+  try {
+    const { paypalOrderId } = req.body || {};
+    const captureData = await capturePaypalOrder(paypalOrderId);
+
+    if (captureData.isPaid) {
+      const io = req.app.get("io");
+      if (io) {
+        io.emit("paypal_payment_confirmed", {
+          paypalOrderId: captureData.paypalOrderId,
+          captureId: captureData.captureId,
+          status: captureData.status
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: captureData.isPaid
+        ? "PayPal payment has been verified and captured."
+        : "PayPal payment has not completed yet.",
+      data: captureData
+    });
+  } catch (error) {
+    console.error("PayPal capture error:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to capture PayPal payment."
+    });
+  }
+};
+
+// Check the current status of a PayPal order for reconnect recovery
+const checkPaypalOrderStatus = async (req, res) => {
+  try {
+    const { paypalOrderId } = req.params;
+    const statusData = await getPaypalOrderDetails(paypalOrderId);
+
+    return res.status(200).json({
+      success: true,
+      message: statusData.isPaid
+        ? "PayPal payment is verified and completed."
+        : "Waiting for PayPal payment authorization.",
+      data: statusData
+    });
+  } catch (error) {
+    console.error("PayPal status verification error:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to verify PayPal payment status."
     });
   }
 };
@@ -145,6 +250,9 @@ module.exports = {
   getPaymentGatewayConfig,
   initiatePaymongoGcashQr,
   checkPaymongoPaymentStatus,
-  receivePaymongoWebhook
+  receivePaymongoWebhook,
+  initiatePaypalOrder,
+  capturePaypalOrderPayment,
+  checkPaypalOrderStatus
 };
 

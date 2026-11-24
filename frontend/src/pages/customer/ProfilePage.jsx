@@ -8,6 +8,7 @@ import {
   compressProfilePhoto
 } from '../../components/profile/ProfilePhotoModal';
 import AccountDeletionSection from '../../components/profile/AccountDeletionSection';
+import LogoutConfirmModal from '../../components/LogoutConfirmModal';
 import {
   Box,
   Typography,
@@ -44,12 +45,13 @@ import {
 } from '../../utils/locationService';
 
 const ProfilePage = () => {
-  const { user, token, updateUser } = useAuth();
+  const { user, token, updateUser, logout } = useAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [addresses, setAddresses] = useState([]);
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   
   const DEFAULT_PROFILE_PHOTO = '/default-profile.png';
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || DEFAULT_PROFILE_PHOTO);
@@ -323,6 +325,19 @@ const ProfilePage = () => {
     }
   };
 
+  // Open the sign-out confirmation dialog from the customer profile card
+  const handleOpenSignOutModal = () => setIsSignOutModalOpen(true);
+
+  // Close the sign-out confirmation dialog without signing out
+  const handleCloseSignOutModal = () => setIsSignOutModalOpen(false);
+
+  // Sign out the customer session and redirect cleanly to the login screen
+  const handleConfirmSignOut = async () => {
+    setIsSignOutModalOpen(false);
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 15, gap: 2 }}>
@@ -532,27 +547,50 @@ const ProfilePage = () => {
 
             <Divider sx={{ mb: 2.5 }} />
 
-            <Button
-              variant="contained"
-              fullWidth
-              
-              onClick={() => navigate('/orders')}
-              sx={{
-                borderRadius: 2.5,
-                textTransform: 'none',
-                fontWeight: 700,
-                py: 1.15,
-                bgcolor: '#1e3a8a',
-                color: '#ffffff',
-                boxShadow: '0 4px 12px rgba(30, 58, 138, 0.28)',
-                '&:hover': { 
-                  bgcolor: '#172554',
-                  boxShadow: '0 6px 16px rgba(30, 58, 138, 0.38)'
-                }
-              }}
-            >
-              Track My Orders
-            </Button>
+            <Stack spacing={1.5}>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => navigate('/orders')}
+                sx={{
+                  borderRadius: 2.5,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  py: 1.15,
+                  bgcolor: '#1e3a8a',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 12px rgba(30, 58, 138, 0.28)',
+                  '&:hover': {
+                    bgcolor: '#172554',
+                    boxShadow: '0 6px 16px rgba(30, 58, 138, 0.38)'
+                  }
+                }}
+              >
+                Track My Orders
+              </Button>
+
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                onClick={handleOpenSignOutModal}
+                sx={{
+                  borderRadius: 2.5,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  py: 1.1,
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(248, 113, 113, 0.5)' : 'rgba(239, 68, 68, 0.45)',
+                  color: (theme) => (theme.palette.mode === 'dark' ? '#f87171' : '#dc2626'),
+                  '&:hover': {
+                    bgcolor: 'rgba(239, 68, 68, 0.08)',
+                    borderColor: (theme) => (theme.palette.mode === 'dark' ? '#f87171' : '#dc2626')
+                  }
+                }}
+              >
+                Sign Out
+              </Button>
+            </Stack>
           </Paper>
         </Stack>
 
@@ -961,6 +999,13 @@ const ProfilePage = () => {
         onConfirmRemove={handleConfirmRemovePhoto}
         removing={removingPhoto}
       />
+
+      {isSignOutModalOpen && (
+        <LogoutConfirmModal
+          onClose={handleCloseSignOutModal}
+          onConfirm={handleConfirmSignOut}
+        />
+      )}
 
       <Snackbar
         open={toast.open}

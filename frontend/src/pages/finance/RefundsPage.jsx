@@ -50,6 +50,9 @@ const formatCurrency = (amt) =>
 
 const getPaymentChannelIcon = (method) => {
   const m = (method || '').toLowerCase();
+  if (m.includes('paypal')) {
+    return <CreditCardIcon size={16} color="#003087" />;
+  }
   if (m.includes('gcash') || m.includes('wallet') || m.includes('e-wallet') || m.includes('paymaya') || m.includes('maya')) {
     return <EWalletIcon size={16} color="#007dfa" />;
   }
@@ -126,16 +129,21 @@ const RefundsPage = () => {
 
   const handleOpenProcessModal = (refund) => {
     setSelectedRefund(refund);
+    const paypalMatch = (refund.paymentMethod || '').match(/Capture ID:\s*([A-Za-z0-9_-]+)/i);
     const paymongoMatch = (refund.paymentMethod || '').match(/(pay_[A-Za-z0-9]+|pi_[A-Za-z0-9]+)/);
     setProcessForm({
       amount: refund.amount,
       returnMethod: refund.paymentMethod,
-      transactionReference: paymongoMatch
-        ? `AUTO-PAYMONGO (${paymongoMatch[1]})`
-        : `REF-${Date.now().toString(36).toUpperCase()}`,
-      notes: paymongoMatch
-        ? `Automated GCash reversal via PayMongo Refund API (${paymongoMatch[1]})`
-        : `Returned via ${refund.paymentMethod} by Finance team`
+      transactionReference: paypalMatch
+        ? `AUTO-PAYPAL (${paypalMatch[1]})`
+        : paymongoMatch
+          ? `AUTO-PAYMONGO (${paymongoMatch[1]})`
+          : `REF-${Date.now().toString(36).toUpperCase()}`,
+      notes: paypalMatch
+        ? `Automated refund via PayPal Refund API (${paypalMatch[1]})`
+        : paymongoMatch
+          ? `Automated GCash reversal via PayMongo Refund API (${paymongoMatch[1]})`
+          : `Returned via ${refund.paymentMethod} by Finance team`
     });
     setProcessModalOpen(true);
   };
@@ -169,7 +177,8 @@ const RefundsPage = () => {
       );
 
       if (res.data.success) {
-        toast.success(`Refund of ${formatCurrency(processForm.amount)} processed! Customer has been notified.`);
+        const processedAmount = res.data?.data?.amount ?? processForm.amount;
+        toast.success(`Refund of ${formatCurrency(processedAmount)} processed! Customer has been notified.`);
         setProcessModalOpen(false);
         fetchData();
       }

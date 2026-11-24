@@ -20,10 +20,10 @@ import {
 
 const SettingsPage = () => {
   const [maxDevices, setMaxDevices] = useState('3');
-  const [paymongoEnabled, setPaymongoEnabled] = useState(true);
-  const [paymongoMode, setPaymongoMode] = useState('test');
-  const [paymongoConfigured, setPaymongoConfigured] = useState(true);
-  const [togglingPaymongo, setTogglingPaymongo] = useState(false);
+  const [paypalEnabled, setPaypalEnabled] = useState(true);
+  const [paypalMode, setPaypalMode] = useState('sandbox');
+  const [paypalConfigured, setPaypalConfigured] = useState(false);
+  const [togglingPaypal, setTogglingPaypal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -49,16 +49,16 @@ const SettingsPage = () => {
       if (deviceSetting) {
         setMaxDevices(deviceSetting.value);
       }
-      const gcashSetting = settings.find(s => s.key === 'paymongo_gcash_qr_enabled');
-      if (gcashSetting) {
-        setPaymongoEnabled(gcashSetting.value === 'true' || gcashSetting.value === 'enabled' || gcashSetting.value === '1');
+      const paypalSetting = settings.find(s => s.key === 'paypal_checkout_enabled');
+      if (paypalSetting) {
+        setPaypalEnabled(paypalSetting.value === 'true' || paypalSetting.value === 'enabled' || paypalSetting.value === '1');
       } else if (gatewayRes.data?.data) {
-        setPaymongoEnabled(Boolean(gatewayRes.data.data.settingEnabled));
+        setPaypalEnabled(Boolean(gatewayRes.data.data.paypalSettingEnabled));
       }
 
       if (gatewayRes.data?.data) {
-        setPaymongoMode(gatewayRes.data.data.mode || 'test');
-        setPaymongoConfigured(Boolean(gatewayRes.data.data.isConfigured));
+        setPaypalMode(gatewayRes.data.data.paypalMode || 'sandbox');
+        setPaypalConfigured(Boolean(gatewayRes.data.data.paypalConfigured));
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to load system settings from server.' });
@@ -67,30 +67,30 @@ const SettingsPage = () => {
     }
   };
 
-  const handleTogglePaymongoGateway = async () => {
-    const nextState = !paymongoEnabled;
-    setTogglingPaymongo(true);
+  const handleTogglePaypalGateway = async () => {
+    const nextState = !paypalEnabled;
+    setTogglingPaypal(true);
     setMessage({ type: '', text: '' });
 
     try {
-      await axios.put(`${API_URL}/api/admin/settings/paymongo_gcash_qr_enabled`, {
+      await axios.put(`${API_URL}/api/admin/settings/paypal_checkout_enabled`, {
         value: nextState ? 'true' : 'false',
-        description: 'Controls whether automated PayMongo GCash QR checkout is active for customer orders'
+        description: 'Controls whether automated PayPal Checkout is active for customer orders'
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setPaymongoEnabled(nextState);
+      setPaypalEnabled(nextState);
       setMessage({
         type: 'success',
         text: nextState
-          ? 'Automated PayMongo GCash QR payment gateway is now enabled for customer checkout.'
-          : 'PayMongo GCash QR gateway paused. Customer checkout switched to standard GCash mobile verification.'
+          ? 'PayPal Checkout payment gateway is now enabled for customer orders.'
+          : 'PayPal Checkout payment gateway is paused.'
       });
       setTimeout(() => setMessage({ type: '', text: '' }), 5000);
     } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to update PayMongo payment gateway switch.' });
+      setMessage({ type: 'error', text: 'Failed to update PayPal payment gateway switch.' });
     } finally {
-      setTogglingPaymongo(false);
+      setTogglingPaypal(false);
     }
   };
 
@@ -292,10 +292,10 @@ const SettingsPage = () => {
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    PayMongo Automated GCash QR Gateway
+                    PayPal Automated Checkout Gateway
                   </h3>
                   <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Controls whether customer checkout generates a real-time PayMongo GCash / QR Ph payment code.
+                    Controls whether customer checkout accepts online payments and automated refunds via PayPal.
                   </p>
                 </div>
               </div>
@@ -307,11 +307,11 @@ const SettingsPage = () => {
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
-                background: paymongoEnabled ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.14)',
-                color: paymongoEnabled ? '#22c55e' : '#f59e0b',
-                border: `1px solid ${paymongoEnabled ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'}`
+                background: paypalEnabled ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.14)',
+                color: paypalEnabled ? '#22c55e' : '#f59e0b',
+                border: `1px solid ${paypalEnabled ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'}`
               }}>
-                {paymongoEnabled ? `Active (${paymongoMode.toUpperCase()} API)` : 'Manual Fallback Mode'}
+                {paypalEnabled ? `Active (${paypalMode.toUpperCase()} API)` : 'Paused'}
               </span>
             </div>
 
@@ -328,34 +328,34 @@ const SettingsPage = () => {
             }}>
               <div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Automated GCash QR Scan at Checkout
+                  PayPal Checkout at Customer Payment
                 </div>
                 <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.45 }}>
-                  {paymongoEnabled
-                    ? 'Customers selecting GCash will scan a live PayMongo QR Ph code to automatically verify payment.'
-                    : 'Automated QR generation is turned off. Customers can enter their GCash mobile number directly without scanning a QR code.'}
+                  {paypalEnabled
+                    ? 'Customers can pay online using PayPal Wallet or Debit/Credit Cards inside the PayPal checkout window.'
+                    : 'PayPal checkout is currently paused by the administrator.'}
                 </div>
               </div>
 
               <button
                 type="button"
                 role="switch"
-                aria-checked={paymongoEnabled}
-                aria-label="Toggle Automated PayMongo GCash QR Payment Gateway"
-                disabled={togglingPaymongo || !paymongoConfigured}
-                onClick={handleTogglePaymongoGateway}
+                aria-checked={paypalEnabled}
+                aria-label="Toggle Automated PayPal Payment Gateway"
+                disabled={togglingPaypal || !paypalConfigured}
+                onClick={handleTogglePaypalGateway}
                 style={{
                   position: 'relative',
                   width: 54,
                   height: 30,
                   borderRadius: 999,
                   border: 'none',
-                  background: paymongoEnabled ? '#005ce6' : '#64748b',
-                  cursor: (togglingPaymongo || !paymongoConfigured) ? 'not-allowed' : 'pointer',
+                  background: paypalEnabled ? '#003087' : '#64748b',
+                  cursor: (togglingPaypal || !paypalConfigured) ? 'not-allowed' : 'pointer',
                   padding: 3,
                   transition: 'background 0.25s ease',
                   flexShrink: 0,
-                  opacity: togglingPaymongo ? 0.65 : 1
+                  opacity: togglingPaypal ? 0.65 : 1
                 }}
               >
                 <span style={{
@@ -364,7 +364,7 @@ const SettingsPage = () => {
                   height: 24,
                   borderRadius: '50%',
                   background: '#ffffff',
-                  transform: paymongoEnabled ? 'translateX(24px)' : 'translateX(0px)',
+                  transform: paypalEnabled ? 'translateX(24px)' : 'translateX(0px)',
                   transition: 'transform 0.25s ease',
                   boxShadow: '0 2px 5px rgba(0,0,0,0.25)'
                 }} />
@@ -373,11 +373,11 @@ const SettingsPage = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.76rem', color: 'var(--text-muted)', flexWrap: 'wrap', gap: 8 }}>
               <span>
-                API Key Status: <strong style={{ color: paymongoConfigured ? '#22c55e' : '#ef4444' }}>
-                  {paymongoConfigured ? `Connected (${paymongoMode === 'live' ? 'Live Production Key' : 'Test Sandbox Key'})` : 'Missing PAYMONGO_SECRET_KEY in .env'}
+                API Key Status: <strong style={{ color: paypalConfigured ? '#22c55e' : '#ef4444' }}>
+                  {paypalConfigured ? `Connected (${paypalMode === 'live' ? 'Live Production Key' : 'Sandbox Test Key'})` : 'Missing PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET in .env'}
                 </strong>
               </span>
-              <span>Channel: <strong>QR Ph / GCash E-Wallet</strong></span>
+              <span>Channel: <strong>PayPal / Debit & Credit Card</strong></span>
             </div>
           </div>
 

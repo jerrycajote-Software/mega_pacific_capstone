@@ -7,7 +7,7 @@ import { getZipCodeForLocation } from '../../utils/locationService';
 import ShippingInfoWidget from '../../components/ShippingInfoWidget';
 import PaymentMethodWidget from '../../components/PaymentMethodWidget';
 import AddProductToOrderModal from '../../components/AddProductToOrderModal';
-import PaymongoQrModal from '../../components/PaymongoQrModal';
+import PaypalCheckoutModal from '../../components/PaypalCheckoutModal';
 import {
   CustomOrderSuccessIcon,
   CustomShoppingCartIcon,
@@ -185,20 +185,22 @@ const Checkout = () => {
     province: 'Cavite',
     zipCode: '',
     notes: '',
-    paymentPlan: 'COD_50', 
-    paymentChannel: 'Card', 
-    fulfillmentType: 'Delivery',
-    cardNumber: '',
-    cardExpiry: '',
-    cardCvv: '',
-    gcashNumber: '',
+    paymentPlan: 'COD_50',
+    paymentChannel: 'PayPal',
+    fulfillmentType: 'Delivery'
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [gcashQrEnabled, setGcashQrEnabled] = useState(false);
-  const [paymongoQrModalOpen, setPaymongoQrModalOpen] = useState(false);
+  const [paypalConfig, setPaypalConfig] = useState({
+    enabled: false,
+    settingEnabled: true,
+    configured: false,
+    mode: 'sandbox',
+    clientId: ''
+  });
+  const [paypalModalOpen, setPaypalModalOpen] = useState(false);
   
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
@@ -243,7 +245,10 @@ const Checkout = () => {
   }, [formData.province, formData.city, formData.fulfillmentType, orderItems]);
 
   const shippingFee = formData.fulfillmentType === 'Pickup' ? 0 : (shippingCalculation?.totalDeliveryCharge || 0);
-  const grandTotal = (orderTotal || 0) + shippingFee;
+  const grandTotal = Math.round(((orderTotal || 0) + shippingFee) * 100) / 100;
+  const downpaymentAmount = Math.round(grandTotal * 0.5 * 100) / 100;
+  const balanceUponDeliveryAmount = Math.round(Math.max(0, grandTotal - downpaymentAmount) * 100) / 100;
+  const payableNowAmount = formData.paymentPlan === 'COD_50' ? downpaymentAmount : grandTotal;
 
   useEffect(() => {
     if (success) return;
@@ -296,7 +301,14 @@ const Checkout = () => {
           axios.get(`${API_URL}/api/payments/config`).catch(() => null)
         ]);
         if (gatewayRes?.data?.data) {
-          setGcashQrEnabled(Boolean(gatewayRes.data.data.gcashQrEnabled));
+          const cfg = gatewayRes.data.data;
+          setPaypalConfig({
+            enabled: Boolean(cfg.paypalEnabled),
+            settingEnabled: cfg.paypalSettingEnabled !== false,
+            configured: Boolean(cfg.paypalConfigured),
+            mode: cfg.paypalMode || 'sandbox',
+            clientId: cfg.paypalClientId || ''
+          });
         }
         if (res.data.data) {
           const profile = res.data.data;
@@ -395,36 +407,6 @@ const Checkout = () => {
       if (!formData.zipCode?.trim()) newErrors.zipCode = 'Zip Code is required';
     }
 
-    if (formData.paymentChannel === 'Card') {
-      const cleanCard = (formData.cardNumber || '').replace(/\s+/g, '');
-      if (!cleanCard) {
-        newErrors.cardNumber = 'Card number is required';
-      } else if (cleanCard.length < 15) {
-        newErrors.cardNumber = 'Card number must be 15 or 16 digits';
-      }
-
-      const expiry = (formData.cardExpiry || '').trim();
-      if (!expiry) {
-        newErrors.cardExpiry = 'Expiration date is required';
-      } else if (!/^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(expiry)) {
-        newErrors.cardExpiry = 'Enter valid MM/YY';
-      }
-
-      const cvv = (formData.cardCvv || '').trim();
-      if (!cvv) {
-        newErrors.cardCvv = 'Security code is required';
-      } else if (cvv.length < 3) {
-        newErrors.cardCvv = 'Security code must be 3 or 4 digits';
-      }
-    } else if (formData.paymentChannel === 'GCash') {
-      const cleanGcash = (formData.gcashNumber || '').replace(/\s+/g, '');
-      if (!cleanGcash) {
-        newErrors.gcashNumber = 'GCash mobile number is required';
-      } else if (!/^09\d{9}$/.test(cleanGcash)) {
-        newErrors.gcashNumber = 'Must be an 11-digit mobile number starting with 09';
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -482,16 +464,16 @@ const Checkout = () => {
 
   const clientRequestIdRef = useRef(generateCheckoutRequestId());
   const pendingVerifiedPaymentRef = useRef(null);
-  const paymongoQrModalOpenRef = useRef(false);
-  const [qrClosedDueToPriceChange, setQrClosedDueToPriceChange] = useState(false);
+  const paypalModalOpenRef = useRef(false);
+  const [modalClosedDueToPriceChange, setModalClosedDueToPriceChange] = useState(false);
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine === false : false
   );
   const [recoveringPendingPayment, setRecoveringPendingPayment] = useState(false);
 
   useEffect(() => {
-    paymongoQrModalOpenRef.current = paymongoQrModalOpen;
-  }, [paymongoQrModalOpen]);
+    paypalModalOpenRef.current = paypalModalOpen;
+  }, [paypalModalOpen]);
 
   // Keep checkout item prices and discounts synchronized in real time when Sales updates the catalog
   const {
@@ -505,38 +487,32 @@ const Checkout = () => {
     token,
     disabled: Boolean(success),
     onPricesChanged: () => {
-      // Close any open unpaid PayMongo QR session so the customer generates a fresh QR for the new amount
-      if (paymongoQrModalOpenRef.current && !pendingVerifiedPaymentRef.current) {
-        setPaymongoQrModalOpen(false);
+      // Close any open unpaid PayPal session so the customer gets the updated total
+      if (paypalModalOpenRef.current && !pendingVerifiedPaymentRef.current) {
+        setPaypalModalOpen(false);
         clearPendingPaymentRecovery();
-        setQrClosedDueToPriceChange(true);
+        setModalClosedDueToPriceChange(true);
       } else {
-        setQrClosedDueToPriceChange(false);
+        setModalClosedDueToPriceChange(false);
       }
       // Rotate client request ID so the refreshed price submission is treated as a fresh intent
       clientRequestIdRef.current = generateCheckoutRequestId();
     }
   });
 
-  const buildOrderRequestConfig = (paymongoRefStr = null, paymongoIntentId = null) => {
+  const buildOrderRequestConfig = ({ paypalOrderId = null, paypalCaptureId = null } = {}) => {
     const paymentModeDescription = formData.paymentPlan === 'COD_50'
       ? 'Cash on Delivery (50% Downpayment)'
-      : 'Bank Transfer - Full Payment';
+      : 'PayPal - Full Payment';
 
     const paymentDetails = {
       paymentPlan: formData.paymentPlan,
-      paymentChannel: formData.paymentChannel,
+      paymentChannel: 'PayPal',
       paymentMode: paymentModeDescription,
       shippingFee: shippingFee,
       expectedItemsTotal: Math.round((orderTotal || 0) * 100) / 100,
-      cardDetails: formData.paymentChannel === 'Card' ? {
-        cardNumber: formData.cardNumber,
-        cardExpiry: formData.cardExpiry,
-        cardCvv: formData.cardCvv,
-      } : undefined,
-      gcashNumber: formData.paymentChannel === 'GCash' ? formData.gcashNumber : undefined,
-      paymongoReference: paymongoRefStr || undefined,
-      paymentIntentId: paymongoIntentId || undefined,
+      paypalOrderId: paypalOrderId || undefined,
+      paypalCaptureId: paypalCaptureId || undefined,
       clientRequestId: clientRequestIdRef.current
     };
 
@@ -549,7 +525,7 @@ const Checkout = () => {
           fulfillmentType: formData.fulfillmentType,
           customerEmail: formData.customerEmail,
           shippingName: formData.customerName,
-          shippingContactNumber: formData.contactNumber || formData.gcashNumber || '',
+          shippingContactNumber: formData.contactNumber || '',
           shippingAddress: formData.address,
           shippingCity: formData.city,
           shippingProvince: formData.province,
@@ -582,7 +558,7 @@ const Checkout = () => {
         fulfillmentType: formData.fulfillmentType,
         customerEmail: formData.customerEmail,
         shippingName: formData.customerName,
-        shippingContactNumber: formData.contactNumber || formData.gcashNumber || '',
+        shippingContactNumber: formData.contactNumber || '',
         shippingAddress: formData.address,
         shippingCity: formData.city,
         shippingProvince: formData.province,
@@ -593,7 +569,7 @@ const Checkout = () => {
     };
   };
 
-  const executeOrderCreation = async (paymongoReference = null, paymongoIntentId = null) => {
+  const executeOrderCreation = async ({ paypalOrderId = null, paypalCaptureId = null } = {}) => {
     if (submittingRef.current || isSubmitting) return;
     submittingRef.current = true;
     setIsSubmitting(true);
@@ -604,7 +580,7 @@ const Checkout = () => {
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
-      const { isBulk, payload } = buildOrderRequestConfig(paymongoReference, paymongoIntentId);
+      const { isBulk, payload } = buildOrderRequestConfig({ paypalOrderId, paypalCaptureId });
       const endpoint = isBulk ? `${API_URL}/api/customer/orders/bulk` : `${API_URL}/api/customer/orders`;
 
       const res = await axios.post(endpoint, payload, {
@@ -615,21 +591,21 @@ const Checkout = () => {
         clearPendingPaymentRecovery();
         pendingVerifiedPaymentRef.current = null;
         isLeavingRef.current = true;
-        setPaymongoQrModalOpen(false);
+        setPaypalModalOpen(false);
         setSuccess(res.data.data.id);
         setCreatedOrder(res.data.data);
       }
     } catch (err) {
       console.error('Failed to submit order', err);
-      setPaymongoQrModalOpen(false);
+      setPaypalModalOpen(false);
       if (isNetworkDisconnectError(err)) {
-        if (paymongoReference || paymongoIntentId) {
+        if (paypalCaptureId || paypalOrderId) {
           pendingVerifiedPaymentRef.current = {
-            paymongoReference,
-            paymongoIntentId
+            paypalOrderId,
+            paypalCaptureId
           };
           setErrors({
-            submit: `Your GCash payment was verified (Ref: ${paymongoReference || paymongoIntentId}), but your internet disconnected while saving your order. Keep this page open — your order will finish saving automatically once you reconnect, or click Pay again to retry safely without being charged twice.`
+            submit: `Your PayPal payment was verified (Ref: ${paypalCaptureId || paypalOrderId}), but your internet disconnected while saving your order. Keep this page open — your order will finish saving automatically once you reconnect, or click Pay again to retry safely without being charged twice.`
           });
         } else {
           setErrors({
@@ -673,30 +649,29 @@ const Checkout = () => {
     }
   };
 
-  // Monitor browser online/offline state and auto-recover any verified PayMongo payment on reconnect
+  // Monitor browser online/offline state and auto-recover any verified PayPal payment on reconnect
   useEffect(() => {
     const handleOfflineEvent = () => setIsOffline(true);
 
     const handleOnlineRecovery = async () => {
       setIsOffline(false);
 
-      // Resume an already-verified PayMongo payment that failed to reach the server while offline
+      // Resume an already-captured PayPal payment that failed to reach the server while offline
       if (pendingVerifiedPaymentRef.current && !submittingRef.current) {
-        const { paymongoReference, paymongoIntentId } = pendingVerifiedPaymentRef.current;
         setErrors({});
-        await executeOrderCreation(paymongoReference, paymongoIntentId);
+        await executeOrderCreation(pendingVerifiedPaymentRef.current);
         return;
       }
 
-      // Check localStorage for a previously scanned PayMongo QR session
+      // Check localStorage for a previously initiated PayPal session
       const saved = loadPendingPaymentRecovery(user?.id || user?.userId);
-      if (!saved?.paymentIntentId || !saved?.orderPayload || !token || submittingRef.current) return;
+      if (!saved?.paypalOrderId || !saved?.orderPayload || !token || submittingRef.current) return;
 
       try {
         setRecoveringPendingPayment(true);
         const API_URL = import.meta.env.VITE_API_URL || '';
         const statusRes = await axios.get(
-          `${API_URL}/api/payments/paymongo/status/${saved.paymentIntentId}`,
+          `${API_URL}/api/payments/paypal/status/${saved.paypalOrderId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const statusData = statusRes.data?.data;
@@ -709,15 +684,15 @@ const Checkout = () => {
             {
               ...saved.orderPayload,
               clientRequestId: saved.clientRequestId,
-              paymentIntentId: statusData.paymentIntentId,
-              paymongoReference: statusData.paymentRecordId || statusData.paymentIntentId
+              paypalOrderId: statusData.paypalOrderId,
+              paypalCaptureId: statusData.captureId
             },
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (orderRes.data?.success && orderRes.data?.data?.id) {
             clearPendingPaymentRecovery();
             isLeavingRef.current = true;
-            setPaymongoQrModalOpen(false);
+            setPaypalModalOpen(false);
             setSuccess(orderRes.data.data.id);
             setCreatedOrder(orderRes.data.data);
           }
@@ -732,7 +707,7 @@ const Checkout = () => {
     window.addEventListener('offline', handleOfflineEvent);
     window.addEventListener('online', handleOnlineRecovery);
 
-    // Also run once on mount in case the user refreshed after paying via GCash QR
+    // Also run once on mount in case the user refreshed after completing PayPal payment
     if (typeof navigator === 'undefined' || navigator.onLine !== false) {
       handleOnlineRecovery();
     }
@@ -749,47 +724,50 @@ const Checkout = () => {
     if (!validateForm()) return;
 
     if (pendingVerifiedPaymentRef.current) {
-      const { paymongoReference, paymongoIntentId } = pendingVerifiedPaymentRef.current;
-      await executeOrderCreation(paymongoReference, paymongoIntentId);
+      await executeOrderCreation(pendingVerifiedPaymentRef.current);
       return;
     }
 
-    if (formData.paymentChannel === 'GCash' && gcashQrEnabled) {
-      // Check live prices before creating a PayMongo QR so the QR always matches the latest discount
-      const liveCheck = await refreshLivePrices({ silentIfUnchanged: true });
-      if (liveCheck.changed) {
-        setErrors({
-          submit: 'Product prices or discounts were just updated. Your total has been refreshed — please review the new amount and click Pay again to generate your updated GCash QR code.'
-        });
-        return;
-      }
-      setQrClosedDueToPriceChange(false);
-      setErrors({});
-      setPaymongoQrModalOpen(true);
+    if (!paypalConfig.settingEnabled) {
+      setErrors({
+        submit: 'PayPal checkout is currently paused by the system administrator. Please try again later.'
+      });
       return;
     }
 
-    await executeOrderCreation(null, null);
+    // Check live prices before opening PayPal so the charged total always matches the latest discount
+    const liveCheck = await refreshLivePrices({ silentIfUnchanged: true });
+    if (liveCheck.changed) {
+      setErrors({
+        submit: 'Product prices or discounts were just updated. Your total has been refreshed — please review the new amount and click Pay again to open PayPal.'
+      });
+      return;
+    }
+
+    setModalClosedDueToPriceChange(false);
+    setErrors({});
+    setPaypalModalOpen(true);
   };
 
-  const handlePaymongoQrSessionCreated = (session) => {
-    if (!session?.paymentIntentId) return;
-    const { isBulk, payload } = buildOrderRequestConfig(null, session.paymentIntentId);
+  const handlePaypalSessionCreated = (session) => {
+    if (!session?.paypalOrderId) return;
+    const { isBulk, payload } = buildOrderRequestConfig({ paypalOrderId: session.paypalOrderId });
     savePendingPaymentRecovery({
       userId: user?.id || user?.userId,
       clientRequestId: clientRequestIdRef.current,
-      paymentIntentId: session.paymentIntentId,
-      amountPhp: formData.paymentPlan === 'COD_50' ? grandTotal * 0.5 : grandTotal,
+      paypalOrderId: session.paypalOrderId,
+      amountPhp: payableNowAmount,
       paymentPlan: formData.paymentPlan,
       isBulk,
       orderPayload: payload
     });
   };
 
-  const handlePaymongoPaymentVerified = async (paymentInfo) => {
-    const refId = paymentInfo?.paymentRecordId || paymentInfo?.paymentIntentId || 'Verified';
-    const intentId = paymentInfo?.paymentIntentId || null;
-    await executeOrderCreation(refId, intentId);
+  const handlePaypalPaymentConfirmed = async (paymentInfo) => {
+    await executeOrderCreation({
+      paypalOrderId: paymentInfo?.paypalOrderId || null,
+      paypalCaptureId: paymentInfo?.captureId || null
+    });
   };
 
   // Render access, completion, empty, and loading states only after all React hooks have run
@@ -1245,16 +1223,11 @@ const Checkout = () => {
 
                 <PaymentMethodWidget
                   paymentPlan={formData.paymentPlan}
-                  paymentChannel={formData.paymentChannel}
+                  paypalMode={paypalConfig.mode}
+                  paypalConfigured={paypalConfig.configured}
                   subtotal={orderTotal}
                   shippingFee={shippingFee}
                   fulfillmentType={formData.fulfillmentType}
-                  gcashQrEnabled={gcashQrEnabled}
-                  cardNumber={formData.cardNumber}
-                  cardExpiry={formData.cardExpiry}
-                  cardCvv={formData.cardCvv}
-                  gcashNumber={formData.gcashNumber}
-                  errors={errors}
                   onChange={handleInputChange}
                 />
               </Paper>
@@ -1603,13 +1576,13 @@ const Checkout = () => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
                     <Typography variant="caption" fontWeight={700} color="#166534">50% Downpayment (Pay Now):</Typography>
                     <Typography variant="caption" fontWeight={900} color="#166534" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                      ₱{(grandTotal * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₱{downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="caption" fontWeight={700} color="#9a3412">50% Balance (Upon Delivery):</Typography>
                     <Typography variant="caption" fontWeight={900} color="#9a3412" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                      ₱{(grandTotal * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ₱{balanceUponDeliveryAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Typography>
                   </Box>
                 </Box>
@@ -1635,7 +1608,7 @@ const Checkout = () => {
                 severity={priceUpdateNotice.direction === 'decreased' ? 'success' : 'info'}
                 onClose={() => {
                   dismissPriceUpdateNotice();
-                  setQrClosedDueToPriceChange(false);
+                  setModalClosedDueToPriceChange(false);
                 }}
                 sx={{ mb: 2, borderRadius: 2 }}
               >
@@ -1652,21 +1625,21 @@ const Checkout = () => {
                     <strong>₱{priceUpdateNotice.updatedTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
                   </>
                 )}
-                {qrClosedDueToPriceChange
-                  ? ' Your previous GCash QR code was closed so a new code will use the updated amount.'
+                {modalClosedDueToPriceChange
+                  ? ' Your previous PayPal window was closed so the next checkout uses the updated amount.'
                   : ' Please review the updated summary before paying.'}
               </Alert>
             )}
 
             {isOffline && (
               <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
-                <strong>No internet connection.</strong> Please reconnect before submitting payment. Any completed GCash payment will be recovered automatically once you are back online.
+                <strong>No internet connection.</strong> Please reconnect before submitting payment. Any completed PayPal payment will be recovered automatically once you are back online.
               </Alert>
             )}
 
             {recoveringPendingPayment && (
               <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
-                Checking your recent GCash payment after reconnecting...
+                Checking your recent PayPal payment after reconnecting...
               </Alert>
             )}
 
@@ -1695,7 +1668,7 @@ const Checkout = () => {
                 boxShadow: '0 6px 20px -4px rgba(30, 58, 138, 0.4)'
               }}
             >
-              {isSubmitting ? 'Processing Order...' : formData.paymentPlan === 'COD_50' ? `Pay 50% (₱${(grandTotal * 0.5).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : `Pay Full (₱${grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+              {isSubmitting ? 'Processing Order...' : formData.paymentPlan === 'COD_50' ? `Pay 50% (₱${downpaymentAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : `Pay Full (₱${grandTotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
             </Button>
 
             <Button
@@ -1758,17 +1731,17 @@ const Checkout = () => {
         initialProductId={modalInitialProductId}
       />
 
-      <PaymongoQrModal
-        open={paymongoQrModalOpen}
-        onClose={() => setPaymongoQrModalOpen(false)}
+      <PaypalCheckoutModal
+        open={paypalModalOpen}
+        onClose={() => setPaypalModalOpen(false)}
         token={token}
-        amountPhp={formData.paymentPlan === 'COD_50' ? grandTotal * 0.5 : grandTotal}
+        paypalClientId={paypalConfig.clientId}
+        paypalMode={paypalConfig.mode}
+        amountPhp={payableNowAmount}
         paymentPlan={formData.paymentPlan}
         customerName={formData.customerName}
-        customerEmail={formData.customerEmail}
-        contactNumber={formData.gcashNumber || formData.contactNumber}
-        onQrSessionCreated={handlePaymongoQrSessionCreated}
-        onPaymentConfirmed={handlePaymongoPaymentVerified}
+        onOrderSessionCreated={handlePaypalSessionCreated}
+        onPaymentConfirmed={handlePaypalPaymentConfirmed}
       />
 
       <Dialog
