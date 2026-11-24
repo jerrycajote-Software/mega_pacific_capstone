@@ -1729,131 +1729,7 @@
   transform: scale(1.06);
 }
 
-/* 49. Customer Total Orders KPI Icon Animations */
-@keyframes mpiCustOrderDocFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
-  }
-}
-
-@keyframes mpiCustOrderSparkle {
-  0%, 100% {
-    opacity: 0.5;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.3);
-    filter: drop-shadow(0 0 3px #60a5fa);
-  }
-}
-
-.mpi-cust-order-doc {
-  animation: mpiCustOrderDocFloat 3s ease-in-out infinite;
-}
-
-.mpi-cust-order-spark {
-  transform-origin: 34px 10px;
-  animation: mpiCustOrderSparkle 2.2s ease-in-out infinite;
-}
-
-/* 50. Customer In Progress KPI Icon Animations */
-@keyframes mpiCustProgHandSweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes mpiCustProgPulse {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(0.96);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.04);
-    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
-  }
-}
-
-.mpi-cust-prog-hand {
-  transform-origin: 24px 24px;
-  animation: mpiCustProgHandSweep 6s linear infinite;
-}
-
-.mpi-cust-prog-ring {
-  transform-origin: 24px 24px;
-  animation: mpiCustProgPulse 2.5s ease-in-out infinite;
-}
-
-/* 51. Customer Completed KPI Icon Animations */
-@keyframes mpiCustCompCheckGleam {
-  0%, 100% {
-    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.4));
-  }
-  50% {
-    filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.9));
-  }
-}
-
-@keyframes mpiCustCompSparkle {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.35);
-    filter: drop-shadow(0 0 4px #a7f3d0);
-  }
-}
-
-.mpi-cust-comp-check {
-  animation: mpiCustCompCheckGleam 2.6s ease-in-out infinite;
-}
-
-.mpi-cust-comp-spark {
-  transform-origin: 36px 12px;
-  animation: mpiCustCompSparkle 2s ease-in-out infinite;
-}
-
-/* 52. Customer Total Spent KPI Icon Animations */
-@keyframes mpiCustSpentCoinFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-2px);
-  }
-}
-
-@keyframes mpiCustSpentCoinGleam {
-  0%, 100% {
-    opacity: 0.7;
-    filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.4));
-  }
-  50% {
-    opacity: 1;
-    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.85));
-  }
-}
-
-.mpi-cust-spent-coin {
-  animation: mpiCustSpentCoinFloat 2.8s ease-in-out infinite;
-}
-
-.mpi-cust-spent-spark {
-  transform-origin: 35px 14px;
-  animation: mpiCustSpentCoinGleam 2.2s ease-in-out infinite;
-}
-
-/* 53. Customer Orders KPI Card Classes */
+/* 49. Customer Orders KPI Card Classes */
 .mpi-cust-kpi-card {
   transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.22s ease;
   position: relative;
@@ -1863,14 +1739,6 @@
 .mpi-cust-kpi-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.12) !important;
-}
-
-.mpi-cust-badge {
-  transition: transform 0.25s ease, filter 0.25s ease;
-}
-
-.mpi-cust-kpi-card:hover .mpi-cust-badge {
-  transform: scale(1.06);
 }
 
 /* 54. Customer Navigation Icons Animations (Home, Catalog, Profile) */

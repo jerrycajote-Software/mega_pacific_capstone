@@ -2,37 +2,16 @@ import React from 'react';
 import { Box, Container, Grid, Typography, Link, IconButton, Divider } from '@mui/material';
 import { openCustomerSupport } from '../utils/supportEvents';
 
-const MastercardBadge = () => (
+const PayPalBadge = () => (
   <Box
     sx={{
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: 32,
-      height: 20,
+      px: 1,
+      height: 22,
       borderRadius: '4px',
-      bgcolor: '#ffffff',
-      border: '1px solid #e2e8f0',
-      flexShrink: 0
-    }}
-  >
-    <svg width="22" height="14" viewBox="0 0 28 18" fill="none">
-      <circle cx="10" cy="9" r="7" fill="#EB001B" />
-      <circle cx="18" cy="9" r="7" fill="#F79E1B" fillOpacity="0.88" />
-    </svg>
-  </Box>
-);
-
-const VisaBadge = () => (
-  <Box
-    sx={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: 34,
-      height: 20,
-      borderRadius: '4px',
-      bgcolor: '#1434CB',
+      bgcolor: '#003087',
       flexShrink: 0
     }}
   >
@@ -42,34 +21,13 @@ const VisaBadge = () => (
         fontFamily: 'system-ui, -apple-system, sans-serif',
         fontWeight: 900,
         fontStyle: 'italic',
-        fontSize: '9.5px',
-        letterSpacing: '0.8px',
+        fontSize: '10px',
+        letterSpacing: '0.2px',
         lineHeight: 1
       }}
     >
-      VISA
+      Pay<Box component="span" sx={{ color: '#009cde' }}>Pal</Box>
     </Typography>
-  </Box>
-);
-
-const GCashBadge = () => (
-  <Box
-    sx={{
-      width: 20,
-      height: 20,
-      borderRadius: '50%',
-      bgcolor: '#005ce6',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: '#ffffff',
-      fontWeight: 800,
-      fontSize: '11px',
-      boxShadow: '0 2px 5px rgba(0, 92, 230, 0.25)',
-      flexShrink: 0
-    }}
-  >
-    <span style={{ transform: 'translateY(-0.5px)' }}>G</span>
   </Box>
 );
 
@@ -180,61 +138,7 @@ const Footer = () => {
                   mb: 1
                 }}
               >
-                Bank Card
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 1.25,
-                    py: 0.6,
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc'
-                  }}
-                >
-                  <MastercardBadge />
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem' }}>
-                    Mastercard
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 1.25,
-                    py: 0.6,
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc'
-                  }}
-                >
-                  <VisaBadge />
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem' }}>
-                    Visa Card
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'text.secondary',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  display: 'block',
-                  mb: 1
-                }}
-              >
-                E-Wallet
+                Online Payment
               </Typography>
               <Box
                 sx={{
@@ -242,7 +146,7 @@ const Footer = () => {
                   alignItems: 'center',
                   gap: 1,
                   px: 1.25,
-                  py: 0.6,
+                  py: 0.7,
                   borderRadius: 2,
                   border: '1px solid',
                   borderColor: 'divider',
@@ -250,11 +154,14 @@ const Footer = () => {
                   width: 'fit-content'
                 }}
               >
-                <GCashBadge />
+                <PayPalBadge />
                 <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8rem' }}>
-                  GCash
+                  PayPal
                 </Typography>
               </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, lineHeight: 1.45 }}>
+                Supports PayPal Wallet and Debit / Credit Cards (Visa & Mastercard) via PayPal Checkout.
+              </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -273,9 +180,7 @@ const Footer = () => {
             © {new Date().getFullYear()} Mega Pacific Metal and Steel Roofing Systems. All rights reserved.
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <MastercardBadge />
-            <VisaBadge />
-            <GCashBadge />
+            <PayPalBadge />
           </Box>
         </Box>
       </Container>

@@ -21,11 +21,63 @@ const buildPaymongoSettingKey = (paymentIntentId) => {
   return token ? `${PAYMONGO_PREFIX}${token}` : null;
 };
 
-// Look up an already-created order matching this checkout request ID or PayMongo intent ID
-const findExistingOrderByIdempotency = async ({ userId, clientRequestId, paymentIntentId }) => {
+// Collect unique gateway idempotency keys from single or multiple payment identifiers
+const collectGatewaySettingKeys = ({ paymentIntentId, paymentIntentIds = [] }) => {
+  const candidates = [
+    paymentIntentId,
+    ...(Array.isArray(paymentIntentIds) ? paymentIntentIds : [])
+  ];
+  const uniqueKeys = new Set();
+
+  for (const candidate of candidates) {
+    const key = buildPaymongoSettingKey(candidate);
+    if (key) {
+      uniqueKeys.add(key);
+    }
+  }
+
+  return Array.from(uniqueKeys);
+};
+
+// Check whether any gateway payment identifier has already been claimed by an existing order
+const findGatewayPaymentClaim = async ({ paymentIntentId, paymentIntentIds = [] }) => {
+  const gatewayKeys = collectGatewaySettingKeys({ paymentIntentId, paymentIntentIds });
+  if (gatewayKeys.length === 0) return null;
+
+  const settings = await prisma.systemSetting.findMany({
+    where: { key: { in: gatewayKeys } }
+  });
+
+  for (const setting of settings) {
+    try {
+      const parsed = JSON.parse(setting.value);
+      const savedOrderId = parseInt(parsed?.orderId, 10);
+      const savedUserId = parseInt(parsed?.userId, 10);
+      if (Number.isNaN(savedOrderId)) continue;
+
+      return {
+        key: setting.key,
+        orderId: savedOrderId,
+        userId: Number.isNaN(savedUserId) ? null : savedUserId
+      };
+    } catch {
+      // Ignore malformed legacy entries
+    }
+  }
+
+  return null;
+};
+
+// Look up an already-created order matching this checkout request ID or payment gateway IDs
+const findExistingOrderByIdempotency = async ({
+  userId,
+  clientRequestId,
+  paymentIntentId,
+  paymentIntentIds = []
+}) => {
   const keysToCheck = [
     buildRequestSettingKey(clientRequestId),
-    buildPaymongoSettingKey(paymentIntentId)
+    ...collectGatewaySettingKeys({ paymentIntentId, paymentIntentIds })
   ].filter(Boolean);
 
   if (keysToCheck.length === 0) return null;
@@ -75,10 +127,13 @@ const findExistingOrderByIdempotency = async ({ userId, clientRequestId, payment
 };
 
 // Persist checkout idempotency keys atomically inside the order creation transaction
-const recordOrderIdempotencyInTx = async (tx, { orderId, userId, clientRequestId, paymentIntentId }) => {
+const recordOrderIdempotencyInTx = async (
+  tx,
+  { orderId, userId, clientRequestId, paymentIntentId, paymentIntentIds = [] }
+) => {
   const entries = [];
   const reqKey = buildRequestSettingKey(clientRequestId);
-  const paymongoKey = buildPaymongoSettingKey(paymentIntentId);
+  const gatewayKeys = collectGatewaySettingKeys({ paymentIntentId, paymentIntentIds });
   const serializedValue = JSON.stringify({
     orderId: parseInt(orderId, 10),
     userId: parseInt(userId, 10),
@@ -93,11 +148,11 @@ const recordOrderIdempotencyInTx = async (tx, { orderId, userId, clientRequestId
     });
   }
 
-  if (paymongoKey) {
+  for (const gatewayKey of gatewayKeys) {
     entries.push({
-      key: paymongoKey,
+      key: gatewayKey,
       value: serializedValue,
-      description: `PayMongo payment intent linkage for Order #ORD-${orderId}`
+      description: `Payment gateway transaction linkage for Order #ORD-${orderId}`
     });
   }
 
@@ -108,6 +163,7 @@ const recordOrderIdempotencyInTx = async (tx, { orderId, userId, clientRequestId
 
 module.exports = {
   sanitizeIdempotencyToken,
+  findGatewayPaymentClaim,
   findExistingOrderByIdempotency,
   recordOrderIdempotencyInTx
 };

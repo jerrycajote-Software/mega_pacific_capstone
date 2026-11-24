@@ -21,10 +21,6 @@ import {
 } from '@mui/material';
 import { io } from 'socket.io-client';
 import {
-  CustomCustomerTotalOrdersIcon,
-  CustomCustomerInProgressIcon,
-  CustomCustomerCompletedIcon,
-  CustomCustomerTotalSpentIcon,
   CustomEmptyOrdersSearchIcon
 } from '../../components/icons';
 
@@ -713,8 +709,7 @@ const OrdersPage = () => {
               p: { xs: 2, sm: 2.25 }, 
               borderRadius: 3.5, 
               border: '1px solid', 
-              borderColor: activeTab === 'all' ? 'rgba(59, 130, 246, 0.4)' : 'divider', 
-              borderTop: '3px solid #3b82f6',
+              borderColor: 'divider', 
               bgcolor: 'background.paper',
               boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
               cursor: 'pointer',
@@ -723,24 +718,7 @@ const OrdersPage = () => {
               gap: 1.5,
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box
-                className="mpi-cust-badge"
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  bgcolor: 'rgba(59, 130, 246, 0.08)',
-                  border: '1px solid rgba(59, 130, 246, 0.22)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.12)'
-                }}
-              >
-                <CustomCustomerTotalOrdersIcon size={28} />
-              </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
               <Chip
                 label="All Orders"
                 size="small"
@@ -777,8 +755,7 @@ const OrdersPage = () => {
               p: { xs: 2, sm: 2.25 }, 
               borderRadius: 3.5, 
               border: '1px solid', 
-              borderColor: activeTab === 'in_progress' ? 'rgba(245, 158, 11, 0.4)' : 'divider', 
-              borderTop: '3px solid #f59e0b',
+              borderColor: 'divider', 
               bgcolor: 'background.paper',
               boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
               cursor: 'pointer',
@@ -787,24 +764,7 @@ const OrdersPage = () => {
               gap: 1.5,
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box
-                className="mpi-cust-badge"
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  bgcolor: 'rgba(245, 158, 11, 0.08)',
-                  border: '1px solid rgba(245, 158, 11, 0.22)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.12)'
-                }}
-              >
-                <CustomCustomerInProgressIcon size={28} />
-              </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
               <Chip
                 label="In Progress"
                 size="small"
@@ -840,8 +800,7 @@ const OrdersPage = () => {
               p: { xs: 2, sm: 2.25 }, 
               borderRadius: 3.5, 
               border: '1px solid', 
-              borderColor: activeTab === 'completed' ? 'rgba(16, 185, 129, 0.4)' : 'divider', 
-              borderTop: '3px solid #10b981',
+              borderColor: 'divider', 
               bgcolor: 'background.paper',
               boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
               cursor: 'pointer',
@@ -850,24 +809,7 @@ const OrdersPage = () => {
               gap: 1.5,
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box
-                className="mpi-cust-badge"
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  bgcolor: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.22)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.12)'
-                }}
-              >
-                <CustomCustomerCompletedIcon size={28} />
-              </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
               <Chip
                 label="Done"
                 size="small"
@@ -903,7 +845,6 @@ const OrdersPage = () => {
               borderRadius: 3.5, 
               border: '1px solid', 
               borderColor: 'divider', 
-              borderTop: '3px solid #4f772d',
               bgcolor: 'background.paper',
               boxShadow: '0 4px 18px -6px rgba(0,0,0,0.06)',
               display: 'flex',
@@ -911,24 +852,7 @@ const OrdersPage = () => {
               gap: 1.5,
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Box
-                className="mpi-cust-badge"
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  bgcolor: 'rgba(79, 119, 45, 0.08)',
-                  border: '1px solid rgba(79, 119, 45, 0.22)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: '0 2px 8px rgba(79, 119, 45, 0.12)'
-                }}
-              >
-                <CustomCustomerTotalSpentIcon size={28} />
-              </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
               <Chip
                 label="Total Paid"
                 size="small"

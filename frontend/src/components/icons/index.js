@@ -42,11 +42,6 @@ export { default as CustomAdminPasswordGuardIcon } from './CustomAdminPasswordGu
 export { default as CustomAdminPlatformGuardIcon } from './CustomAdminPlatformGuardIcon';
 export { default as CustomAdminUserAccountIcon } from './CustomAdminUserAccountIcon';
 
-export { default as CustomCustomerTotalOrdersIcon } from './CustomCustomerTotalOrdersIcon';
-export { default as CustomCustomerInProgressIcon } from './CustomCustomerInProgressIcon';
-export { default as CustomCustomerCompletedIcon } from './CustomCustomerCompletedIcon';
-export { default as CustomCustomerTotalSpentIcon } from './CustomCustomerTotalSpentIcon';
-
 export { default as CustomCustomerHomeIcon } from './CustomCustomerHomeIcon';
 export { default as CustomCustomerCatalogIcon } from './CustomCustomerCatalogIcon';
 export { default as CustomCustomerProfileIcon } from './CustomCustomerProfileIcon';

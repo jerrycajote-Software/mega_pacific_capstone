@@ -9,7 +9,6 @@ import {
   Button,
   IconButton,
   Avatar,
-  Tooltip,
   Drawer,
   List,
   ListItem,
@@ -19,7 +18,6 @@ import {
   Divider,
   Chip,
 } from '@mui/material';
-import LogoutConfirmModal from './LogoutConfirmModal';
 import { openCustomerSupport } from '../utils/supportEvents';
 import {
   CustomCustomerHomeIcon,
@@ -33,13 +31,10 @@ const NAV_LINKS = [
 ];
 
 const CustomerHeader = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-
-  const handleLogout = () => setIsLogoutOpen(true);
 
   return (
     <>
@@ -232,31 +227,6 @@ const CustomerHeader = () => {
                 {user?.name || 'Customer'}
               </Typography>
             </Box>
-
-            <Tooltip title="Sign Out">
-              <IconButton
-                onClick={handleLogout}
-                size="small"
-                aria-label="Sign Out"
-                sx={{
-                  color: '#ef4444',
-                  border: '1px solid',
-                  borderColor: 'rgba(239, 68, 68, 0.25)',
-                  borderRadius: '50%',
-                  width: { xs: 32, sm: 36 },
-                  height: { xs: 32, sm: 36 },
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    bgcolor: 'rgba(239, 68, 68, 0.1)',
-                    borderColor: '#ef4444',
-                    color: '#dc2626',
-                    transform: 'scale(1.05)',
-                  },
-                }}
-              >
-                <i className="fi fi-rr-sign-out-alt" style={{ fontSize: '14px' }}></i>
-              </IconButton>
-            </Tooltip>
           </Box>
         </Toolbar>
       </AppBar>
@@ -413,34 +383,7 @@ const CustomerHeader = () => {
             </ListItemButton>
           </ListItem>
         </List>
-
-        <Divider sx={{ my: 1.5 }} />
-
-        <Button
-          fullWidth
-          variant="outlined"
-          color="error"
-          onClick={() => {
-            setMobileDrawerOpen(false);
-            handleLogout();
-          }}
-          startIcon={<i className="fi fi-rr-sign-out-alt" style={{ fontSize: '14px' }}></i>}
-          sx={{ borderRadius: 2, fontWeight: 700, py: 1 }}
-        >
-          Sign Out
-        </Button>
       </Drawer>
-
-      {isLogoutOpen && (
-        <LogoutConfirmModal
-          onClose={() => setIsLogoutOpen(false)}
-          onConfirm={() => {
-            setIsLogoutOpen(false);
-            logout();
-            navigate('/login', { replace: true });
-          }}
-        />
-      )}
     </>
   );
 };
